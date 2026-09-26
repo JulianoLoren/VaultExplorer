@@ -52,6 +52,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   // since re_editor's readOnly flag only blocks edits, not selection.
   bool _readOnly = false;
 
+  // Soft wrap vs. horizontal scroll (Phase 1, item 2). re_editor handles
+  // both modes -- and, for horizontal scroll, its own synced scrollbar --
+  // entirely on its own once `wordWrap` flips; nothing else here changes.
+  bool _wordWrap = true;
+
   Timer? _autosaveTimer;
   final FocusNode _focusNode = FocusNode();
 
@@ -234,6 +239,8 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     }
   }
 
+  void _toggleWordWrap() => setState(() => _wordWrap = !_wordWrap);
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -292,6 +299,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                     ? context.l10n.textEditorSwitchToEditModeTooltip
                     : context.l10n.textEditorSwitchToReadModeTooltip,
                 onPressed: _toggleReadOnly,
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.wrap_text_rounded,
+                  color: _wordWrap ? cs.primary : cs.onSurfaceVariant,
+                ),
+                tooltip: _wordWrap
+                    ? context.l10n.textEditorSwitchToHorizontalScrollTooltip
+                    : context.l10n.textEditorSwitchToSoftWrapTooltip,
+                onPressed: _toggleWordWrap,
               ),
               IconButton(
                 icon: (_isSaving || _isAutosaving)
@@ -384,7 +401,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
               focusNode: _focusNode,
               readOnly: _readOnly,
               showCursorWhenReadOnly: true,
-              wordWrap: true,
+              wordWrap: _wordWrap,
               autofocus: false,
               // Folding isn't exposed yet (no indicator/UI for it in this
               // pass), so skip the analysis pass that would otherwise run

@@ -1,11 +1,15 @@
 // The bar pinned above the soft keyboard while editing a file in
-// TextEditorScreen -- see docs/text editor expansion plan, Phase 2. Two
+// TextEditorScreen -- see docs/text editor expansion plan, Phase 2. Three
 // horizontally-scrollable rows:
 //   1. Symbols that are awkward to reach on a stock Android keyboard layout
 //      (nested punctuation, brackets, quotes).
 //   2. Undo/redo, left/right caret nav, select-word, and paste -- one-tap
 //      versions of gestures that are fiddly with a fingertip on a small
 //      screen.
+//   3. The caret scrubber -- a full-width drag strip that moves the cursor
+//      left/right one character per step of travel, so repositioning the
+//      caret doesn't require a fingertip directly on top of it (which is
+//      exactly what obscures the thing you're trying to aim at).
 //
 // Every button re-requests focus on the editor after acting: a Material
 // `InkWell` can otherwise pull keyboard focus onto itself for a frame,
@@ -125,6 +129,7 @@ class EditorAccessoryKeyBar extends StatelessWidget {
                 },
               ),
             ),
+            _CaretScrubber(controller: controller, editorFocusNode: editorFocusNode),
           ],
         ),
       ),
@@ -204,6 +209,106 @@ class _IconKeyButton extends StatelessWidget {
               icon,
               size: 20,
               color: enabled ? cs.onSurface : cs.onSurface.withValues(alpha: 0.35),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A full-width horizontal drag strip: dragging right or left moves the
+/// caret forward/backward one character per [_pixelsPerStep] of travel.
+/// Lives in its own row (rather than layered on the text) specifically so
+/// scrubbing doesn't put a fingertip over the caret it's positioning.
+class _CaretScrubber extends StatefulWidget {
+  final CodeLineEditingController controller;
+  final FocusNode editorFocusNode;
+
+  const _CaretScrubber({required this.controller, required this.editorFocusNode});
+
+  @override
+  State<_CaretScrubber> createState() => _CaretScrubberState();
+}
+
+class _CaretScrubberState extends State<_CaretScrubber> {
+  static const double _pixelsPerStep = 10;
+  // A single fast flick can report a large delta in one callback; cap how
+  // many characters one update can move the caret so that stays a scrub,
+  // not a teleport.
+  static const int _maxStepsPerUpdate = 20;
+
+  double _dragAccumulator = 0;
+  bool _isDragging = false;
+
+  void _onDragStart(DragStartDetails details) {
+    _dragAccumulator = 0;
+    setState(() => _isDragging = true);
+    if (!widget.editorFocusNode.hasFocus) {
+      widget.editorFocusNode.requestFocus();
+    }
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    _dragAccumulator += details.delta.dx;
+    var steps = 0;
+    while (_dragAccumulator.abs() >= _pixelsPerStep && steps < _maxStepsPerUpdate) {
+      if (_dragAccumulator > 0) {
+        widget.controller.moveCursor(AxisDirection.right);
+        _dragAccumulator -= _pixelsPerStep;
+      } else {
+        widget.controller.moveCursor(AxisDirection.left);
+        _dragAccumulator += _pixelsPerStep;
+      }
+      steps++;
+    }
+  }
+
+  void _onDragEnd(DragEndDetails details) => setState(() {
+    _isDragging = false;
+    _dragAccumulator = 0;
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 0, 6, 4),
+      child: Semantics(
+        label: context.l10n.textEditorCaretScrubberLabel,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragStart: _onDragStart,
+          onHorizontalDragUpdate: _onDragUpdate,
+          onHorizontalDragEnd: _onDragEnd,
+          onHorizontalDragCancel: () => setState(() {
+            _isDragging = false;
+            _dragAccumulator = 0;
+          }),
+          child: Container(
+            height: 26,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _isDragging ? cs.primary.withValues(alpha: 0.16) : cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.chevron_left_rounded, size: 16, color: cs.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Container(
+                  width: 28,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: cs.onSurfaceVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right_rounded, size: 16, color: cs.onSurfaceVariant),
+              ],
             ),
           ),
         ),
