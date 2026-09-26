@@ -2522,6 +2522,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get textEditorSelectWordTooltip => 'تحديد الكلمة';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip =>
+      'التبديل إلى التمرير الأفقي';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip =>
+      'التبديل إلى الالتفاف التلقائي';
+
+  @override
+  String get textEditorCaretScrubberLabel =>
+      'اسحب لليسار أو لليمين لتحريك المؤشر';
+
+  @override
   String get textEditorSaveConfirmTitle => 'تغييرات غير محفوظة';
 
   @override

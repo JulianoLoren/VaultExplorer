@@ -2348,5 +2348,8 @@
   "qrScannerTitle": "QRコードをスキャン",
   "qrScannerHint": "フレーム内にQRコードを合わせてください",
   "qrCodeScannedSuccess": "QRコードを正常にスキャンしました",
-  "invalidQrCodeError": "有効な2FA QRコードではありません"
+  "invalidQrCodeError": "有効な2FA QRコードではありません",
+  "textEditorSwitchToHorizontalScrollTooltip": "水平スクロールに切り替える",
+  "textEditorSwitchToSoftWrapTooltip": "折り返しに切り替える",
+  "textEditorCaretScrubberLabel": "左右にドラッグしてカーソルを移動"
 }

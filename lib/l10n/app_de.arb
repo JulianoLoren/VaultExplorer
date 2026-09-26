@@ -2348,5 +2348,8 @@
   "qrScannerTitle": "QR-Code scannen",
   "qrScannerHint": "QR-Code im Rahmen ausrichten",
   "qrCodeScannedSuccess": "QR-Code erfolgreich gescannt",
-  "invalidQrCodeError": "Ungültiger 2FA-QR-Code"
+  "invalidQrCodeError": "Ungültiger 2FA-QR-Code",
+  "textEditorSwitchToHorizontalScrollTooltip": "Zu horizontalem Scrollen wechseln",
+  "textEditorSwitchToSoftWrapTooltip": "Zu automatischem Zeilenumbruch wechseln",
+  "textEditorCaretScrubberLabel": "Nach links oder rechts ziehen, um den Cursor zu bewegen"
 }

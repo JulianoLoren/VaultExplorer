@@ -2503,6 +2503,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get textEditorSelectWordTooltip => 'Sélectionner le mot';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip =>
+      'Passer au défilement horizontal';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip =>
+      'Passer au retour automatique à la ligne';
+
+  @override
+  String get textEditorCaretScrubberLabel =>
+      'Glissez vers la gauche ou la droite pour déplacer le curseur';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Modifications non enregistrées';
 
   @override

@@ -2513,6 +2513,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get textEditorSelectWordTooltip => 'Виділити слово';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip =>
+      'Перемкнути на горизонтальне прокручування';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip =>
+      'Перемкнути на перенесення рядків';
+
+  @override
+  String get textEditorCaretScrubberLabel =>
+      'Перетягніть ліворуч або праворуч, щоб перемістити курсор';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Незбережені зміни';
 
   @override

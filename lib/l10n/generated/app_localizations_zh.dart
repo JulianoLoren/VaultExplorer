@@ -2318,6 +2318,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textEditorSelectWordTooltip => '选择单词';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip => '切换到水平滚动';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip => '切换到自动换行';
+
+  @override
+  String get textEditorCaretScrubberLabel => '向左或向右拖动以移动光标';
+
+  @override
   String get textEditorSaveConfirmTitle => '未保存的更改';
 
   @override

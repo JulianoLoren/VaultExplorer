@@ -2348,5 +2348,8 @@
   "qrScannerTitle": "Escanear código QR",
   "qrScannerHint": "Alinhe o código QR dentro do quadro",
   "qrCodeScannedSuccess": "Código QR escaneado com sucesso",
-  "invalidQrCodeError": "Código QR 2FA inválido"
+  "invalidQrCodeError": "Código QR 2FA inválido",
+  "textEditorSwitchToHorizontalScrollTooltip": "Alternar para rolagem horizontal",
+  "textEditorSwitchToSoftWrapTooltip": "Alternar para quebra automática de linha",
+  "textEditorCaretScrubberLabel": "Arraste para a esquerda ou direita para mover o cursor"
 }

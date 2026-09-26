@@ -2348,5 +2348,8 @@
   "qrScannerTitle": "Сканувати QR-код",
   "qrScannerHint": "Вирівняйте QR-код у рамці",
   "qrCodeScannedSuccess": "QR-код успішно відскановано",
-  "invalidQrCodeError": "Недійсний 2FA QR-код"
+  "invalidQrCodeError": "Недійсний 2FA QR-код",
+  "textEditorSwitchToHorizontalScrollTooltip": "Перемкнути на горизонтальне прокручування",
+  "textEditorSwitchToSoftWrapTooltip": "Перемкнути на перенесення рядків",
+  "textEditorCaretScrubberLabel": "Перетягніть ліворуч або праворуч, щоб перемістити курсор"
 }

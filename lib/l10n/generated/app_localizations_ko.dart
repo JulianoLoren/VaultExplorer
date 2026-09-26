@@ -2354,6 +2354,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get textEditorSelectWordTooltip => '단어 선택';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip => '가로 스크롤로 전환';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip => '자동 줄 바꿈으로 전환';
+
+  @override
+  String get textEditorCaretScrubberLabel => '커서를 이동하려면 좌우로 드래그하세요';
+
+  @override
   String get textEditorSaveConfirmTitle => '저장되지 않은 변경 사항';
 
   @override

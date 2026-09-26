@@ -2354,6 +2354,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get textEditorSelectWordTooltip => '単語を選択';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip => '水平スクロールに切り替える';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip => '折り返しに切り替える';
+
+  @override
+  String get textEditorCaretScrubberLabel => '左右にドラッグしてカーソルを移動';
+
+  @override
   String get textEditorSaveConfirmTitle => '未保存の変更';
 
   @override

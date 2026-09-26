@@ -3240,6 +3240,18 @@
   "@textEditorSelectWordTooltip": {
     "description": "Tooltip for the accessory key bar button that selects the word at the caret"
   },
+  "textEditorSwitchToHorizontalScrollTooltip": "Switch to horizontal scroll",
+  "@textEditorSwitchToHorizontalScrollTooltip": {
+    "description": "Tooltip for the button that turns off soft wrap, so long lines scroll horizontally instead"
+  },
+  "textEditorSwitchToSoftWrapTooltip": "Switch to soft wrap",
+  "@textEditorSwitchToSoftWrapTooltip": {
+    "description": "Tooltip for the button that turns soft wrap back on, so long lines wrap instead of scrolling horizontally"
+  },
+  "textEditorCaretScrubberLabel": "Drag left or right to move the cursor",
+  "@textEditorCaretScrubberLabel": {
+    "description": "Accessibility label for the caret scrubber strip in the text editor's accessory key bar"
+  },
   "textEditorSaveConfirmTitle": "Unsaved Changes",
   "@textEditorSaveConfirmTitle": {
     "description": "Title for unsaved changes confirm dialog in text editor"

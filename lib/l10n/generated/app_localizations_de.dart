@@ -2495,6 +2495,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get textEditorSelectWordTooltip => 'Wort auswählen';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip =>
+      'Zu horizontalem Scrollen wechseln';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip =>
+      'Zu automatischem Zeilenumbruch wechseln';
+
+  @override
+  String get textEditorCaretScrubberLabel =>
+      'Nach links oder rechts ziehen, um den Cursor zu bewegen';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Nicht gespeicherte Änderungen';
 
   @override

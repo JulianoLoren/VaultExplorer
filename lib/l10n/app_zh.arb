@@ -2348,5 +2348,8 @@
   "qrScannerTitle": "扫描二维码",
   "qrScannerHint": "将二维码对齐在框内",
   "qrCodeScannedSuccess": "二维码扫描成功",
-  "invalidQrCodeError": "无效的双重验证二维码"
+  "invalidQrCodeError": "无效的双重验证二维码",
+  "textEditorSwitchToHorizontalScrollTooltip": "切换到水平滚动",
+  "textEditorSwitchToSoftWrapTooltip": "切换到自动换行",
+  "textEditorCaretScrubberLabel": "向左或向右拖动以移动光标"
 }

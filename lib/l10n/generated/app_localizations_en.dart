@@ -2448,6 +2448,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textEditorSelectWordTooltip => 'Select word';
 
   @override
+  String get textEditorSwitchToHorizontalScrollTooltip =>
+      'Switch to horizontal scroll';
+
+  @override
+  String get textEditorSwitchToSoftWrapTooltip => 'Switch to soft wrap';
+
+  @override
+  String get textEditorCaretScrubberLabel =>
+      'Drag left or right to move the cursor';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Unsaved Changes';
 
   @override

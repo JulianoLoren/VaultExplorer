@@ -4098,6 +4098,24 @@ abstract class AppLocalizations {
   /// **'Select word'**
   String get textEditorSelectWordTooltip;
 
+  /// Tooltip for the button that turns off soft wrap, so long lines scroll horizontally instead
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to horizontal scroll'**
+  String get textEditorSwitchToHorizontalScrollTooltip;
+
+  /// Tooltip for the button that turns soft wrap back on, so long lines wrap instead of scrolling horizontally
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to soft wrap'**
+  String get textEditorSwitchToSoftWrapTooltip;
+
+  /// Accessibility label for the caret scrubber strip in the text editor's accessory key bar
+  ///
+  /// In en, this message translates to:
+  /// **'Drag left or right to move the cursor'**
+  String get textEditorCaretScrubberLabel;
+
   /// Title for unsaved changes confirm dialog in text editor
   ///
   /// In en, this message translates to:

@@ -2348,5 +2348,8 @@
   "qrScannerTitle": "مسح رمز الاستجابة السريعة",
   "qrScannerHint": "قم بمحاذاة الرمز داخل الإطار",
   "qrCodeScannedSuccess": "تم مسح الرمز بنجاح",
-  "invalidQrCodeError": "رمز الاستجابة السريعة للمصادقة غير صالح"
+  "invalidQrCodeError": "رمز الاستجابة السريعة للمصادقة غير صالح",
+  "textEditorSwitchToHorizontalScrollTooltip": "التبديل إلى التمرير الأفقي",
+  "textEditorSwitchToSoftWrapTooltip": "التبديل إلى الالتفاف التلقائي",
+  "textEditorCaretScrubberLabel": "اسحب لليسار أو لليمين لتحريك المؤشر"
 }
