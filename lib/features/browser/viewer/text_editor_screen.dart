@@ -115,10 +115,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   void _bindTabController(EditorTab tab) {
     tab.codeController.addListener(_onTextChanged);
+    tab.findController.addListener(_onFindChanged);
   }
 
   void _unbindTabController(EditorTab tab) {
     tab.codeController.removeListener(_onTextChanged);
+    tab.findController.removeListener(_onFindChanged);
+  }
+
+  void _onFindChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadFileForTab(EditorTab tab) async {
@@ -513,10 +519,65 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   void _toggleWordWrap() => setState(() => _wordWrap = !_wordWrap);
 
-  void _insertImageTemplate() {
-    final placeholder = context.l10n.mimeTypeImage;
-    final template = '![$placeholder](image.png)';
-    _activeTab.codeController.replaceSelection(template);
+ Future<void> _insertImageTemplate() async {
+    final imageExts = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'};
+    final currentTab = _activeTab;
+    final lastSlash = currentTab.filePath.lastIndexOf('/');
+    final parentDir = lastSlash >= 0 ? currentTab.filePath.substring(0, lastSlash) : '';
+    
+    final rawList = await ref.read(vaultFileIoApiProvider).listDirectory(
+          widget.container,
+          parentDir,
+        );
+        
+    final images = rawList == null 
+        ? <RawEntry>[] 
+        : RawEntry.parseAll(rawList).where((e) {
+            if (e.isDir) return false;
+            final dot = e.name.lastIndexOf('.');
+            if (dot < 0) return false;
+            return imageExts.contains(e.name.substring(dot + 1).toLowerCase());
+          }).toList();
+
+    if (!mounted) return;
+
+    final selectedImage = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.selectImageTitle),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: images.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(ctx.l10n.noImagesFoundMessage),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: images.length,
+                  itemBuilder: (context, index) {
+                    final img = images[index];
+                    return ListTile(
+                      leading: const Icon(Icons.image_outlined),
+                      title: Text(img.name),
+                      onTap: () => Navigator.of(ctx).pop(img.name),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancel),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedImage == null) return;
+
+    final template = '![$selectedImage]($selectedImage)';
+    currentTab.codeController.replaceSelection(template);
     _focusNode.requestFocus();
   }
 
@@ -582,6 +643,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     });
 
     final anyDirty = _tabs.any((t) => t.isDirty);
+    final isSearching = activeTab.findController.value != null;
+    final isReplaceMode = activeTab.findController.value?.replaceMode ?? false;
+    final findBarHeight = (isReplaceMode && !_readOnly) ? 88.0 : 48.0;
 
     return PopScope(
       canPop: !anyDirty,
@@ -595,234 +659,224 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       child: Scaffold(
         key: _scaffoldKey,
         drawer: _buildProjectDrawer(cs),
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.menu_rounded),
-            tooltip: context.l10n.textEditorProjectFilesTitle,
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          ),
-          title: Text(activeTab.fileName),
-          actions: [
-            if (!activeTab.isLoading && !activeTab.hasError) ...[
-              if (activeTab.isMarkdownFile) ...[
-                if (!activeTab.showMarkdownPreview && !_readOnly)
-                  IconButton(
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    tooltip: context.l10n.addFile,
-                    onPressed: _insertImageTemplate,
-                  ),
-                IconButton(
-                  icon: Icon(activeTab.showMarkdownPreview ? Icons.edit_note_rounded : Icons.visibility_outlined),
-                  tooltip: activeTab.showMarkdownPreview
-                      ? context.l10n.markdownViewerEditTooltip
-                      : context.l10n.markdownViewerPreviewTooltip,
-                  onPressed: () => setState(() => activeTab.showMarkdownPreview = !activeTab.showMarkdownPreview),
+        appBar: isSearching
+            ? AppBar(
+                automaticallyImplyLeading: false,
+                toolbarHeight: findBarHeight,
+                titleSpacing: 0,
+                title: EditorFindPanel(
+                  controller: activeTab.findController,
+                  readOnly: _readOnly,
                 ),
-              ],
-              IconButton(
-                icon: const Icon(Icons.search_rounded),
-                tooltip: context.l10n.textEditorFindTooltip,
-                onPressed: () {
-                  if (activeTab.showMarkdownPreview) {
-                    setState(() => activeTab.showMarkdownPreview = false);
-                  }
-                  activeTab.findController.findMode();
-                },
-              ),
-              PopupMenuButton<String>(
-                tooltip: context.l10n.textEditorMoreActionsTooltip,
-                icon: const Icon(Icons.more_vert_rounded),
-                onSelected: (value) {
-                  switch (value) {
-                    case 'save':
-                      _saveFile(activeTab);
-                      break;
-                    case 'saveAs':
-                      _showSaveAsDialog();
-                      break;
-                    case 'readOnly':
-                      _toggleReadOnly();
-                      break;
-                    case 'wordWrap':
-                      _toggleWordWrap();
-                      break;
-                    case 'goToLine':
-                      _showGoToLineDialog();
-                      break;
-                    case 'goToStart':
-                      _goToStart();
-                      break;
-                    case 'goToEnd':
-                      _goToEnd();
-                      break;
-                    case 'format':
-                      final formatter = _formatter;
-                      if (formatter != null) _runFormatter(formatter);
-                      break;
-                    case 'minify':
-                      _runFormatter(minifyJson);
-                      break;
-                    case 'appearance':
-                      showEditorAppearanceSheet(context);
-                      break;
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'save',
-                    enabled: activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.save_rounded,
-                          size: 20,
-                          color: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
-                              ? cs.primary
-                              : cs.onSurface.withValues(alpha: 0.38),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(42),
+                  child: _buildTabBar(cs),
+                ),
+              )
+            : AppBar(
+                leading: IconButton(
+                  icon: const Icon(Icons.menu_rounded),
+                  tooltip: context.l10n.textEditorProjectFilesTitle,
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+                title: Text(activeTab.fileName),
+                actions: [
+                  if (!activeTab.isLoading && !activeTab.hasError) ...[
+                    if (activeTab.isMarkdownFile) ...[
+                      if (!activeTab.showMarkdownPreview && !_readOnly)
+                        IconButton(
+                          icon: const Icon(Icons.add_photo_alternate_outlined),
+                          tooltip: context.l10n.addFile,
+                          onPressed: _insertImageTemplate,
                         ),
-                        const SizedBox(width: 12),
-                        Text(context.l10n.save),
-                      ],
+                      IconButton(
+                        icon: Icon(activeTab.showMarkdownPreview ? Icons.edit_note_rounded : Icons.visibility_outlined),
+                        tooltip: activeTab.showMarkdownPreview
+                            ? context.l10n.markdownViewerEditTooltip
+                            : context.l10n.markdownViewerPreviewTooltip,
+                        onPressed: () => setState(() => activeTab.showMarkdownPreview = !activeTab.showMarkdownPreview),
+                      ),
+                    ],
+                    IconButton(
+                      icon: const Icon(Icons.search_rounded),
+                      tooltip: context.l10n.textEditorFindTooltip,
+                      onPressed: () {
+                        if (activeTab.showMarkdownPreview) {
+                          setState(() => activeTab.showMarkdownPreview = false);
+                        }
+                        activeTab.findController.findMode();
+                      },
                     ),
-                  ),
-                  PopupMenuItem(
-                    value: 'saveAs',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.save_as_rounded, size: 20),
-                        const SizedBox(width: 12),
-                        Text(context.l10n.textEditorSaveAsMenuItem),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'wordWrap',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.wrap_text_rounded, size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _wordWrap
-                                ? context.l10n.textEditorSwitchToHorizontalScrollTooltip
-                                : context.l10n.textEditorSwitchToSoftWrapTooltip,
+                    PopupMenuButton<String>(
+                      tooltip: context.l10n.textEditorMoreActionsTooltip,
+                      icon: const Icon(Icons.more_vert_rounded),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'save':
+                            _saveFile(activeTab);
+                            break;
+                          case 'saveAs':
+                            _showSaveAsDialog();
+                            break;
+                          case 'readOnly':
+                            _toggleReadOnly();
+                            break;
+                          case 'wordWrap':
+                            _toggleWordWrap();
+                            break;
+                          case 'goToLine':
+                            _showGoToLineDialog();
+                            break;
+                          case 'goToStart':
+                            _goToStart();
+                            break;
+                          case 'goToEnd':
+                            _goToEnd();
+                            break;
+                          case 'format':
+                            final formatter = _formatter;
+                            if (formatter != null) _runFormatter(formatter);
+                            break;
+                          case 'minify':
+                            _runFormatter(minifyJson);
+                            break;
+                          case 'appearance':
+                            showEditorAppearanceSheet(context);
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'save',
+                          enabled: activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.save_rounded,
+                                size: 20,
+                                color: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
+                                    ? cs.primary
+                                    : cs.onSurface.withValues(alpha: 0.38),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(context.l10n.save),
+                            ],
                           ),
                         ),
-                        if (_wordWrap)
-                          Icon(Icons.check_rounded, size: 18, color: cs.primary),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'readOnly',
-                    child: Row(
-                      children: [
-                        Icon(_readOnly ? Icons.lock_rounded : Icons.lock_open_rounded, size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _readOnly
-                                ? context.l10n.textEditorSwitchToEditModeTooltip
-                                : context.l10n.textEditorSwitchToReadModeTooltip,
+                        PopupMenuItem(
+                          value: 'saveAs',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.save_as_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Text(context.l10n.textEditorSaveAsMenuItem),
+                            ],
                           ),
                         ),
-                        if (_readOnly)
-                          Icon(Icons.check_rounded, size: 18, color: cs.primary),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'goToLine',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.redo_rounded, size: 20),
-                        const SizedBox(width: 12),
-                        Text(context.l10n.textEditorGoToLineMenuItem),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'goToStart',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.vertical_align_top_rounded, size: 20),
-                        const SizedBox(width: 12),
-                        Text(context.l10n.textEditorGoToStartMenuItem),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'goToEnd',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.vertical_align_bottom_rounded, size: 20),
-                        const SizedBox(width: 12),
-                        Text(context.l10n.textEditorGoToEndMenuItem),
-                      ],
-                    ),
-                  ),
-                  if (_formatter != null && !_readOnly) ...[
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: 'format',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.auto_fix_high_rounded, size: 20),
-                          const SizedBox(width: 12),
-                          Text(context.l10n.textEditorFormatDocumentMenuItem),
+                        const PopupMenuDivider(),
+                        PopupMenuItem(
+                          value: 'wordWrap',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.wrap_text_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(context.l10n.textEditorWordWrap),
+                              ),
+                              if (_wordWrap)
+                                Icon(Icons.check_rounded, size: 18, color: cs.primary),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'readOnly',
+                          child: Row(
+                            children: [
+                              Icon(_readOnly ? Icons.lock_rounded : Icons.lock_open_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(context.l10n.textEditorReadOnly),
+                              ),
+                              if (_readOnly)
+                                Icon(Icons.check_rounded, size: 18, color: cs.primary),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        PopupMenuItem(
+                          value: 'goToLine',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.redo_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Text(context.l10n.textEditorGoToLineMenuItem),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'goToStart',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.vertical_align_top_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Text(context.l10n.textEditorGoToStartMenuItem),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'goToEnd',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.vertical_align_bottom_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Text(context.l10n.textEditorGoToEndMenuItem),
+                            ],
+                          ),
+                        ),
+                        if (_formatter != null && !_readOnly) ...[
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
+                            value: 'format',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.auto_fix_high_rounded, size: 20),
+                                const SizedBox(width: 12),
+                                Text(context.l10n.textEditorFormatDocumentMenuItem),
+                              ],
+                            ),
+                          ),
+                          if (_isJsonFile)
+                            PopupMenuItem(
+                              value: 'minify',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.compress_rounded, size: 20),
+                                  const SizedBox(width: 12),
+                                  Text(context.l10n.textEditorMinifyJsonMenuItem),
+                                ],
+                              ),
+                            ),
                         ],
-                      ),
-                    ),
-                    if (_isJsonFile)
-                      PopupMenuItem(
-                        value: 'minify',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.compress_rounded, size: 20),
-                            const SizedBox(width: 12),
-                            Text(context.l10n.textEditorMinifyJsonMenuItem),
-                          ],
+                        const PopupMenuDivider(),
+                        PopupMenuItem(
+                          value: 'appearance',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.palette_outlined, size: 20),
+                              const SizedBox(width: 12),
+                              Text(context.l10n.textEditorThemeMenuItem),
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'appearance',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.palette_outlined, size: 20),
-                        const SizedBox(width: 12),
-                        Text(context.l10n.textEditorThemeMenuItem),
                       ],
                     ),
-                  ),
+                  ],
                 ],
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(42),
+                  child: _buildTabBar(cs),
+                ),
               ),
-              IconButton(
-                icon: (activeTab.isSaving || activeTab.isAutosaving)
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        Icons.save_rounded,
-                        color: activeTab.isDirty ? cs.primary : cs.outline,
-                      ),
-                tooltip: context.l10n.saveChangesTooltip,
-                onPressed: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
-                    ? () => _saveFile(activeTab)
-                    : null,
-              ),
-            ],
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(42),
-            child: _buildTabBar(cs),
-          ),
-        ),
         body: _buildBody(cs, Theme.of(context).textTheme),
         bottomNavigationBar:
             activeTab.isLoading || activeTab.hasError ? null : _buildBottomBar(cs),
@@ -958,7 +1012,7 @@ List<PathSegment> get _drawerPathStack {
               padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHigh,
-                border: Border(bottom: BorderSide(color: cs.outlineVariant, width: 0.5)),
+               
               ),
               child: Row(
                 children: [
@@ -969,12 +1023,8 @@ List<PathSegment> get _drawerPathStack {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          context.l10n.textEditorProjectFilesTitle,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                        Text(
                           widget.container.displayName,
-                          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -993,7 +1043,7 @@ List<PathSegment> get _drawerPathStack {
             Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainer,
-                border: Border(bottom: BorderSide(color: cs.outlineVariant, width: 0.5)),
+               
               ),
               child: BreadcrumbBar(
                 stack: _drawerPathStack,
@@ -1185,7 +1235,7 @@ List<PathSegment> get _drawerPathStack {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-         child: CodeEditor(
+       child: CodeEditor(
               key: ValueKey(
                 '${activeTab.filePath}_${appearance.background.name}_${appearance.syntaxTheme.name}_${appearance.fontSize}_${appearance.showLineNumbers}_${appearance.relativeLineNumbers}_${Theme.of(context).brightness.name}',
               ),
@@ -1195,16 +1245,8 @@ List<PathSegment> get _drawerPathStack {
               showCursorWhenReadOnly: true,
               wordWrap: _wordWrap,
               autofocus: false,
-              findController: activeTab.findController,
-              findBuilder: (context, findController, readOnly) {
-                if (findController.value == null) {
-                  return const PreferredSize(
-                    preferredSize: Size.zero,
-                    child: SizedBox.shrink(),
-                  );
-                }
-                return EditorFindPanel(controller: findController, readOnly: readOnly);
-              },
+             findController: activeTab.findController,
+              findBuilder: null,
               chunkAnalyzer: const NonCodeChunkAnalyzer(),
               style: CodeEditorStyle(
                 fontFamily: 'JetBrains Mono',
@@ -1218,7 +1260,7 @@ List<PathSegment> get _drawerPathStack {
                 selectionColor: cs.primary.withValues(alpha: 0.28),
                 codeTheme: syntaxStyle.codeTheme,
               ),
-              indicatorBuilder: appearance.showLineNumbers
+             indicatorBuilder: appearance.showLineNumbers
                   ? (context, editingController, chunkController, notifier) {
                       return DefaultCodeLineNumber(
                         controller: editingController,
@@ -1227,14 +1269,16 @@ List<PathSegment> get _drawerPathStack {
                           color: syntaxStyle.textColor.withValues(alpha: 0.45),
                           fontFamily: 'JetBrains Mono',
                           fontFamilyFallback: const ['monospace'],
-                          fontSize: (appearance.fontSize - 1).clamp(9.0, 23.0),
+                          fontSize: appearance.fontSize,
+                          height: 1.5,
                         ),
                         focusedTextStyle: TextStyle(
                           color: cs.primary,
                           fontFamily: 'JetBrains Mono',
                           fontFamilyFallback: const ['monospace'],
-                          fontSize: (appearance.fontSize - 1).clamp(9.0, 23.0),
+                          fontSize: appearance.fontSize,
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                         customLineIndex2Text: appearance.relativeLineNumbers
                             ? (lineIndex) {
@@ -1250,11 +1294,31 @@ List<PathSegment> get _drawerPathStack {
             ),
           ),
         ),
-        if (!_readOnly && softKeyboardVisible && appearance.showAccessoryBar)
+        if (!_readOnly &&
+            softKeyboardVisible &&
+            appearance.showAccessoryBar &&
+            (appearance.showAccessorySymbols || appearance.showAccessoryActions))
           EditorAccessoryKeyBar(
             controller: activeTab.codeController,
             editorFocusNode: _focusNode,
             symbols: appearance.accessorySymbols,
+            actions: appearance.accessoryActions,
+            showSymbols: appearance.showAccessorySymbols,
+            showActions: appearance.showAccessoryActions,
+            isWordWrap: _wordWrap,
+            isReadOnly: _readOnly,
+            onSearch: () {
+              if (activeTab.showMarkdownPreview) {
+                setState(() => activeTab.showMarkdownPreview = false);
+              }
+              activeTab.findController.findMode();
+            },
+            onToggleWordWrap: _toggleWordWrap,
+            onGoToLine: _showGoToLineDialog,
+            onGoToStart: _goToStart,
+            onGoToEnd: _goToEnd,
+            onFormat: _formatter != null ? () => _runFormatter(_formatter!) : null,
+            onToggleReadOnly: _toggleReadOnly,
           ),
       ],
     );

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/utils/raw_entry.dart';
 import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/features/browser/viewer/markdown/markdown_body_view.dart';
@@ -408,11 +409,65 @@ class _MarkdownViewerScreenState extends ConsumerState<MarkdownViewerScreen> {
     }
   }
 
-  void _insertImageTemplate() {
+  Future<void> _insertImageTemplate() async {
+    final imageExts = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'};
+    final lastSlash = widget.filePath.lastIndexOf('/');
+    final parentDir = lastSlash >= 0 ? widget.filePath.substring(0, lastSlash) : '';
+    
+    final rawList = await ref.read(vaultFileIoApiProvider).listDirectory(
+          widget.container,
+          parentDir,
+        );
+        
+    final images = rawList == null 
+        ? <RawEntry>[] 
+        : RawEntry.parseAll(rawList).where((e) {
+            if (e.isDir) return false;
+            final dot = e.name.lastIndexOf('.');
+            if (dot < 0) return false;
+            return imageExts.contains(e.name.substring(dot + 1).toLowerCase());
+          }).toList();
+
+    if (!mounted) return;
+
+    final selectedImage = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.selectImageTitle),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: images.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(ctx.l10n.noImagesFoundMessage),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: images.length,
+                  itemBuilder: (context, index) {
+                    final img = images[index];
+                    return ListTile(
+                      leading: const Icon(Icons.image_outlined),
+                      title: Text(img.name),
+                      onTap: () => Navigator.of(ctx).pop(img.name),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancel),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedImage == null) return;
+
     final text = _textController.text;
     final selection = _textController.selection;
-    final placeholder = context.l10n.mimeTypeImage;
-    final template = '![$placeholder](image.png)';
+    final template = '![$selectedImage]($selectedImage)';
 
     if (!selection.isValid || selection.baseOffset < 0) {
       _textController.text = '$text\n$template\n';
@@ -422,10 +477,7 @@ class _MarkdownViewerScreenState extends ConsumerState<MarkdownViewerScreen> {
     final newText = text.replaceRange(selection.start, selection.end, template);
     _textController.value = TextEditingValue(
       text: newText,
-      selection: TextSelection(
-        baseOffset: selection.start + 2,
-        extentOffset: selection.start + 2 + placeholder.length,
-      ),
+      selection: TextSelection.collapsed(offset: selection.start + template.length),
     );
     _focusNode.requestFocus();
   }

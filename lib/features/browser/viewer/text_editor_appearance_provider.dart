@@ -28,12 +28,12 @@ class TextEditorAppearanceNotifier extends Notifier<TextEditorAppearancePrefs> {
     _service.save(state);
   }
 
-   void setRelativeLineNumbers(bool enabled) {
+  void setRelativeLineNumbers(bool enabled) {
     state = state.copyWith(relativeLineNumbers: enabled);
     _service.save(state);
   }
 
-   void setAutoSave(bool enabled) {
+  void setAutoSave(bool enabled) {
     state = state.copyWith(autoSave: enabled);
     _service.save(state);
   }
@@ -48,6 +48,16 @@ class TextEditorAppearanceNotifier extends Notifier<TextEditorAppearancePrefs> {
     _service.save(state);
   }
 
+  void setShowAccessorySymbols(bool enabled) {
+    state = state.copyWith(showAccessorySymbols: enabled);
+    _service.save(state);
+  }
+
+  void setShowAccessoryActions(bool enabled) {
+    state = state.copyWith(showAccessoryActions: enabled);
+    _service.save(state);
+  }
+
   void setFontSize(double size) {
     state = state.copyWith(fontSize: size);
     _service.save(state);
@@ -55,6 +65,11 @@ class TextEditorAppearanceNotifier extends Notifier<TextEditorAppearancePrefs> {
 
   void setAccessorySymbols(List<String> symbols) {
     state = state.copyWith(accessorySymbols: symbols);
+    _service.save(state);
+  }
+
+  void setAccessoryActions(List<String> actions) {
+    state = state.copyWith(accessoryActions: actions);
     _service.save(state);
   }
 }

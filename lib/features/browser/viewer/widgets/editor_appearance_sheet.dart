@@ -102,7 +102,7 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
           textColor: syntaxStyle.textColor,
           codeTheme: syntaxStyle.codeTheme,
         ),
-        indicatorBuilder: prefs.showLineNumbers
+         indicatorBuilder: prefs.showLineNumbers
             ? (context, editingController, chunkController, notifier) {
                 return DefaultCodeLineNumber(
                   controller: editingController,
@@ -111,14 +111,16 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
                     color: syntaxStyle.textColor.withValues(alpha: 0.45),
                     fontFamily: 'JetBrains Mono',
                     fontFamilyFallback: const ['monospace'],
-                    fontSize: (prefs.fontSize - 1).clamp(9.0, 23.0),
+                    fontSize: prefs.fontSize,
+                    height: 1.45,
                   ),
                   focusedTextStyle: TextStyle(
                     color: cs.primary,
                     fontFamily: 'JetBrains Mono',
                     fontFamilyFallback: const ['monospace'],
-                    fontSize: (prefs.fontSize - 1).clamp(9.0, 23.0),
+                    fontSize: prefs.fontSize,
                     fontWeight: FontWeight.w700,
+                    height: 1.45,
                   ),
                   customLineIndex2Text: prefs.relativeLineNumbers
                       ? (lineIndex) {
@@ -151,7 +153,7 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
+           IconButton(
             icon: const Icon(Icons.restart_alt_rounded),
             tooltip: context.l10n.textEditorResetToDefault,
             onPressed: () {
@@ -161,7 +163,10 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
               notifier.setShowLineNumbers(true);
               notifier.setRelativeLineNumbers(false);
               notifier.setShowAccessoryBar(true);
+              notifier.setShowAccessorySymbols(true);
+              notifier.setShowAccessoryActions(true);
               notifier.setAccessorySymbols(TextEditorAppearancePrefs.defaultSymbols);
+              notifier.setAccessoryActions(TextEditorAppearancePrefs.defaultActions);
               notifier.setAutoSave(false);
             },
           ),
@@ -326,10 +331,10 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
                       ),
                     ),
 
-                    // Relative Line Numbers (indented sub-setting)
+                   // Relative Line Numbers
                     if (prefs.showLineNumbers)
                       SwitchListTile(
-                        contentPadding: const EdgeInsets.only(left: 32, right: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                         value: prefs.relativeLineNumbers,
                         onChanged: notifier.setRelativeLineNumbers,
                         title: Text(
@@ -346,7 +351,7 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
                         ),
                       ),
 
-                    // Accessory Bar Switch
+                    // Accessory Bar Master Switch
                     SwitchListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                       value: prefs.showAccessoryBar,
@@ -365,22 +370,79 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
                       ),
                     ),
 
-                    // Customize Key Bar (indented sub-setting)
-                    if (prefs.showAccessoryBar)
-                      ListTile(
-                        contentPadding: const EdgeInsets.only(left: 32, right: 16),
-                        leading: Icon(Icons.tune_rounded, color: cs.primary),
+                    if (prefs.showAccessoryBar) ...[
+                      // Show Symbols Row Switch
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        value: prefs.showAccessorySymbols,
+                        onChanged: notifier.setShowAccessorySymbols,
                         title: Text(
-                          context.l10n.textEditorCustomizeKeyBarLabel,
+                          context.l10n.textEditorShowSymbolsBarLabel,
                           style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Text(
-                          context.l10n.textEditorCustomizeKeyBarDescription,
+                          context.l10n.textEditorShowSymbolsBarDescription,
                           style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                         ),
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => _showCustomizeKeyBarDialog(context),
+                        secondary: Icon(
+                          Icons.tag_rounded,
+                          color: cs.primary,
+                        ),
                       ),
+
+                      // Customize Symbols Tile
+                      if (prefs.showAccessorySymbols)
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          leading: Icon(Icons.edit_note_rounded, color: cs.primary),
+                          title: Text(
+                            context.l10n.textEditorCustomizeKeyBarLabel,
+                            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            context.l10n.textEditorCustomizeKeyBarDescription,
+                            style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => _showCustomizeKeyBarDialog(context),
+                        ),
+
+                      // Show Actions Row Switch
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        value: prefs.showAccessoryActions,
+                        onChanged: notifier.setShowAccessoryActions,
+                        title: Text(
+                          context.l10n.textEditorShowActionsBarLabel,
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          context.l10n.textEditorShowActionsBarDescription,
+                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        secondary: Icon(
+                          Icons.smart_button_rounded,
+                          color: cs.primary,
+                        ),
+                      ),
+
+                      // Customize & Reorder Actions Tile
+                      if (prefs.showAccessoryActions)
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          leading: Icon(Icons.tune_rounded, color: cs.primary),
+                          title: Text(
+                            context.l10n.textEditorCustomizeActionsLabel,
+                            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            context.l10n.textEditorCustomizeActionsDescription,
+                            style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => _showCustomizeActionsDialog(context),
+                        ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -415,6 +477,19 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showCustomizeActionsDialog(BuildContext context) {
+    final prefs = ref.read(textEditorAppearanceProvider);
+    final notifier = ref.read(textEditorAppearanceProvider.notifier);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => _CustomizeActionsDialog(
+        currentActions: prefs.accessoryActions,
+        onSave: notifier.setAccessoryActions,
       ),
     );
   }
@@ -470,6 +545,145 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CustomizeActionsDialog extends StatefulWidget {
+  final List<String> currentActions;
+  final ValueChanged<List<String>> onSave;
+
+  const _CustomizeActionsDialog({
+    required this.currentActions,
+    required this.onSave,
+  });
+
+  @override
+  State<_CustomizeActionsDialog> createState() => _CustomizeActionsDialogState();
+}
+
+class _CustomizeActionsDialogState extends State<_CustomizeActionsDialog> {
+  late List<String> _order;
+  late Set<String> _enabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _enabled = Set<String>.from(widget.currentActions);
+    final rest = TextEditorAppearancePrefs.allAvailableActions
+        .where((a) => !_enabled.contains(a));
+    _order = [...widget.currentActions, ...rest];
+  }
+
+  (IconData, String) _actionInfo(BuildContext context, String key) {
+    return switch (key) {
+      'undo' => (Icons.undo_rounded, context.l10n.actionUndo),
+      'redo' => (Icons.redo_rounded, context.l10n.actionRedo),
+      'cursorLeft' => (Icons.keyboard_arrow_left_rounded, context.l10n.actionCursorLeft),
+      'cursorRight' => (Icons.keyboard_arrow_right_rounded, context.l10n.actionCursorRight),
+      'selectWord' => (Icons.highlight_alt_rounded, context.l10n.actionSelectWord),
+      'copy' => (Icons.content_copy_rounded, context.l10n.actionCopy),
+      'cut' => (Icons.content_cut_rounded, context.l10n.actionCut),
+      'paste' => (Icons.content_paste_rounded, context.l10n.actionPaste),
+      'find' => (Icons.search_rounded, context.l10n.actionFind),
+      'wordWrap' => (Icons.wrap_text_rounded, context.l10n.actionWordWrap),
+      'goToLine' => (Icons.format_list_numbered_rounded, context.l10n.actionGoToLine),
+      'goToStart' => (Icons.vertical_align_top_rounded, context.l10n.actionGoToStart),
+      'goToEnd' => (Icons.vertical_align_bottom_rounded, context.l10n.actionGoToEnd),
+      'indent' => (Icons.format_indent_increase_rounded, context.l10n.actionIndent),
+      'outdent' => (Icons.format_indent_decrease_rounded, context.l10n.actionOutdent),
+      'format' => (Icons.auto_fix_high_rounded, context.l10n.actionFormat),
+      'readOnly' => (Icons.lock_outline_rounded, context.l10n.actionReadOnly),
+      _ => (Icons.code_rounded, key),
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return AlertDialog(
+      title: Text(context.l10n.textEditorCustomizeActionsTitle),
+      contentPadding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 420,
+        child: ReorderableListView.builder(
+          shrinkWrap: true,
+          itemCount: _order.length,
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (newIndex > oldIndex) newIndex -= 1;
+              final item = _order.removeAt(oldIndex);
+              _order.insert(newIndex, item);
+            });
+          },
+          itemBuilder: (context, index) {
+            final key = _order[index];
+            final isChecked = _enabled.contains(key);
+            final (icon, label) = _actionInfo(context, key);
+
+            return ListTile(
+              key: ValueKey(key),
+              leading: Icon(icon, color: isChecked ? cs.primary : cs.outline),
+              title: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: isChecked ? FontWeight.w600 : FontWeight.normal,
+                  color: isChecked ? cs.onSurface : cs.onSurfaceVariant,
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Checkbox(
+                    value: isChecked,
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          _enabled.add(key);
+                        } else {
+                          _enabled.remove(key);
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle_rounded),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _enabled = Set<String>.from(TextEditorAppearancePrefs.defaultActions);
+              final rest = TextEditorAppearancePrefs.allAvailableActions
+                  .where((a) => !_enabled.contains(a));
+              _order = [...TextEditorAppearancePrefs.defaultActions, ...rest];
+            });
+          },
+          child: Text(context.l10n.textEditorResetToDefault),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final finalActions = _order.where((a) => _enabled.contains(a)).toList();
+            widget.onSave(finalActions);
+            Navigator.of(context).pop();
+          },
+          child: Text(context.l10n.done),
+        ),
+      ],
     );
   }
 }

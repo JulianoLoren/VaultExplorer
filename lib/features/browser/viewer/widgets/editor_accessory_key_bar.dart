@@ -39,12 +39,36 @@ class EditorAccessoryKeyBar extends StatelessWidget {
   final CodeLineEditingController controller;
   final FocusNode editorFocusNode;
   final List<String> symbols;
+  final List<String> actions;
+  final bool showSymbols;
+  final bool showActions;
+  final bool isWordWrap;
+  final bool isReadOnly;
+  final VoidCallback? onSearch;
+  final VoidCallback? onToggleWordWrap;
+  final VoidCallback? onGoToLine;
+  final VoidCallback? onGoToStart;
+  final VoidCallback? onGoToEnd;
+  final VoidCallback? onFormat;
+  final VoidCallback? onToggleReadOnly;
 
   const EditorAccessoryKeyBar({
     super.key,
     required this.controller,
     required this.editorFocusNode,
     this.symbols = TextEditorAppearancePrefs.defaultSymbols,
+    this.actions = TextEditorAppearancePrefs.defaultActions,
+    this.showSymbols = true,
+    this.showActions = true,
+    this.isWordWrap = true,
+    this.isReadOnly = false,
+    this.onSearch,
+    this.onToggleWordWrap,
+    this.onGoToLine,
+    this.onGoToStart,
+    this.onGoToEnd,
+    this.onFormat,
+    this.onToggleReadOnly,
   });
 
   void _act(VoidCallback action) {
@@ -56,81 +80,200 @@ class EditorAccessoryKeyBar extends StatelessWidget {
 
   void _insert(String symbol) => _act(() => controller.replaceSelection(symbol));
 
-  void _selectWord() => _act(() {
-    controller.moveCursorToWordBoundaryBackward();
-    controller.extendSelectionToWordBoundaryForward();
-  });
+ void _selectWord() => _act(() {
+    final selection = controller.selection;
+    final lineIdx = selection.extentIndex;
+    if (lineIdx < 0 || lineIdx >= controller.codeLines.length) return;
+    final line = controller.codeLines[lineIdx].text;
+    if (line.isEmpty) return;
 
-  void _copy() {
-    _act(() {
-      final selection = controller.selection;
-      final baseIdx = selection.baseIndex;
-      final baseOff = selection.baseOffset;
-      final extIdx = selection.extentIndex;
-      final extOff = selection.extentOffset;
+    int offset = selection.extentOffset.clamp(0, line.length);
+    bool isWordChar(String ch) => RegExp(r'[\w]').hasMatch(ch);
 
-      if (baseIdx == extIdx && baseOff == extOff) return;
+    if (offset == line.length && offset > 0) {
+      offset--;
+    }
 
-      int startIdx, startOff, endIdx, endOff;
-      if (baseIdx < extIdx || (baseIdx == extIdx && baseOff < extOff)) {
-        startIdx = baseIdx;
-        startOff = baseOff;
-        endIdx = extIdx;
-        endOff = extOff;
+    if (!isWordChar(line[offset]) && offset > 0 && isWordChar(line[offset - 1])) {
+      offset--;
+    }
+
+    if (!isWordChar(line[offset])) {
+      final isSpace = RegExp(r'\s').hasMatch(line[offset]);
+      int start = offset;
+      int end = offset;
+      if (isSpace) {
+        while (start > 0 && RegExp(r'\s').hasMatch(line[start - 1])) {
+          start--;
+        }
+        while (end < line.length && RegExp(r'\s').hasMatch(line[end])) {
+          end++;
+        }
       } else {
-        startIdx = extIdx;
-        startOff = extOff;
-        endIdx = baseIdx;
-        endOff = baseOff;
-      }
-
-      final lines = controller.text.split('\n');
-      final buffer = StringBuffer();
-      
-      for (int i = startIdx; i <= endIdx && i < lines.length; i++) {
-        final line = lines[i];
-        if (i == startIdx && i == endIdx) {
-          buffer.write(line.substring(math.min(startOff, line.length), math.min(endOff, line.length)));
-        } else if (i == startIdx) {
-          buffer.write(line.substring(math.min(startOff, line.length)));
-          buffer.write('\n');
-        } else if (i == endIdx) {
-          buffer.write(line.substring(0, math.min(endOff, line.length)));
-        } else {
-          buffer.write(line);
-          buffer.write('\n');
+        while (start > 0 && !isWordChar(line[start - 1]) && !RegExp(r'\s').hasMatch(line[start - 1])) {
+          start--;
+        }
+        while (end < line.length && !isWordChar(line[end]) && !RegExp(r'\s').hasMatch(line[end])) {
+          end++;
         }
       }
+      controller.selection = CodeLineSelection(
+        baseIndex: lineIdx,
+        baseOffset: start,
+        extentIndex: lineIdx,
+        extentOffset: math.max(start + 1, end),
+      );
+      return;
+    }
 
-      final textToCopy = buffer.toString();
-      if (textToCopy.isNotEmpty) {
-        Clipboard.setData(ClipboardData(text: textToCopy));
-      }
-    });
-  }
+    int start = offset;
+    while (start > 0 && isWordChar(line[start - 1])) {
+      start--;
+    }
+    int end = offset;
+    while (end < line.length && isWordChar(line[end])) {
+      end++;
+    }
 
-  void _cut() {
-    _copy();
-    _insert('');
+    controller.selection = CodeLineSelection(
+      baseIndex: lineIdx,
+      baseOffset: start,
+      extentIndex: lineIdx,
+      extentOffset: end,
+    );
+  });
+
+  Widget? _buildActionButton(BuildContext context, String actionKey, ColorScheme cs) {
+    switch (actionKey) {
+      case 'undo':
+        return _IconKeyButton(
+          icon: Icons.undo_rounded,
+          tooltip: context.l10n.actionUndo,
+          enabled: controller.canUndo,
+          onTap: () => _act(controller.undo),
+        );
+      case 'redo':
+        return _IconKeyButton(
+          icon: Icons.redo_rounded,
+          tooltip: context.l10n.actionRedo,
+          enabled: controller.canRedo,
+          onTap: () => _act(controller.redo),
+        );
+      case 'cursorLeft':
+        return _IconKeyButton(
+          icon: Icons.keyboard_arrow_left_rounded,
+          tooltip: context.l10n.actionCursorLeft,
+          onTap: () => _act(() => controller.moveCursor(AxisDirection.left)),
+        );
+      case 'cursorRight':
+        return _IconKeyButton(
+          icon: Icons.keyboard_arrow_right_rounded,
+          tooltip: context.l10n.actionCursorRight,
+          onTap: () => _act(() => controller.moveCursor(AxisDirection.right)),
+        );
+      case 'selectWord':
+        return _IconKeyButton(
+          icon: Icons.highlight_alt_rounded,
+          tooltip: context.l10n.actionSelectWord,
+          onTap: _selectWord,
+        );
+      case 'copy':
+        return _IconKeyButton(
+          icon: Icons.content_copy_rounded,
+          tooltip: context.l10n.actionCopy,
+          onTap: () => _act(controller.copy),
+        );
+      case 'cut':
+        return _IconKeyButton(
+          icon: Icons.content_cut_rounded,
+          tooltip: context.l10n.actionCut,
+          enabled: !isReadOnly,
+          onTap: () => _act(controller.cut),
+        );
+      case 'paste':
+        return _IconKeyButton(
+          icon: Icons.content_paste_rounded,
+          tooltip: context.l10n.actionPaste,
+          enabled: !isReadOnly,
+          onTap: () => _act(controller.paste),
+        );
+      case 'find':
+        return _IconKeyButton(
+          icon: Icons.search_rounded,
+          tooltip: context.l10n.actionFind,
+          onTap: () => _act(() => onSearch?.call()),
+        );
+      case 'wordWrap':
+        return _IconKeyButton(
+          icon: Icons.wrap_text_rounded,
+          tooltip: context.l10n.actionWordWrap,
+          selected: isWordWrap,
+          onTap: () => _act(() => onToggleWordWrap?.call()),
+        );
+      case 'goToLine':
+        return _IconKeyButton(
+          icon: Icons.format_list_numbered_rounded,
+          tooltip: context.l10n.actionGoToLine,
+          onTap: () => _act(() => onGoToLine?.call()),
+        );
+      case 'goToStart':
+        return _IconKeyButton(
+          icon: Icons.vertical_align_top_rounded,
+          tooltip: context.l10n.actionGoToStart,
+          onTap: () => _act(() => onGoToStart?.call()),
+        );
+      case 'goToEnd':
+        return _IconKeyButton(
+          icon: Icons.vertical_align_bottom_rounded,
+          tooltip: context.l10n.actionGoToEnd,
+          onTap: () => _act(() => onGoToEnd?.call()),
+        );
+      case 'indent':
+        return _IconKeyButton(
+          icon: Icons.format_indent_increase_rounded,
+          tooltip: context.l10n.actionIndent,
+          enabled: !isReadOnly,
+          onTap: () => _act(controller.applyIndent),
+        );
+      case 'outdent':
+        return _IconKeyButton(
+          icon: Icons.format_indent_decrease_rounded,
+          tooltip: context.l10n.actionOutdent,
+          enabled: !isReadOnly,
+          onTap: () => _act(controller.applyOutdent),
+        );
+      case 'format':
+        return _IconKeyButton(
+          icon: Icons.auto_fix_high_rounded,
+          tooltip: context.l10n.actionFormat,
+          enabled: !isReadOnly && onFormat != null,
+          onTap: () => _act(() => onFormat?.call()),
+        );
+      case 'readOnly':
+        return _IconKeyButton(
+          icon: isReadOnly ? Icons.lock_rounded : Icons.lock_open_rounded,
+          tooltip: context.l10n.actionReadOnly,
+          selected: isReadOnly,
+          onTap: () => _act(() => onToggleReadOnly?.call()),
+        );
+      default:
+        return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
+
     void setFocusLock(bool locked) {
       if (editorFocusNode is EditorFocusNode) {
         (editorFocusNode as EditorFocusNode).keepFocusLocked = locked;
       }
     }
 
-    // We wrap the bar in two TapRegions. Standard TextFields use EditableText
-    // as their TapRegion group, while many custom text editors use their own 
-    // FocusNode. Wrapping in both ensures tapping the bar doesn't trigger the 
-    // editor's "tap outside" detector. ExcludeFocus ensures no inner widget 
-    // can steal focus through the gesture arena.
-    // The Listener intercepts pointer events to lock the EditorFocusNode,
-    // preventing re_editor from dropping focus before the button action fires.
+    final hasSymbols = showSymbols && symbols.isNotEmpty;
+    final hasActions = showActions && actions.isNotEmpty;
+
     return Listener(
       onPointerDown: (_) => setFocusLock(true),
       onPointerUp: (_) => setFocusLock(false),
@@ -141,103 +284,62 @@ class EditorAccessoryKeyBar extends StatelessWidget {
           groupId: editorFocusNode,
           child: ExcludeFocus(
             child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHigh,
-              border: Border(top: BorderSide(color: cs.outlineVariant, width: 0.5)),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                   SizedBox(
-                    height: 40,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      itemCount: symbols.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 4),
-                      itemBuilder: (context, index) {
-                        final symbol = symbols[index];
-                        final isTab = symbol == 'Tab';
-                        return _KeyButton(
-                          label: symbol,
-                          onTap: isTab ? () => _act(controller.applyIndent) : () => _insert(symbol),
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(
-                    height: 40,
-                    child: ListenableBuilder(
-                      listenable: controller,
-                      builder: (context, child) {
-                        return ListView(
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHigh,
+                border: Border(top: BorderSide(color: cs.outlineVariant, width: 0.5)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasSymbols)
+                      SizedBox(
+                        height: 40,
+                        child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          children: [
-                            _IconKeyButton(
-                              icon: Icons.undo_rounded,
-                              tooltip: context.l10n.undoTooltip,
-                              enabled: controller.canUndo,
-                              onTap: () => _act(controller.undo),
-                            ),
-                            const SizedBox(width: 4),
-                            _IconKeyButton(
-                              icon: Icons.redo_rounded,
-                              tooltip: context.l10n.redoTooltip,
-                              enabled: controller.canRedo,
-                              onTap: () => _act(controller.redo),
-                            ),
-                            const SizedBox(width: 4),
-                            _IconKeyButton(
-                              icon: Icons.keyboard_arrow_left_rounded,
-                              tooltip: context.l10n.textEditorMoveCursorLeftTooltip,
-                              onTap: () => _act(() => controller.moveCursor(AxisDirection.left)),
-                            ),
-                            const SizedBox(width: 4),
-                            _IconKeyButton(
-                              icon: Icons.keyboard_arrow_right_rounded,
-                              tooltip: context.l10n.textEditorMoveCursorRightTooltip,
-                              onTap: () => _act(() => controller.moveCursor(AxisDirection.right)),
-                            ),
-                            const SizedBox(width: 4),
-                          _IconKeyButton(
-                              icon: Icons.highlight_alt_rounded,
-                              tooltip: context.l10n.textEditorSelectWordTooltip,
-                              onTap: _selectWord,
-                            ),
-                            const SizedBox(width: 4),
-                            _IconKeyButton(
-                              icon: Icons.content_copy_rounded,
-                              tooltip: context.l10n.copy,
-                              onTap: _copy,
-                            ),
-                            const SizedBox(width: 4),
-                            _IconKeyButton(
-                              icon: Icons.content_cut_rounded,
-                              tooltip: context.l10n.cutTooltip,
-                              onTap: _cut,
-                            ),
-                            const SizedBox(width: 4),
-                            _IconKeyButton(
-                              icon: Icons.content_paste_rounded,
-                              tooltip: context.l10n.paste,
-                              onTap: () => _act(controller.paste),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                 _CaretScrubber(controller: controller, editorFocusNode: editorFocusNode),
-                ],
+                          itemCount: symbols.length,
+                          separatorBuilder: (context, index) => const SizedBox(width: 4),
+                          itemBuilder: (context, index) {
+                            final symbol = symbols[index];
+                            final isTab = symbol == 'Tab';
+                            return _KeyButton(
+                              label: symbol,
+                              onTap: isTab
+                                  ? () => _act(controller.applyIndent)
+                                  : () => _insert(symbol),
+                            );
+                          },
+                        ),
+                      ),
+                    if (hasActions)
+                      SizedBox(
+                        height: 40,
+                        child: ListenableBuilder(
+                          listenable: controller,
+                          builder: (context, child) {
+                            return ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              itemCount: actions.length,
+                              separatorBuilder: (context, index) => const SizedBox(width: 4),
+                              itemBuilder: (context, index) {
+                                final widget = _buildActionButton(context, actions[index], cs);
+                                return widget ?? const SizedBox.shrink();
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    _CaretScrubber(controller: controller, editorFocusNode: editorFocusNode),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }
@@ -288,19 +390,21 @@ class _IconKeyButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback onTap;
   final bool enabled;
+  final bool selected;
 
   const _IconKeyButton({
     required this.icon,
     required this.tooltip,
     required this.onTap,
     this.enabled = true,
+    this.selected = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Material(
-      color: cs.surfaceContainerHighest,
+      color: selected ? cs.primaryContainer : cs.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         canRequestFocus: false,
@@ -315,7 +419,9 @@ class _IconKeyButton extends StatelessWidget {
             child: Icon(
               icon,
               size: 20,
-              color: enabled ? cs.onSurface : cs.onSurface.withValues(alpha: 0.35),
+              color: !enabled
+                  ? cs.onSurface.withValues(alpha: 0.35)
+                  : (selected ? cs.onPrimaryContainer : cs.onSurface),
             ),
           ),
         ),

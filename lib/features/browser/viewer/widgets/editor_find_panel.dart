@@ -42,118 +42,114 @@ class EditorFindPanel extends StatelessWidget implements PreferredSizeWidget {
     final currentIndex = result?.index ?? -1;
     final hasQuery = value.option.pattern.isNotEmpty;
 
-    return Material(
+   return Material(
       color: cs.surfaceContainerHigh,
-      elevation: 2,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 40,
+              child: Row(
+                children: [
+                  if (!readOnly)
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        value.replaceMode ? Icons.expand_more_rounded : Icons.chevron_right_rounded,
+                      ),
+                      tooltip: context.l10n.textEditorToggleReplaceTooltip,
+                      onPressed: controller.toggleMode,
+                    ),
+                  Expanded(
+                    child: TextField(
+                      controller: controller.findInputController,
+                      focusNode: controller.findInputFocusNode,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        hintText: context.l10n.textEditorFindHint,
+                      ),
+                      onSubmitted: (_) {
+                        if (matchCount > 0) controller.nextMatch();
+                      },
+                    ),
+                  ),
+                  if (hasQuery) ...[
+                    Text(
+                      matchCount == 0
+                          ? context.l10n.textEditorNoMatches
+                          : '${currentIndex + 1}/$matchCount',
+                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.keyboard_arrow_up_rounded),
+                    tooltip: context.l10n.textEditorPreviousMatchTooltip,
+                    onPressed: matchCount > 0 ? controller.previousMatch : null,
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                    tooltip: context.l10n.textEditorNextMatchTooltip,
+                    onPressed: matchCount > 0 ? controller.nextMatch : null,
+                  ),
+                  _ToggleChip(
+                    label: 'Aa',
+                    active: value.option.caseSensitive,
+                    tooltip: context.l10n.textEditorCaseSensitiveTooltip,
+                    onTap: controller.toggleCaseSensitive,
+                  ),
+                  const SizedBox(width: 4),
+                  _ToggleChip(
+                    label: '.*',
+                    active: value.option.regex,
+                    tooltip: context.l10n.textEditorRegexTooltip,
+                    onTap: controller.toggleRegex,
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.close_rounded),
+                    tooltip: context.l10n.textEditorCloseFindTooltip,
+                    onPressed: controller.close,
+                  ),
+                ],
+              ),
+            ),
+            if (_showReplaceRow)
               SizedBox(
                 height: 40,
                 child: Row(
                   children: [
-                    if (!readOnly)
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        icon: Icon(
-                          value.replaceMode ? Icons.expand_more_rounded : Icons.chevron_right_rounded,
-                        ),
-                        tooltip: context.l10n.textEditorToggleReplaceTooltip,
-                        onPressed: controller.toggleMode,
-                      ),
+                    const SizedBox(width: 40),
                     Expanded(
                       child: TextField(
-                        controller: controller.findInputController,
-                        focusNode: controller.findInputFocusNode,
+                        controller: controller.replaceInputController,
+                        focusNode: controller.replaceInputFocusNode,
                         style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
                           isDense: true,
                           border: InputBorder.none,
-                          hintText: context.l10n.textEditorFindHint,
+                          hintText: context.l10n.textEditorReplaceHint,
                         ),
-                        onSubmitted: (_) {
-                          if (matchCount > 0) controller.nextMatch();
-                        },
                       ),
                     ),
-                    if (hasQuery) ...[
-                      Text(
-                        matchCount == 0
-                            ? context.l10n.textEditorNoMatches
-                            : '${currentIndex + 1}/$matchCount',
-                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.keyboard_arrow_up_rounded),
-                      tooltip: context.l10n.textEditorPreviousMatchTooltip,
-                      onPressed: matchCount > 0 ? controller.previousMatch : null,
+                    TextButton(
+                      onPressed: matchCount > 0 ? controller.replaceMatch : null,
+                      child: Text(context.l10n.textEditorReplaceButton),
                     ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                      tooltip: context.l10n.textEditorNextMatchTooltip,
-                      onPressed: matchCount > 0 ? controller.nextMatch : null,
-                    ),
-                    _ToggleChip(
-                      label: 'Aa',
-                      active: value.option.caseSensitive,
-                      tooltip: context.l10n.textEditorCaseSensitiveTooltip,
-                      onTap: controller.toggleCaseSensitive,
-                    ),
-                    const SizedBox(width: 4),
-                    _ToggleChip(
-                      label: '.*',
-                      active: value.option.regex,
-                      tooltip: context.l10n.textEditorRegexTooltip,
-                      onTap: controller.toggleRegex,
-                    ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.close_rounded),
-                      tooltip: context.l10n.textEditorCloseFindTooltip,
-                      onPressed: controller.close,
+                    TextButton(
+                      onPressed: matchCount > 0 ? controller.replaceAllMatches : null,
+                      child: Text(context.l10n.textEditorReplaceAllButton),
                     ),
                   ],
                 ),
               ),
-              if (_showReplaceRow)
-                SizedBox(
-                  height: 40,
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 40),
-                      Expanded(
-                        child: TextField(
-                          controller: controller.replaceInputController,
-                          focusNode: controller.replaceInputFocusNode,
-                          style: const TextStyle(fontSize: 14),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            border: InputBorder.none,
-                            hintText: context.l10n.textEditorReplaceHint,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: matchCount > 0 ? controller.replaceMatch : null,
-                        child: Text(context.l10n.textEditorReplaceButton),
-                      ),
-                      TextButton(
-                        onPressed: matchCount > 0 ? controller.replaceAllMatches : null,
-                        child: Text(context.l10n.textEditorReplaceAllButton),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );

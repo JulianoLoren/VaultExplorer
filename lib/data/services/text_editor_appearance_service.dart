@@ -22,12 +22,26 @@ class TextEditorAppearancePrefs {
   final bool autoSave;
   final bool showLineNumbers;
   final bool showAccessoryBar;
+  final bool showAccessorySymbols;
+  final bool showAccessoryActions;
   final double fontSize;
   final List<String> accessorySymbols;
+  final List<String> accessoryActions;
 
   static const List<String> defaultSymbols = [
     'Tab', '{', '}', '[', ']', '(', ')', '=', '"', "'",
     ':', ';', '/', '\\', '<', '>', '_', '-', '&', '|', '!',
+  ];
+
+  static const List<String> defaultActions = [
+    'undo', 'redo', 'cursorLeft', 'cursorRight', 'selectWord',
+    'copy', 'cut', 'paste', 'find', 'wordWrap', 'goToLine',
+  ];
+
+  static const List<String> allAvailableActions = [
+    'undo', 'redo', 'cursorLeft', 'cursorRight', 'selectWord',
+    'copy', 'cut', 'paste', 'find', 'wordWrap', 'goToLine',
+    'goToStart', 'goToEnd', 'indent', 'outdent', 'format', 'readOnly',
   ];
 
   const TextEditorAppearancePrefs({
@@ -37,8 +51,11 @@ class TextEditorAppearancePrefs {
     this.autoSave = false,
     this.showLineNumbers = true,
     this.showAccessoryBar = true,
+    this.showAccessorySymbols = true,
+    this.showAccessoryActions = true,
     this.fontSize = 14.0,
     this.accessorySymbols = defaultSymbols,
+    this.accessoryActions = defaultActions,
   });
 
   TextEditorAppearancePrefs copyWith({
@@ -48,8 +65,11 @@ class TextEditorAppearancePrefs {
     bool? autoSave,
     bool? showLineNumbers,
     bool? showAccessoryBar,
+    bool? showAccessorySymbols,
+    bool? showAccessoryActions,
     double? fontSize,
     List<String>? accessorySymbols,
+    List<String>? accessoryActions,
   }) => TextEditorAppearancePrefs(
     background: background ?? this.background,
     syntaxTheme: syntaxTheme ?? this.syntaxTheme,
@@ -57,8 +77,11 @@ class TextEditorAppearancePrefs {
     autoSave: autoSave ?? this.autoSave,
     showLineNumbers: showLineNumbers ?? this.showLineNumbers,
     showAccessoryBar: showAccessoryBar ?? this.showAccessoryBar,
+    showAccessorySymbols: showAccessorySymbols ?? this.showAccessorySymbols,
+    showAccessoryActions: showAccessoryActions ?? this.showAccessoryActions,
     fontSize: fontSize ?? this.fontSize,
     accessorySymbols: accessorySymbols ?? this.accessorySymbols,
+    accessoryActions: accessoryActions ?? this.accessoryActions,
   );
 
   Map<String, dynamic> toJson() => {
@@ -68,8 +91,11 @@ class TextEditorAppearancePrefs {
     'autoSave': autoSave,
     'showLineNumbers': showLineNumbers,
     'showAccessoryBar': showAccessoryBar,
+    'showAccessorySymbols': showAccessorySymbols,
+    'showAccessoryActions': showAccessoryActions,
     'fontSize': fontSize,
     'accessorySymbols': accessorySymbols,
+    'accessoryActions': accessoryActions,
   };
 
   factory TextEditorAppearancePrefs.fromJson(Map<String, dynamic> json) {
@@ -86,11 +112,17 @@ class TextEditorAppearancePrefs {
       autoSave: json['autoSave'] == true,
       showLineNumbers: json['showLineNumbers'] ?? true,
       showAccessoryBar: json['showAccessoryBar'] ?? true,
+      showAccessorySymbols: json['showAccessorySymbols'] ?? true,
+      showAccessoryActions: json['showAccessoryActions'] ?? true,
       fontSize: (json['fontSize'] as num?)?.toDouble() ?? 14.0,
       accessorySymbols: (json['accessorySymbols'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           defaultSymbols,
+      accessoryActions: (json['accessoryActions'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          defaultActions,
     );
   }
 }

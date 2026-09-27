@@ -45,8 +45,6 @@ import 'package:re_highlight/languages/typescript.dart';
 import 'package:re_highlight/languages/xml.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/re_highlight.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_theme.dart';
 
 /// The [CodeHighlightThemeMode] for a single recognized language, along
