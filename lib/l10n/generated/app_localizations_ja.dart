@@ -8328,4 +8328,69 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       '絶対行番号の代わりにカーソルからの行数を表示';
+
+  @override
+  String get textEditorAutoSaveLabel => '自動保存';
+
+  @override
+  String get textEditorAutoSaveDescription => '入力を停止したときに変更を自動的に保存します';
+
+  @override
+  String get cutTooltip => '切り取り';
+
+  @override
+  String get textEditorShowLineNumbersLabel => '行番号を表示';
+
+  @override
+  String get textEditorShowLineNumbersDescription => '左端に行番号を表示します';
+
+  @override
+  String get textEditorShowAccessoryBarLabel => 'ショートカットバーを表示';
+
+  @override
+  String get textEditorShowAccessoryBarDescription => 'キーボードの上に記号やツールを表示します';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return 'フォントサイズ: $size pt';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => '記号のカスタマイズ';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription => '表示する記号を編集および並べ替えます';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => '記号をカスタマイズ';
+
+  @override
+  String get textEditorCustomizeKeyBarHint => 'スペース区切りの記号';
+
+  @override
+  String get textEditorSaveAsMenuItem => '名前を付けて保存…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => '名前を付けて保存';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => 'ファイル名';
+
+  @override
+  String get textEditorSaveAsButton => '保存';
+
+  @override
+  String get textEditorFileAlreadyExistsError => 'この名前のファイルは既に存在します';
+
+  @override
+  String get textEditorProjectFilesTitle => 'プロジェクトファイル';
+
+  @override
+  String get textEditorCloseTabTooltip => 'タブを閉じる';
+
+  @override
+  String get textEditorResetToDefault => 'デフォルトに戻す';
+
+  @override
+  String get textEditorLivePreviewTitle => 'ライブプレビュー';
 }

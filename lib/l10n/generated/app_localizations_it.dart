@@ -8800,4 +8800,76 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       'Mostra la distanza di ciascuna riga dal cursore anziché il numero assoluto';
+
+  @override
+  String get textEditorAutoSaveLabel => 'Salvataggio automatico';
+
+  @override
+  String get textEditorAutoSaveDescription =>
+      'Salva automaticamente le modifiche quando smetti di digitare';
+
+  @override
+  String get cutTooltip => 'Taglia';
+
+  @override
+  String get textEditorShowLineNumbersLabel => 'Mostra numeri di riga';
+
+  @override
+  String get textEditorShowLineNumbersDescription =>
+      'Mostra i numeri di riga lungo il bordo sinistro';
+
+  @override
+  String get textEditorShowAccessoryBarLabel =>
+      'Mostra barra scorciatoie tastiera';
+
+  @override
+  String get textEditorShowAccessoryBarDescription =>
+      'Mostra simboli e strumenti sopra la tastiera';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return 'Dimensione carattere: $size pt';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel =>
+      'Personalizza simboli scorciatoie';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription =>
+      'Modifica e riordina i simboli mostrati';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => 'Personalizza simboli';
+
+  @override
+  String get textEditorCustomizeKeyBarHint => 'Simboli separati da spazio';
+
+  @override
+  String get textEditorSaveAsMenuItem => 'Salva con nome…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => 'Salva con nome';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => 'Nome del file';
+
+  @override
+  String get textEditorSaveAsButton => 'Salva con nome';
+
+  @override
+  String get textEditorFileAlreadyExistsError =>
+      'Un file con questo nome esiste già qui';
+
+  @override
+  String get textEditorProjectFilesTitle => 'File di progetto';
+
+  @override
+  String get textEditorCloseTabTooltip => 'Chiudi scheda';
+
+  @override
+  String get textEditorResetToDefault => 'Ripristina predefiniti';
+
+  @override
+  String get textEditorLivePreviewTitle => 'Anteprima dal vivo';
 }

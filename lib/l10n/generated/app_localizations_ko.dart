@@ -8326,4 +8326,70 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       '절대 줄 번호 대신 커서로부터의 거리 표시';
+
+  @override
+  String get textEditorAutoSaveLabel => '자동 저장';
+
+  @override
+  String get textEditorAutoSaveDescription => '입력을 멈추면 변경 사항을 자동으로 저장합니다';
+
+  @override
+  String get cutTooltip => '잘라내기';
+
+  @override
+  String get textEditorShowLineNumbersLabel => '줄 번호 표시';
+
+  @override
+  String get textEditorShowLineNumbersDescription => '왼쪽 가장자리에 줄 번호를 표시합니다';
+
+  @override
+  String get textEditorShowAccessoryBarLabel => '키보드 단축키 모음 표시';
+
+  @override
+  String get textEditorShowAccessoryBarDescription =>
+      '키보드 위에 기호 및 편집 도구를 표시합니다';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return '글꼴 크기: $size pt';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => '단축 기호 사용자 지정';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription => '표시되는 기호 편집 및 재정렬';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => '기호 사용자 지정';
+
+  @override
+  String get textEditorCustomizeKeyBarHint => '공백으로 구분된 기호';
+
+  @override
+  String get textEditorSaveAsMenuItem => '다른 이름으로 저장…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => '다른 이름으로 저장';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => '파일 이름';
+
+  @override
+  String get textEditorSaveAsButton => '저장';
+
+  @override
+  String get textEditorFileAlreadyExistsError => '해당 이름의 파일이 이미 존재합니다';
+
+  @override
+  String get textEditorProjectFilesTitle => '프로젝트 파일';
+
+  @override
+  String get textEditorCloseTabTooltip => '탭 닫기';
+
+  @override
+  String get textEditorResetToDefault => '기본값으로 재설정';
+
+  @override
+  String get textEditorLivePreviewTitle => '실시간 미리보기';
 }

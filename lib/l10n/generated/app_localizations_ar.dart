@@ -8862,4 +8862,76 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       'إظهار مسافة كل سطر من المؤشر بدلاً من رقمه المطلق';
+
+  @override
+  String get textEditorAutoSaveLabel => 'الحفظ التلقائي';
+
+  @override
+  String get textEditorAutoSaveDescription =>
+      'حفظ التغييرات تلقائيًا عند التوقف عن الكتابة';
+
+  @override
+  String get cutTooltip => 'قص';
+
+  @override
+  String get textEditorShowLineNumbersLabel => 'إظهار أرقام الأسطر';
+
+  @override
+  String get textEditorShowLineNumbersDescription =>
+      'عرض أرقام الأسطر على طول الحافة اليسرى';
+
+  @override
+  String get textEditorShowAccessoryBarLabel =>
+      'إظهار شريط اختصارات لوحة المفاتيح';
+
+  @override
+  String get textEditorShowAccessoryBarDescription =>
+      'عرض الرموز وأدوات التحرير فوق لوحة المفاتيح';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return 'حجم الخط: $size نقطة';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => 'تخصيص رموز الاختصارات';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription =>
+      'تعديل وإعادة ترتيب الرموز المعروضة';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => 'تخصيص الرموز';
+
+  @override
+  String get textEditorCustomizeKeyBarHint => 'رموز مفصولة بمسافات';
+
+  @override
+  String get textEditorSaveAsMenuItem => 'حفظ باسم…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => 'حفظ باسم';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => 'اسم الملف';
+
+  @override
+  String get textEditorSaveAsButton => 'حفظ باسم';
+
+  @override
+  String get textEditorFileAlreadyExistsError =>
+      'يوجد ملف بهذا الاسم بالفعل هنا';
+
+  @override
+  String get textEditorProjectFilesTitle => 'ملفات المشروع';
+
+  @override
+  String get textEditorCloseTabTooltip => 'إغلاق علامة التبويب';
+
+  @override
+  String get textEditorResetToDefault =>
+      'إعادة التعيين إلى الإعدادات الافتراضية';
+
+  @override
+  String get textEditorLivePreviewTitle => 'معاينة حية';
 }

@@ -11069,5 +11069,94 @@
   "textEditorRelativeLineNumbersDescription": "Show each line's distance from the cursor instead of its absolute number",
   "@textEditorRelativeLineNumbersDescription": {
     "description": "Description under the relative line numbers toggle"
+  },
+  "textEditorAutoSaveLabel": "Auto-save",
+  "@textEditorAutoSaveLabel": {
+    "description": "Toggle label for enabling automatic saving in the text editor"
+  },
+  "textEditorAutoSaveDescription": "Automatically save changes when you stop typing",
+  "@textEditorAutoSaveDescription": {
+    "description": "Toggle description for enabling automatic saving in the text editor"
+  },
+  "cutTooltip": "Cut",
+  "@cutTooltip": {
+    "description": "Tooltip for the cut action button in the text editor accessory key bar"
+  },
+  "textEditorShowLineNumbersLabel": "Show line numbers",
+  "@textEditorShowLineNumbersLabel": {
+    "description": "Toggle label for displaying line numbers in the gutter"
+  },
+  "textEditorShowLineNumbersDescription": "Display line numbers along the left edge",
+  "@textEditorShowLineNumbersDescription": {
+    "description": "Description for displaying line numbers in the gutter"
+  },
+  "textEditorShowAccessoryBarLabel": "Show keyboard shortcut bar",
+  "@textEditorShowAccessoryBarLabel": {
+    "description": "Toggle label for displaying the accessory shortcut bar above the keyboard"
+  },
+  "textEditorShowAccessoryBarDescription": "Display symbols and editing tools above soft keyboard",
+  "@textEditorShowAccessoryBarDescription": {
+    "description": "Description for displaying the accessory shortcut bar above the keyboard"
+  },
+  "textEditorFontSizeLabel": "Font size: {size} pt",
+  "@textEditorFontSizeLabel": {
+    "description": "Label for font size slider in editor appearance settings",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "textEditorCustomizeKeyBarLabel": "Customize shortcut symbols",
+  "@textEditorCustomizeKeyBarLabel": {
+    "description": "List tile title to customize symbols in the accessory bar"
+  },
+  "textEditorCustomizeKeyBarDescription": "Edit and reorder the symbols shown above keyboard",
+  "@textEditorCustomizeKeyBarDescription": {
+    "description": "Description for customizing shortcut symbols"
+  },
+  "textEditorCustomizeKeyBarTitle": "Customize Symbols",
+  "@textEditorCustomizeKeyBarTitle": {
+    "description": "Dialog title for customizing key bar symbols"
+  },
+  "textEditorCustomizeKeyBarHint": "Space-separated symbols",
+  "@textEditorCustomizeKeyBarHint": {
+    "description": "Hint text for editing key bar symbols"
+  },
+  "textEditorSaveAsMenuItem": "Save as…",
+  "@textEditorSaveAsMenuItem": {
+    "description": "Menu item label to save file with a new name"
+  },
+  "textEditorSaveAsDialogTitle": "Save As",
+  "@textEditorSaveAsDialogTitle": {
+    "description": "Dialog title for Save As"
+  },
+  "textEditorSaveAsFileNameLabel": "File name",
+  "@textEditorSaveAsFileNameLabel": {
+    "description": "Text field label for Save As new filename"
+  },
+  "textEditorSaveAsButton": "Save As",
+  "@textEditorSaveAsButton": {
+    "description": "Confirm button label for Save As"
+  },
+  "textEditorFileAlreadyExistsError": "A file with this name already exists here",
+  "@textEditorFileAlreadyExistsError": {
+    "description": "Validation error when Save As filename already exists"
+  },
+  "textEditorProjectFilesTitle": "Project Files",
+  "@textEditorProjectFilesTitle": {
+    "description": "Drawer title for project files"
+  },
+  "textEditorCloseTabTooltip": "Close tab",
+  "@textEditorCloseTabTooltip": {
+    "description": "Tooltip to close editor tab"
+  },
+  "textEditorResetToDefault": "Reset to defaults",
+  "@textEditorResetToDefault": {
+    "description": "Button label to reset symbols or settings to defaults"
+  },
+  "textEditorLivePreviewTitle": "Live preview",
+  "@textEditorLivePreviewTitle": {
+    "description": "Section title for the live code editor preview box in appearance settings"
   }
 }

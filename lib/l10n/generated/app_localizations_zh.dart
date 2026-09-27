@@ -8214,4 +8214,69 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get textEditorRelativeLineNumbersDescription => '显示每行相对于光标的距离，而非绝对行号';
+
+  @override
+  String get textEditorAutoSaveLabel => '自动保存';
+
+  @override
+  String get textEditorAutoSaveDescription => '停止输入时自动保存更改';
+
+  @override
+  String get cutTooltip => '剪切';
+
+  @override
+  String get textEditorShowLineNumbersLabel => '显示行号';
+
+  @override
+  String get textEditorShowLineNumbersDescription => '在左侧边缘显示代码行号';
+
+  @override
+  String get textEditorShowAccessoryBarLabel => '显示键盘辅助快捷栏';
+
+  @override
+  String get textEditorShowAccessoryBarDescription => '在软键盘上方显示符号和编辑工具';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return '字体大小: $size pt';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => '自定义快捷符号';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription => '编辑和重新排列键盘上方的符号';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => '自定义符号';
+
+  @override
+  String get textEditorCustomizeKeyBarHint => '用空格分隔符号';
+
+  @override
+  String get textEditorSaveAsMenuItem => '另存为…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => '另存为';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => '文件名';
+
+  @override
+  String get textEditorSaveAsButton => '另存为';
+
+  @override
+  String get textEditorFileAlreadyExistsError => '此处已存在同名文件';
+
+  @override
+  String get textEditorProjectFilesTitle => '项目文件';
+
+  @override
+  String get textEditorCloseTabTooltip => '关闭标签页';
+
+  @override
+  String get textEditorResetToDefault => '恢复默认设置';
+
+  @override
+  String get textEditorLivePreviewTitle => '实时预览';
 }

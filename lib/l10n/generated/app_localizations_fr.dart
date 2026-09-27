@@ -8879,4 +8879,76 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       'Afficher la distance de chaque ligne par rapport au curseur au lieu de son numéro absolu';
+
+  @override
+  String get textEditorAutoSaveLabel => 'Enregistrement automatique';
+
+  @override
+  String get textEditorAutoSaveDescription =>
+      'Enregistrer automatiquement les modifications lorsque vous arrêtez de taper';
+
+  @override
+  String get cutTooltip => 'Couper';
+
+  @override
+  String get textEditorShowLineNumbersLabel => 'Afficher les numéros de ligne';
+
+  @override
+  String get textEditorShowLineNumbersDescription =>
+      'Afficher les numéros de ligne sur le bord gauche';
+
+  @override
+  String get textEditorShowAccessoryBarLabel =>
+      'Afficher la barre de raccourcis';
+
+  @override
+  String get textEditorShowAccessoryBarDescription =>
+      'Afficher les symboles et outils au-dessus du clavier';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return 'Taille de police : $size pt';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => 'Personnaliser les symboles';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription =>
+      'Modifier et réorganiser les symboles affichés';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => 'Personnaliser les symboles';
+
+  @override
+  String get textEditorCustomizeKeyBarHint =>
+      'Symboles séparés par des espaces';
+
+  @override
+  String get textEditorSaveAsMenuItem => 'Enregistrer sous…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => 'Enregistrer sous';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => 'Nom du fichier';
+
+  @override
+  String get textEditorSaveAsButton => 'Enregistrer sous';
+
+  @override
+  String get textEditorFileAlreadyExistsError =>
+      'Un fichier portant ce nom existe déjà ici';
+
+  @override
+  String get textEditorProjectFilesTitle => 'Fichiers du projet';
+
+  @override
+  String get textEditorCloseTabTooltip => 'Fermer l’onglet';
+
+  @override
+  String get textEditorResetToDefault => 'Rétablir les valeurs par défaut';
+
+  @override
+  String get textEditorLivePreviewTitle => 'Aperçu en direct';
 }

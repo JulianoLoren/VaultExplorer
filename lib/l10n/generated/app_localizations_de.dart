@@ -8803,4 +8803,76 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       'Abstand jeder Zeile zum Cursor anstelle der absoluten Zeilennummer anzeigen';
+
+  @override
+  String get textEditorAutoSaveLabel => 'Automatisches Speichern';
+
+  @override
+  String get textEditorAutoSaveDescription =>
+      'Änderungen automatisch speichern, wenn die Eingabe stoppt';
+
+  @override
+  String get cutTooltip => 'Ausschneiden';
+
+  @override
+  String get textEditorShowLineNumbersLabel => 'Zeilennummern anzeigen';
+
+  @override
+  String get textEditorShowLineNumbersDescription =>
+      'Zeilennummern am linken Rand anzeigen';
+
+  @override
+  String get textEditorShowAccessoryBarLabel =>
+      'Tastatur-Symbolleiste anzeigen';
+
+  @override
+  String get textEditorShowAccessoryBarDescription =>
+      'Symbole und Werkzeuge über der Tastatur anzeigen';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return 'Schriftgröße: $size pt';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => 'Kurzbefehl-Symbole anpassen';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription =>
+      'Symbole in der Leiste bearbeiten und anordnen';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => 'Symbole anpassen';
+
+  @override
+  String get textEditorCustomizeKeyBarHint =>
+      'Durch Leerzeichen getrennte Symbole';
+
+  @override
+  String get textEditorSaveAsMenuItem => 'Speichern unter…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => 'Speichern unter';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => 'Dateiname';
+
+  @override
+  String get textEditorSaveAsButton => 'Speichern unter';
+
+  @override
+  String get textEditorFileAlreadyExistsError =>
+      'Eine Datei mit diesem Namen existiert hier bereits';
+
+  @override
+  String get textEditorProjectFilesTitle => 'Projektdateien';
+
+  @override
+  String get textEditorCloseTabTooltip => 'Tab schließen';
+
+  @override
+  String get textEditorResetToDefault => 'Auf Standard zurücksetzen';
+
+  @override
+  String get textEditorLivePreviewTitle => 'Live-Vorschau';
 }

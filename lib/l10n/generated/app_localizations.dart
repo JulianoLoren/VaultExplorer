@@ -14574,6 +14574,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show each line\'s distance from the cursor instead of its absolute number'**
   String get textEditorRelativeLineNumbersDescription;
+
+  /// Toggle label for enabling automatic saving in the text editor
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-save'**
+  String get textEditorAutoSaveLabel;
+
+  /// Toggle description for enabling automatic saving in the text editor
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically save changes when you stop typing'**
+  String get textEditorAutoSaveDescription;
+
+  /// Tooltip for the cut action button in the text editor accessory key bar
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get cutTooltip;
+
+  /// Toggle label for displaying line numbers in the gutter
+  ///
+  /// In en, this message translates to:
+  /// **'Show line numbers'**
+  String get textEditorShowLineNumbersLabel;
+
+  /// Description for displaying line numbers in the gutter
+  ///
+  /// In en, this message translates to:
+  /// **'Display line numbers along the left edge'**
+  String get textEditorShowLineNumbersDescription;
+
+  /// Toggle label for displaying the accessory shortcut bar above the keyboard
+  ///
+  /// In en, this message translates to:
+  /// **'Show keyboard shortcut bar'**
+  String get textEditorShowAccessoryBarLabel;
+
+  /// Description for displaying the accessory shortcut bar above the keyboard
+  ///
+  /// In en, this message translates to:
+  /// **'Display symbols and editing tools above soft keyboard'**
+  String get textEditorShowAccessoryBarDescription;
+
+  /// Label for font size slider in editor appearance settings
+  ///
+  /// In en, this message translates to:
+  /// **'Font size: {size} pt'**
+  String textEditorFontSizeLabel(int size);
+
+  /// List tile title to customize symbols in the accessory bar
+  ///
+  /// In en, this message translates to:
+  /// **'Customize shortcut symbols'**
+  String get textEditorCustomizeKeyBarLabel;
+
+  /// Description for customizing shortcut symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Edit and reorder the symbols shown above keyboard'**
+  String get textEditorCustomizeKeyBarDescription;
+
+  /// Dialog title for customizing key bar symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Customize Symbols'**
+  String get textEditorCustomizeKeyBarTitle;
+
+  /// Hint text for editing key bar symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Space-separated symbols'**
+  String get textEditorCustomizeKeyBarHint;
+
+  /// Menu item label to save file with a new name
+  ///
+  /// In en, this message translates to:
+  /// **'Save as…'**
+  String get textEditorSaveAsMenuItem;
+
+  /// Dialog title for Save As
+  ///
+  /// In en, this message translates to:
+  /// **'Save As'**
+  String get textEditorSaveAsDialogTitle;
+
+  /// Text field label for Save As new filename
+  ///
+  /// In en, this message translates to:
+  /// **'File name'**
+  String get textEditorSaveAsFileNameLabel;
+
+  /// Confirm button label for Save As
+  ///
+  /// In en, this message translates to:
+  /// **'Save As'**
+  String get textEditorSaveAsButton;
+
+  /// Validation error when Save As filename already exists
+  ///
+  /// In en, this message translates to:
+  /// **'A file with this name already exists here'**
+  String get textEditorFileAlreadyExistsError;
+
+  /// Drawer title for project files
+  ///
+  /// In en, this message translates to:
+  /// **'Project Files'**
+  String get textEditorProjectFilesTitle;
+
+  /// Tooltip to close editor tab
+  ///
+  /// In en, this message translates to:
+  /// **'Close tab'**
+  String get textEditorCloseTabTooltip;
+
+  /// Button label to reset symbols or settings to defaults
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get textEditorResetToDefault;
+
+  /// Section title for the live code editor preview box in appearance settings
+  ///
+  /// In en, this message translates to:
+  /// **'Live preview'**
+  String get textEditorLivePreviewTitle;
 }
 
 class _AppLocalizationsDelegate

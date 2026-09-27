@@ -8669,4 +8669,74 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       'Show each line\'s distance from the cursor instead of its absolute number';
+
+  @override
+  String get textEditorAutoSaveLabel => 'Auto-save';
+
+  @override
+  String get textEditorAutoSaveDescription =>
+      'Automatically save changes when you stop typing';
+
+  @override
+  String get cutTooltip => 'Cut';
+
+  @override
+  String get textEditorShowLineNumbersLabel => 'Show line numbers';
+
+  @override
+  String get textEditorShowLineNumbersDescription =>
+      'Display line numbers along the left edge';
+
+  @override
+  String get textEditorShowAccessoryBarLabel => 'Show keyboard shortcut bar';
+
+  @override
+  String get textEditorShowAccessoryBarDescription =>
+      'Display symbols and editing tools above soft keyboard';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return 'Font size: $size pt';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => 'Customize shortcut symbols';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription =>
+      'Edit and reorder the symbols shown above keyboard';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => 'Customize Symbols';
+
+  @override
+  String get textEditorCustomizeKeyBarHint => 'Space-separated symbols';
+
+  @override
+  String get textEditorSaveAsMenuItem => 'Save as…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => 'Save As';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => 'File name';
+
+  @override
+  String get textEditorSaveAsButton => 'Save As';
+
+  @override
+  String get textEditorFileAlreadyExistsError =>
+      'A file with this name already exists here';
+
+  @override
+  String get textEditorProjectFilesTitle => 'Project Files';
+
+  @override
+  String get textEditorCloseTabTooltip => 'Close tab';
+
+  @override
+  String get textEditorResetToDefault => 'Reset to defaults';
+
+  @override
+  String get textEditorLivePreviewTitle => 'Live preview';
 }

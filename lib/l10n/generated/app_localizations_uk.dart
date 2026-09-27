@@ -8879,4 +8879,75 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get textEditorRelativeLineNumbersDescription =>
       'Показувати відстань кожного рядка від курсора замість його абсолютного номера';
+
+  @override
+  String get textEditorAutoSaveLabel => 'Автозбереження';
+
+  @override
+  String get textEditorAutoSaveDescription =>
+      'Автоматично зберігати зміни після завершення введення';
+
+  @override
+  String get cutTooltip => 'Вирізати';
+
+  @override
+  String get textEditorShowLineNumbersLabel => 'Показувати номери рядків';
+
+  @override
+  String get textEditorShowLineNumbersDescription =>
+      'Відображати номери рядків уздовж лівого краю';
+
+  @override
+  String get textEditorShowAccessoryBarLabel =>
+      'Показувати панель швидких клавіш';
+
+  @override
+  String get textEditorShowAccessoryBarDescription =>
+      'Відображати символи та інструменти над клавіатурою';
+
+  @override
+  String textEditorFontSizeLabel(int size) {
+    return 'Розмір шрифту: $size пт';
+  }
+
+  @override
+  String get textEditorCustomizeKeyBarLabel => 'Налаштувати символи';
+
+  @override
+  String get textEditorCustomizeKeyBarDescription =>
+      'Редагувати та впорядковувати символи панелі';
+
+  @override
+  String get textEditorCustomizeKeyBarTitle => 'Налаштувати символи';
+
+  @override
+  String get textEditorCustomizeKeyBarHint => 'Символи, розділені пробілом';
+
+  @override
+  String get textEditorSaveAsMenuItem => 'Зберегти як…';
+
+  @override
+  String get textEditorSaveAsDialogTitle => 'Зберегти як';
+
+  @override
+  String get textEditorSaveAsFileNameLabel => 'Назва файлу';
+
+  @override
+  String get textEditorSaveAsButton => 'Зберегти як';
+
+  @override
+  String get textEditorFileAlreadyExistsError =>
+      'Файл із такою назвою вже існує';
+
+  @override
+  String get textEditorProjectFilesTitle => 'Файли проєкту';
+
+  @override
+  String get textEditorCloseTabTooltip => 'Закрити вкладку';
+
+  @override
+  String get textEditorResetToDefault => 'Скинути до початкових';
+
+  @override
+  String get textEditorLivePreviewTitle => 'Попередній перегляд';
 }
