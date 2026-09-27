@@ -6028,7 +6028,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Salva un layout di visualizzazione (elenco, griglia, mosaico) e un ordine di ordinamento separati per ogni cartella';
+      'Salva separatamente il layout di visualizzazione (elenco, griglia, mosaico) e l\'ordine di ciascuna cartella';
+
+  @override
+  String get defaultFolderLayoutLabel => 'Layout predefinito delle cartelle';
 
   @override
   String get fileInfoAction => 'Info';

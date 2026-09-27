@@ -1581,8 +1581,8 @@
   "confirmRemoveMasterPasswordMessage": "削除を確認するため、現在のマスターパスワードを入力してください：",
   "authenticateToRemoveMasterPassword": "マスターパスワードを削除するために認証してください",
   "incorrectPassword": "パスワードが正しくありません",
-  "rememberPerFolderLayoutLabel": "フォルダごとのレイアウトと並び順を記憶",
-  "rememberPerFolderLayoutDesc": "フォルダごとに個別の表示レイアウト（リスト、グリッド、マソンリー）と並び順を保存します",
+  "rememberPerFolderLayoutLabel": "フォルダーごとのレイアウトと並べ替えを記憶",
+  "rememberPerFolderLayoutDesc": "フォルダーごとに表示レイアウト（リスト、グリッド、メイソンリー）と並べ替え順を個別に保存",
   "fileInfoAction": "情報",
   "automationSectionHeader": "自動化",
   "automationTileTitle": "自動化",
@@ -2375,5 +2375,6 @@
   "goToLineButton": "移動",
   "textEditorFormatDocumentMenuItem": "ドキュメントのフォーマット",
   "textEditorMinifyJsonMenuItem": "JSON を最小化",
-  "textEditorFormatFailedMessage": "このファイルをフォーマットできませんでした。有効な形式か確認してください"
+  "textEditorFormatFailedMessage": "このファイルをフォーマットできませんでした。有効な形式か確認してください",
+  "defaultFolderLayoutLabel": "デフォルトのフォルダーレイアウト"
 }

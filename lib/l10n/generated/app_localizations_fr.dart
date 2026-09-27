@@ -6083,7 +6083,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Enregistrer une disposition d\'affichage (liste, grille, mosaïque) et un ordre de tri distincts pour chaque dossier';
+      'Enregistrer séparément la disposition d\'affichage (liste, grille, mosaïque) et l\'ordre de tri de chaque dossier';
+
+  @override
+  String get defaultFolderLayoutLabel => 'Disposition par défaut des dossiers';
 
   @override
   String get fileInfoAction => 'Infos';

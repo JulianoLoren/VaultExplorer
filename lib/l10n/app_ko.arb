@@ -1582,7 +1582,7 @@
   "authenticateToRemoveMasterPassword": "마스터 비밀번호를 제거하려면 인증하세요",
   "incorrectPassword": "잘못된 비밀번호",
   "rememberPerFolderLayoutLabel": "폴더별 레이아웃 및 정렬 기억",
-  "rememberPerFolderLayoutDesc": "폴더마다 별도의 보기 레이아웃(목록, 그리드, 매스너리)과 정렬 순서를 저장합니다",
+  "rememberPerFolderLayoutDesc": "각 폴더의 보기 레이아웃(목록, 그리드, 메이슨리)과 정렬 순서를 별도로 저장",
   "fileInfoAction": "정보",
   "automationSectionHeader": "자동화",
   "automationTileTitle": "자동화",
@@ -2375,5 +2375,6 @@
   "goToLineButton": "이동",
   "textEditorFormatDocumentMenuItem": "문서 서식 지정",
   "textEditorMinifyJsonMenuItem": "JSON 축소",
-  "textEditorFormatFailedMessage": "이 파일의 서식을 지정할 수 없습니다. 먼저 유효한지 확인하세요"
+  "textEditorFormatFailedMessage": "이 파일의 서식을 지정할 수 없습니다. 먼저 유효한지 확인하세요",
+  "defaultFolderLayoutLabel": "기본 폴더 레이아웃"
 }

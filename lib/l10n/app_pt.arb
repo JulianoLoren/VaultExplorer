@@ -1581,8 +1581,8 @@
   "confirmRemoveMasterPasswordMessage": "Digite sua Senha Mestra atual para confirmar a remoção:",
   "authenticateToRemoveMasterPassword": "Autentique-se para remover a Senha Mestra",
   "incorrectPassword": "Senha incorreta",
-  "rememberPerFolderLayoutLabel": "Lembrar Layout e Ordenação por Pasta",
-  "rememberPerFolderLayoutDesc": "Salvar um layout de exibição (lista, grade, mosaico) e uma ordem de classificação separados para cada pasta",
+  "rememberPerFolderLayoutLabel": "Lembrar layout e ordenação por pasta",
+  "rememberPerFolderLayoutDesc": "Salvar o layout de visualização (lista, grade, mosaico) e a ordem de classificação de cada pasta separadamente",
   "fileInfoAction": "Info",
   "automationSectionHeader": "Automação",
   "automationTileTitle": "Automação",
@@ -2375,5 +2375,6 @@
   "goToLineButton": "Ir",
   "textEditorFormatDocumentMenuItem": "Formatar documento",
   "textEditorMinifyJsonMenuItem": "Minificar JSON",
-  "textEditorFormatFailedMessage": "Não foi possível formatar este arquivo — verifique primeiro se ele é válido"
+  "textEditorFormatFailedMessage": "Não foi possível formatar este arquivo — verifique primeiro se ele é válido",
+  "defaultFolderLayoutLabel": "Layout padrão da pasta"
 }

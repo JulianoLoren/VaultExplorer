@@ -6040,11 +6040,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutLabel =>
-      'Lembrar Layout e Ordenação por Pasta';
+      'Lembrar layout e ordenação por pasta';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Salvar um layout de exibição (lista, grade, mosaico) e uma ordem de classificação separados para cada pasta';
+      'Salvar o layout de visualização (lista, grade, mosaico) e a ordem de classificação de cada pasta separadamente';
+
+  @override
+  String get defaultFolderLayoutLabel => 'Layout padrão da pasta';
 
   @override
   String get fileInfoAction => 'Info';

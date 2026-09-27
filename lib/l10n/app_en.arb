@@ -7623,13 +7623,17 @@
   "@incorrectPassword": {
     "description": "Error message when entering an incorrect password"
   },
-  "rememberPerFolderLayoutLabel": "Remember Per-Folder Layout",
+  "rememberPerFolderLayoutLabel": "Remember Per-Folder Layout & Sort",
   "@rememberPerFolderLayoutLabel": {
-    "description": "Toggle label for remembering layout mode per folder"
+    "description": "Toggle label for remembering layout mode and sort order per folder"
   },
-  "rememberPerFolderLayoutDesc": "Save separate view layout (list, grid, masonry) for each folder",
+  "rememberPerFolderLayoutDesc": "Save each folder's view layout (list, grid, masonry) and sort order separately",
   "@rememberPerFolderLayoutDesc": {
-    "description": "Toggle description for remembering layout mode per folder"
+    "description": "Toggle description for remembering layout mode and sort order per folder"
+  },
+  "defaultFolderLayoutLabel": "Default Folder Layout",
+  "@defaultFolderLayoutLabel": {
+    "description": "Settings row label for the app-wide fallback folder layout"
   },
   "fileInfoAction": "Info",
   "@fileInfoAction": {

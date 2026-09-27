@@ -5726,11 +5726,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get incorrectPassword => 'パスワードが正しくありません';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'フォルダごとのレイアウトと並び順を記憶';
+  String get rememberPerFolderLayoutLabel => 'フォルダーごとのレイアウトと並べ替えを記憶';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'フォルダごとに個別の表示レイアウト（リスト、グリッド、マソンリー）と並び順を保存します';
+      'フォルダーごとに表示レイアウト（リスト、グリッド、メイソンリー）と並べ替え順を個別に保存';
+
+  @override
+  String get defaultFolderLayoutLabel => 'デフォルトのフォルダーレイアウト';
 
   @override
   String get fileInfoAction => '情報';

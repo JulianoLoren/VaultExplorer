@@ -5938,11 +5938,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incorrectPassword => 'Incorrect password';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'Remember Per-Folder Layout';
+  String get rememberPerFolderLayoutLabel =>
+      'Remember Per-Folder Layout & Sort';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Save separate view layout (list, grid, masonry) for each folder';
+      'Save each folder\'s view layout (list, grid, masonry) and sort order separately';
+
+  @override
+  String get defaultFolderLayoutLabel => 'Default Folder Layout';
 
   @override
   String get fileInfoAction => 'Info';

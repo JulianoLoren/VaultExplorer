@@ -1581,8 +1581,8 @@
   "confirmRemoveMasterPasswordMessage": "أدخل كلمة المرور الرئيسية الحالية لتأكيد الإزالة:",
   "authenticateToRemoveMasterPassword": "أجرِ المصادقة لإزالة كلمة المرور الرئيسية",
   "incorrectPassword": "كلمة مرور غير صحيحة",
-  "rememberPerFolderLayoutLabel": "تذكّر التخطيط والفرز لكل مجلد",
-  "rememberPerFolderLayoutDesc": "حفظ تخطيط العرض (قائمة، شبكة، متدرّج) وترتيب الفرز بشكل منفصل لكل مجلد",
+  "rememberPerFolderLayoutLabel": "تذكر التخطيط والترتيب لكل مجلد",
+  "rememberPerFolderLayoutDesc": "حفظ تخطيط العرض (قائمة، شبكة، بناء) وترتيب الفرز لكل مجلد بشكل منفصل",
   "fileInfoAction": "معلومات",
   "automationSectionHeader": "الأتمتة",
   "automationTileTitle": "الأتمتة",
@@ -2375,5 +2375,6 @@
   "goToLineButton": "انتقال",
   "textEditorFormatDocumentMenuItem": "تنسيق المستند",
   "textEditorMinifyJsonMenuItem": "ضغط JSON",
-  "textEditorFormatFailedMessage": "تعذر تنسيق هذا الملف — تحقق من صحته أولاً"
+  "textEditorFormatFailedMessage": "تعذر تنسيق هذا الملف — تحقق من صحته أولاً",
+  "defaultFolderLayoutLabel": "تخطيط المجلد الافتراضي"
 }

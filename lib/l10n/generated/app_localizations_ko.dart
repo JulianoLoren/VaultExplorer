@@ -5727,7 +5727,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      '폴더마다 별도의 보기 레이아웃(목록, 그리드, 매스너리)과 정렬 순서를 저장합니다';
+      '각 폴더의 보기 레이아웃(목록, 그리드, 메이슨리)과 정렬 순서를 별도로 저장';
+
+  @override
+  String get defaultFolderLayoutLabel => '기본 폴더 레이아웃';
 
   @override
   String get fileInfoAction => '정보';

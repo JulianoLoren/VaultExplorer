@@ -1582,7 +1582,7 @@
   "authenticateToRemoveMasterPassword": "Authentifiez-vous pour retirer le mot de passe principal",
   "incorrectPassword": "Mot de passe incorrect",
   "rememberPerFolderLayoutLabel": "Mémoriser la disposition et le tri par dossier",
-  "rememberPerFolderLayoutDesc": "Enregistrer une disposition d'affichage (liste, grille, mosaïque) et un ordre de tri distincts pour chaque dossier",
+  "rememberPerFolderLayoutDesc": "Enregistrer séparément la disposition d'affichage (liste, grille, mosaïque) et l'ordre de tri de chaque dossier",
   "fileInfoAction": "Infos",
   "automationSectionHeader": "Automatisation",
   "automationTileTitle": "Automatisation",
@@ -2375,5 +2375,6 @@
   "goToLineButton": "Aller",
   "textEditorFormatDocumentMenuItem": "Mettre en forme le document",
   "textEditorMinifyJsonMenuItem": "Minifier le JSON",
-  "textEditorFormatFailedMessage": "Impossible de formater ce fichier — vérifiez d'abord qu'il est valide"
+  "textEditorFormatFailedMessage": "Impossible de formater ce fichier — vérifiez d'abord qu'il est valide",
+  "defaultFolderLayoutLabel": "Disposition par défaut des dossiers"
 }

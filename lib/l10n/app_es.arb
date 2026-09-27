@@ -1582,7 +1582,7 @@
   "authenticateToRemoveMasterPassword": "Autenticar para quitar la contraseña maestra",
   "incorrectPassword": "Contraseña incorrecta",
   "rememberPerFolderLayoutLabel": "Recordar diseño y orden por carpeta",
-  "rememberPerFolderLayoutDesc": "Guarda un diseño de vista (lista, cuadrícula, mosaico) y un orden de clasificación independientes para cada carpeta",
+  "rememberPerFolderLayoutDesc": "Guardar el diseño de vista (lista, cuadrícula, mosaico) y el orden de clasificación de cada carpeta por separado",
   "fileInfoAction": "Info",
   "automationSectionHeader": "Automatización",
   "automationTileTitle": "Automatización",
@@ -2375,5 +2375,6 @@
   "goToLineButton": "Ir",
   "textEditorFormatDocumentMenuItem": "Dar formato al documento",
   "textEditorMinifyJsonMenuItem": "Minificar JSON",
-  "textEditorFormatFailedMessage": "No se pudo formatear este archivo: comprueba primero que sea válido"
+  "textEditorFormatFailedMessage": "No se pudo formatear este archivo: comprueba primero que sea válido",
+  "defaultFolderLayoutLabel": "Diseño de carpeta predeterminado"
 }

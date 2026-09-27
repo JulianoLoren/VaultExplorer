@@ -6029,11 +6029,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutLabel =>
-      'Layout & Sortierung pro Ordner merken';
+      'Layout und Sortierung pro Ordner merken';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Separates Ansichtslayout (Liste, Raster, Mauerwerk) und Sortierreihenfolge für jeden Ordner speichern';
+      'Ansichtslayout (Liste, Raster, Masonry) und Sortierreihenfolge für jeden Ordner separat speichern';
+
+  @override
+  String get defaultFolderLayoutLabel => 'Standard-Ordnerlayout';
 
   @override
   String get fileInfoAction => 'Info';

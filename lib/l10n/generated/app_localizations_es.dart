@@ -6046,7 +6046,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Guarda un diseño de vista (lista, cuadrícula, mosaico) y un orden de clasificación independientes para cada carpeta';
+      'Guardar el diseño de vista (lista, cuadrícula, mosaico) y el orden de clasificación de cada carpeta por separado';
+
+  @override
+  String get defaultFolderLayoutLabel => 'Diseño de carpeta predeterminado';
 
   @override
   String get fileInfoAction => 'Info';

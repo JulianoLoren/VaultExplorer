@@ -1581,8 +1581,8 @@
   "confirmRemoveMasterPasswordMessage": "Geben Sie Ihr aktuelles Master-Passwort ein, um das Entfernen zu bestätigen:",
   "authenticateToRemoveMasterPassword": "Authentifizieren, um das Master-Passwort zu entfernen",
   "incorrectPassword": "Falsches Passwort",
-  "rememberPerFolderLayoutLabel": "Layout & Sortierung pro Ordner merken",
-  "rememberPerFolderLayoutDesc": "Separates Ansichtslayout (Liste, Raster, Mauerwerk) und Sortierreihenfolge für jeden Ordner speichern",
+  "rememberPerFolderLayoutLabel": "Layout und Sortierung pro Ordner merken",
+  "rememberPerFolderLayoutDesc": "Ansichtslayout (Liste, Raster, Masonry) und Sortierreihenfolge für jeden Ordner separat speichern",
   "fileInfoAction": "Info",
   "automationSectionHeader": "Automatisierung",
   "automationTileTitle": "Automatisierung",
@@ -2375,5 +2375,6 @@
   "goToLineButton": "Los",
   "textEditorFormatDocumentMenuItem": "Dokument formatieren",
   "textEditorMinifyJsonMenuItem": "JSON minimieren",
-  "textEditorFormatFailedMessage": "Datei konnte nicht formatiert werden – prüfen Sie zuerst, ob sie gültig ist"
+  "textEditorFormatFailedMessage": "Datei konnte nicht formatiert werden – prüfen Sie zuerst, ob sie gültig ist",
+  "defaultFolderLayoutLabel": "Standard-Ordnerlayout"
 }

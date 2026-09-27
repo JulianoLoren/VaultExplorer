@@ -6078,11 +6078,14 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutLabel =>
-      'Пам\'ятати вигляд і сортування для кожної папки';
+      'Пам’ятати вигляд і сортування для кожної папки';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Зберігати окремий вигляд (список, сітка, мозаїка) і порядок сортування для кожної папки';
+      'Зберігати вигляд (список, сітка, мозаїка) та порядок сортування для кожної папки окремо';
+
+  @override
+  String get defaultFolderLayoutLabel => 'Стандартний вигляд папки';
 
   @override
   String get fileInfoAction => 'Інформація';

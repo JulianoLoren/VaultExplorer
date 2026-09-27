@@ -6110,11 +6110,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get incorrectPassword => 'كلمة مرور غير صحيحة';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'تذكّر التخطيط والفرز لكل مجلد';
+  String get rememberPerFolderLayoutLabel => 'تذكر التخطيط والترتيب لكل مجلد';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'حفظ تخطيط العرض (قائمة، شبكة، متدرّج) وترتيب الفرز بشكل منفصل لكل مجلد';
+      'حفظ تخطيط العرض (قائمة، شبكة، بناء) وترتيب الفرز لكل مجلد بشكل منفصل';
+
+  @override
+  String get defaultFolderLayoutLabel => 'تخطيط المجلد الافتراضي';
 
   @override
   String get fileInfoAction => 'معلومات';
