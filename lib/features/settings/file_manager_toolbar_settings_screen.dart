@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/utils/file_type_utils.dart';
 import 'package:vaultexplorer/core/widgets/common_widgets.dart';
+import 'package:vaultexplorer/data/models/browser_layout_mode.dart';
 import 'package:vaultexplorer/data/models/grid_aspect_ratio.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
 import 'package:vaultexplorer/data/models/playlist_transition_effect.dart';
@@ -35,12 +36,39 @@ class FileManagerToolbarSettingsScreen extends ConsumerWidget {
     return !leaf.contains('.') || path.endsWith('/');
   }
 
+  /// Mirrors the label mapping in layout_mode_menu_button.dart's
+  /// buildLayoutModeMenuItems -- kept in sync manually since
+  /// [BrowserLayoutMode] has no getLocalizedLabel of its own (unlike
+  /// [GridAspectRatio]/[LongFileNameDisplayMode]/[ThumbnailCacheMode]).
+  static String _layoutModeLabel(BrowserLayoutMode mode, AppLocalizations l10n) {
+    switch (mode) {
+      case BrowserLayoutMode.list:
+        return l10n.layoutModeColumnedList;
+      case BrowserLayoutMode.detailed:
+        return l10n.layoutModeDetailedList;
+      case BrowserLayoutMode.compact:
+        return l10n.layoutModeCompactList;
+      case BrowserLayoutMode.grid:
+        return l10n.layoutModeGalleryGrid;
+      case BrowserLayoutMode.masonry:
+        return l10n.layoutModeMasonry;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(fileManagerToolbarSettingsProvider(containerUri));
     // Check if currently in Decoy mode
     final isDecoyMode = ref.watch(
       appSettingsControllerProvider.select((s) => s.disguiseMode == DisguiseMode.decoy),
+    );
+    // The app-wide fallback layout: what a folder without its own saved
+    // choice opens in (or, with "Remember Per-Folder Layout" off, what
+    // every folder uses). Reset explicitly here rather than as a side
+    // effect of changing view while browsing -- see
+    // AppSettingsController.setDefaultLayoutMode's doc comment.
+    final defaultLayoutMode = ref.watch(
+      appSettingsControllerProvider.select((s) => s.settings.defaultLayoutMode),
     );
     // Thumbnail caching has nowhere else to be configured for a
     // local-storage browsing session (no `MountedContainer` record, so no
@@ -112,6 +140,19 @@ class FileManagerToolbarSettingsScreen extends ConsumerWidget {
                               Icons.folder_special_outlined,
                               color: cs.primary,
                             ),
+                          ),
+                          OptionPickerTile<BrowserLayoutMode>(
+                            label: context.l10n.defaultFolderLayoutLabel,
+                            value: defaultLayoutMode,
+                            options: BrowserLayoutMode.values.map((mode) {
+                              return SelectOption(
+                                value: mode,
+                                label: _layoutModeLabel(mode, context.l10n),
+                              );
+                            }).toList(),
+                            onChanged: (v) => ref
+                                .read(appSettingsControllerProvider.notifier)
+                                .setDefaultLayoutMode(v),
                           ),
                           SwitchListTile(
                             contentPadding:

@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/services/disguise_mode_api.dart';
 import 'package:vaultexplorer/core/utils/ve_log.dart';
+import 'package:vaultexplorer/data/models/browser_layout_mode.dart';
 import 'package:vaultexplorer/data/services/app_settings_service.dart';
 import 'package:vaultexplorer/data/services/password_hasher.dart';
 import 'package:vaultexplorer/data/services/secure_screen_policy.dart';
@@ -186,6 +187,16 @@ class AppSettingsController extends _$AppSettingsController {
       VeLog.e('AppSettingsController', 'Failed to persist settings', e);
     }
   }
+
+  /// Explicit, deliberate way to change the app-wide fallback layout mode --
+  /// the one folders use when they have no per-folder override (or, with
+  /// "Remember Per-Folder Layout" off, the one every folder uses). Kept as
+  /// its own method rather than folded into a folder-scoped change, since
+  /// this is meant to be an intentional settings action, not an incidental
+  /// side effect of browsing (see file_browser_screen.dart's
+  /// _onLayoutModeChanged for why that distinction matters).
+  Future<void> setDefaultLayoutMode(BrowserLayoutMode mode) =>
+      updateSettings((s) => s.copyWith(defaultLayoutMode: mode));
 
   void setShowPwFields(bool show) =>
       state = state._copy(showPwFields: show, clearPwError: true);

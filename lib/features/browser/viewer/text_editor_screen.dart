@@ -9,8 +9,10 @@ import 'package:vaultexplorer/core/theme/app_theme.dart';
 import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_controller.dart';
+import 'package:vaultexplorer/features/browser/viewer/text_editor_formatters.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_accessory_key_bar.dart';
+import 'package:vaultexplorer/features/browser/viewer/widgets/editor_find_panel.dart';
 
 class TextEditorScreen extends ConsumerStatefulWidget {
   final MountedContainer container;
@@ -33,6 +35,12 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   // once via `.text =` the moment the file finishes decrypting; see the
   // ref.listen callback in build().
   final CodeLineEditingController _codeController = CodeLineEditingController.fromText('');
+
+  // Find/replace engine (Phase 4, item 3) -- CodeFindController owns the
+  // actual search: regex compilation, match scanning, current-match
+  // tracking. EditorFindPanel (wired in via CodeEditor.findBuilder below)
+  // only renders its state.
+  late final CodeFindController _findController = CodeFindController(_codeController);
 
   // Genuinely ephemeral UI state -- tied to the controller's own listener,
   // not domain data. Load/save/error state lives in TextEditorLoad.
@@ -83,6 +91,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   void dispose() {
     _autosaveTimer?.cancel();
     _codeController.removeListener(_onTextChanged);
+    _findController.dispose();
     _codeController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -241,6 +250,114 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   void _toggleWordWrap() => setState(() => _wordWrap = !_wordWrap);
 
+  // Go to Line & Quick Navigation (Phase 4, item 1). Auto-indent (item 2)
+  // needs no code here at all -- re_editor's own Enter-key handling
+  // (CodeLineEditingController.applyNewLine) already carries the current
+  // line's leading whitespace onto the new one and adds an extra indent
+  // level when the cursor is inside an unclosed {}/[]/(), matching the
+  // plan's Auto-Indent Engine section exactly. Verified by reading
+  // re_editor's source rather than assuming it, since getting this wrong
+  // would mean shipping a second, conflicting auto-indent on top of it.
+  void _goToLineIndex(int lineIndex) {
+    final target = lineIndex.clamp(0, _codeController.lineCount - 1);
+    _codeController.selection = CodeLineSelection.collapsed(index: target, offset: 0);
+    _codeController.makeCursorCenterIfInvisible();
+  }
+
+  void _goToStart() => _goToLineIndex(0);
+
+  void _goToEnd() => _goToLineIndex(_codeController.lineCount - 1);
+
+  Future<void> _showGoToLineDialog() async {
+    final maxLine = _codeController.lineCount;
+    final fieldController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.textEditorGoToLineDialogTitle),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: fieldController,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: context.l10n.textEditorGoToLineFieldLabel,
+              helperText: context.l10n.textEditorGoToLineHelperText(maxLine),
+            ),
+            validator: (value) {
+              final line = int.tryParse(value?.trim() ?? '');
+              if (line == null || line < 1 || line > maxLine) {
+                return context.l10n.textEditorGoToLineInvalidNumber(maxLine);
+              }
+              return null;
+            },
+            onFieldSubmitted: (value) {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.of(dialogContext).pop(int.parse(value.trim()));
+              }
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.of(dialogContext).pop(int.parse(fieldController.text.trim()));
+              }
+            },
+            child: Text(context.l10n.goToLineButton),
+          ),
+        ],
+      ),
+    );
+
+    fieldController.dispose();
+    if (result != null) {
+      // Dialog collects a 1-based line number; the controller is 0-based.
+      _goToLineIndex(result - 1);
+    }
+  }
+
+  // Offline formatters (Phase 5). formatterFor returns null for anything
+  // that isn't one of the recognized types, which is also what gates the
+  // "Format document"/"Minify JSON" menu items below.
+  String? Function(String)? get _formatter => formatterFor(widget.filePath);
+
+  bool get _isJsonFile => widget.filePath.toLowerCase().endsWith('.json');
+
+  void _runFormatter(String? Function(String) formatter) {
+    final input = _codeController.text;
+    String? result;
+    try {
+      result = formatter(input);
+    } catch (_) {
+      // A formatter finding a way to throw despite its own null-on-failure
+      // contract is exactly the kind of bug that shouldn't be able to
+      // touch the buffer -- treat it the same as a declared failure.
+      result = null;
+    }
+    if (result == null) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.textEditorFormatFailedMessage,
+        tone: AppBannerTone.error,
+      );
+      return;
+    }
+    if (result == input) return; // already formatted -- nothing to do
+    // Deliberately not calling clearHistory() here (unlike the initial
+    // load): the user has real prior content, so a single Undo should be
+    // able to revert the format.
+    _codeController.text = result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -309,6 +426,61 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                     ? context.l10n.textEditorSwitchToHorizontalScrollTooltip
                     : context.l10n.textEditorSwitchToSoftWrapTooltip,
                 onPressed: _toggleWordWrap,
+              ),
+              IconButton(
+                icon: const Icon(Icons.search_rounded),
+                tooltip: context.l10n.textEditorFindTooltip,
+                onPressed: _findController.findMode,
+              ),
+              PopupMenuButton<String>(
+                tooltip: context.l10n.textEditorMoreActionsTooltip,
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'goToLine':
+                      _showGoToLineDialog();
+                      break;
+                    case 'goToStart':
+                      _goToStart();
+                      break;
+                    case 'goToEnd':
+                      _goToEnd();
+                      break;
+                    case 'format':
+                      final formatter = _formatter;
+                      if (formatter != null) _runFormatter(formatter);
+                      break;
+                    case 'minify':
+                      _runFormatter(minifyJson);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'goToLine',
+                    child: Text(context.l10n.textEditorGoToLineMenuItem),
+                  ),
+                  PopupMenuItem(
+                    value: 'goToStart',
+                    child: Text(context.l10n.textEditorGoToStartMenuItem),
+                  ),
+                  PopupMenuItem(
+                    value: 'goToEnd',
+                    child: Text(context.l10n.textEditorGoToEndMenuItem),
+                  ),
+                  if (_formatter != null && !_readOnly) ...[
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'format',
+                      child: Text(context.l10n.textEditorFormatDocumentMenuItem),
+                    ),
+                    if (_isJsonFile)
+                      PopupMenuItem(
+                        value: 'minify',
+                        child: Text(context.l10n.textEditorMinifyJsonMenuItem),
+                      ),
+                  ],
+                ],
               ),
               IconButton(
                 icon: (_isSaving || _isAutosaving)
@@ -403,6 +575,22 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
               showCursorWhenReadOnly: true,
               wordWrap: _wordWrap,
               autofocus: false,
+              findController: _findController,
+              // findBuilder is invoked on every rebuild CodeEditor makes in
+              // response to _findController itself (it already listens),
+              // so gating on value here is what actually shows/hides the
+              // panel. Since it expects a non-null PreferredSizeWidget, we
+              // return a zero-sized empty widget when inactive to give the
+              // padding it would have taken back to the code.
+              findBuilder: (context, findController, readOnly) {
+                if (findController.value == null) {
+                  return const PreferredSize(
+                    preferredSize: Size.zero,
+                    child: SizedBox.shrink(),
+                  );
+                }
+                return EditorFindPanel(controller: findController, readOnly: readOnly);
+              },
               // Folding isn't exposed yet (no indicator/UI for it in this
               // pass), so skip the analysis pass that would otherwise run
               // on every edit to support it.
