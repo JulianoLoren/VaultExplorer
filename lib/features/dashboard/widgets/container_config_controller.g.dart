@@ -60,7 +60,7 @@ final class ContainerConfigControllerProvider
 }
 
 String _$containerConfigControllerHash() =>
-    r'ac72e27d331dd8a25dac3056dd2eee3ac13afcb6';
+    r'4ed65ed66fe9db4cd4835aeab114a931aa9f5d6d';
 
 final class ContainerConfigControllerFamily extends $Family
     with

@@ -15,7 +15,7 @@ SessionLockController sessionLockController(Ref ref) {
   return controller;
 }
 
-/// Arms and fires two independent auto-lock timers:
+/// Arms and fires two independent auto-lock timers, plus one direct action:
 ///
 /// - **App lock** ([performAppLock]) re-shows `LockGateScreen` via
 ///   [_enforceAppLock]. Cheap to reverse -- mounted containers are left
@@ -27,13 +27,20 @@ SessionLockController sessionLockController(Ref ref) {
 ///   [_lockAllMountedContainers]. Expensive to reverse -- the user has to
 ///   re-decrypt. Gated by its own [AppSettings.autoLockMins] (inactivity)
 ///   and [AppSettings.lockContainersOnScreenLock] (screen-off).
+/// - **Immediate overrides** ([_lockImmediateOverrides]) unmounts only the
+///   containers explicitly configured to "Immediately"
+///   (`ContainerRecord.autoCloseImmediately`), on every real screen-off or
+///   backgrounding event, regardless of either toggle above -- a stronger,
+///   per-container choice that isn't gated by the app-wide vault-lock
+///   settings any more than an explicit per-container duration is.
 ///
-/// The two are independent on purpose: a container can keep running while
-/// the app still asks for the master password again, or the app gate can
-/// stay open while containers unmount on their own shorter timeout.
+/// The two timers are independent on purpose: a container can keep running
+/// while the app still asks for the master password again, or the app gate
+/// can stay open while containers unmount on their own shorter timeout.
 class SessionLockController {
   AppSettings Function()? _settings;
   Future<void> Function()? _lockAllMountedContainers;
+  Future<void> Function()? _lockImmediateOverrideContainers;
   void Function()? _enforceAppLock;
   DateTime Function() _now;
 
@@ -97,10 +104,12 @@ class SessionLockController {
     required AppSettings Function() settings,
     required Future<void> Function() lockAllMountedContainers,
     required void Function() enforceAppLock,
+    Future<void> Function()? lockImmediateOverrideContainers,
     DateTime Function()? now,
   }) {
     _settings = settings;
     _lockAllMountedContainers = lockAllMountedContainers;
+    _lockImmediateOverrideContainers = lockImmediateOverrideContainers;
     _enforceAppLock = enforceAppLock;
     if (now != null) _now = now;
   }
@@ -118,6 +127,25 @@ class SessionLockController {
 
   bool _hasMasterPassword(AppSettings settings) =>
       settings.useMasterPassword && settings.masterPasswordHash != null;
+
+  /// Locks any mounted container explicitly configured to "Immediately"
+  /// (`ContainerRecord.autoCloseImmediately`), regardless of
+  /// [AppSettings.lockContainersOnScreenLock] or [AppSettings.autoLockMins]
+  /// -- like an explicit per-container duration, this is a stronger choice
+  /// than the app-wide default and isn't gated by it. Deliberately separate
+  /// from [performVaultLock]/[_lockAllMountedContainers] (the app-wide
+  /// sweep already skips these containers -- see
+  /// [ContainerRecord.isExemptFromGlobalLock]) and from the per-container
+  /// inactivity timer (`VaultDashboardController.scheduleAutoClose`, which
+  /// also skips them): a 0-minute foreground idle timer would re-lock the
+  /// container almost instantly after every tap, since that timer re-arms
+  /// on every interaction app-wide. Only called from real
+  /// backgrounding/screen-off signals below, never from foreground activity.
+  void _lockImmediateOverrides() {
+    if (_lockImmediateOverrideContainers == null) return;
+    VeLog.i(_kLogTag, '_lockImmediateOverrides: locking any Immediately-configured containers');
+    unawaited(_lockImmediateOverrideContainers!.call());
+  }
 
   /// Re-arms both inactivity timers from current settings, measured from
   /// now. Called on every user interaction (pointer-down on the dashboard)
@@ -263,6 +291,10 @@ class SessionLockController {
         return;
       }
 
+      // A genuine background period just ended -- independent of
+      // lockContainersOnScreenLock, see _lockImmediateOverrides.
+      _lockImmediateOverrides();
+
       final awayDuration = _now().difference(pausedAt);
       final settings = _settings!();
       final hasMasterPassword = _hasMasterPassword(settings);
@@ -314,6 +346,9 @@ class SessionLockController {
       'lockAppOnScreenLock=${settings.lockAppOnScreenLock}, appLockAfterMins=${settings.appLockAfterMins}, '
       'lockContainersOnScreenLock=${settings.lockContainersOnScreenLock}, autoLockMins=${settings.autoLockMins})',
     );
+
+    // Independent of both toggles above -- see _lockImmediateOverrides.
+    _lockImmediateOverrides();
 
      if (hasMasterPassword && settings.lockAppOnScreenLock) {
       if (settings.appLockAfterMins <= 0) {

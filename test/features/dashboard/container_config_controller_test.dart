@@ -4,7 +4,7 @@ import 'package:vaultexplorer/core/api/vault_crypto_api.dart';
 import 'package:vaultexplorer/core/api/vault_lifecycle_api.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/widgets/inputs/auto_lock_duration_options.dart'
-    show kInheritAutoLockDuration;
+    show kImmediateAutoLockDuration, kInheritAutoLockDuration;
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
 import 'package:vaultexplorer/data/models/thumbnail_quality.dart';
 import 'package:vaultexplorer/data/services/app_secure_storage.dart';
@@ -309,6 +309,48 @@ void main() {
       );
 
       expect(crypto.setExpiryCalls.single.path, '/dev/bus/usb/001/002');
+    });
+
+    test('a container explicitly set to Immediately round-trips through load and save', () async {
+      await initFromRecord(
+        const ContainerRecord(
+          uri: 'file:///vault.hc',
+          label: 'My Vault',
+          autoCloseImmediately: true,
+        ),
+      );
+      // Distinct from both "Never" (0) and "App Default"
+      // (kInheritAutoLockDuration) -- see _resolveInitialAutoCloseMins.
+      expect(localContainer.read(provider).autoCloseMins, kImmediateAutoLockDuration);
+
+      final saved = await save(
+        const ContainerRecord(uri: 'file:///vault.hc', label: 'My Vault'),
+      );
+
+      expect(saved, isNotNull);
+      // Persisted as its own flag, not folded into autoCloseMins (which
+      // stays 0, same as "App Default" and "Never") -- see the field doc
+      // comment on ContainerRecord.autoCloseImmediately.
+      expect(saved!.autoCloseMins, 0);
+      expect(saved.autoCloseNever, isFalse);
+      expect(saved.autoCloseImmediately, isTrue);
+      expect(saved.isExemptFromGlobalLock, isTrue);
+    });
+
+    test('picking Immediately after a stored "Never" replaces it, not adds to it', () async {
+      await initFromRecord(
+        const ContainerRecord(uri: 'file:///vault.hc', label: 'My Vault', autoCloseNever: true),
+      );
+      expect(localContainer.read(provider).autoCloseMins, 0);
+
+      localContainer.read(provider.notifier).setAutoCloseMins(kImmediateAutoLockDuration);
+      final saved = await save(
+        const ContainerRecord(uri: 'file:///vault.hc', label: 'My Vault', autoCloseNever: true),
+      );
+
+      expect(saved, isNotNull);
+      expect(saved!.autoCloseNever, isFalse);
+      expect(saved.autoCloseImmediately, isTrue);
     });
   });
 }

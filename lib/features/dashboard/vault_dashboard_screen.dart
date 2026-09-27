@@ -123,6 +123,7 @@ class VaultDashboardState extends ConsumerState<VaultDashboard> with WidgetsBind
     _lockController.configure(
       settings: () => _container.read(appSettingsControllerProvider).settings,
       lockAllMountedContainers: _lockAllMountedContainers,
+      lockImmediateOverrideContainers: _lockImmediateOverrideContainers,
       enforceAppLock: _enforceAppLock,
     );
     _lockController.notifyAppUnlocked();
@@ -263,6 +264,45 @@ class VaultDashboardState extends ConsumerState<VaultDashboard> with WidgetsBind
       }
       if (!controller.acquireLockGuard(c.volId)) {
         VeLog.d(_kLogTag, '_lockAllMountedContainers: volId=${c.volId} guard busy, skipping');
+        continue;
+      }
+      try {
+        await lifecycle.lockContainer(c.uri);
+        controller.onContainerLocked(c.volId);
+      } finally {
+        controller.releaseLockGuard(c.volId);
+      }
+    }
+  }
+
+  // Companion to _lockAllMountedContainers, for containers explicitly
+  // configured to "Immediately" (ContainerRecord.autoCloseImmediately).
+  // Called by SessionLockController on real screen-off/backgrounding events,
+  // independent of the app-wide sweep above and its timing -- see
+  // SessionLockController's class doc comment and _lockImmediateOverrides.
+  // These containers are exempt from _lockAllMountedContainers (they're
+  // "isExemptFromGlobalLock"), so there's no overlap/double-locking between
+  // the two methods.
+  Future<void> _lockImmediateOverrideContainers() async {
+    final state = _container.read(vaultDashboardControllerProvider);
+    final mountedList = state.mounted;
+    final lifecycle = _container.read(vaultLifecycleApiProvider);
+    final controller = _container.read(vaultDashboardControllerProvider.notifier);
+
+    final targets = mountedList
+        .where((c) => state.records[c.uri]?.autoCloseImmediately == true)
+        .toList(growable: false);
+    if (targets.isEmpty) return;
+
+    VeLog.i(
+      _kLogTag,
+      '_lockImmediateOverrideContainers: locking ${targets.length} '
+      'Immediately-configured container(s): ${targets.map((c) => c.volId).toList()}',
+    );
+
+    for (final c in targets) {
+      if (!controller.acquireLockGuard(c.volId)) {
+        VeLog.d(_kLogTag, '_lockImmediateOverrideContainers: volId=${c.volId} guard busy, skipping');
         continue;
       }
       try {

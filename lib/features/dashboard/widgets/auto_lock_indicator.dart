@@ -34,6 +34,19 @@ class AutoLockNever extends AutoLockStatus {
   const AutoLockNever();
 }
 
+/// Explicitly set to "Immediately" on this container: locks as soon as the
+/// screen turns off or the app is backgrounded, with no foreground
+/// inactivity grace period and regardless of the app-wide auto-lock delay.
+/// Unlike [AutoLockOnScreenOff] (which is what a non-overridden container
+/// falls back to when the app-wide default has no delay of its own), this
+/// is always an explicit per-container choice -- see
+/// [ContainerRecord.autoCloseImmediately] and
+/// [SessionLockController.handleScreenOff]/`handleAppLifecycleState`'s use
+/// of `lockImmediateOverrideContainers` for how it's actually enforced.
+class AutoLockImmediately extends AutoLockStatus {
+  const AutoLockImmediately();
+}
+
 /// Computes what will actually lock [record]'s container, falling back to
 /// the app-wide [settings] when the container has no override of its own.
 /// See [ContainerRecord.isExemptFromGlobalLock] and
@@ -50,19 +63,14 @@ class AutoLockPolicy {
 
 AutoLockPolicy computeAutoLockPolicy(ContainerRecord? record, AppSettings settings) {
   if (record?.autoCloseNever == true) {
-    // Only an override if global settings would have locked it.
-    final isCustom = settings.lockContainersOnScreenLock;
-    return AutoLockPolicy(status: const AutoLockNever(), isCustomOverride: isCustom);
+    return const AutoLockPolicy(status: AutoLockNever(), isCustomOverride: true);
+  }
+  if (record?.autoCloseImmediately == true) {
+    return const AutoLockPolicy(status: AutoLockImmediately(), isCustomOverride: true);
   }
   final perContainerMins = record?.autoCloseMins ?? 0;
   if (perContainerMins > 0) {
-    // If global screen-lock is enabled and has the exact same duration, it matches global.
-    final matchesGlobal = settings.lockContainersOnScreenLock &&
-        settings.autoLockMins == perContainerMins;
-    return AutoLockPolicy(
-      status: AutoLockAfter(perContainerMins),
-      isCustomOverride: !matchesGlobal,
-    );
+    return AutoLockPolicy(status: AutoLockAfter(perContainerMins), isCustomOverride: true);
   }
   if (!settings.lockContainersOnScreenLock) {
     return const AutoLockPolicy(status: AutoLockNever(), isCustomOverride: false);
@@ -96,12 +104,18 @@ _AutoLockVisual? _visualFor(BuildContext context, AutoLockStatus status) {
         label: l10n.autoLockIndicatorLocksOnScreenOff,
         tooltip: l10n.autoLockIndicatorLocksOnScreenOff,
       ),
+    AutoLockImmediately() => _AutoLockVisual(
+        icon: Icons.flash_on_outlined,
+        label: l10n.autoLockIndicatorLocksImmediately,
+        tooltip: l10n.autoLockIndicatorLocksImmediately,
+      ),
     AutoLockNever() => null,
   };
 }
 
-/// Subtle icon badge placed next to the vault title or on the container avatar.
-/// Shows an icon (e.g. timer or screen lock) with an explanatory tooltip on tap/hover.
+/// Subtle icon badge placed next to the vault title. Shows an icon (e.g. timer
+/// or screen lock) with an explanatory tooltip on tap/hover stating that the
+/// inactivity timer resets on interaction. Hidden when auto-lock is disabled.
 class AutoLockIconBadge extends StatelessWidget {
   const AutoLockIconBadge({super.key, required this.record, required this.settings});
   final ContainerRecord? record;
@@ -120,8 +134,9 @@ class AutoLockIconBadge extends StatelessWidget {
     };
 
     final IconData iconData = switch (policy.status) {
-      AutoLockAfter() => policy.isCustomOverride ? Icons.lock_clock : Icons.timer_outlined,
+      AutoLockAfter() => policy.isCustomOverride ? Icons.timer_rounded : Icons.timer_outlined,
       AutoLockOnScreenOff() => Icons.screen_lock_portrait_outlined,
+      AutoLockImmediately() => Icons.flash_on_outlined,
       AutoLockNever() => Icons.timer_off_outlined,
     };
 
@@ -176,8 +191,9 @@ class DrawerAutoLockStatusText extends StatelessWidget {
         : cs.onSurfaceVariant.withValues(alpha: 0.75);
 
     final IconData iconData = switch (policy.status) {
-      AutoLockAfter() => policy.isCustomOverride ? Icons.lock_clock : Icons.timer_outlined,
+      AutoLockAfter() => policy.isCustomOverride ? Icons.timer_rounded : Icons.timer_outlined,
       AutoLockOnScreenOff() => Icons.screen_lock_portrait_outlined,
+      AutoLockImmediately() => Icons.flash_on_outlined,
       AutoLockNever() => Icons.timer_off_outlined,
     };
 

@@ -499,6 +499,25 @@ class ContainerRecord {
   // and deserialize to false, so upgrading never silently exempts an
   // existing container from that security feature.
   final bool autoCloseNever;
+  // The other explicit extreme alongside autoCloseNever: true only when the
+  // user has explicitly picked "Immediately" in the per-container Auto-Lock
+  // Duration picker. Stored separately rather than folded into autoCloseMins
+  // because 0 there already means "App Default" (or "Never", disambiguated
+  // by autoCloseNever above) -- "Immediately" needs a third state that isn't
+  // spelled with autoCloseMins alone. Mutually exclusive with autoCloseNever
+  // by construction (the picker only ever sets one at a time). Like
+  // autoCloseNever, this also exempts the container from the app-wide
+  // lock-all sweep (VaultDashboardScreen._lockAllMountedContainers) -- but
+  // unlike an explicit duration or "Never", it isn't handled by that sweep's
+  // timing or by the per-container inactivity timer (scheduleAutoClose):
+  // a 0-minute foreground idle timer would re-lock the container almost
+  // instantly after every tap, since the timer re-arms on every interaction
+  // app-wide. Instead this is enforced directly by SessionLockController on
+  // real screen-off/backgrounding events -- see handleScreenOff and
+  // handleAppLifecycleState's use of lockImmediateOverrideContainers.
+  // Records written before this field existed have no key for it in the
+  // JSON file and deserialize to false, same reasoning as autoCloseNever.
+  final bool autoCloseImmediately;
   final bool documentProvider;
   final List<DocumentProviderFolder> documentProviderFolders;
   final ThumbnailCacheMode? thumbnailCacheMode;
@@ -529,6 +548,7 @@ class ContainerRecord {
     this.unlockMethod = ContainerUnlockMethod.password,
     this.autoCloseMins = 0,
     this.autoCloseNever = false,
+    this.autoCloseImmediately = false,
     this.documentProvider = false,
     this.documentProviderFolders = const [],
     this.thumbnailCacheMode,
@@ -554,11 +574,13 @@ class ContainerRecord {
   /// sweep (VaultDashboardScreen._lockAllMountedContainers, triggered by
   /// SessionLockController on the global auto-lock timeout or screen lock).
   /// True when the user explicitly configured this specific container to
-  /// "Never" (autoCloseNever) or an explicit duration (autoCloseMins > 0).
-  /// Only false when the container follows "App Default" (autoCloseMins == 0 && !autoCloseNever),
-  /// which is also the default for every container that's never had this
-  /// setting touched.
-  bool get isExemptFromGlobalLock => autoCloseNever || autoCloseMins > 0;
+  /// "Never" (autoCloseNever), "Immediately" (autoCloseImmediately), or an
+  /// explicit duration (autoCloseMins > 0). Only false when the container
+  /// follows "App Default" (autoCloseMins == 0 && !autoCloseNever &&
+  /// !autoCloseImmediately), which is also the default for every container
+  /// that's never had this setting touched.
+  bool get isExemptFromGlobalLock =>
+      autoCloseNever || autoCloseImmediately || autoCloseMins > 0;
 
   ContainerRecord copyWith({
     String? label,
@@ -566,6 +588,7 @@ class ContainerRecord {
     ContainerUnlockMethod? unlockMethod,
     int? autoCloseMins,
     bool? autoCloseNever,
+    bool? autoCloseImmediately,
     bool? documentProvider,
     List<DocumentProviderFolder>? documentProviderFolders,
     Object? thumbnailCacheMode = _keep,
@@ -590,6 +613,7 @@ class ContainerRecord {
       unlockMethod: unlockMethod ?? this.unlockMethod,
       autoCloseMins: autoCloseMins ?? this.autoCloseMins,
       autoCloseNever: autoCloseNever ?? this.autoCloseNever,
+      autoCloseImmediately: autoCloseImmediately ?? this.autoCloseImmediately,
       documentProvider: documentProvider ?? this.documentProvider,
       documentProviderFolders:
           documentProviderFolders ?? this.documentProviderFolders,
@@ -621,6 +645,7 @@ class ContainerRecord {
     'unlockMethod': unlockMethod.toJson(),
     'autoCloseMins': autoCloseMins,
     'autoCloseNever': autoCloseNever,
+    'autoCloseImmediately': autoCloseImmediately,
     'documentProvider': documentProvider,
     if (thumbnailCacheMode != null)
       'thumbnailCacheMode': thumbnailCacheMode!.toJson(),
@@ -651,6 +676,7 @@ class ContainerRecord {
       // Absent (pre-upgrade records) -> false, i.e. not exempt. See the
       // field doc comment above for why this default matters.
       autoCloseNever: j['autoCloseNever'] as bool? ?? false,
+      autoCloseImmediately: j['autoCloseImmediately'] as bool? ?? false,
       documentProvider: j['documentProvider'] as bool? ?? false,
       // Populated from secure storage in _hydrate(), not from this file.
       documentProviderFolders: const [],
