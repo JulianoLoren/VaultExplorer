@@ -8135,8 +8135,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalidQrCodeError => '无效的双重验证二维码';
 
   @override
-  String get immediateAutoLockOptionSubtitle =>
-      '屏幕熄灭或应用进入后台时立即锁定，不受应用的自动锁定延迟影响';
+  String get immediateAutoLockOptionSubtitle => '屏幕熄灭或应用进入后台时立即锁定';
 
   @override
   String get autoLockIndicatorLocksImmediately => '立即锁定';

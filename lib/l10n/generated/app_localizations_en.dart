@@ -8585,7 +8585,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'Locks as soon as the screen turns off or the app is backgrounded, regardless of the app\'s Auto-Lock delay';
+      'Locks as soon as the screen turns off or the app is backgrounded';
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Immediate lock';

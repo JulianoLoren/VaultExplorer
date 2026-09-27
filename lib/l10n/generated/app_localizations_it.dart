@@ -8716,7 +8716,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'Si blocca non appena lo schermo si spegne o l\'app passa in background, indipendentemente dal ritardo di blocco automatico dell\'app';
+      'Si blocca non appena lo schermo si spegne o l\'app passa in background';
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Blocco immediato';

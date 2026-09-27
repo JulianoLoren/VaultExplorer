@@ -2377,6 +2377,6 @@
   "textEditorMinifyJsonMenuItem": "JSON minimieren",
   "textEditorFormatFailedMessage": "Datei konnte nicht formatiert werden – prüfen Sie zuerst, ob sie gültig ist",
   "defaultFolderLayoutLabel": "Standard-Ordnerlayout",
-  "immediateAutoLockOptionSubtitle": "Sperrt sofort beim Ausschalten des Bildschirms oder Wechsel der App in den Hintergrund, unabhängig von der automatischen Sperrverzögerung der App",
+  "immediateAutoLockOptionSubtitle": "Sperrt sofort beim Ausschalten des Bildschirms oder Wechsel der App in den Hintergrund",
   "autoLockIndicatorLocksImmediately": "Sofortige Sperre"
 }

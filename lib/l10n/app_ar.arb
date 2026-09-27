@@ -2377,6 +2377,6 @@
   "textEditorMinifyJsonMenuItem": "ضغط JSON",
   "textEditorFormatFailedMessage": "تعذر تنسيق هذا الملف — تحقق من صحته أولاً",
   "defaultFolderLayoutLabel": "تخطيط المجلد الافتراضي",
-  "immediateAutoLockOptionSubtitle": "يتم القفل بمجرد إيقاف تشغيل الشاشة أو انتقال التطبيق إلى الخلفية، بغض النظر عن مهلة القفل التلقائي للتطبيق",
+  "immediateAutoLockOptionSubtitle": "يتم القفل بمجرد إيقاف تشغيل الشاشة أو انتقال التطبيق إلى الخلفية",
   "autoLockIndicatorLocksImmediately": "قفل فوري"
 }

@@ -8777,7 +8777,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'يتم القفل بمجرد إيقاف تشغيل الشاشة أو انتقال التطبيق إلى الخلفية، بغض النظر عن مهلة القفل التلقائي للتطبيق';
+      'يتم القفل بمجرد إيقاف تشغيل الشاشة أو انتقال التطبيق إلى الخلفية';
 
   @override
   String get autoLockIndicatorLocksImmediately => 'قفل فوري';

@@ -8718,7 +8718,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'Sperrt sofort beim Ausschalten des Bildschirms oder Wechsel der App in den Hintergrund, unabhängig von der automatischen Sperrverzögerung der App';
+      'Sperrt sofort beim Ausschalten des Bildschirms oder Wechsel der App in den Hintergrund';
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Sofortige Sperre';

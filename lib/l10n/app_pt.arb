@@ -2377,6 +2377,6 @@
   "textEditorMinifyJsonMenuItem": "Minificar JSON",
   "textEditorFormatFailedMessage": "Não foi possível formatar este arquivo — verifique primeiro se ele é válido",
   "defaultFolderLayoutLabel": "Layout padrão da pasta",
-  "immediateAutoLockOptionSubtitle": "Bloqueia assim que a tela desliga ou o aplicativo vai para segundo plano, independentemente do atraso de bloqueio automático do aplicativo",
+  "immediateAutoLockOptionSubtitle": "Bloqueia assim que a tela desliga ou o aplicativo vai para segundo plano",
   "autoLockIndicatorLocksImmediately": "Bloqueio imediato"
 }

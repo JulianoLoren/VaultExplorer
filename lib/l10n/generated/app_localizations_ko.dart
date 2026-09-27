@@ -8245,7 +8245,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      '앱의 자동 잠금 대기 시간과 관계없이 화면이 꺼지거나 앱이 백그라운드로 전환되는 즉시 잠깁니다';
+      '화면이 꺼지거나 앱이 백그라운드로 전환되는 즉시 잠깁니다';
 
   @override
   String get autoLockIndicatorLocksImmediately => '즉시 잠금';

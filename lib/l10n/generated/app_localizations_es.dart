@@ -8735,7 +8735,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'Se bloquea tan pronto como se apaga la pantalla o la app pasa a segundo plano, independientemente del retraso de bloqueo automático de la app';
+      'Se bloquea tan pronto como se apaga la pantalla o la app pasa a segundo plano';
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Bloqueo inmediato';

@@ -8246,7 +8246,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'アプリの自動ロック遅延に関係なく、画面が消灯するかアプリがバックグラウンドに移行するとすぐにロックされます';
+      '画面が消灯するかアプリがバックグラウンドに移行するとすぐにロックされます';
 
   @override
   String get autoLockIndicatorLocksImmediately => '即時ロック';

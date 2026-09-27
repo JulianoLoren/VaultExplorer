@@ -2377,6 +2377,6 @@
   "textEditorMinifyJsonMenuItem": "Minifica JSON",
   "textEditorFormatFailedMessage": "Impossibile formattare questo file: controlla prima che sia valido",
   "defaultFolderLayoutLabel": "Layout predefinito delle cartelle",
-  "immediateAutoLockOptionSubtitle": "Si blocca non appena lo schermo si spegne o l'app passa in background, indipendentemente dal ritardo di blocco automatico dell'app",
+  "immediateAutoLockOptionSubtitle": "Si blocca non appena lo schermo si spegne o l'app passa in background",
   "autoLockIndicatorLocksImmediately": "Blocco immediato"
 }

@@ -2377,6 +2377,6 @@
   "textEditorMinifyJsonMenuItem": "JSON を最小化",
   "textEditorFormatFailedMessage": "このファイルをフォーマットできませんでした。有効な形式か確認してください",
   "defaultFolderLayoutLabel": "デフォルトのフォルダーレイアウト",
-  "immediateAutoLockOptionSubtitle": "アプリの自動ロック遅延に関係なく、画面が消灯するかアプリがバックグラウンドに移行するとすぐにロックされます",
+  "immediateAutoLockOptionSubtitle": "画面が消灯するかアプリがバックグラウンドに移行するとすぐにロックされます",
   "autoLockIndicatorLocksImmediately": "即時ロック"
 }

@@ -8795,7 +8795,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'Блокується, щойно екран вимикається або програма переходить у фоновий режим, незалежно від затримки автоблокування програми';
+      'Блокується, щойно екран вимикається або програма переходить у фоновий режим';
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Миттєве блокування';

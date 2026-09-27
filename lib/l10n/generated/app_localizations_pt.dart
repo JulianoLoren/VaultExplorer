@@ -8722,7 +8722,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get immediateAutoLockOptionSubtitle =>
-      'Bloqueia assim que a tela desliga ou o aplicativo vai para segundo plano, independentemente do atraso de bloqueio automático do aplicativo';
+      'Bloqueia assim que a tela desliga ou o aplicativo vai para segundo plano';
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Bloqueio imediato';
