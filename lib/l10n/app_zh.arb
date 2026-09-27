@@ -2372,5 +2372,8 @@
   "textEditorGoToLineFieldLabel": "行号",
   "textEditorGoToLineHelperText": "1–{maxLine}",
   "textEditorGoToLineInvalidNumber": "请输入介于 1 和 {maxLine} 之间的行号",
-  "goToLineButton": "转到"
+  "goToLineButton": "转到",
+  "textEditorFormatDocumentMenuItem": "格式化文档",
+  "textEditorMinifyJsonMenuItem": "压缩 JSON",
+  "textEditorFormatFailedMessage": "无法格式化此文件，请先检查其是否有效"
 }

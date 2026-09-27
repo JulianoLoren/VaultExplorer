@@ -3316,6 +3316,18 @@
   "@textEditorGoToEndMenuItem": {
     "description": "Overflow menu item that jumps the cursor to the last line of the file"
   },
+  "textEditorFormatDocumentMenuItem": "Format document",
+  "@textEditorFormatDocumentMenuItem": {
+    "description": "Overflow menu item that reformats/beautifies the current file"
+  },
+  "textEditorMinifyJsonMenuItem": "Minify JSON",
+  "@textEditorMinifyJsonMenuItem": {
+    "description": "Overflow menu item that strips whitespace from a JSON file, shown only for .json files"
+  },
+  "textEditorFormatFailedMessage": "Couldn't format this file -- check it's valid first",
+  "@textEditorFormatFailedMessage": {
+    "description": "Error snackbar shown when Format document/Minify JSON fails because the file isn't well-formed"
+  },
   "textEditorGoToLineDialogTitle": "Go to line",
   "@textEditorGoToLineDialogTitle": {
     "description": "Title of the go-to-line dialog"

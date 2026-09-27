@@ -2375,6 +2375,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textEditorGoToEndMenuItem => '转到末尾';
 
   @override
+  String get textEditorFormatDocumentMenuItem => '格式化文档';
+
+  @override
+  String get textEditorMinifyJsonMenuItem => '压缩 JSON';
+
+  @override
+  String get textEditorFormatFailedMessage => '无法格式化此文件，请先检查其是否有效';
+
+  @override
   String get textEditorGoToLineDialogTitle => '转到行';
 
   @override

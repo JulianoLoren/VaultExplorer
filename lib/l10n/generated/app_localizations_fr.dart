@@ -2563,6 +2563,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get textEditorGoToEndMenuItem => 'Aller à la fin';
 
   @override
+  String get textEditorFormatDocumentMenuItem => 'Mettre en forme le document';
+
+  @override
+  String get textEditorMinifyJsonMenuItem => 'Minifier le JSON';
+
+  @override
+  String get textEditorFormatFailedMessage =>
+      'Impossible de formater ce fichier — vérifiez d\'abord qu\'il est valide';
+
+  @override
   String get textEditorGoToLineDialogTitle => 'Aller à la ligne';
 
   @override

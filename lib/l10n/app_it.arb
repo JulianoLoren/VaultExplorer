@@ -2372,5 +2372,8 @@
   "textEditorGoToLineFieldLabel": "Numero di riga",
   "textEditorGoToLineHelperText": "1–{maxLine}",
   "textEditorGoToLineInvalidNumber": "Inserisci un numero di riga compreso tra 1 e {maxLine}",
-  "goToLineButton": "Vai"
+  "goToLineButton": "Vai",
+  "textEditorFormatDocumentMenuItem": "Formatta documento",
+  "textEditorMinifyJsonMenuItem": "Minifica JSON",
+  "textEditorFormatFailedMessage": "Impossibile formattare questo file: controlla prima che sia valido"
 }

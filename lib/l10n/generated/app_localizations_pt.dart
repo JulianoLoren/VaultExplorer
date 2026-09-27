@@ -2549,6 +2549,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get textEditorGoToEndMenuItem => 'Ir para o fim';
 
   @override
+  String get textEditorFormatDocumentMenuItem => 'Formatar documento';
+
+  @override
+  String get textEditorMinifyJsonMenuItem => 'Minificar JSON';
+
+  @override
+  String get textEditorFormatFailedMessage =>
+      'Não foi possível formatar este arquivo — verifique primeiro se ele é válido';
+
+  @override
   String get textEditorGoToLineDialogTitle => 'Ir para a linha';
 
   @override

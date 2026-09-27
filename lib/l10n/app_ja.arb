@@ -2372,5 +2372,8 @@
   "textEditorGoToLineFieldLabel": "行番号",
   "textEditorGoToLineHelperText": "1–{maxLine}",
   "textEditorGoToLineInvalidNumber": "1 から {maxLine} までの行番号を入力してください",
-  "goToLineButton": "移動"
+  "goToLineButton": "移動",
+  "textEditorFormatDocumentMenuItem": "ドキュメントのフォーマット",
+  "textEditorMinifyJsonMenuItem": "JSON を最小化",
+  "textEditorFormatFailedMessage": "このファイルをフォーマットできませんでした。有効な形式か確認してください"
 }

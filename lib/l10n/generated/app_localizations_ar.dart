@@ -2582,6 +2582,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get textEditorGoToEndMenuItem => 'الانتقال إلى النهاية';
 
   @override
+  String get textEditorFormatDocumentMenuItem => 'تنسيق المستند';
+
+  @override
+  String get textEditorMinifyJsonMenuItem => 'ضغط JSON';
+
+  @override
+  String get textEditorFormatFailedMessage =>
+      'تعذر تنسيق هذا الملف — تحقق من صحته أولاً';
+
+  @override
   String get textEditorGoToLineDialogTitle => 'الانتقال إلى سطر';
 
   @override

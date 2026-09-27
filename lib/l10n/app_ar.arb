@@ -2372,5 +2372,8 @@
   "textEditorGoToLineFieldLabel": "رقم السطر",
   "textEditorGoToLineHelperText": "1–{maxLine}",
   "textEditorGoToLineInvalidNumber": "أدخل رقم سطر بين 1 و {maxLine}",
-  "goToLineButton": "انتقال"
+  "goToLineButton": "انتقال",
+  "textEditorFormatDocumentMenuItem": "تنسيق المستند",
+  "textEditorMinifyJsonMenuItem": "ضغط JSON",
+  "textEditorFormatFailedMessage": "تعذر تنسيق هذا الملف — تحقق من صحته أولاً"
 }

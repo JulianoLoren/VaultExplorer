@@ -2573,6 +2573,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get textEditorGoToEndMenuItem => 'Перейти в кінець';
 
   @override
+  String get textEditorFormatDocumentMenuItem => 'Форматувати документ';
+
+  @override
+  String get textEditorMinifyJsonMenuItem => 'Мініфікувати JSON';
+
+  @override
+  String get textEditorFormatFailedMessage =>
+      'Не вдалося відформатувати цей файл — спочатку перевірте його коректність';
+
+  @override
   String get textEditorGoToLineDialogTitle => 'Перейти до рядка';
 
   @override

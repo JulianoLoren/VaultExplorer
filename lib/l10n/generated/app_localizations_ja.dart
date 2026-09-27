@@ -2411,6 +2411,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get textEditorGoToEndMenuItem => '末尾へ移動';
 
   @override
+  String get textEditorFormatDocumentMenuItem => 'ドキュメントのフォーマット';
+
+  @override
+  String get textEditorMinifyJsonMenuItem => 'JSON を最小化';
+
+  @override
+  String get textEditorFormatFailedMessage =>
+      'このファイルをフォーマットできませんでした。有効な形式か確認してください';
+
+  @override
   String get textEditorGoToLineDialogTitle => '行へ移動';
 
   @override

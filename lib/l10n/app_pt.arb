@@ -2372,5 +2372,8 @@
   "textEditorGoToLineFieldLabel": "Número da linha",
   "textEditorGoToLineHelperText": "1–{maxLine}",
   "textEditorGoToLineInvalidNumber": "Digite um número de linha entre 1 e {maxLine}",
-  "goToLineButton": "Ir"
+  "goToLineButton": "Ir",
+  "textEditorFormatDocumentMenuItem": "Formatar documento",
+  "textEditorMinifyJsonMenuItem": "Minificar JSON",
+  "textEditorFormatFailedMessage": "Não foi possível formatar este arquivo — verifique primeiro se ele é válido"
 }

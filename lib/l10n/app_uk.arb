@@ -2372,5 +2372,8 @@
   "textEditorGoToLineFieldLabel": "Номер рядка",
   "textEditorGoToLineHelperText": "1–{maxLine}",
   "textEditorGoToLineInvalidNumber": "Введіть номер рядка від 1 до {maxLine}",
-  "goToLineButton": "Перейти"
+  "goToLineButton": "Перейти",
+  "textEditorFormatDocumentMenuItem": "Форматувати документ",
+  "textEditorMinifyJsonMenuItem": "Мініфікувати JSON",
+  "textEditorFormatFailedMessage": "Не вдалося відформатувати цей файл — спочатку перевірте його коректність"
 }

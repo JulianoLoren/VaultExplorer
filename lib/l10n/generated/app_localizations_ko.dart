@@ -2411,6 +2411,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get textEditorGoToEndMenuItem => '끝으로 이동';
 
   @override
+  String get textEditorFormatDocumentMenuItem => '문서 서식 지정';
+
+  @override
+  String get textEditorMinifyJsonMenuItem => 'JSON 축소';
+
+  @override
+  String get textEditorFormatFailedMessage =>
+      '이 파일의 서식을 지정할 수 없습니다. 먼저 유효한지 확인하세요';
+
+  @override
   String get textEditorGoToLineDialogTitle => '줄로 이동';
 
   @override

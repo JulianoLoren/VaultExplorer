@@ -2372,5 +2372,8 @@
   "textEditorGoToLineFieldLabel": "Zeilennummer",
   "textEditorGoToLineHelperText": "1–{maxLine}",
   "textEditorGoToLineInvalidNumber": "Geben Sie eine Zeilennummer zwischen 1 und {maxLine} ein",
-  "goToLineButton": "Los"
+  "goToLineButton": "Los",
+  "textEditorFormatDocumentMenuItem": "Dokument formatieren",
+  "textEditorMinifyJsonMenuItem": "JSON minimieren",
+  "textEditorFormatFailedMessage": "Datei konnte nicht formatiert werden – prüfen Sie zuerst, ob sie gültig ist"
 }

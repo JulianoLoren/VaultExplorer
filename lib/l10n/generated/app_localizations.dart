@@ -4212,6 +4212,24 @@ abstract class AppLocalizations {
   /// **'Go to end'**
   String get textEditorGoToEndMenuItem;
 
+  /// Overflow menu item that reformats/beautifies the current file
+  ///
+  /// In en, this message translates to:
+  /// **'Format document'**
+  String get textEditorFormatDocumentMenuItem;
+
+  /// Overflow menu item that strips whitespace from a JSON file, shown only for .json files
+  ///
+  /// In en, this message translates to:
+  /// **'Minify JSON'**
+  String get textEditorMinifyJsonMenuItem;
+
+  /// Error snackbar shown when Format document/Minify JSON fails because the file isn't well-formed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t format this file -- check it\'s valid first'**
+  String get textEditorFormatFailedMessage;
+
   /// Title of the go-to-line dialog
   ///
   /// In en, this message translates to:
