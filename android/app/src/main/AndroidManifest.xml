@@ -113,18 +113,12 @@
                 android:resource="@style/NormalTheme" />
         </activity>
 
-        <!-- Dedicated isolated task window for the Quick Capture Quick
-             Settings tile / pinned home-screen shortcut. Exported=true is
-             required here (not just precedent-matching VaultShareActivity
-             above): the launcher app resolves and starts this Activity
-             directly for a pinned/dynamic shortcut, from its own process,
-             so a non-exported Activity would refuse it with a
-             SecurityException. -->
         <activity
             android:name=".VaultQuickCaptureActivity"
             android:label="@string/app_name"
             android:icon="@mipmap/ic_launcher"
             android:exported="true"
+            android:enableOnBackInvokedCallback="false"
             android:taskAffinity="com.aeidolon.vaultexplorer.quickcapture"
             android:launchMode="singleTask"
             android:documentLaunchMode="always"

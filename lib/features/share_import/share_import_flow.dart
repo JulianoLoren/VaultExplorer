@@ -103,9 +103,13 @@ Future<void> presentIncomingShareImport(
     conflictPlan = resolved;
   }
 
-  if (!context.mounted) return;
+   if (!context.mounted) return;
   final settings = await ref.read(appSettingsServiceProvider).loadSettings();
-  final shouldRelock = destination.wasInitiallyLocked && settings.autoLockOnShareImport;
+  final shouldRelock = switch (settings.quickActionLockMode) {
+    QuickActionLockMode.alwaysLock => true,
+    QuickActionLockMode.leaveAsFound => destination.wasInitiallyLocked,
+    QuickActionLockMode.leaveOpen => false,
+  };
 
   final opSvc = ref.read(fileOperationServiceProvider);
   final vaultLifecycleApi = ref.read(vaultLifecycleApiProvider);

@@ -10,6 +10,7 @@ import 'package:vaultexplorer/core/api/vault_lifecycle_api.dart';
 import 'package:vaultexplorer/core/api/quick_capture_api.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
+import 'package:vaultexplorer/data/services/app_settings_service.dart';
 import 'package:vaultexplorer/features/share_import/share_destination_sheet.dart';
 import 'package:vaultexplorer/features/tools/models/tool_models.dart';
 import 'camera_vault_service.dart';
@@ -47,6 +48,9 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen>
 _Phase _phase = _Phase.camera;
   ScratchpadSession? _pendingScratchpad;
   final List<CapturedMediaItem> _capturedMedia = [];
+  final ScrollController _trayScrollController = ScrollController();
+  int _pendingPhotoCount = 0;
+  bool _isTakingPhoto = false;
   String? _saveError;
 
   bool _isRecording = false;
@@ -167,9 +171,60 @@ _Phase _phase = _Phase.camera;
     setState(() => _displayRotation = rotation);
   }
 
+  void _scrollToEndOfTray() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_trayScrollController.hasClients) {
+        _trayScrollController.animateTo(
+          _trayScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  bool get _isOwnRouteCurrent => ModalRoute.of(context)?.isCurrent ?? false;
+
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) {
+    if (!_isOwnRouteCurrent) return false;
+    if (_phase == _Phase.reviewing && _capturedMedia.isNotEmpty) {
+      return true;
+    }
+    if (_isRecording ||
+        _isEncrypting ||
+        _isCountingDown ||
+        _phase == _Phase.saving ||
+        _pendingPhotoCount > 0) {
+      return true;
+    }
+    if (_capturedMedia.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  void handleUpdateBackGestureProgress(PredictiveBackEvent backEvent) {}
+
+  @override
+  void handleCancelBackGesture() {}
+
+  @override
+  void handleCommitBackGesture() {
+    if (!_isOwnRouteCurrent) return;
+    if (_phase == _Phase.reviewing && _capturedMedia.isNotEmpty) {
+      setState(() => _phase = _Phase.camera);
+    } else if (_capturedMedia.isNotEmpty) {
+      HapticFeedback.lightImpact();
+      _discardAllMedia();
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _trayScrollController.dispose();
     _timer?.cancel();
     _exposureHideTimer?.cancel();
     _sensorSubscription?.cancel();
@@ -421,10 +476,16 @@ void _triggerShutterFlash() {
     });
   }
 
-   Future<void> _takePhoto() async {
-    if (!_cameraController.isInitialized || _isEncrypting) return;
+  Future<void> _takePhoto() async {
+    if (!_cameraController.isInitialized || _isEncrypting || _isTakingPhoto) return;
+    _isTakingPhoto = true;
 
     _triggerShutterFlash();
+
+    setState(() {
+      _pendingPhotoCount++;
+    });
+    _scrollToEndOfTray();
 
     try {
       await _cameraController.setOrientationDegrees(
@@ -447,6 +508,7 @@ void _triggerShutterFlash() {
             _phase = _Phase.reviewing;
           }
         });
+        _scrollToEndOfTray();
       } else {
         if (mounted) {
           _showErrorToast(
@@ -457,6 +519,13 @@ void _triggerShutterFlash() {
     } catch (_) {
       if (mounted) {
         _showErrorToast(context.l10n.cameraPhotoCaptureFailedMessage);
+      }
+    } finally {
+      _isTakingPhoto = false;
+      if (mounted) {
+        setState(() {
+          _pendingPhotoCount = math.max(0, _pendingPhotoCount - 1);
+        });
       }
     }
   }
@@ -524,6 +593,17 @@ void _triggerShutterFlash() {
           );
           if (ok) await vaultService.finalizeVaultWrite(virtualPath);
         }
+      }
+
+      final settings = await ref.read(appSettingsServiceProvider).loadSettings();
+      final shouldRelock = switch (settings.quickActionLockMode) {
+        QuickActionLockMode.alwaysLock => true,
+        QuickActionLockMode.leaveAsFound => destination.wasInitiallyLocked,
+        QuickActionLockMode.leaveOpen => false,
+      };
+
+      if (shouldRelock) {
+        await _lifecycleApi.lockContainer(container.uri);
       }
 
       if (mounted) {
@@ -689,35 +769,47 @@ void _triggerShutterFlash() {
     ref.watch(cameraCaptureControlsProvider(_quickCaptureControlsKey));
     ref.watch(cameraCaptureSessionProvider(_quickCaptureControlsKey));
 
-   if (_phase == _Phase.reviewing && _capturedMedia.isNotEmpty) {
-      return CameraMediaReviewView(
-        initialMedia: _capturedMedia,
-        iconTurns: _iconTurns,
-        onMediaChanged: (updated) {
-          setState(() {
-            _capturedMedia
-              ..clear()
-              ..addAll(updated);
-          });
-        },
-        onDiscard: _discardAllMedia,
-        onTakeMoreMedia: () {
-          setState(() => _phase = _Phase.camera);
-        },
-        onSaveMedia: _commitAllMediaToVault,
-      );
-    }
+    final isReviewing = _phase == _Phase.reviewing && _capturedMedia.isNotEmpty;
+    final canPop = !isReviewing &&
+        !_isRecording &&
+        !_isEncrypting &&
+        !_isCountingDown &&
+        _phase != _Phase.saving &&
+        _capturedMedia.isEmpty &&
+        _pendingPhotoCount == 0;
 
     return PopScope(
-      canPop: !_isRecording && !_isEncrypting && !_isCountingDown && _phase != _Phase.saving && _capturedMedia.isEmpty,
+      canPop: canPop,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (_capturedMedia.isNotEmpty) {
+        if (isReviewing) {
+          setState(() => _phase = _Phase.camera);
+        } else if (_capturedMedia.isNotEmpty) {
           HapticFeedback.lightImpact();
           _discardAllMedia();
         }
       },
-      child: Scaffold(
+      child: isReviewing
+          ? CameraMediaReviewView(
+              initialMedia: _capturedMedia,
+              iconTurns: _iconTurns,
+              onMediaChanged: (updated) {
+                setState(() {
+                  _capturedMedia
+                    ..clear()
+                    ..addAll(updated);
+                  if (_capturedMedia.isEmpty) {
+                    _phase = _Phase.camera;
+                  }
+                });
+              },
+              onDiscard: _discardAllMedia,
+              onTakeMoreMedia: () {
+                setState(() => _phase = _Phase.camera);
+              },
+              onSaveMedia: _commitAllMediaToVault,
+            )
+          : Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
           fit: StackFit.expand,
@@ -751,6 +843,7 @@ void _triggerShutterFlash() {
                         frameAspectRatio: isLandscapeFrame
                             ? _selectedAspectRatio
                             : 1 / _selectedAspectRatio,
+                        showShutterFlash: _showShutterFlash,
                       ),
                     ),
                   );
@@ -794,6 +887,8 @@ void _triggerShutterFlash() {
                   timerText: _timerText,
                   videoQuality: _captureControls.videoQuality,
                   photoResolution: _captureControls.photoResolution,
+                  photoResolutions: _captureSession.photoResolutions,
+                  videoQualities: _captureSession.videoQualities,
                   selectedAspectRatio: _selectedAspectRatio,
                   onAspectRatioChanged: (ratio) => setState(() => _selectedAspectRatio = ratio),
                   timerDelaySeconds: _captureControls.timerDelaySeconds,
@@ -820,22 +915,14 @@ void _triggerShutterFlash() {
               child: _buildBottomControls(),
             ),
 
-              // In LANDSCAPE, place the tray above the flip camera button on the left so they never overlap
-            if (isLandscape && _capturedMedia.isNotEmpty && !_isRecording && !_isCountingDown)
+               // In LANDSCAPE, place the tray above the flip camera button on the left so they never overlap
+            if (isLandscape && (_capturedMedia.isNotEmpty || _pendingPhotoCount > 0) && !_isRecording && !_isCountingDown)
               Positioned(
                 left: 16.0 + MediaQuery.paddingOf(context).left,
                 bottom: 76.0 + MediaQuery.paddingOf(context).bottom,
                 child: _buildCapturedMediaTray(),
               ),
             ],
-
-             IgnorePointer(
-              child: AnimatedOpacity(
-                opacity: _showShutterFlash ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 50),
-                child: Container(color: Colors.white.withValues(alpha: 0.65)),
-              ),
-            ),
 
             if (_isCountingDown)
               Center(
@@ -886,6 +973,7 @@ void _triggerShutterFlash() {
 
  Widget _buildCapturedMediaTray() {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final totalCount = _capturedMedia.length + _pendingPhotoCount;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -901,6 +989,7 @@ void _triggerShutterFlash() {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: isLandscape ? 160 : 180),
             child: SingleChildScrollView(
+              controller: _trayScrollController,
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
@@ -982,6 +1071,29 @@ void _triggerShutterFlash() {
                         ],
                       ),
                     ),
+                  for (int p = 0; p < _pendingPhotoCount; p++)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 2, right: 8, left: 4),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.amber.withValues(alpha: 0.8), width: 1.5),
+                        ),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.amber,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -995,13 +1107,15 @@ void _triggerShutterFlash() {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            onPressed: () {
-              setState(() => _phase = _Phase.reviewing);
-            },
+            onPressed: _capturedMedia.isNotEmpty
+                ? () {
+                    setState(() => _phase = _Phase.reviewing);
+                  }
+                : null,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${_capturedMedia.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text('$totalCount', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(width: 4),
                 const Icon(Icons.arrow_forward_rounded, size: 14),
               ],
@@ -1033,7 +1147,7 @@ void _triggerShutterFlash() {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Live captured media tray: stacked above controls ONLY in PORTRAIT
-            if (!isLandscape && _capturedMedia.isNotEmpty && !_isRecording && !_isCountingDown)
+            if (!isLandscape && (_capturedMedia.isNotEmpty || _pendingPhotoCount > 0) && !_isRecording && !_isCountingDown)
               _buildCapturedMediaTray(),
 
             if (!_isRecording && !_isCountingDown) ...[

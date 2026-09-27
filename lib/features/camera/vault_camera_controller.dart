@@ -47,9 +47,13 @@ class VaultCameraSessionInfo {
   final double minExposureEv;
   final double maxExposureEv;
   final int previewWidth;
-  final int previewHeight;
+ final int previewHeight;
   final int sensorOrientation;
   final List<NativeCameraLens> lenses;
+  final Map<String, String> photoResolutions;
+  final Map<String, String> videoQualities;
+  final String? currentPhotoResolution;
+  final String? currentVideoResolution;
 
   const VaultCameraSessionInfo({
     required this.sessionId,
@@ -63,6 +67,10 @@ class VaultCameraSessionInfo {
     required this.previewHeight,
     required this.sensorOrientation,
     required this.lenses,
+    this.photoResolutions = const {},
+    this.videoQualities = const {},
+    this.currentPhotoResolution,
+    this.currentVideoResolution,
   });
 
   factory VaultCameraSessionInfo.fromMap(Map<dynamic, dynamic> map) {
@@ -70,6 +78,16 @@ class VaultCameraSessionInfo {
             ?.map((e) => NativeCameraLens.fromMap(e as Map<dynamic, dynamic>))
             .toList() ??
         [];
+
+    final photoResMap = (map['photoResolutions'] as Map<dynamic, dynamic>?)?.map(
+          (k, v) => MapEntry(k.toString(), v.toString()),
+        ) ??
+        const <String, String>{};
+
+    final videoQualMap = (map['videoQualities'] as Map<dynamic, dynamic>?)?.map(
+          (k, v) => MapEntry(k.toString(), v.toString()),
+        ) ??
+        const <String, String>{};
 
     return VaultCameraSessionInfo(
       sessionId: (map['sessionId'] as num).toInt(),
@@ -83,6 +101,10 @@ class VaultCameraSessionInfo {
       previewHeight: (map['previewHeight'] as num?)?.toInt() ?? 1080,
       sensorOrientation: (map['sensorOrientation'] as num?)?.toInt() ?? 90,
       lenses: lensesList,
+      photoResolutions: photoResMap,
+      videoQualities: videoQualMap,
+      currentPhotoResolution: map['currentPhotoResolution'] as String?,
+      currentVideoResolution: map['currentVideoResolution'] as String?,
     );
   }
 }
@@ -115,8 +137,12 @@ class VaultCameraController {
   double _maxExposureEv = 0.0;
   int _previewWidth = 1920;
   int _previewHeight = 1080;
-  int _sensorOrientation = 90;
+ int _sensorOrientation = 90;
   List<NativeCameraLens> _lenses = [];
+  Map<String, String> _photoResolutions = const {};
+  Map<String, String> _videoQualities = const {};
+  String? _currentPhotoResolution;
+  String? _currentVideoResolution;
 
   StreamSubscription? _eventSubscription;
   final StreamController<Map<String, dynamic>> _eventsController = StreamController.broadcast();
@@ -145,7 +171,11 @@ class VaultCameraController {
     return w / h;
   }
 
-  List<NativeCameraLens> get lenses => _lenses;
+   List<NativeCameraLens> get lenses => _lenses;
+  Map<String, String> get photoResolutions => _photoResolutions;
+  Map<String, String> get videoQualities => _videoQualities;
+  String? get currentPhotoResolution => _currentPhotoResolution;
+  String? get currentVideoResolution => _currentVideoResolution;
   bool get isInitialized => _sessionId != null && _textureId != null;
 
   /// Quarter-turn index (0..3) of the activity's display, i.e. Android's
@@ -205,8 +235,12 @@ class VaultCameraController {
     _maxExposureEv = info.maxExposureEv;
     _previewWidth = info.previewWidth;
     _previewHeight = info.previewHeight;
-    _sensorOrientation = info.sensorOrientation;
+   _sensorOrientation = info.sensorOrientation;
     _lenses = info.lenses;
+    _photoResolutions = info.photoResolutions;
+    _videoQualities = info.videoQualities;
+    _currentPhotoResolution = info.currentPhotoResolution;
+    _currentVideoResolution = info.currentVideoResolution;
 
     final eventChannel = EventChannel('com.aeidolon.vaultexplorer/camera/events/$_sessionId');
     _eventSubscription = eventChannel.receiveBroadcastStream().listen((data) {

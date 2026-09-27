@@ -45,6 +45,31 @@ enum AuthenticatorSearchPlacement {
   };
 }
 
+enum QuickActionLockMode {
+  leaveAsFound,
+  alwaysLock,
+  leaveOpen;
+
+  String getLocalizedLabel(AppLocalizations l10n) => switch (this) {
+    QuickActionLockMode.leaveAsFound => l10n.quickActionLockModeLeaveAsFoundLabel,
+    QuickActionLockMode.alwaysLock => l10n.quickActionLockModeAlwaysLockLabel,
+    QuickActionLockMode.leaveOpen => l10n.quickActionLockModeLeaveOpenLabel,
+  };
+
+  String getLocalizedSubtitle(AppLocalizations l10n) => switch (this) {
+    QuickActionLockMode.leaveAsFound => l10n.quickActionLockModeLeaveAsFoundSubtitle,
+    QuickActionLockMode.alwaysLock => l10n.quickActionLockModeAlwaysLockSubtitle,
+    QuickActionLockMode.leaveOpen => l10n.quickActionLockModeLeaveOpenSubtitle,
+  };
+
+  String toJson() => name;
+  static QuickActionLockMode fromJson(String? value) => switch (value) {
+    'alwaysLock' => QuickActionLockMode.alwaysLock,
+    'leaveOpen' => QuickActionLockMode.leaveOpen,
+    _ => QuickActionLockMode.leaveAsFound,
+  };
+}
+
 enum MasterUnlockMethod {
   password,
   biometrics,
@@ -117,7 +142,8 @@ class AppSettings {
   DeleteAfterImportMode deleteAfterImportMode;
   bool videoMuted;
   bool showStorageLocationsInDrawer;
- bool autoLockOnShareImport;
+  bool autoLockOnShareImport;
+  QuickActionLockMode quickActionLockMode;
   bool enableAuthenticator;
   bool authenticatorShowNumbers;
   AuthenticatorSearchPlacement authenticatorSearchPlacement;
@@ -154,6 +180,7 @@ class AppSettings {
     this.videoMuted = false,
     this.showStorageLocationsInDrawer = true,
     this.autoLockOnShareImport = true,
+    this.quickActionLockMode = QuickActionLockMode.leaveAsFound,
     this.enableAuthenticator = true,
     this.authenticatorShowNumbers = true,
     this.authenticatorSearchPlacement = AuthenticatorSearchPlacement.bottom,
@@ -231,6 +258,7 @@ class AppSettings {
     bool? videoMuted,
     bool? showStorageLocationsInDrawer,
     bool? autoLockOnShareImport,
+    QuickActionLockMode? quickActionLockMode,
     bool? enableAuthenticator,
     bool? authenticatorShowNumbers,
     AuthenticatorSearchPlacement? authenticatorSearchPlacement,
@@ -273,8 +301,9 @@ class AppSettings {
       debugLoggingEnabled: debugLoggingEnabled ?? this.debugLoggingEnabled,
       deleteAfterImportMode: deleteAfterImportMode ?? this.deleteAfterImportMode,
       videoMuted: videoMuted ?? this.videoMuted,
-      showStorageLocationsInDrawer: showStorageLocationsInDrawer ?? this.showStorageLocationsInDrawer,
-      autoLockOnShareImport: autoLockOnShareImport ?? this.autoLockOnShareImport,
+       showStorageLocationsInDrawer: showStorageLocationsInDrawer ?? this.showStorageLocationsInDrawer,
+      autoLockOnShareImport: autoLockOnShareImport ?? (quickActionLockMode != null ? quickActionLockMode != QuickActionLockMode.leaveOpen : this.autoLockOnShareImport),
+      quickActionLockMode: quickActionLockMode ?? this.quickActionLockMode,
       enableAuthenticator: enableAuthenticator ?? this.enableAuthenticator,
       authenticatorShowNumbers: authenticatorShowNumbers ?? this.authenticatorShowNumbers,
       authenticatorSearchPlacement: authenticatorSearchPlacement ?? this.authenticatorSearchPlacement,
@@ -315,6 +344,7 @@ class AppSettings {
     'videoMuted': videoMuted,
      'showStorageLocationsInDrawer': showStorageLocationsInDrawer,
     'autoLockOnShareImport': autoLockOnShareImport,
+    'quickActionLockMode': quickActionLockMode.toJson(),
     'enableAuthenticator': enableAuthenticator,
     'authenticatorShowNumbers': authenticatorShowNumbers,
     'authenticatorSearchPlacement': authenticatorSearchPlacement.toJson(),
@@ -380,8 +410,13 @@ class AppSettings {
       j['deleteAfterImportMode'] as String?,
     ),
     videoMuted: j['videoMuted'] as bool? ?? false,
-    showStorageLocationsInDrawer: j['showStorageLocationsInDrawer'] as bool? ?? true,
+     showStorageLocationsInDrawer: j['showStorageLocationsInDrawer'] as bool? ?? true,
     autoLockOnShareImport: j['autoLockOnShareImport'] as bool? ?? true,
+    quickActionLockMode: j['quickActionLockMode'] != null
+        ? QuickActionLockMode.fromJson(j['quickActionLockMode'] as String?)
+        : (j['autoLockOnShareImport'] as bool? ?? true)
+            ? QuickActionLockMode.leaveAsFound
+            : QuickActionLockMode.leaveOpen,
     enableAuthenticator: j['enableAuthenticator'] as bool? ?? true,
     authenticatorShowNumbers: j['authenticatorShowNumbers'] as bool? ?? true,
     authenticatorSearchPlacement: AuthenticatorSearchPlacement.fromJson(

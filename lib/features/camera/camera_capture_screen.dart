@@ -61,9 +61,12 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
   DateTime? _recordingStart;
   Timer? _timer;
 
- String? _currentRecordingName;
+  String? _currentRecordingName;
   String? _currentRecordingPath;
   final List<CapturedMediaItem> _capturedMedia = [];
+  final ScrollController _trayScrollController = ScrollController();
+  int _pendingPhotoCount = 0;
+  bool _isTakingPhoto = false;
   bool _isReviewingMedia = false;
 
   StreamSubscription<({double x, double y, double z})>? _sensorSubscription;
@@ -193,12 +196,62 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     setState(() => _displayRotation = rotation);
   }
 
+   void _scrollToEndOfTray() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_trayScrollController.hasClients) {
+        _trayScrollController.animateTo(
+          _trayScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  bool get _isOwnRouteCurrent => ModalRoute.of(context)?.isCurrent ?? false;
+
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) {
+    if (!_isOwnRouteCurrent) return false;
+    if (_isReviewingMedia && _capturedMedia.isNotEmpty) {
+      return true;
+    }
+    if (_isRecording ||
+        _isEncrypting ||
+        _isCountingDown ||
+        _pendingPhotoCount > 0) {
+      return true;
+    }
+    if (_capturedMedia.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  void handleUpdateBackGestureProgress(PredictiveBackEvent backEvent) {}
+
+  @override
+  void handleCancelBackGesture() {}
+
+  @override
+  void handleCommitBackGesture() {
+    if (!_isOwnRouteCurrent) return;
+    if (_isReviewingMedia && _capturedMedia.isNotEmpty) {
+      setState(() => _isReviewingMedia = false);
+    } else if (_capturedMedia.isNotEmpty) {
+      HapticFeedback.lightImpact();
+      _discardAllMedia();
+    }
+  }
+
   @override
   void dispose() {
     _engineEvents.removeBackgroundRecordingStopRequestedListener(
       _onBackgroundRecordingStopRequestedEvent,
     );
     WidgetsBinding.instance.removeObserver(this);
+    _trayScrollController.dispose();
     _timer?.cancel();
     _exposureHideTimer?.cancel();
     _sensorSubscription?.cancel();
@@ -459,10 +512,16 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     });
   }
 
-   Future<void> _takePhoto() async {
-    if (!_cameraController.isInitialized || _isEncrypting) return;
+ Future<void> _takePhoto() async {
+    if (!_cameraController.isInitialized || _isEncrypting || _isTakingPhoto) return;
+    _isTakingPhoto = true;
 
     _triggerShutterFlash();
+
+    setState(() {
+      _pendingPhotoCount++;
+    });
+    _scrollToEndOfTray();
 
     try {
       await _cameraController.setOrientationDegrees(
@@ -485,6 +544,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
             _isReviewingMedia = true;
           }
         });
+        _scrollToEndOfTray();
       } else {
         if (mounted) {
           _showErrorToast(
@@ -495,6 +555,13 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     } catch (_) {
       if (mounted) {
         _showErrorToast(context.l10n.cameraPhotoCaptureFailedMessage);
+      }
+    } finally {
+      _isTakingPhoto = false;
+      if (mounted) {
+        setState(() {
+          _pendingPhotoCount = math.max(0, _pendingPhotoCount - 1);
+        });
       }
     }
   }
@@ -712,27 +779,34 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
         body: SizedBox.expand(),
       );
     }
-    if (_isReviewingMedia && _capturedMedia.isNotEmpty) {
-      return CameraMediaReviewView(
-        initialMedia: _capturedMedia,
-        iconTurns: _iconTurns,
-        onMediaChanged: (updated) {
-          setState(() {
-            _capturedMedia
-              ..clear()
-              ..addAll(updated);
-          });
-        },
-        onDiscard: _discardAllMedia,
-        onTakeMoreMedia: () {
+     if (_isReviewingMedia && _capturedMedia.isNotEmpty) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
           setState(() => _isReviewingMedia = false);
         },
-        onSaveMedia: _commitAllMediaToVault,
+        child: CameraMediaReviewView(
+          initialMedia: _capturedMedia,
+          iconTurns: _iconTurns,
+          onMediaChanged: (updated) {
+            setState(() {
+              _capturedMedia
+                ..clear()
+                ..addAll(updated);
+            });
+          },
+          onDiscard: _discardAllMedia,
+          onTakeMoreMedia: () {
+            setState(() => _isReviewingMedia = false);
+          },
+          onSaveMedia: _commitAllMediaToVault,
+        ),
       );
     }
 
     return PopScope(
-      canPop: !_isRecording && !_isEncrypting && !_isCountingDown && _capturedMedia.isEmpty,
+      canPop: !_isRecording && !_isEncrypting && !_isCountingDown && _capturedMedia.isEmpty && _pendingPhotoCount == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (_capturedMedia.isNotEmpty) {
@@ -774,6 +848,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
                         frameAspectRatio: isLandscapeFrame
                             ? _selectedAspectRatio
                             : 1 / _selectedAspectRatio,
+                        showShutterFlash: _showShutterFlash,
                       ),
                     ),
                   );
@@ -804,7 +879,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
               },
             ),
 
-            // Top Bar
+             // Top Bar
             Positioned(
               top: 0,
               left: 0,
@@ -816,6 +891,10 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
                 timerText: _timerText,
                 videoQuality: _captureControls.videoQuality,
                 photoResolution: _captureControls.photoResolution,
+                photoResolutions: _captureSession.photoResolutions,
+                videoQualities: _captureSession.videoQualities,
+                currentPhotoResolution: _captureSession.currentPhotoResolution,
+                currentVideoResolution: _captureSession.currentVideoResolution,
                 selectedAspectRatio: _selectedAspectRatio,
                 onAspectRatioChanged: (ratio) => setState(() => _selectedAspectRatio = ratio),
                 timerDelaySeconds: _captureControls.timerDelaySeconds,
@@ -840,21 +919,13 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
               child: _buildBottomControls(),
             ),
 
-           // In LANDSCAPE, place the tray above the flip camera button on the left so they never overlap
-            if (isLandscape && _capturedMedia.isNotEmpty && !_isRecording && !_isCountingDown)
+          // In LANDSCAPE, place the tray above the flip camera button on the left so they never overlap
+            if (isLandscape && (_capturedMedia.isNotEmpty || _pendingPhotoCount > 0) && !_isRecording && !_isCountingDown)
               Positioned(
                 left: 16.0 + MediaQuery.paddingOf(context).left,
                 bottom: 76.0 + MediaQuery.paddingOf(context).bottom,
                 child: _buildCapturedMediaTray(),
               ),
-
-             IgnorePointer(
-              child: AnimatedOpacity(
-                opacity: _showShutterFlash ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 50),
-                child: Container(color: Colors.white.withValues(alpha: 0.65)),
-              ),
-            ),
 
             if (_isCountingDown)
               Center(
@@ -903,6 +974,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
 
   Widget _buildCapturedMediaTray() {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final totalCount = _capturedMedia.length + _pendingPhotoCount;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -915,9 +987,10 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ConstrainedBox(
+         ConstrainedBox(
             constraints: BoxConstraints(maxWidth: isLandscape ? 160 : 180),
             child: SingleChildScrollView(
+              controller: _trayScrollController,
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
@@ -999,6 +1072,29 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
                         ],
                       ),
                     ),
+                  for (int p = 0; p < _pendingPhotoCount; p++)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 2, right: 8, left: 4),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.amber.withValues(alpha: 0.8), width: 1.5),
+                        ),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.amber,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -1012,13 +1108,15 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            onPressed: () {
-              setState(() => _isReviewingMedia = true);
-            },
+            onPressed: _capturedMedia.isNotEmpty
+                ? () {
+                    setState(() => _isReviewingMedia = true);
+                  }
+                : null,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${_capturedMedia.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text('$totalCount', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(width: 4),
                 const Icon(Icons.arrow_forward_rounded, size: 14),
               ],
@@ -1049,8 +1147,8 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Live captured media tray: stacked above controls ONLY in PORTRAIT
-            if (!isLandscape && _capturedMedia.isNotEmpty && !_isRecording && !_isCountingDown)
+          // Live captured media tray: stacked above controls ONLY in PORTRAIT
+            if (!isLandscape && (_capturedMedia.isNotEmpty || _pendingPhotoCount > 0) && !_isRecording && !_isCountingDown)
               _buildCapturedMediaTray(),
 
             if (!_isRecording && !_isCountingDown) ...[

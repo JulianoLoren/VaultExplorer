@@ -317,6 +317,7 @@ class CameraPreviewView extends StatelessWidget {
   final int sensorOrientation;
   final int displayRotation;
   final double frameAspectRatio;
+  final bool showShutterFlash;
 
   const CameraPreviewView({
     super.key,
@@ -326,6 +327,7 @@ class CameraPreviewView extends StatelessWidget {
     required this.sensorOrientation,
     required this.displayRotation,
     required this.frameAspectRatio,
+    this.showShutterFlash = false,
   });
 
   @override
@@ -342,16 +344,26 @@ class CameraPreviewView extends StatelessWidget {
     return AspectRatio(
       aspectRatio: frameAspectRatio,
       child: ClipRect(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: odd ? naturalH : naturalW,
-            height: odd ? naturalW : naturalH,
-            child: RotatedBox(
-              quarterTurns: turns,
-              child: Texture(textureId: textureId),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: odd ? naturalH : naturalW,
+                height: odd ? naturalW : naturalH,
+                child: RotatedBox(
+                  quarterTurns: turns,
+                  child: Texture(textureId: textureId),
+                ),
+              ),
             ),
-          ),
+            AnimatedOpacity(
+              opacity: showShutterFlash ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 50),
+              child: const ColoredBox(color: Colors.black),
+            ),
+          ],
         ),
       ),
     );
@@ -375,6 +387,10 @@ class CameraTopControlsBar extends StatelessWidget {
   final String timerText;
   final String videoQuality;
   final String photoResolution;
+  final Map<String, String> photoResolutions;
+  final Map<String, String> videoQualities;
+  final String? currentPhotoResolution;
+  final String? currentVideoResolution;
   final double selectedAspectRatio;
   final ValueChanged<double> onAspectRatioChanged;
   final int timerDelaySeconds;
@@ -394,6 +410,10 @@ class CameraTopControlsBar extends StatelessWidget {
     required this.timerText,
     required this.videoQuality,
     required this.photoResolution,
+    this.photoResolutions = const {},
+    this.videoQualities = const {},
+    this.currentPhotoResolution,
+    this.currentVideoResolution,
     required this.selectedAspectRatio,
     required this.onAspectRatioChanged,
     required this.timerDelaySeconds,
@@ -406,9 +426,43 @@ class CameraTopControlsBar extends StatelessWidget {
     required this.onCycleFlashMode,
   });
 
+  String _formatVideoResolution(String quality) {
+    final exact = videoQualities[quality];
+    if (exact != null && exact.isNotEmpty) return exact;
+    if (quality == videoQuality &&
+        currentVideoResolution != null &&
+        currentVideoResolution!.isNotEmpty) {
+      return currentVideoResolution!;
+    }
+    return switch (quality) {
+      'uhd' => '3840x2160',
+      'fhd' => '1920x1080',
+      'hd' => '1280x720',
+      'sd' => '720x480',
+      _ => quality.toUpperCase(),
+    };
+  }
+
+
+   String _formatPhotoResolution(String res) {
+    final exact = photoResolutions[res];
+    if (exact != null && exact.isNotEmpty) return exact;
+    if (res == photoResolution &&
+        currentPhotoResolution != null &&
+        currentPhotoResolution!.isNotEmpty) {
+      return currentPhotoResolution!;
+    }
+    return switch (res) {
+      'max' => '4000x3000',
+      'high' => '2560x1920',
+      'med' => '1920x1440',
+      'low' => '1280x960',
+      _ => res.toUpperCase(),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
 
     return Container(
       decoration: const BoxDecoration(
@@ -515,50 +569,18 @@ class CameraTopControlsBar extends StatelessWidget {
                       iconTurns: iconTurns,
                       onSelected: onVideoQualityChanged,
                       items: [
-                        CameraPopupMenuItem(
-                          value: 'sd',
-                          isSelected: videoQuality == 'sd',
-                          child: Text(
-                            l10n.cameraQualitySd,
-                            style: TextStyle(
-                              color: videoQuality == 'sd' ? Colors.amber : Colors.white,
-                              fontWeight: videoQuality == 'sd' ? FontWeight.bold : FontWeight.normal,
+                        for (final q in const ['uhd', 'fhd', 'hd', 'sd'])
+                          CameraPopupMenuItem(
+                            value: q,
+                            isSelected: videoQuality == q,
+                            child: Text(
+                              _formatVideoResolution(q),
+                              style: TextStyle(
+                                color: videoQuality == q ? Colors.amber : Colors.white,
+                                fontWeight: videoQuality == q ? FontWeight.bold : FontWeight.normal,
+                              ),
                             ),
                           ),
-                        ),
-                        CameraPopupMenuItem(
-                          value: 'hd',
-                          isSelected: videoQuality == 'hd',
-                          child: Text(
-                            l10n.cameraQualityHd,
-                            style: TextStyle(
-                              color: videoQuality == 'hd' ? Colors.amber : Colors.white,
-                              fontWeight: videoQuality == 'hd' ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        CameraPopupMenuItem(
-                          value: 'fhd',
-                          isSelected: videoQuality == 'fhd',
-                          child: Text(
-                            l10n.cameraQualityFhd,
-                            style: TextStyle(
-                              color: videoQuality == 'fhd' ? Colors.amber : Colors.white,
-                              fontWeight: videoQuality == 'fhd' ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        CameraPopupMenuItem(
-                          value: 'uhd',
-                          isSelected: videoQuality == 'uhd',
-                          child: Text(
-                            l10n.cameraQualityUhd,
-                            style: TextStyle(
-                              color: videoQuality == 'uhd' ? Colors.amber : Colors.white,
-                              fontWeight: videoQuality == 'uhd' ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
                       ],
                       child: Padding(
                         padding: const EdgeInsets.all(6.0),
@@ -572,8 +594,8 @@ class CameraTopControlsBar extends StatelessWidget {
                               border: Border.all(color: Colors.white30),
                             ),
                             child: Text(
-                              videoQuality.toUpperCase(),
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              _formatVideoResolution(videoQuality),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                             ),
                           ),
                         ),
@@ -585,50 +607,18 @@ class CameraTopControlsBar extends StatelessWidget {
                       iconTurns: iconTurns,
                       onSelected: onPhotoResolutionChanged,
                       items: [
-                        CameraPopupMenuItem(
-                          value: 'max',
-                          isSelected: photoResolution == 'max',
-                          child: Text(
-                            l10n.cameraPhotoResMax,
-                            style: TextStyle(
-                              color: photoResolution == 'max' ? Colors.amber : Colors.white,
-                              fontWeight: photoResolution == 'max' ? FontWeight.bold : FontWeight.normal,
+                        for (final r in const ['max', 'high', 'med', 'low'])
+                          CameraPopupMenuItem(
+                            value: r,
+                            isSelected: photoResolution == r,
+                            child: Text(
+                              _formatPhotoResolution(r),
+                              style: TextStyle(
+                                color: photoResolution == r ? Colors.amber : Colors.white,
+                                fontWeight: photoResolution == r ? FontWeight.bold : FontWeight.normal,
+                              ),
                             ),
                           ),
-                        ),
-                        CameraPopupMenuItem(
-                          value: 'high',
-                          isSelected: photoResolution == 'high',
-                          child: Text(
-                            l10n.cameraPhotoResHigh,
-                            style: TextStyle(
-                              color: photoResolution == 'high' ? Colors.amber : Colors.white,
-                              fontWeight: photoResolution == 'high' ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        CameraPopupMenuItem(
-                          value: 'med',
-                          isSelected: photoResolution == 'med',
-                          child: Text(
-                            l10n.cameraPhotoResMedium,
-                            style: TextStyle(
-                              color: photoResolution == 'med' ? Colors.amber : Colors.white,
-                              fontWeight: photoResolution == 'med' ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        CameraPopupMenuItem(
-                          value: 'low',
-                          isSelected: photoResolution == 'low',
-                          child: Text(
-                            l10n.cameraPhotoResLow,
-                            style: TextStyle(
-                              color: photoResolution == 'low' ? Colors.amber : Colors.white,
-                              fontWeight: photoResolution == 'low' ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
                       ],
                       child: Padding(
                         padding: const EdgeInsets.all(6.0),
@@ -642,8 +632,8 @@ class CameraTopControlsBar extends StatelessWidget {
                               border: Border.all(color: Colors.white30),
                             ),
                             child: Text(
-                              photoResolution == 'max' ? 'MAX' : photoResolution.toUpperCase(),
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              _formatPhotoResolution(photoResolution),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                             ),
                           ),
                         ),

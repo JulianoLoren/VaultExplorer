@@ -28,6 +28,10 @@ class CameraCaptureSessionState {
     this.maxExposureEv = 0.0,
     this.currentExposureEv = 0.0,
     this.showExposureSlider = false,
+    this.photoResolutions = const {},
+    this.videoQualities = const {},
+    this.currentPhotoResolution,
+    this.currentVideoResolution,
   });
 
   final bool isInitialized;
@@ -48,6 +52,10 @@ class CameraCaptureSessionState {
   final double maxExposureEv;
   final double currentExposureEv;
   final bool showExposureSlider;
+  final Map<String, String> photoResolutions;
+  final Map<String, String> videoQualities;
+  final String? currentPhotoResolution;
+  final String? currentVideoResolution;
 
   CameraCaptureSessionState copyWith({
     bool? isInitialized,
@@ -69,6 +77,10 @@ class CameraCaptureSessionState {
     double? maxExposureEv,
     double? currentExposureEv,
     bool? showExposureSlider,
+    Map<String, String>? photoResolutions,
+    Map<String, String>? videoQualities,
+    String? currentPhotoResolution,
+    String? currentVideoResolution,
   }) => CameraCaptureSessionState(
     isInitialized: isInitialized ?? this.isInitialized,
     selectedCameraId: selectedCameraId ?? this.selectedCameraId,
@@ -87,8 +99,14 @@ class CameraCaptureSessionState {
     currentZoom: currentZoom ?? this.currentZoom,
     minExposureEv: minExposureEv ?? this.minExposureEv,
     maxExposureEv: maxExposureEv ?? this.maxExposureEv,
-    currentExposureEv: currentExposureEv ?? this.currentExposureEv,
+     currentExposureEv: currentExposureEv ?? this.currentExposureEv,
     showExposureSlider: showExposureSlider ?? this.showExposureSlider,
+    photoResolutions: photoResolutions ?? this.photoResolutions,
+    videoQualities: videoQualities ?? this.videoQualities,
+    currentPhotoResolution:
+        currentPhotoResolution ?? this.currentPhotoResolution,
+    currentVideoResolution:
+        currentVideoResolution ?? this.currentVideoResolution,
   );
 }
 
@@ -121,9 +139,13 @@ class CameraCaptureSession extends _$CameraCaptureSession {
       minZoom: info.zoomMin,
       maxZoom: info.zoomMax,
       currentZoom: 1.0.clamp(info.zoomMin, info.zoomMax),
-      minExposureEv: info.minExposureEv,
+       minExposureEv: info.minExposureEv,
       maxExposureEv: info.maxExposureEv,
       currentExposureEv: 0.0,
+      photoResolutions: info.photoResolutions,
+      videoQualities: info.videoQualities,
+      currentPhotoResolution: info.currentPhotoResolution,
+      currentVideoResolution: info.currentVideoResolution,
     );
   }
 

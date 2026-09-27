@@ -135,6 +135,10 @@ class VaultCameraPlugin(
                                     "previewHeight" to session.previewHeight,
                                     "sensorOrientation" to session.sensorOrientationDegrees,
                                     "lenses" to listCameraLenses(cameraManager).map { it.toMap() },
+                                    "photoResolutions" to session.photoResolutions,
+                                    "videoQualities" to session.videoQualities,
+                                    "currentPhotoResolution" to session.currentPhotoResolution,
+                                    "currentVideoResolution" to session.currentVideoResolution,
                                 ))
                             } else {
                                 VeLog.e(TAG) { "open: failed camera=$cameraId error=$error" }

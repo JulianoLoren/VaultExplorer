@@ -92,12 +92,20 @@ class VaultCameraSession(
     private var exposureStepValue = 1.0 / 6.0
     private var currentExposureSteps = 0
     private var lastOrientationDegrees = 0
-    private var photoSize: Size = Size(1920, 1080)
+ private var photoSize: Size = Size(1920, 1080)
     private var videoSize: Size = Size(1920, 1080)
     private var pendingQuality: VaultVideoQuality = VaultVideoQuality.FHD
     private var pendingPhotoResolution: VaultPhotoResolution = VaultPhotoResolution.MAX
     private var currentPreviewWidth: Int = 1920
     private var currentPreviewHeight: Int = 1080
+
+   private val availablePhotoResolutions = LinkedHashMap<String, String>()
+    private val availableVideoQualities = LinkedHashMap<String, String>()
+
+    val photoResolutions: Map<String, String> get() = availablePhotoResolutions
+    val videoQualities: Map<String, String> get() = availableVideoQualities
+    val currentPhotoResolution: String get() = "${maxOf(photoSize.width, photoSize.height)}x${minOf(photoSize.width, photoSize.height)}"
+    val currentVideoResolution: String get() = "${maxOf(videoSize.width, videoSize.height)}x${minOf(videoSize.width, videoSize.height)}"
 
     private var isRecording = false
     private var recordingChunkWriter: ChunkSink? = null
@@ -311,13 +319,46 @@ class VaultCameraSession(
             TARGET_RECORDING_FPS,
         )
 
-        // Photo size strictly follows the chosen photo resolution
+      // Photo size strictly follows the chosen photo resolution
         val jpegSizes = map.getOutputSizes(ImageFormat.JPEG)?.toList().orEmpty().ifEmpty { listOf(Size(1920, 1080)) }
-        photoSize = chooseSize(jpegSizes, photoResolution.targetLongEdge, capAt1080p = false)
+        val maxJpegSize = jpegSizes.maxByOrNull { it.width.toLong() * it.height.toLong() } ?: jpegSizes.first()
+        photoSize = if (photoResolution == VaultPhotoResolution.MAX) {
+            maxJpegSize
+        } else {
+            chooseSize(jpegSizes, photoResolution.targetLongEdge, capAt1080p = false)
+        }
 
         // Video size selects closest height (480p, 720p, 1080p, 2160p)
         val videoSizes = map.getOutputSizes(MediaCodec::class.java)?.toList().orEmpty().ifEmpty { listOf(Size(1920, 1080)) }
         videoSize = chooseVideoSizeByHeight(videoSizes, videoQuality.targetVideoHeight)
+
+        availablePhotoResolutions.clear()
+        for (res in VaultPhotoResolution.values()) {
+            val s = if (res == VaultPhotoResolution.MAX) {
+                maxJpegSize
+            } else {
+                chooseSize(jpegSizes, res.targetLongEdge, capAt1080p = false)
+            }
+            val key = when (res) {
+                VaultPhotoResolution.LOW -> "low"
+                VaultPhotoResolution.MEDIUM -> "med"
+                VaultPhotoResolution.HIGH -> "high"
+                VaultPhotoResolution.MAX -> "max"
+            }
+            availablePhotoResolutions[key] = "${maxOf(s.width, s.height)}x${minOf(s.width, s.height)}"
+        }
+
+        availableVideoQualities.clear()
+        for (q in VaultVideoQuality.values()) {
+            val s = chooseVideoSizeByHeight(videoSizes, q.targetVideoHeight)
+            val key = when (q) {
+                VaultVideoQuality.SD -> "sd"
+                VaultVideoQuality.HD -> "hd"
+                VaultVideoQuality.FHD -> "fhd"
+                VaultVideoQuality.UHD -> "uhd"
+            }
+            availableVideoQualities[key] = "${maxOf(s.width, s.height)}x${minOf(s.width, s.height)}"
+        }
 
         // Safeguard: Cap preview size at 1920 to stay within CDD limits
         val previewSizes = map.getOutputSizes(SurfaceTexture::class.java)?.toList().orEmpty().ifEmpty { listOf(Size(1920, 1080)) }
