@@ -32,10 +32,6 @@ class OpenInHtmlViewer extends FileOpenAction {
   const OpenInHtmlViewer();
 }
 
-class OpenInMarkdownViewer extends FileOpenAction {
-  const OpenInMarkdownViewer();
-}
-
 /// Hand off to a system app -- either the one already remembered for this
 /// extension ([packageName] set), or the platform's own app picker
 /// ([packageName] null, covering both the "needs a system app for a local
@@ -84,11 +80,10 @@ FileOpenAction decideFileOpenAction({
 }) {
   if (needsSystemAppForLocal) return const OpenWithSystemApp();
   final pref = extensionPreference;
-  if (pref == 'editor') return const OpenInEditor();
+  if (pref == 'editor' || pref == 'markdown') return const OpenInEditor();
   if (pref == 'media') return const OpenInMediaViewer();
   if (pref == 'pdf') return const OpenInPdfViewer();
   if (pref == 'html') return const OpenInHtmlViewer();
-  if (pref == 'markdown') return const OpenInMarkdownViewer();
   if (pref != null && pref.startsWith('package:')) {
     return OpenWithSystemApp(packageName: pref.substring(8));
   }
@@ -96,7 +91,7 @@ FileOpenAction decideFileOpenAction({
   if (isSupportedMedia) return const OpenInMediaViewer();
   if (ext == 'pdf') return const OpenInPdfViewer();
   if (ext == 'html' || ext == 'htm') return const OpenInHtmlViewer();
-  if (ext == 'md' || ext == 'markdown') return const OpenInMarkdownViewer();
+  if (ext == 'md' || ext == 'markdown') return const OpenInEditor();
   if (ext == 'apk') return const InstallApk();
   return const ShowOpenWithDialog();
 }

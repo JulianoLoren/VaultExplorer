@@ -19,27 +19,57 @@ class TextEditorAppearancePrefs {
   final EditorBackgroundOption background;
   final EditorSyntaxThemeOption syntaxTheme;
   final bool relativeLineNumbers;
+  final bool autoSave;
+  final bool showLineNumbers;
+  final bool showAccessoryBar;
+  final double fontSize;
+  final List<String> accessorySymbols;
+
+  static const List<String> defaultSymbols = [
+    'Tab', '{', '}', '[', ']', '(', ')', '=', '"', "'",
+    ':', ';', '/', '\\', '<', '>', '_', '-', '&', '|', '!',
+  ];
 
   const TextEditorAppearancePrefs({
     this.background = EditorBackgroundOption.matchSyntaxTheme,
     this.syntaxTheme = EditorSyntaxThemeOption.auto,
     this.relativeLineNumbers = false,
+    this.autoSave = false,
+    this.showLineNumbers = true,
+    this.showAccessoryBar = true,
+    this.fontSize = 14.0,
+    this.accessorySymbols = defaultSymbols,
   });
 
   TextEditorAppearancePrefs copyWith({
     EditorBackgroundOption? background,
     EditorSyntaxThemeOption? syntaxTheme,
     bool? relativeLineNumbers,
+    bool? autoSave,
+    bool? showLineNumbers,
+    bool? showAccessoryBar,
+    double? fontSize,
+    List<String>? accessorySymbols,
   }) => TextEditorAppearancePrefs(
     background: background ?? this.background,
     syntaxTheme: syntaxTheme ?? this.syntaxTheme,
     relativeLineNumbers: relativeLineNumbers ?? this.relativeLineNumbers,
+    autoSave: autoSave ?? this.autoSave,
+    showLineNumbers: showLineNumbers ?? this.showLineNumbers,
+    showAccessoryBar: showAccessoryBar ?? this.showAccessoryBar,
+    fontSize: fontSize ?? this.fontSize,
+    accessorySymbols: accessorySymbols ?? this.accessorySymbols,
   );
 
   Map<String, dynamic> toJson() => {
     'background': background.name,
     'syntaxTheme': syntaxTheme.name,
     'relativeLineNumbers': relativeLineNumbers,
+    'autoSave': autoSave,
+    'showLineNumbers': showLineNumbers,
+    'showAccessoryBar': showAccessoryBar,
+    'fontSize': fontSize,
+    'accessorySymbols': accessorySymbols,
   };
 
   factory TextEditorAppearancePrefs.fromJson(Map<String, dynamic> json) {
@@ -53,6 +83,14 @@ class TextEditorAppearancePrefs {
         orElse: () => EditorSyntaxThemeOption.auto,
       ),
       relativeLineNumbers: json['relativeLineNumbers'] == true,
+      autoSave: json['autoSave'] == true,
+      showLineNumbers: json['showLineNumbers'] ?? true,
+      showAccessoryBar: json['showAccessoryBar'] ?? true,
+      fontSize: (json['fontSize'] as num?)?.toDouble() ?? 14.0,
+      accessorySymbols: (json['accessorySymbols'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          defaultSymbols,
     );
   }
 }

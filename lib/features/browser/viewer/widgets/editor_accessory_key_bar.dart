@@ -14,25 +14,38 @@
 // Every button re-requests focus on the editor after acting: a Material
 // `InkWell` can otherwise pull keyboard focus onto itself for a frame,
 // which would dismiss the soft keyboard the bar is meant to sit above.
+import 'dart:math' as math;
 import 'package:flutter/rendering.dart' show AxisDirection;
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show EditableText, ExcludeFocus, TapRegion;
 import 'package:material_ui/material_ui.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
+import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart';
+import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart';
+
+class EditorFocusNode extends FocusNode {
+  bool keepFocusLocked = false;
+
+  @override
+  void unfocus({UnfocusDisposition disposition = UnfocusDisposition.scope}) {
+    // Ignore requests to drop focus if the accessory bar is actively being touched
+    if (keepFocusLocked) return;
+    super.unfocus(disposition: disposition);
+  }
+}
 
 class EditorAccessoryKeyBar extends StatelessWidget {
   final CodeLineEditingController controller;
   final FocusNode editorFocusNode;
+  final List<String> symbols;
 
   const EditorAccessoryKeyBar({
     super.key,
     required this.controller,
     required this.editorFocusNode,
+    this.symbols = TextEditorAppearancePrefs.defaultSymbols,
   });
-
-  static const List<String> _symbolRow = [
-    'Tab', '{', '}', '[', ']', '(', ')', '=', '"', "'",
-    ':', ';', '/', '\\', '<', '>', '_', '-', '&', '|', '!',
-  ];
 
   void _act(VoidCallback action) {
     action();
@@ -48,91 +61,183 @@ class EditorAccessoryKeyBar extends StatelessWidget {
     controller.extendSelectionToWordBoundaryForward();
   });
 
+  void _copy() {
+    _act(() {
+      final selection = controller.selection;
+      final baseIdx = selection.baseIndex;
+      final baseOff = selection.baseOffset;
+      final extIdx = selection.extentIndex;
+      final extOff = selection.extentOffset;
+
+      if (baseIdx == extIdx && baseOff == extOff) return;
+
+      int startIdx, startOff, endIdx, endOff;
+      if (baseIdx < extIdx || (baseIdx == extIdx && baseOff < extOff)) {
+        startIdx = baseIdx;
+        startOff = baseOff;
+        endIdx = extIdx;
+        endOff = extOff;
+      } else {
+        startIdx = extIdx;
+        startOff = extOff;
+        endIdx = baseIdx;
+        endOff = baseOff;
+      }
+
+      final lines = controller.text.split('\n');
+      final buffer = StringBuffer();
+      
+      for (int i = startIdx; i <= endIdx && i < lines.length; i++) {
+        final line = lines[i];
+        if (i == startIdx && i == endIdx) {
+          buffer.write(line.substring(math.min(startOff, line.length), math.min(endOff, line.length)));
+        } else if (i == startIdx) {
+          buffer.write(line.substring(math.min(startOff, line.length)));
+          buffer.write('\n');
+        } else if (i == endIdx) {
+          buffer.write(line.substring(0, math.min(endOff, line.length)));
+        } else {
+          buffer.write(line);
+          buffer.write('\n');
+        }
+      }
+
+      final textToCopy = buffer.toString();
+      if (textToCopy.isNotEmpty) {
+        Clipboard.setData(ClipboardData(text: textToCopy));
+      }
+    });
+  }
+
+  void _cut() {
+    _copy();
+    _insert('');
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh,
-        border: Border(top: BorderSide(color: cs.outlineVariant, width: 0.5)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                itemCount: _symbolRow.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 4),
-                itemBuilder: (context, index) {
-                  final symbol = _symbolRow[index];
-                  final isTab = symbol == 'Tab';
-                  return _KeyButton(
-                    label: symbol,
-                    onTap: isTab ? () => _act(controller.applyIndent) : () => _insert(symbol),
-                  );
-                },
+    
+    void setFocusLock(bool locked) {
+      if (editorFocusNode is EditorFocusNode) {
+        (editorFocusNode as EditorFocusNode).keepFocusLocked = locked;
+      }
+    }
+
+    // We wrap the bar in two TapRegions. Standard TextFields use EditableText
+    // as their TapRegion group, while many custom text editors use their own 
+    // FocusNode. Wrapping in both ensures tapping the bar doesn't trigger the 
+    // editor's "tap outside" detector. ExcludeFocus ensures no inner widget 
+    // can steal focus through the gesture arena.
+    // The Listener intercepts pointer events to lock the EditorFocusNode,
+    // preventing re_editor from dropping focus before the button action fires.
+    return Listener(
+      onPointerDown: (_) => setFocusLock(true),
+      onPointerUp: (_) => setFocusLock(false),
+      onPointerCancel: (_) => setFocusLock(false),
+      child: TapRegion(
+        groupId: EditableText,
+        child: TapRegion(
+          groupId: editorFocusNode,
+          child: ExcludeFocus(
+            child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHigh,
+              border: Border(top: BorderSide(color: cs.outlineVariant, width: 0.5)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                   SizedBox(
+                    height: 40,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      itemCount: symbols.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 4),
+                      itemBuilder: (context, index) {
+                        final symbol = symbols[index];
+                        final isTab = symbol == 'Tab';
+                        return _KeyButton(
+                          label: symbol,
+                          onTap: isTab ? () => _act(controller.applyIndent) : () => _insert(symbol),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(
+                    height: 40,
+                    child: ListenableBuilder(
+                      listenable: controller,
+                      builder: (context, child) {
+                        return ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          children: [
+                            _IconKeyButton(
+                              icon: Icons.undo_rounded,
+                              tooltip: context.l10n.undoTooltip,
+                              enabled: controller.canUndo,
+                              onTap: () => _act(controller.undo),
+                            ),
+                            const SizedBox(width: 4),
+                            _IconKeyButton(
+                              icon: Icons.redo_rounded,
+                              tooltip: context.l10n.redoTooltip,
+                              enabled: controller.canRedo,
+                              onTap: () => _act(controller.redo),
+                            ),
+                            const SizedBox(width: 4),
+                            _IconKeyButton(
+                              icon: Icons.keyboard_arrow_left_rounded,
+                              tooltip: context.l10n.textEditorMoveCursorLeftTooltip,
+                              onTap: () => _act(() => controller.moveCursor(AxisDirection.left)),
+                            ),
+                            const SizedBox(width: 4),
+                            _IconKeyButton(
+                              icon: Icons.keyboard_arrow_right_rounded,
+                              tooltip: context.l10n.textEditorMoveCursorRightTooltip,
+                              onTap: () => _act(() => controller.moveCursor(AxisDirection.right)),
+                            ),
+                            const SizedBox(width: 4),
+                          _IconKeyButton(
+                              icon: Icons.highlight_alt_rounded,
+                              tooltip: context.l10n.textEditorSelectWordTooltip,
+                              onTap: _selectWord,
+                            ),
+                            const SizedBox(width: 4),
+                            _IconKeyButton(
+                              icon: Icons.content_copy_rounded,
+                              tooltip: context.l10n.copy,
+                              onTap: _copy,
+                            ),
+                            const SizedBox(width: 4),
+                            _IconKeyButton(
+                              icon: Icons.content_cut_rounded,
+                              tooltip: context.l10n.cutTooltip,
+                              onTap: _cut,
+                            ),
+                            const SizedBox(width: 4),
+                            _IconKeyButton(
+                              icon: Icons.content_paste_rounded,
+                              tooltip: context.l10n.paste,
+                              onTap: () => _act(controller.paste),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                 _CaretScrubber(controller: controller, editorFocusNode: editorFocusNode),
+                ],
               ),
             ),
-            SizedBox(
-              height: 40,
-              child: ListenableBuilder(
-                listenable: controller,
-                builder: (context, child) {
-                  return ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    children: [
-                      _IconKeyButton(
-                        icon: Icons.undo_rounded,
-                        tooltip: context.l10n.undoTooltip,
-                        enabled: controller.canUndo,
-                        onTap: () => _act(controller.undo),
-                      ),
-                      const SizedBox(width: 4),
-                      _IconKeyButton(
-                        icon: Icons.redo_rounded,
-                        tooltip: context.l10n.redoTooltip,
-                        enabled: controller.canRedo,
-                        onTap: () => _act(controller.redo),
-                      ),
-                      const SizedBox(width: 4),
-                      _IconKeyButton(
-                        icon: Icons.keyboard_arrow_left_rounded,
-                        tooltip: context.l10n.textEditorMoveCursorLeftTooltip,
-                        onTap: () => _act(() => controller.moveCursor(AxisDirection.left)),
-                      ),
-                      const SizedBox(width: 4),
-                      _IconKeyButton(
-                        icon: Icons.keyboard_arrow_right_rounded,
-                        tooltip: context.l10n.textEditorMoveCursorRightTooltip,
-                        onTap: () => _act(() => controller.moveCursor(AxisDirection.right)),
-                      ),
-                      const SizedBox(width: 4),
-                      _IconKeyButton(
-                        icon: Icons.highlight_alt_rounded,
-                        tooltip: context.l10n.textEditorSelectWordTooltip,
-                        onTap: _selectWord,
-                      ),
-                      const SizedBox(width: 4),
-                      _IconKeyButton(
-                        icon: Icons.content_paste_rounded,
-                        tooltip: context.l10n.paste,
-                        onTap: () => _act(controller.paste),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            _CaretScrubber(controller: controller, editorFocusNode: editorFocusNode),
-          ],
+          ),
         ),
       ),
+    ),
     );
   }
 }
@@ -152,6 +257,7 @@ class _KeyButton extends StatelessWidget {
       color: cs.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
+        canRequestFocus: false,
         borderRadius: BorderRadius.circular(6),
         onTap: onTap,
         child: Container(
@@ -197,6 +303,7 @@ class _IconKeyButton extends StatelessWidget {
       color: cs.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
+        canRequestFocus: false,
         borderRadius: BorderRadius.circular(6),
         onTap: enabled ? onTap : null,
         child: Container(

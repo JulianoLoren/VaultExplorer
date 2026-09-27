@@ -1,20 +1,70 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/rendering.dart' show AxisDirection;
 import 'package:flutter/scheduler.dart' show SchedulerBinding, SchedulerPhase;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:re_editor/re_editor.dart';
-import 'package:vaultexplorer/data/models/mounted_container.dart';
-import 'package:vaultexplorer/core/theme/app_theme.dart';
-import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
-import 'package:vaultexplorer/features/browser/viewer/text_editor_controller.dart';
+import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
+import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/utils/raw_entry.dart';
+import 'package:vaultexplorer/core/widgets/common_widgets.dart';
+import 'package:vaultexplorer/data/models/mounted_container.dart';
+import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart';
+import 'package:vaultexplorer/features/browser/viewer/markdown/markdown_body_view.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_appearance_provider.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_formatters.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_accessory_key_bar.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_appearance_sheet.dart';
+import 'package:vaultexplorer/features/browser/controllers/file_browser_navigation_controller.dart' show PathSegment;
+import 'package:vaultexplorer/features/browser/widgets/breadcrumb_bar.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_find_panel.dart';
+
+class EditorTab {
+  String filePath;
+  final CodeLineEditingController codeController;
+  late final CodeFindController findController;
+  bool isLoading = true;
+  bool hasError = false;
+  String errorMessage = '';
+  bool isDirty = false;
+  bool isSaving = false;
+  bool isAutosaving = false;
+  int lineCount = 0;
+  int charCount = 0;
+  DateTime? lastSavedAt;
+  bool lastSaveWasAutosave = false;
+  bool appliedInitialText = false;
+  String lastKnownText = '';
+  Object? lastCodeLines;
+  int editsSinceHistoryClear = 0;
+  bool showMarkdownPreview;
+  final ScrollController previewScrollController = ScrollController();
+
+  EditorTab({
+    required this.filePath,
+    String initialText = '',
+    bool isMarkdown = false,
+  })  : codeController = CodeLineEditingController.fromText(initialText),
+        showMarkdownPreview = isMarkdown {
+    findController = CodeFindController(codeController);
+  }
+
+  String get fileName => filePath.contains('/') ? filePath.split('/').last : filePath;
+
+  bool get isMarkdownFile =>
+      filePath.toLowerCase().endsWith('.md') ||
+      filePath.toLowerCase().endsWith('.markdown');
+
+  void dispose() {
+    findController.dispose();
+    codeController.dispose();
+    previewScrollController.dispose();
+  }
+}
 
 class TextEditorScreen extends ConsumerStatefulWidget {
   final MountedContainer container;
@@ -31,116 +81,123 @@ class TextEditorScreen extends ConsumerStatefulWidget {
 }
 
 class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
-  // re_editor's own controller -- carries the buffer, selection, and undo
-  // history (replacing the plain TextEditingController + UndoHistoryController
-  // pair the TextField-based editor used). Starts empty and is populated
-  // once via `.text =` the moment the file finishes decrypting; see the
-  // ref.listen callback in build().
-  final CodeLineEditingController _codeController = CodeLineEditingController.fromText('');
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final List<EditorTab> _tabs = [];
+  int _activeTabIndex = 0;
 
-  // Find/replace engine (Phase 4, item 3) -- CodeFindController owns the
-  // actual search: regex compilation, match scanning, current-match
-  // tracking. EditorFindPanel (wired in via CodeEditor.findBuilder below)
-  // only renders its state.
-  late final CodeFindController _findController = CodeFindController(_codeController);
-
-  // Genuinely ephemeral UI state -- tied to the controller's own listener,
-  // not domain data. Load/save/error state lives in TextEditorLoad.
-  bool _isSaving = false;
-  bool _isAutosaving = false;
-  bool _isDirty = false;
-  int _lineCount = 0;
-  int _charCount = 0;
-  DateTime? _lastSavedAt;
-  bool _appliedInitialText = false;
-
-  // See the comment in _onTextChanged for why this is an approximation
-  // (a periodic full wipe) rather than a true capped sliding window.
   static const _kMaxUndoHistoryOperations = 200;
-  int _editsSinceHistoryClear = 0;
-  String _lastKnownText = '';
-  Object? _lastCodeLines;
 
-  // Read/inspection-mode lock (Phase 1, item 3). Locking closes the
-  // soft-keyboard IME connection outright rather than merely hiding it --
-  // see `_toggleReadOnly` -- while still allowing tap-to-select/scroll,
-  // since re_editor's readOnly flag only blocks edits, not selection.
   bool _readOnly = false;
-
-  // Soft wrap vs. horizontal scroll (Phase 1, item 2). re_editor handles
-  // both modes -- and, for horizontal scroll, its own synced scrollbar --
-  // entirely on its own once `wordWrap` flips; nothing else here changes.
   bool _wordWrap = true;
-
   Timer? _autosaveTimer;
-  final FocusNode _focusNode = FocusNode();
+  final EditorFocusNode _focusNode = EditorFocusNode();
+
+  late String _projectDirPath;
+
+  EditorTab get _activeTab => _tabs[_activeTabIndex];
 
   @override
   void initState() {
     super.initState();
-    _codeController.addListener(_onTextChanged);
-    // context.l10n needs didChangeDependencies to have run first, so defer
-    // to a microtask (runs right after initState, before the first build).
-    Future.microtask(_loadFile);
+    final slash = widget.filePath.lastIndexOf('/');
+    _projectDirPath = slash >= 0 ? widget.filePath.substring(0, slash) : '';
+
+    final initialTab = EditorTab(
+      filePath: widget.filePath,
+      isMarkdown: widget.filePath.toLowerCase().endsWith('.md') ||
+          widget.filePath.toLowerCase().endsWith('.markdown'),
+    );
+    _tabs.add(initialTab);
+    _bindTabController(initialTab);
+
+    Future.microtask(() => _loadFileForTab(initialTab));
   }
 
-  Future<void> _loadFile() {
-    return ref
-        .read(textEditorLoadProvider(widget.container.volId, widget.filePath).notifier)
-        .load(
-          widget.container,
-          context.l10n.textEditorDecryptFailedMessage,
-          context.l10n.textEditorInvalidTextFileMessage,
-        );
+  void _bindTabController(EditorTab tab) {
+    tab.codeController.addListener(_onTextChanged);
+  }
+
+  void _unbindTabController(EditorTab tab) {
+    tab.codeController.removeListener(_onTextChanged);
+  }
+
+  Future<void> _loadFileForTab(EditorTab tab) async {
+    setState(() {
+      tab.isLoading = true;
+      tab.hasError = false;
+      tab.errorMessage = '';
+    });
+
+    try {
+      final bytes = await ref.read(vaultFileIoApiProvider).readWholeFile(widget.container, tab.filePath);
+      if (bytes == null) {
+        throw Exception(context.l10n.textEditorDecryptFailedMessage);
+      }
+      String text;
+      try {
+        text = utf8.decode(bytes);
+      } on FormatException {
+        throw FormatException(context.l10n.textEditorInvalidTextFileMessage);
+      }
+
+      if (!mounted) return;
+      tab.appliedInitialText = true;
+      tab.lastKnownText = text;
+      tab.codeController.text = text;
+      tab.lastCodeLines = tab.codeController.value.codeLines;
+      tab.codeController.clearHistory();
+      tab.editsSinceHistoryClear = 0;
+      tab.lineCount = tab.codeController.lineCount;
+      tab.charCount = text.length;
+      tab.isLoading = false;
+      if (mounted) setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        tab.isLoading = false;
+        tab.hasError = true;
+        tab.errorMessage = e.toString();
+      });
+    }
   }
 
   @override
   void dispose() {
     _autosaveTimer?.cancel();
-    _codeController.removeListener(_onTextChanged);
-    _findController.dispose();
-    _codeController.dispose();
+    for (final tab in _tabs) {
+      _unbindTabController(tab);
+      tab.dispose();
+    }
     _focusNode.dispose();
     super.dispose();
   }
 
   void _onTextChanged() {
-    final codeLines = _codeController.value.codeLines;
-    if (identical(codeLines, _lastCodeLines)) {
-      return;
-    }
-    final currentText = _codeController.text;
-    if (currentText == _lastKnownText) {
-      _lastCodeLines = codeLines;
-      return;
-    }
-    _lastCodeLines = codeLines;
-    _lastKnownText = currentText;
+    if (_tabs.isEmpty) return;
+    final tab = _activeTab;
+    final codeLines = tab.codeController.value.codeLines;
+    if (identical(codeLines, tab.lastCodeLines)) return;
 
-    // Undo-history capping (Phase 6, item 3). re_editor's own undo stack
-    // is an unbounded, private linked list of full-buffer snapshots --
-    // there's no public config to cap it at N entries the way the plan
-    // describes. clearHistory() (already used for the initial load,
-    // above) is the only lever this library exposes, so this
-    // approximates a cap by wiping it outright every
-    // _kMaxUndoHistoryOperations edits rather than keeping a true sliding
-    // window of the last N. That means undo can't reach earlier than the
-    // last wipe, which is a real behavior change during one very long
-    // editing session -- the tradeoff made deliberately in exchange for
-    // bounding memory on the low-RAM devices this is meant to protect,
-    // and disclosed rather than silently shipped.
-    _editsSinceHistoryClear++;
-    if (_editsSinceHistoryClear >= _kMaxUndoHistoryOperations) {
-      _codeController.clearHistory();
-      _editsSinceHistoryClear = 0;
+    final currentText = tab.codeController.text;
+    if (currentText == tab.lastKnownText) {
+      tab.lastCodeLines = codeLines;
+      return;
+    }
+    tab.lastCodeLines = codeLines;
+    tab.lastKnownText = currentText;
+
+    tab.editsSinceHistoryClear++;
+    if (tab.editsSinceHistoryClear >= _kMaxUndoHistoryOperations) {
+      tab.codeController.clearHistory();
+      tab.editsSinceHistoryClear = 0;
     }
 
     void updateState() {
       if (!mounted) return;
       setState(() {
-        _isDirty = true;
-        _lineCount = _codeController.lineCount;
-        _charCount = currentText.length;
+        tab.isDirty = true;
+        tab.lineCount = tab.codeController.lineCount;
+        tab.charCount = currentText.length;
       });
     }
 
@@ -150,43 +207,47 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       updateState();
     }
 
-    // Debounced autosave: triggers 2.5s after user stops typing
     _autosaveTimer?.cancel();
-    final loadState = ref.read(textEditorLoadProvider(widget.container.volId, widget.filePath));
-    if (!loadState.isLoading && !loadState.hasError) {
+    final appearance = ref.read(textEditorAppearanceProvider);
+
+    if (appearance.autoSave && !tab.isLoading && !tab.hasError) {
       _autosaveTimer = Timer(const Duration(milliseconds: 2500), () {
-        if (mounted && _isDirty && !_isSaving && !_isAutosaving) {
-          _saveFile(isAutosave: true);
+        final currentAppearance = ref.read(textEditorAppearanceProvider);
+        if (mounted && currentAppearance.autoSave && tab.isDirty && !tab.isSaving && !tab.isAutosaving) {
+          _saveFile(tab, isAutosave: true);
         }
       });
     }
   }
 
-  Future<bool> _saveFile({bool isAutosave = false}) async {
+  Future<bool> _saveFile(EditorTab tab, {bool isAutosave = false}) async {
     _autosaveTimer?.cancel();
 
     setState(() {
       if (isAutosave) {
-        _isAutosaving = true;
+        tab.isAutosaving = true;
       } else {
-        _isSaving = true;
+        tab.isSaving = true;
       }
     });
 
-    final content = _codeController.text;
-    final error = await ref
-        .read(textEditorLoadProvider(widget.container.volId, widget.filePath).notifier)
-        .save(widget.container, content, context.l10n.textEditorWriteBackFailedMessage);
+    final content = tab.codeController.text;
+    final ok = await ref.read(vaultFileIoApiProvider).writeWholeFile(
+          widget.container,
+          tab.filePath,
+          Uint8List.fromList(utf8.encode(content)),
+        );
 
-   if (error == null) {
+    if (ok) {
       if (mounted) {
-        _lastKnownText = content;
-        _lastCodeLines = _codeController.value.codeLines;
+        tab.lastKnownText = content;
+        tab.lastCodeLines = tab.codeController.value.codeLines;
         setState(() {
-          _isSaving = false;
-          _isAutosaving = false;
-          _isDirty = false;
-          _lastSavedAt = DateTime.now();
+          tab.isSaving = false;
+          tab.isAutosaving = false;
+          tab.isDirty = false;
+          tab.lastSavedAt = DateTime.now();
+          tab.lastSaveWasAutosave = isAutosave;
         });
 
         if (!isAutosave) {
@@ -201,14 +262,14 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     } else {
       if (mounted) {
         setState(() {
-          _isSaving = false;
-          _isAutosaving = false;
+          tab.isSaving = false;
+          tab.isAutosaving = false;
         });
 
         if (!isAutosave) {
           showAppSnackBar(
             context,
-            message: context.l10n.saveFailedWithError(error),
+            message: context.l10n.saveFailedWithError(context.l10n.textEditorWriteBackFailedMessage),
             tone: AppBannerTone.error,
           );
         }
@@ -218,20 +279,23 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   }
 
   Future<bool> _onWillPop() async {
-    if (!_isDirty) return true;
+    final anyDirty = _tabs.any((t) => t.isDirty);
+    if (!anyDirty) return true;
 
-    // Flush any pending changes automatically on exit
-    final saved = await _saveFile(isAutosave: true);
-    if (saved) return true;
+    final appearance = ref.read(textEditorAppearanceProvider);
+    if (appearance.autoSave) {
+      for (final tab in _tabs.where((t) => t.isDirty)) {
+        await _saveFile(tab, isAutosave: true);
+      }
+      return true;
+    }
 
     if (!mounted) return true;
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.unsavedChangesTitle),
-        content: Text(
-          context.l10n.unsavedChangesMessage,
-        ),
+        content: Text(context.l10n.unsavedChangesMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop('discard'),
@@ -253,119 +317,240 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     );
 
     if (result == 'save') {
-      return await _saveFile();
+      for (final tab in _tabs.where((t) => t.isDirty)) {
+        await _saveFile(tab);
+      }
+      return true;
     } else if (result == 'discard') {
       return true;
     }
     return false;
   }
 
-  String get _fileName => widget.filePath.split('/').last;
+  void _openFileInTab(String filePath) {
+    final existingIndex = _tabs.indexWhere((t) => t.filePath == filePath);
+    if (existingIndex != -1) {
+      setState(() => _activeTabIndex = existingIndex);
+      return;
+    }
+
+    final newTab = EditorTab(
+      filePath: filePath,
+      isMarkdown: filePath.toLowerCase().endsWith('.md') ||
+          filePath.toLowerCase().endsWith('.markdown'),
+    );
+    _bindTabController(newTab);
+    setState(() {
+      _tabs.add(newTab);
+      _activeTabIndex = _tabs.length - 1;
+    });
+
+    _loadFileForTab(newTab);
+  }
+
+  Future<void> _closeTab(int index) async {
+    final tab = _tabs[index];
+    if (tab.isDirty) {
+      final shouldClose = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(ctx.l10n.unsavedChangesTitle),
+          content: Text(ctx.l10n.unsavedChangesMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(ctx.l10n.discardButton, style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final saved = await _saveFile(tab);
+                if (ctx.mounted) Navigator.of(ctx).pop(saved);
+              },
+              child: Text(ctx.l10n.save),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldClose != true) return;
+    }
+
+    if (_tabs.length == 1) {
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+
+    _unbindTabController(tab);
+    tab.dispose();
+
+    setState(() {
+      _tabs.removeAt(index);
+      _activeTabIndex = _activeTabIndex.clamp(0, _tabs.length - 1);
+    });
+  }
+
+  Future<void> _showSaveAsDialog() async {
+    final currentTab = _activeTab;
+    final lastSlash = currentTab.filePath.lastIndexOf('/');
+    final parentDir = lastSlash >= 0 ? currentTab.filePath.substring(0, lastSlash) : '';
+    final fileName = currentTab.fileName;
+    final controller = TextEditingController(text: fileName);
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.textEditorSaveAsDialogTitle),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: ctx.l10n.textEditorSaveAsFileNameLabel,
+            ),
+            validator: (val) {
+              final text = val?.trim() ?? '';
+              if (text.isEmpty) return ctx.l10n.validationEmptyName;
+              if (text.contains('/') || text.contains('\\')) {
+                return ctx.l10n.validationIllegalChar('/', 0, 'vault');
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.of(ctx).pop(controller.text.trim());
+              }
+            },
+            child: Text(ctx.l10n.textEditorSaveAsButton),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || result == fileName) return;
+
+    final newFilePath = parentDir.isEmpty ? result : '$parentDir/$result';
+
+    final rawList = await ref.read(vaultFileIoApiProvider).listDirectory(
+          widget.container,
+          parentDir,
+        );
+    final existingNames = RawEntry.parseAll(rawList ?? const [])
+        .map((e) => e.name.toLowerCase())
+        .toSet();
+
+    if (existingNames.contains(result.toLowerCase()) && mounted) {
+      final overwrite = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(ctx.l10n.conflictResolutionTitle),
+          content: Text(ctx.l10n.textEditorFileAlreadyExistsError),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(ctx.l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(ctx.l10n.replaceExistingFile),
+            ),
+          ],
+        ),
+      );
+
+      if (overwrite != true) return;
+    }
+
+    final content = currentTab.codeController.text;
+    final ok = await ref.read(vaultFileIoApiProvider).writeWholeFile(
+          widget.container,
+          newFilePath,
+          Uint8List.fromList(utf8.encode(content)),
+        );
+
+    if (ok && mounted) {
+      setState(() {
+        currentTab.filePath = newFilePath;
+        currentTab.isDirty = false;
+        currentTab.lastSavedAt = DateTime.now();
+      });
+      showAppSnackBar(
+        context,
+        message: context.l10n.changesSavedSuccessfully,
+        tone: AppBannerTone.success,
+      );
+    }
+  }
+
+  Future<void> _handleLinkTap(String url) async {
+    try {
+      final ok = await ref.read(vaultFileIoApiProvider).launchUrl(url);
+      if (!ok && mounted) {
+        showAppSnackBar(context, message: context.l10n.couldNotOpenLinkMessage, tone: AppBannerTone.error);
+      }
+    } catch (_) {
+      if (mounted) {
+        showAppSnackBar(context, message: context.l10n.couldNotOpenLinkMessage, tone: AppBannerTone.error);
+      }
+    }
+  }
 
   void _toggleReadOnly() {
     setState(() => _readOnly = !_readOnly);
     if (_readOnly) {
-      // Flipping `readOnly` alone only stops *future* IME connections from
-      // opening (see re_editor's `_CodeInputController.readOnly` setter) --
-      // it doesn't close one that's already open. Unfocus explicitly so
-      // locking the editor dismisses an active soft keyboard right away.
       _focusNode.unfocus();
     }
   }
 
   void _toggleWordWrap() => setState(() => _wordWrap = !_wordWrap);
 
-  // Go to Line & Quick Navigation (Phase 4, item 1). Auto-indent (item 2)
-  // needs no code here at all -- re_editor's own Enter-key handling
-  // (CodeLineEditingController.applyNewLine) already carries the current
-  // line's leading whitespace onto the new one and adds an extra indent
-  // level when the cursor is inside an unclosed {}/[]/(), matching the
-  // plan's Auto-Indent Engine section exactly. Verified by reading
-  // re_editor's source rather than assuming it, since getting this wrong
-  // would mean shipping a second, conflicting auto-indent on top of it.
+  void _insertImageTemplate() {
+    final placeholder = context.l10n.mimeTypeImage;
+    final template = '![$placeholder](image.png)';
+    _activeTab.codeController.replaceSelection(template);
+    _focusNode.requestFocus();
+  }
+
   void _goToLineIndex(int lineIndex) {
-    final target = lineIndex.clamp(0, _codeController.lineCount - 1);
-    _codeController.selection = CodeLineSelection.collapsed(index: target, offset: 0);
-    _codeController.makeCursorCenterIfInvisible();
+    final target = lineIndex.clamp(0, _activeTab.codeController.lineCount - 1);
+    _activeTab.codeController.selection = CodeLineSelection.collapsed(index: target, offset: 0);
+    _activeTab.codeController.makeCursorCenterIfInvisible();
   }
 
   void _goToStart() => _goToLineIndex(0);
 
-  void _goToEnd() => _goToLineIndex(_codeController.lineCount - 1);
+  void _goToEnd() => _goToLineIndex(_activeTab.codeController.lineCount - 1);
 
   Future<void> _showGoToLineDialog() async {
-    final maxLine = _codeController.lineCount;
-    final fieldController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
     final result = await showDialog<int>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.textEditorGoToLineDialogTitle),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: fieldController,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: context.l10n.textEditorGoToLineFieldLabel,
-              helperText: context.l10n.textEditorGoToLineHelperText(maxLine),
-            ),
-            validator: (value) {
-              final line = int.tryParse(value?.trim() ?? '');
-              if (line == null || line < 1 || line > maxLine) {
-                return context.l10n.textEditorGoToLineInvalidNumber(maxLine);
-              }
-              return null;
-            },
-            onFieldSubmitted: (value) {
-              if (formKey.currentState?.validate() ?? false) {
-                Navigator.of(dialogContext).pop(int.parse(value.trim()));
-              }
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                Navigator.of(dialogContext).pop(int.parse(fieldController.text.trim()));
-              }
-            },
-            child: Text(context.l10n.goToLineButton),
-          ),
-        ],
-      ),
+      builder: (dialogContext) => _GoToLineDialog(maxLine: _activeTab.codeController.lineCount),
     );
 
-    fieldController.dispose();
     if (result != null) {
-      // Dialog collects a 1-based line number; the controller is 0-based.
       _goToLineIndex(result - 1);
     }
   }
 
-  // Offline formatters (Phase 5). formatterFor returns null for anything
-  // that isn't one of the recognized types, which is also what gates the
-  // "Format document"/"Minify JSON" menu items below.
-  String? Function(String)? get _formatter => formatterFor(widget.filePath);
+  String? Function(String)? get _formatter => formatterFor(_activeTab.filePath);
 
-  bool get _isJsonFile => widget.filePath.toLowerCase().endsWith('.json');
+  bool get _isJsonFile => _activeTab.filePath.toLowerCase().endsWith('.json');
 
   void _runFormatter(String? Function(String) formatter) {
-    final input = _codeController.text;
+    final input = _activeTab.codeController.text;
     String? result;
     try {
       result = formatter(input);
     } catch (_) {
-      // A formatter finding a way to throw despite its own null-on-failure
-      // contract is exactly the kind of bug that shouldn't be able to
-      // touch the buffer -- treat it the same as a declared failure.
       result = null;
     }
     if (result == null) {
@@ -376,54 +561,30 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       );
       return;
     }
-    if (result == input) return; // already formatted -- nothing to do
-    // Deliberately not calling clearHistory() here (unlike the initial
-    // load): the user has real prior content, so a single Undo should be
-    // able to revert the format.
-    _codeController.text = result;
+    if (result == input) return;
+    _activeTab.codeController.text = result;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_tabs.isEmpty) {
+      return const Scaffold(body: SizedBox.shrink());
+    }
+
     final cs = Theme.of(context).colorScheme;
-    final loadState = ref.watch(textEditorLoadProvider(widget.container.volId, widget.filePath));
+    final activeTab = _activeTab;
 
-    ref.listen(textEditorLoadProvider(widget.container.volId, widget.filePath), (previous, next) {
-      // Apply loaded text to the controller exactly once, the moment it
-      // goes from null to non-null -- matches the original synchronous
-      // `_textController.text = text` inside _loadFile. clearHistory()
-      // matters here: without it this initial assignment would itself be
-      // undoable, letting a fresh, unedited open of the file show a live
-      // "Undo" button that reverts it to blank.
-      if (!_appliedInitialText && next.loadedText != null) {
-        _appliedInitialText = true;
-        final initialText = next.loadedText!;
-        _lastKnownText = initialText;
-        _codeController.text = initialText;
-        _lastCodeLines = _codeController.value.codeLines;
-        _codeController.clearHistory();
-        _editsSinceHistoryClear = 0;
+    ref.listen<TextEditorAppearancePrefs>(textEditorAppearanceProvider, (previous, next) {
+      if (!next.autoSave) {
         _autosaveTimer?.cancel();
-
-        void updateInitial() {
-          if (!mounted) return;
-          setState(() {
-            _isDirty = false;
-            _lineCount = _codeController.lineCount;
-            _charCount = initialText.length;
-          });
-        }
-
-        if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => updateInitial());
-        } else {
-          updateInitial();
-        }
+        _autosaveTimer = null;
       }
     });
 
+    final anyDirty = _tabs.any((t) => t.isDirty);
+
     return PopScope(
-      canPop: !_isDirty,
+      canPop: !anyDirty,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _onWillPop();
@@ -432,37 +593,59 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         }
       },
       child: Scaffold(
+        key: _scaffoldKey,
+        drawer: _buildProjectDrawer(cs),
         appBar: AppBar(
-          title: Text(_fileName),
+          leading: IconButton(
+            icon: const Icon(Icons.menu_rounded),
+            tooltip: context.l10n.textEditorProjectFilesTitle,
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
+          title: Text(activeTab.fileName),
           actions: [
-            if (!loadState.isLoading && !loadState.hasError) ...[
-              IconButton(
-                icon: Icon(_readOnly ? Icons.edit_rounded : Icons.lock_outline_rounded),
-                tooltip: _readOnly
-                    ? context.l10n.textEditorSwitchToEditModeTooltip
-                    : context.l10n.textEditorSwitchToReadModeTooltip,
-                onPressed: _toggleReadOnly,
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.wrap_text_rounded,
-                  color: _wordWrap ? cs.primary : cs.onSurfaceVariant,
+            if (!activeTab.isLoading && !activeTab.hasError) ...[
+              if (activeTab.isMarkdownFile) ...[
+                if (!activeTab.showMarkdownPreview && !_readOnly)
+                  IconButton(
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    tooltip: context.l10n.addFile,
+                    onPressed: _insertImageTemplate,
+                  ),
+                IconButton(
+                  icon: Icon(activeTab.showMarkdownPreview ? Icons.edit_note_rounded : Icons.visibility_outlined),
+                  tooltip: activeTab.showMarkdownPreview
+                      ? context.l10n.markdownViewerEditTooltip
+                      : context.l10n.markdownViewerPreviewTooltip,
+                  onPressed: () => setState(() => activeTab.showMarkdownPreview = !activeTab.showMarkdownPreview),
                 ),
-                tooltip: _wordWrap
-                    ? context.l10n.textEditorSwitchToHorizontalScrollTooltip
-                    : context.l10n.textEditorSwitchToSoftWrapTooltip,
-                onPressed: _toggleWordWrap,
-              ),
+              ],
               IconButton(
                 icon: const Icon(Icons.search_rounded),
                 tooltip: context.l10n.textEditorFindTooltip,
-                onPressed: _findController.findMode,
+                onPressed: () {
+                  if (activeTab.showMarkdownPreview) {
+                    setState(() => activeTab.showMarkdownPreview = false);
+                  }
+                  activeTab.findController.findMode();
+                },
               ),
               PopupMenuButton<String>(
                 tooltip: context.l10n.textEditorMoreActionsTooltip,
                 icon: const Icon(Icons.more_vert_rounded),
                 onSelected: (value) {
                   switch (value) {
+                    case 'save':
+                      _saveFile(activeTab);
+                      break;
+                    case 'saveAs':
+                      _showSaveAsDialog();
+                      break;
+                    case 'readOnly':
+                      _toggleReadOnly();
+                      break;
+                    case 'wordWrap':
+                      _toggleWordWrap();
+                      break;
                     case 'goToLine':
                       _showGoToLineDialog();
                       break;
@@ -486,38 +669,139 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem(
+                    value: 'save',
+                    enabled: activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.save_rounded,
+                          size: 20,
+                          color: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
+                              ? cs.primary
+                              : cs.onSurface.withValues(alpha: 0.38),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.save),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'saveAs',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.save_as_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorSaveAsMenuItem),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'wordWrap',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.wrap_text_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _wordWrap
+                                ? context.l10n.textEditorSwitchToHorizontalScrollTooltip
+                                : context.l10n.textEditorSwitchToSoftWrapTooltip,
+                          ),
+                        ),
+                        if (_wordWrap)
+                          Icon(Icons.check_rounded, size: 18, color: cs.primary),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'readOnly',
+                    child: Row(
+                      children: [
+                        Icon(_readOnly ? Icons.lock_rounded : Icons.lock_open_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _readOnly
+                                ? context.l10n.textEditorSwitchToEditModeTooltip
+                                : context.l10n.textEditorSwitchToReadModeTooltip,
+                          ),
+                        ),
+                        if (_readOnly)
+                          Icon(Icons.check_rounded, size: 18, color: cs.primary),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
                     value: 'goToLine',
-                    child: Text(context.l10n.textEditorGoToLineMenuItem),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.redo_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorGoToLineMenuItem),
+                      ],
+                    ),
                   ),
                   PopupMenuItem(
                     value: 'goToStart',
-                    child: Text(context.l10n.textEditorGoToStartMenuItem),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.vertical_align_top_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorGoToStartMenuItem),
+                      ],
+                    ),
                   ),
                   PopupMenuItem(
                     value: 'goToEnd',
-                    child: Text(context.l10n.textEditorGoToEndMenuItem),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.vertical_align_bottom_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorGoToEndMenuItem),
+                      ],
+                    ),
                   ),
                   if (_formatter != null && !_readOnly) ...[
                     const PopupMenuDivider(),
                     PopupMenuItem(
                       value: 'format',
-                      child: Text(context.l10n.textEditorFormatDocumentMenuItem),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.auto_fix_high_rounded, size: 20),
+                          const SizedBox(width: 12),
+                          Text(context.l10n.textEditorFormatDocumentMenuItem),
+                        ],
+                      ),
                     ),
                     if (_isJsonFile)
                       PopupMenuItem(
                         value: 'minify',
-                        child: Text(context.l10n.textEditorMinifyJsonMenuItem),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.compress_rounded, size: 20),
+                            const SizedBox(width: 12),
+                            Text(context.l10n.textEditorMinifyJsonMenuItem),
+                          ],
+                        ),
                       ),
                   ],
                   const PopupMenuDivider(),
                   PopupMenuItem(
                     value: 'appearance',
-                    child: Text(context.l10n.textEditorThemeMenuItem),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.palette_outlined, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorThemeMenuItem),
+                      ],
+                    ),
                   ),
                 ],
               ),
               IconButton(
-                icon: (_isSaving || _isAutosaving)
+                icon: (activeTab.isSaving || activeTab.isAutosaving)
                     ? const SizedBox(
                         width: 18,
                         height: 18,
@@ -525,25 +809,313 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                       )
                     : Icon(
                         Icons.save_rounded,
-                        color: _isDirty ? cs.primary : cs.outline,
+                        color: activeTab.isDirty ? cs.primary : cs.outline,
                       ),
                 tooltip: context.l10n.saveChangesTooltip,
-                onPressed: (_isDirty && !_isSaving && !_isAutosaving)
-                    ? () => _saveFile()
+                onPressed: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
+                    ? () => _saveFile(activeTab)
                     : null,
               ),
             ],
           ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(42),
+            child: _buildTabBar(cs),
+          ),
         ),
-        body: _buildBody(cs, Theme.of(context).textTheme, loadState),
+        body: _buildBody(cs, Theme.of(context).textTheme),
         bottomNavigationBar:
-            loadState.isLoading || loadState.hasError ? null : _buildBottomBar(cs),
+            activeTab.isLoading || activeTab.hasError ? null : _buildBottomBar(cs),
       ),
     );
   }
 
-  Widget _buildBody(ColorScheme cs, TextTheme textTheme, TextEditorLoadState loadState) {
-    if (loadState.isLoading) {
+  Widget _buildTabBar(ColorScheme cs) {
+    return Container(
+      height: 42,
+      decoration: BoxDecoration(
+        color: cs.surfaceContainer,
+        border: Border(bottom: BorderSide(color: cs.outlineVariant, width: 0.5)),
+      ),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        itemCount: _tabs.length,
+        itemBuilder: (context, index) {
+          final tab = _tabs[index];
+          final isActive = index == _activeTabIndex;
+
+          return Material(
+            color: isActive ? cs.surfaceContainerHighest : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => setState(() => _activeTabIndex = index),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isActive ? cs.primary.withValues(alpha: 0.5) : Colors.transparent,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (tab.isDirty)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+                      ),
+                    Text(
+                      tab.fileName,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        color: isActive ? cs.onSurface : cs.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _closeTab(index),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 14,
+                          color: isActive ? cs.onSurfaceVariant : cs.outline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+List<PathSegment> get _drawerPathStack {
+    final rootLabel = context.l10n.rootFolderLabel;
+    final stack = <PathSegment>[
+      PathSegment(rootLabel, ''),
+    ];
+    if (_projectDirPath.isEmpty) return stack;
+
+    final segments = _projectDirPath.split('/');
+    String accumulated = '';
+    for (final seg in segments) {
+      if (seg.isEmpty) continue;
+      accumulated = accumulated.isEmpty ? seg : '$accumulated/$seg';
+      stack.add(PathSegment(seg, accumulated));
+    }
+    return stack;
+  }
+
+  IconData _fileIconFor(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.md') || lower.endsWith('.markdown')) {
+      return Icons.article_outlined;
+    }
+    if (lower.endsWith('.json') ||
+        lower.endsWith('.xml') ||
+        lower.endsWith('.html') ||
+        lower.endsWith('.yaml') ||
+        lower.endsWith('.yml')) {
+      return Icons.data_object_rounded;
+    }
+    if (lower.endsWith('.dart') ||
+        lower.endsWith('.js') ||
+        lower.endsWith('.ts') ||
+        lower.endsWith('.py') ||
+        lower.endsWith('.c') ||
+        lower.endsWith('.cpp') ||
+        lower.endsWith('.java') ||
+        lower.endsWith('.kt') ||
+        lower.endsWith('.go') ||
+        lower.endsWith('.rs') ||
+        lower.endsWith('.sh')) {
+      return Icons.code_rounded;
+    }
+    return Icons.insert_drive_file_outlined;
+  }
+
+  Widget _buildProjectDrawer(ColorScheme cs) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Drawer Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHigh,
+                border: Border(bottom: BorderSide(color: cs.outlineVariant, width: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 20, color: cs.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.textEditorProjectFilesTitle,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        Text(
+                          widget.container.displayName,
+                          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    tooltip: context.l10n.close,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+            // Reused BreadcrumbBar
+            Container(
+              decoration: BoxDecoration(
+                color: cs.surfaceContainer,
+                border: Border(bottom: BorderSide(color: cs.outlineVariant, width: 0.5)),
+              ),
+              child: BreadcrumbBar(
+                stack: _drawerPathStack,
+                backgroundColor: Colors.transparent,
+                onTap: (index) {
+                  final target = _drawerPathStack[index];
+                  setState(() => _projectDirPath = target.fatPath);
+                },
+              ),
+            ),
+            // File & Directory List
+            Expanded(
+              child: FutureBuilder<List<String>?>(
+                future: ref.read(vaultFileIoApiProvider).listDirectory(
+                      widget.container,
+                      _projectDirPath,
+                    ),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final rawEntries = snapshot.data ?? [];
+                  final entries = RawEntry.parseAll(rawEntries)
+                    ..sort((a, b) {
+                      if (a.isDir != b.isDir) return a.isDir ? -1 : 1;
+                      return a.name.compareTo(b.name);
+                    });
+
+                  if (entries.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.folder_open_rounded, size: 40, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                          const SizedBox(height: 8),
+                          Text(
+                            context.l10n.filesEmptyMessage,
+                            style: TextStyle(color: cs.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    itemCount: entries.length,
+                    itemBuilder: (context, index) {
+                      final entry = entries[index];
+                      final fullPath = _projectDirPath.isEmpty
+                          ? entry.name
+                          : '$_projectDirPath/${entry.name}';
+                      final isOpen = _tabs.any((t) => t.filePath == fullPath);
+                      final isCurrentActive = fullPath == _activeTab.filePath;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Material(
+                          color: isCurrentActive
+                              ? cs.secondaryContainer.withValues(alpha: 0.6)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                            visualDensity: VisualDensity.compact,
+                            dense: true,
+                            leading: Icon(
+                              entry.isDir ? Icons.folder_rounded : _fileIconFor(entry.name),
+                              color: entry.isDir
+                                  ? cs.primary
+                                  : (isCurrentActive ? cs.primary : cs.onSurfaceVariant),
+                              size: 20,
+                            ),
+                            title: Text(
+                              entry.name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: (isCurrentActive || isOpen) ? FontWeight.w600 : FontWeight.normal,
+                                color: isCurrentActive ? cs.onSecondaryContainer : cs.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: entry.isDir
+                                ? Icon(Icons.chevron_right_rounded, size: 18, color: cs.onSurfaceVariant)
+                                : (isCurrentActive
+                                    ? Icon(Icons.edit_note_rounded, size: 18, color: cs.primary)
+                                    : (isOpen
+                                        ? Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+                                          )
+                                        : null)),
+                            onTap: () {
+                              if (entry.isDir) {
+                                setState(() => _projectDirPath = fullPath);
+                              } else {
+                                Navigator.of(context).pop();
+                                _openFileInTab(fullPath);
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(ColorScheme cs, TextTheme textTheme) {
+    final activeTab = _activeTab;
+
+    if (activeTab.isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -555,7 +1127,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         ),
       );
     }
-    if (loadState.hasError) {
+    if (activeTab.hasError) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -566,23 +1138,19 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
               const SizedBox(height: 16),
               Text(
                 context.l10n.cannotOpenFile,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                loadState.errorMessage,
+                activeTab.errorMessage,
                 textAlign: TextAlign.center,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
+                style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
               OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.arrow_back_rounded),
-                label: Text(context.l10n.goBack),
+                onPressed: () => _loadFileForTab(activeTab),
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(context.l10n.retryButton),
               ),
             ],
           ),
@@ -590,18 +1158,26 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       );
     }
 
+    if (activeTab.isMarkdownFile && activeTab.showMarkdownPreview) {
+      return SelectionArea(
+        child: MarkdownBodyView(
+          source: activeTab.codeController.text,
+          container: widget.container,
+          currentFilePath: activeTab.filePath,
+          onLinkTap: _handleLinkTap,
+          scrollController: activeTab.previewScrollController,
+        ),
+      );
+    }
+
     final appearance = ref.watch(textEditorAppearanceProvider);
     final syntaxStyle = resolveEditorSyntaxStyle(
-      widget.filePath,
+      activeTab.filePath,
       Theme.of(context).brightness,
       cs,
       background: appearance.background,
       syntaxTheme: appearance.syntaxTheme,
     );
-    // The accessory key bar only makes sense while the soft keyboard (and
-    // therefore touch typing) is actually up -- it tracks the same inset
-    // a hardware keyboard never pushes, so it naturally stays out of the
-    // way when one is attached instead of needing separate detection.
     final softKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Column(
@@ -609,19 +1185,17 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: CodeEditor(
-              controller: _codeController,
+         child: CodeEditor(
+              key: ValueKey(
+                '${activeTab.filePath}_${appearance.background.name}_${appearance.syntaxTheme.name}_${appearance.fontSize}_${appearance.showLineNumbers}_${appearance.relativeLineNumbers}_${Theme.of(context).brightness.name}',
+              ),
+              controller: activeTab.codeController,
               focusNode: _focusNode,
               readOnly: _readOnly,
               showCursorWhenReadOnly: true,
               wordWrap: _wordWrap,
               autofocus: false,
-              findController: _findController,
-             // findBuilder is invoked on every rebuild CodeEditor makes in
-              // response to _findController itself (it already listens),
-              // so gating on value here is what actually shows/hides the
-              // panel -- returning a zero-size PreferredSize renders nothing
-              // and gives the padding it would have taken back to the code.
+              findController: activeTab.findController,
               findBuilder: (context, findController, readOnly) {
                 if (findController.value == null) {
                   return const PreferredSize(
@@ -631,14 +1205,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 }
                 return EditorFindPanel(controller: findController, readOnly: readOnly);
               },
-              // Folding isn't exposed yet (no indicator/UI for it in this
-              // pass), so skip the analysis pass that would otherwise run
-              // on every edit to support it.
               chunkAnalyzer: const NonCodeChunkAnalyzer(),
               style: CodeEditorStyle(
                 fontFamily: 'JetBrains Mono',
                 fontFamilyFallback: const ['monospace'],
-                fontSize: 14,
+                fontSize: appearance.fontSize,
                 fontHeight: 1.5,
                 backgroundColor: syntaxStyle.backgroundColor,
                 textColor: syntaxStyle.textColor,
@@ -647,50 +1218,53 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 selectionColor: cs.primary.withValues(alpha: 0.28),
                 codeTheme: syntaxStyle.codeTheme,
               ),
-              indicatorBuilder: (context, editingController, chunkController, notifier) {
-                return DefaultCodeLineNumber(
-                  controller: editingController,
-                  notifier: notifier,
-                  textStyle: TextStyle(
-                    color: syntaxStyle.textColor.withValues(alpha: 0.45),
-                    fontFamily: 'JetBrains Mono',
-                    fontFamilyFallback: const ['monospace'],
-                    fontSize: 13,
-                  ),
-                  focusedTextStyle: TextStyle(
-                    color: cs.primary,
-                    fontFamily: 'JetBrains Mono',
-                    fontFamilyFallback: const ['monospace'],
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  // Vim-style relative numbers (Phase 3, item 2): every
-                  // line but the current one shows its distance from the
-                  // cursor's line; the current line still shows its real,
-                  // absolute number (focusedTextStyle above is what makes
-                  // it stand out visually too).
-                  customLineIndex2Text: appearance.relativeLineNumbers
-                      ? (lineIndex) {
-                          final current = editingController.selection.extentIndex;
-                          return lineIndex == current
-                              ? '${lineIndex + 1}'
-                              : '${(lineIndex - current).abs()}';
-                        }
-                      : null,
-                );
-              },
+              indicatorBuilder: appearance.showLineNumbers
+                  ? (context, editingController, chunkController, notifier) {
+                      return DefaultCodeLineNumber(
+                        controller: editingController,
+                        notifier: notifier,
+                        textStyle: TextStyle(
+                          color: syntaxStyle.textColor.withValues(alpha: 0.45),
+                          fontFamily: 'JetBrains Mono',
+                          fontFamilyFallback: const ['monospace'],
+                          fontSize: (appearance.fontSize - 1).clamp(9.0, 23.0),
+                        ),
+                        focusedTextStyle: TextStyle(
+                          color: cs.primary,
+                          fontFamily: 'JetBrains Mono',
+                          fontFamilyFallback: const ['monospace'],
+                          fontSize: (appearance.fontSize - 1).clamp(9.0, 23.0),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        customLineIndex2Text: appearance.relativeLineNumbers
+                            ? (lineIndex) {
+                                final current = editingController.selection.extentIndex;
+                                return lineIndex == current
+                                    ? '${lineIndex + 1}'
+                                    : '${(lineIndex - current).abs()}';
+                              }
+                            : null,
+                      );
+                    }
+                  : null,
             ),
           ),
         ),
-        if (!_readOnly && softKeyboardVisible)
-          EditorAccessoryKeyBar(controller: _codeController, editorFocusNode: _focusNode),
+        if (!_readOnly && softKeyboardVisible && appearance.showAccessoryBar)
+          EditorAccessoryKeyBar(
+            controller: activeTab.codeController,
+            editorFocusNode: _focusNode,
+            symbols: appearance.accessorySymbols,
+          ),
       ],
     );
   }
 
   Widget _buildBottomBar(ColorScheme cs) {
-    final timeStr = _lastSavedAt != null
-        ? '${_lastSavedAt!.hour.toString().padLeft(2, '0')}:${_lastSavedAt!.minute.toString().padLeft(2, '0')}'
+    final activeTab = _activeTab;
+    final appearance = ref.watch(textEditorAppearanceProvider);
+    final timeStr = activeTab.lastSavedAt != null
+        ? '${activeTab.lastSavedAt!.hour.toString().padLeft(2, '0')}:${activeTab.lastSavedAt!.minute.toString().padLeft(2, '0')}'
         : null;
 
     return Container(
@@ -702,11 +1276,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       child: Row(
         children: [
           Text(
-            '${context.l10n.linesCount(_lineCount)}  |  ${context.l10n.charsCount(_charCount)}',
+            '${context.l10n.linesCount(activeTab.lineCount)}  |  ${context.l10n.charsCount(activeTab.charCount)}',
             style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
           ),
           const Spacer(),
-          if (_readOnly) ...[
+          if (_readOnly && !activeTab.showMarkdownPreview) ...[
             Icon(Icons.lock_outline_rounded, size: 14, color: cs.onSurfaceVariant),
             const SizedBox(width: 4),
             Text(
@@ -717,7 +1291,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ] else if (_isAutosaving) ...[
+          ] else if (activeTab.isAutosaving) ...[
             SizedBox(
               width: 12,
               height: 12,
@@ -735,7 +1309,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ] else if (_isSaving) ...[
+          ] else if (activeTab.isSaving) ...[
             Text(
               context.l10n.savingLabel,
               style: TextStyle(
@@ -744,7 +1318,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-          ] else if (_isDirty) ...[
+          ] else if (activeTab.isDirty) ...[
             Text(
               context.l10n.unsavedChangesLabel,
               style: TextStyle(
@@ -761,7 +1335,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
             ),
             const SizedBox(width: 4),
             Text(
-              timeStr != null ? context.l10n.autosavedAtLabel(timeStr) : context.l10n.savedToVault,
+              (activeTab.lastSaveWasAutosave && appearance.autoSave && timeStr != null)
+                  ? context.l10n.autosavedAtLabel(timeStr)
+                  : context.l10n.savedToVault,
               style: TextStyle(
                 color: context.semanticColors.success,
                 fontSize: 12,
@@ -771,6 +1347,69 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _GoToLineDialog extends StatefulWidget {
+  final int maxLine;
+
+  const _GoToLineDialog({required this.maxLine});
+
+  @override
+  State<_GoToLineDialog> createState() => _GoToLineDialogState();
+}
+
+class _GoToLineDialogState extends State<_GoToLineDialog> {
+  late final TextEditingController _controller = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() ?? false) {
+      Navigator.of(context).pop(int.parse(_controller.text.trim()));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.l10n.textEditorGoToLineDialogTitle),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: context.l10n.textEditorGoToLineFieldLabel,
+            helperText: context.l10n.textEditorGoToLineHelperText(widget.maxLine),
+          ),
+          validator: (value) {
+            final line = int.tryParse(value?.trim() ?? '');
+            if (line == null || line < 1 || line > widget.maxLine) {
+              return context.l10n.textEditorGoToLineInvalidNumber(widget.maxLine);
+            }
+            return null;
+          },
+          onFieldSubmitted: (_) => _submit(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(context.l10n.goToLineButton),
+        ),
+      ],
     );
   }
 }

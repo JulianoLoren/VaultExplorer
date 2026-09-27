@@ -56,7 +56,6 @@ import 'package:vaultexplorer/features/browser/mixins/sort_mixin.dart';
 import 'package:vaultexplorer/features/browser/services/folder_document_provider_service.dart';
 import 'package:vaultexplorer/features/browser/services/media_scan_service.dart';
 import 'package:vaultexplorer/features/browser/viewer/html_viewer_screen.dart';
-import 'package:vaultexplorer/features/browser/viewer/markdown_viewer_screen.dart';
 import 'package:vaultexplorer/features/browser/viewer/media_viewer_constants.dart';
 import 'package:vaultexplorer/features/browser/viewer/media_viewer_screen.dart';
 import 'package:vaultexplorer/features/browser/viewer/pdf_viewer_screen.dart';
@@ -1595,10 +1594,8 @@ void _navigateUp() {
         await _openMediaViewer(entry.name, fullPath);
       case OpenInPdfViewer():
         await _openPdfViewer(fullPath);
-      case OpenInHtmlViewer():
+     case OpenInHtmlViewer():
         _openHtmlViewer(fullPath);
-      case OpenInMarkdownViewer():
-        await _openMarkdownViewer(fullPath);
       case OpenWithSystemApp(packageName: final packageName):
         _openFileWithApp(entry.name, fullPath, packageName: packageName);
       case InstallApk():
@@ -1619,23 +1616,13 @@ void _navigateUp() {
     _loadDirectoryContents(_currentDirPath);
   }
 
-  void _openHtmlViewer(String fullPath) {
+ void _openHtmlViewer(String fullPath) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => HtmlViewerScreen(container: widget.container, filePath: fullPath),
       ),
     );
-  }
-
-  Future<void> _openMarkdownViewer(String fullPath) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MarkdownViewerScreen(container: widget.container, filePath: fullPath),
-      ),
-    );
-    _loadDirectoryContents(_currentDirPath);
   }
 
   Route<void> _buildMediaViewerRoute({

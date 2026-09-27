@@ -1,27 +1,45 @@
-// The bottom sheet for choosing TextEditorScreen's background and syntax
-// theme (Phase 3, item 1) plus relative line numbers (Phase 3, item 2).
-// Every swatch is rendered using that option's own actual colors -- a
-// syntax theme's chip is filled with its real root background and text
-// color, not a separate icon standing in for it -- so a combination that
-// clashes (e.g. a light background against a dark-designed syntax theme)
-// is visible here before it's applied, rather than only discovered after.
+// Settings screen for choosing TextEditorScreen's appearance, themes,
+// typography, keyboard shortcuts, and auto-save behavior.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:re_editor/re_editor.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
+import 'package:vaultexplorer/core/widgets/common_widgets.dart';
+import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_appearance_provider.dart';
+import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_theme.dart';
 
 Future<void> showEditorAppearanceSheet(BuildContext context) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (context) => const _EditorAppearanceSheet(),
+  return Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (context) => const EditorAppearanceScreen(),
+    ),
   );
 }
 
-class _EditorAppearanceSheet extends ConsumerWidget {
-  const _EditorAppearanceSheet();
+class EditorAppearanceScreen extends ConsumerStatefulWidget {
+  const EditorAppearanceScreen({super.key});
+
+  @override
+  ConsumerState<EditorAppearanceScreen> createState() => _EditorAppearanceScreenState();
+}
+
+class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen> {
+  late final CodeLineEditingController _previewCodeController = CodeLineEditingController.fromText(
+    '// Live theme & font preview\n'
+    'void main() {\n'
+    '  const vault = "VaultExplorer";\n'
+    '  final count = 42;\n'
+    '  print("Ready: \$vault (\$count)");\n'
+    '}',
+  );
+
+  @override
+  void dispose() {
+    _previewCodeController.dispose();
+    super.dispose();
+  }
 
   String _backgroundLabel(BuildContext context, EditorBackgroundOption option) => switch (option) {
     EditorBackgroundOption.matchSyntaxTheme => context.l10n.textEditorBackgroundMatchTheme,
@@ -40,87 +58,422 @@ class _EditorAppearanceSheet extends ConsumerWidget {
     EditorSyntaxThemeOption.nord => context.l10n.textEditorSyntaxThemeNord,
   };
 
+  Widget _buildPreviewCard(
+    BuildContext context,
+    TextEditorAppearancePrefs prefs,
+    ColorScheme cs,
+    Brightness appBrightness,
+  ) {
+    final syntaxStyle = resolveEditorSyntaxStyle(
+      'preview.dart',
+      appBrightness,
+      cs,
+      background: prefs.background,
+      syntaxTheme: prefs.syntaxTheme,
+    );
+
+    return Container(
+      height: 145,
+      decoration: BoxDecoration(
+        color: syntaxStyle.backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: CodeEditor(
+        key: ValueKey(
+          'preview_${prefs.background.name}_${prefs.syntaxTheme.name}_${prefs.fontSize}_${prefs.showLineNumbers}_${prefs.relativeLineNumbers}_${appBrightness.name}',
+        ),
+        controller: _previewCodeController,
+        readOnly: true,
+        showCursorWhenReadOnly: false,
+        wordWrap: false,
+        autofocus: false,
+        chunkAnalyzer: const NonCodeChunkAnalyzer(),
+        style: CodeEditorStyle(
+          fontFamily: 'JetBrains Mono',
+          fontFamilyFallback: const ['monospace'],
+          fontSize: prefs.fontSize,
+          fontHeight: 1.45,
+          backgroundColor: syntaxStyle.backgroundColor,
+          textColor: syntaxStyle.textColor,
+          codeTheme: syntaxStyle.codeTheme,
+        ),
+        indicatorBuilder: prefs.showLineNumbers
+            ? (context, editingController, chunkController, notifier) {
+                return DefaultCodeLineNumber(
+                  controller: editingController,
+                  notifier: notifier,
+                  textStyle: TextStyle(
+                    color: syntaxStyle.textColor.withValues(alpha: 0.45),
+                    fontFamily: 'JetBrains Mono',
+                    fontFamilyFallback: const ['monospace'],
+                    fontSize: (prefs.fontSize - 1).clamp(9.0, 23.0),
+                  ),
+                  focusedTextStyle: TextStyle(
+                    color: cs.primary,
+                    fontFamily: 'JetBrains Mono',
+                    fontFamilyFallback: const ['monospace'],
+                    fontSize: (prefs.fontSize - 1).clamp(9.0, 23.0),
+                    fontWeight: FontWeight.w700,
+                  ),
+                  customLineIndex2Text: prefs.relativeLineNumbers
+                      ? (lineIndex) {
+                          const simulatedCurrentLine = 1;
+                          return lineIndex == simulatedCurrentLine
+                              ? '${lineIndex + 1}'
+                              : '${(lineIndex - simulatedCurrentLine).abs()}';
+                        }
+                      : null,
+                );
+              }
+            : null,
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final prefs = ref.watch(textEditorAppearanceProvider);
     final notifier = ref.read(textEditorAppearanceProvider.notifier);
     final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final appBrightness = Theme.of(context).brightness;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        child: Column(
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: cs.surfaceContainerHigh,
+        title: Text(
+          context.l10n.textEditorThemeSheetTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.restart_alt_rounded),
+            tooltip: context.l10n.textEditorResetToDefault,
+            onPressed: () {
+              notifier.setBackground(EditorBackgroundOption.matchSyntaxTheme);
+              notifier.setSyntaxTheme(EditorSyntaxThemeOption.auto);
+              notifier.setFontSize(14.0);
+              notifier.setShowLineNumbers(true);
+              notifier.setRelativeLineNumbers(false);
+              notifier.setShowAccessoryBar(true);
+              notifier.setAccessorySymbols(TextEditorAppearancePrefs.defaultSymbols);
+              notifier.setAutoSave(false);
+            },
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              children: [
+                // ==========================================
+                // 1. LIVE PREVIEW (Original style)
+                // ==========================================
+                SectionHeader(context.l10n.textEditorLivePreviewTitle),
+                _buildPreviewCard(context, prefs, cs, appBrightness),
+                const SizedBox(height: 16),
+
+                // ==========================================
+                // 2. THEMES & COLORS (Single Card, no dividers between titles & pills)
+                // ==========================================
+                SectionHeader(context.l10n.textEditorBackgroundSectionTitle),
+                SectionCard(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Background Subtitle
+                          Text(
+                            context.l10n.textEditorBackgroundSectionTitle,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Background Pills
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final option in EditorBackgroundOption.values)
+                                _BackgroundChip(
+                                  label: _backgroundLabel(context, option),
+                                  color: option.overrideColor ?? cs.surfaceContainerHighest,
+                                  textColor: option.overrideColor != null
+                                      ? option.fallbackTextColor
+                                      : cs.onSurface,
+                                  selected: prefs.background == option,
+                                  isAuto: option == EditorBackgroundOption.matchSyntaxTheme,
+                                  onTap: () => notifier.setBackground(option),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          // Syntax Theme Subtitle
+                          Text(
+                            context.l10n.textEditorSyntaxThemeSectionTitle,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Syntax Theme Pills
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final option in EditorSyntaxThemeOption.values)
+                                _BackgroundChip(
+                                  label: _syntaxThemeLabel(context, option),
+                                  color: option.themeMap(appBrightness)['root']?.backgroundColor ??
+                                      cs.surfaceContainerHighest,
+                                  textColor: option.themeMap(appBrightness)['root']?.color ?? cs.onSurface,
+                                  selected: prefs.syntaxTheme == option,
+                                  isAuto: option == EditorSyntaxThemeOption.auto,
+                                  onTap: () => notifier.setSyntaxTheme(option),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // ==========================================
+                // 3. APPEARANCE & INTERFACE (No divider between Font label & Slider)
+                // ==========================================
+                SectionHeader(context.l10n.sectionAppearanceInterface),
+                SectionCard(
+                  children: [
+                    // Font Size and Slider unified without divider
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.format_size_rounded, color: cs.primary),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  context.l10n.textEditorFontSizeLabel(prefs.fontSize.round()),
+                                  style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: cs.primaryContainer,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${prefs.fontSize.round()} pt',
+                                  style: TextStyle(
+                                    color: cs.onPrimaryContainer,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Slider(
+                            value: prefs.fontSize,
+                            min: 10,
+                            max: 24,
+                            divisions: 14,
+                            label: '${prefs.fontSize.round()} pt',
+                            onChanged: notifier.setFontSize,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Show Line Numbers Switch
+                    SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      value: prefs.showLineNumbers,
+                      onChanged: notifier.setShowLineNumbers,
+                      title: Text(
+                        context.l10n.textEditorShowLineNumbersLabel,
+                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        context.l10n.textEditorShowLineNumbersDescription,
+                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      secondary: Icon(
+                        Icons.format_list_numbered_rounded,
+                        color: cs.primary,
+                      ),
+                    ),
+
+                    // Relative Line Numbers (indented sub-setting)
+                    if (prefs.showLineNumbers)
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.only(left: 32, right: 16),
+                        value: prefs.relativeLineNumbers,
+                        onChanged: notifier.setRelativeLineNumbers,
+                        title: Text(
+                          context.l10n.textEditorRelativeLineNumbersLabel,
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          context.l10n.textEditorRelativeLineNumbersDescription,
+                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        secondary: Icon(
+                          Icons.swap_vert_rounded,
+                          color: cs.primary,
+                        ),
+                      ),
+
+                    // Accessory Bar Switch
+                    SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      value: prefs.showAccessoryBar,
+                      onChanged: notifier.setShowAccessoryBar,
+                      title: Text(
+                        context.l10n.textEditorShowAccessoryBarLabel,
+                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        context.l10n.textEditorShowAccessoryBarDescription,
+                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      secondary: Icon(
+                        Icons.keyboard_outlined,
+                        color: cs.primary,
+                      ),
+                    ),
+
+                    // Customize Key Bar (indented sub-setting)
+                    if (prefs.showAccessoryBar)
+                      ListTile(
+                        contentPadding: const EdgeInsets.only(left: 32, right: 16),
+                        leading: Icon(Icons.tune_rounded, color: cs.primary),
+                        title: Text(
+                          context.l10n.textEditorCustomizeKeyBarLabel,
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          context.l10n.textEditorCustomizeKeyBarDescription,
+                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => _showCustomizeKeyBarDialog(context),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // ==========================================
+                // 4. VAULT & FILE HANDLING
+                // ==========================================
+                SectionHeader(context.l10n.sectionVaultFileHandling),
+                SectionCard(
+                  children: [
+                    SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      value: prefs.autoSave,
+                      onChanged: notifier.setAutoSave,
+                      title: Text(
+                        context.l10n.textEditorAutoSaveLabel,
+                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        context.l10n.textEditorAutoSaveDescription,
+                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      secondary: Icon(
+                        Icons.save_as_outlined,
+                        color: cs.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCustomizeKeyBarDialog(BuildContext context) {
+    final prefs = ref.read(textEditorAppearanceProvider);
+    final notifier = ref.read(textEditorAppearanceProvider.notifier);
+    final controller = TextEditingController(text: prefs.accessorySymbols.join(' '));
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.textEditorCustomizeKeyBarTitle),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              context.l10n.textEditorThemeSheetTitle,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.l10n.textEditorBackgroundSectionTitle,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final option in EditorBackgroundOption.values)
-                  _BackgroundChip(
-                    label: _backgroundLabel(context, option),
-                    color: option.overrideColor ?? cs.surfaceContainerHighest,
-                    textColor: option.overrideColor != null ? option.fallbackTextColor : cs.onSurface,
-                    selected: prefs.background == option,
-                    isAuto: option == EditorBackgroundOption.matchSyntaxTheme,
-                    onTap: () => notifier.setBackground(option),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              context.l10n.textEditorSyntaxThemeSectionTitle,
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final option in EditorSyntaxThemeOption.values)
-                  _BackgroundChip(
-                    label: _syntaxThemeLabel(context, option),
-                    color: option.themeMap(appBrightness)['root']?.backgroundColor ?? cs.surfaceContainerHighest,
-                    textColor: option.themeMap(appBrightness)['root']?.color ?? cs.onSurface,
-                    selected: prefs.syntaxTheme == option,
-                    isAuto: option == EditorSyntaxThemeOption.auto,
-                    onTap: () => notifier.setSyntaxTheme(option),
-                  ),
-              ],
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: ctx.l10n.textEditorCustomizeKeyBarHint,
+                helperText: ctx.l10n.textEditorCustomizeKeyBarDescription,
+              ),
             ),
             const SizedBox(height: 12),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(context.l10n.textEditorRelativeLineNumbersLabel),
-              subtitle: Text(context.l10n.textEditorRelativeLineNumbersDescription),
-              value: prefs.relativeLineNumbers,
-              onChanged: notifier.setRelativeLineNumbers,
+            TextButton.icon(
+              onPressed: () {
+                controller.text = TextEditorAppearancePrefs.defaultSymbols.join(' ');
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(ctx.l10n.textEditorResetToDefault),
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final symbols = controller.text
+                  .trim()
+                  .split(RegExp(r'\s+'))
+                  .where((s) => s.isNotEmpty)
+                  .toList();
+              if (symbols.isNotEmpty) {
+                notifier.setAccessorySymbols(symbols);
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: Text(ctx.l10n.done),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// A selectable chip filled with [color]/[textColor] -- the swatch *is*
-/// the preview, not a separate icon standing in for it. [isAuto] draws a
-/// small "auto" glyph next to the label for the two "follow something
-/// else" options (match theme / follow app brightness), which otherwise
-/// wouldn't have one fixed color to show at all.
 class _BackgroundChip extends StatelessWidget {
   final String label;
   final Color color;
@@ -141,18 +494,25 @@ class _BackgroundChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final borderColor = selected
+        ? cs.primary
+        : cs.outlineVariant.withValues(alpha: 0.35);
+
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: borderColor,
+          width: selected ? 2 : 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: selected ? cs.primary : Colors.transparent, width: 2),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -162,11 +522,26 @@ class _BackgroundChip extends StatelessWidget {
               ],
               Text(
                 label,
-                style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
               if (selected) ...[
                 const SizedBox(width: 6),
-                Icon(Icons.check_rounded, size: 16, color: textColor),
+                Container(
+                  padding: const EdgeInsets.all(1.5),
+                  decoration: BoxDecoration(
+                    color: cs.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: 12,
+                    color: cs.onPrimary,
+                  ),
+                ),
               ],
             ],
           ),

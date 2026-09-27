@@ -28,8 +28,33 @@ class TextEditorAppearanceNotifier extends Notifier<TextEditorAppearancePrefs> {
     _service.save(state);
   }
 
-  void setRelativeLineNumbers(bool enabled) {
+   void setRelativeLineNumbers(bool enabled) {
     state = state.copyWith(relativeLineNumbers: enabled);
+    _service.save(state);
+  }
+
+   void setAutoSave(bool enabled) {
+    state = state.copyWith(autoSave: enabled);
+    _service.save(state);
+  }
+
+  void setShowLineNumbers(bool enabled) {
+    state = state.copyWith(showLineNumbers: enabled);
+    _service.save(state);
+  }
+
+  void setShowAccessoryBar(bool enabled) {
+    state = state.copyWith(showAccessoryBar: enabled);
+    _service.save(state);
+  }
+
+  void setFontSize(double size) {
+    state = state.copyWith(fontSize: size);
+    _service.save(state);
+  }
+
+  void setAccessorySymbols(List<String> symbols) {
+    state = state.copyWith(accessorySymbols: symbols);
     _service.save(state);
   }
 }
