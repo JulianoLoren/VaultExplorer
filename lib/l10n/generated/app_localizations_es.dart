@@ -5963,11 +5963,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get incorrectPassword => 'Contraseña incorrecta';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'Recordar diseño por carpeta';
+  String get rememberPerFolderLayoutLabel =>
+      'Recordar diseño y orden por carpeta';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Guarda un diseño de vista independiente (lista, cuadrícula, mosaico) para cada carpeta';
+      'Guarda un diseño de vista (lista, cuadrícula, mosaico) y un orden de clasificación independientes para cada carpeta';
 
   @override
   String get fileInfoAction => 'Info';

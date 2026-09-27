@@ -5646,11 +5646,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get incorrectPassword => '잘못된 비밀번호';
 
   @override
-  String get rememberPerFolderLayoutLabel => '폴더별 레이아웃 기억';
+  String get rememberPerFolderLayoutLabel => '폴더별 레이아웃 및 정렬 기억';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      '폴더마다 별도의 보기 레이아웃(목록, 그리드, 매스너리)을 저장합니다';
+      '폴더마다 별도의 보기 레이아웃(목록, 그리드, 매스너리)과 정렬 순서를 저장합니다';
 
   @override
   String get fileInfoAction => '정보';

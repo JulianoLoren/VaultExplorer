@@ -9699,16 +9699,16 @@ abstract class AppLocalizations {
   /// **'Incorrect password'**
   String get incorrectPassword;
 
-  /// Toggle label for remembering layout mode per folder
+  /// Toggle label for remembering layout mode and sort order per folder
   ///
   /// In en, this message translates to:
-  /// **'Remember Per-Folder Layout'**
+  /// **'Remember Per-Folder Layout & Sort'**
   String get rememberPerFolderLayoutLabel;
 
-  /// Toggle description for remembering layout mode per folder
+  /// Toggle description for remembering layout mode and sort order per folder
   ///
   /// In en, this message translates to:
-  /// **'Save separate view layout (list, grid, masonry) for each folder'**
+  /// **'Save each folder\'s view layout (list, grid, masonry) and sort order separately'**
   String get rememberPerFolderLayoutDesc;
 
   /// Menu item label to view metadata, EXIF, and details of the selected file

@@ -5961,11 +5961,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get incorrectPassword => 'Senha incorreta';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'Lembrar Layout por Pasta';
+  String get rememberPerFolderLayoutLabel =>
+      'Lembrar Layout e Ordenação por Pasta';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Salvar um layout de exibição separado (lista, grade, mosaico) para cada pasta';
+      'Salvar um layout de exibição (lista, grade, mosaico) e uma ordem de classificação separados para cada pasta';
 
   @override
   String get fileInfoAction => 'Info';

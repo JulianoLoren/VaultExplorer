@@ -5946,11 +5946,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get incorrectPassword => 'Password errata';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'Ricorda il layout per cartella';
+  String get rememberPerFolderLayoutLabel =>
+      'Ricorda layout e ordinamento per cartella';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Salva un layout di visualizzazione separato (elenco, griglia, mosaico) per ogni cartella';
+      'Salva un layout di visualizzazione (elenco, griglia, mosaico) e un ordine di ordinamento separati per ogni cartella';
 
   @override
   String get fileInfoAction => 'Info';

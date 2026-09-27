@@ -6033,11 +6033,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get incorrectPassword => 'كلمة مرور غير صحيحة';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'تذكّر التخطيط لكل مجلد';
+  String get rememberPerFolderLayoutLabel => 'تذكّر التخطيط والفرز لكل مجلد';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'حفظ تخطيط عرض منفصل (قائمة، شبكة، متدرّج) لكل مجلد';
+      'حفظ تخطيط العرض (قائمة، شبكة، متدرّج) وترتيب الفرز بشكل منفصل لكل مجلد';
 
   @override
   String get fileInfoAction => 'معلومات';

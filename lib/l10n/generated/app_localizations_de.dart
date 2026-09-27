@@ -5951,11 +5951,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get incorrectPassword => 'Falsches Passwort';
 
   @override
-  String get rememberPerFolderLayoutLabel => 'Layout pro Ordner merken';
+  String get rememberPerFolderLayoutLabel =>
+      'Layout & Sortierung pro Ordner merken';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Separates Ansichtslayout (Liste, Raster, Mauerwerk) für jeden Ordner speichern';
+      'Separates Ansichtslayout (Liste, Raster, Mauerwerk) und Sortierreihenfolge für jeden Ordner speichern';
 
   @override
   String get fileInfoAction => 'Info';

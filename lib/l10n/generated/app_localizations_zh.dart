@@ -5580,10 +5580,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get incorrectPassword => '密码错误';
 
   @override
-  String get rememberPerFolderLayoutLabel => '记住每个文件夹的布局';
+  String get rememberPerFolderLayoutLabel => '记住每个文件夹的布局和排序';
 
   @override
-  String get rememberPerFolderLayoutDesc => '为每个文件夹分别保存视图布局（列表、网格、瀑布流）';
+  String get rememberPerFolderLayoutDesc => '为每个文件夹分别保存视图布局（列表、网格、瀑布流）和排序方式';
 
   @override
   String get fileInfoAction => '信息';

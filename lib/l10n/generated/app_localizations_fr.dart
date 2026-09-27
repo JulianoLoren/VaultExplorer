@@ -6002,11 +6002,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rememberPerFolderLayoutLabel =>
-      'Mémoriser la disposition par dossier';
+      'Mémoriser la disposition et le tri par dossier';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Enregistrer une disposition d\'affichage distincte (liste, grille, mosaïque) pour chaque dossier';
+      'Enregistrer une disposition d\'affichage (liste, grille, mosaïque) et un ordre de tri distincts pour chaque dossier';
 
   @override
   String get fileInfoAction => 'Infos';
