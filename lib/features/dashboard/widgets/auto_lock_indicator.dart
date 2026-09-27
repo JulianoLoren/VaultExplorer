@@ -20,18 +20,36 @@ sealed class AutoLockStatus {
 class AutoLockAfter extends AutoLockStatus {
   const AutoLockAfter(this.minutes);
   final int minutes;
+
+  @override
+  bool operator ==(Object other) => other is AutoLockAfter && other.minutes == minutes;
+
+  @override
+  int get hashCode => Object.hash(AutoLockAfter, minutes);
 }
 
 /// No per-container override, and the app-wide default has no inactivity
 /// delay of its own -- locks as soon as the screen turns off.
 class AutoLockOnScreenOff extends AutoLockStatus {
   const AutoLockOnScreenOff();
+
+  @override
+  bool operator ==(Object other) => other is AutoLockOnScreenOff;
+
+  @override
+  int get hashCode => (AutoLockOnScreenOff).hashCode;
 }
 
 /// Either explicitly set to "Never" on this container, or falling back to
 /// an app-wide default that has vault auto-lock switched off entirely.
 class AutoLockNever extends AutoLockStatus {
   const AutoLockNever();
+
+  @override
+  bool operator ==(Object other) => other is AutoLockNever;
+
+  @override
+  int get hashCode => (AutoLockNever).hashCode;
 }
 
 /// Explicitly set to "Immediately" on this container: locks as soon as the
@@ -45,6 +63,12 @@ class AutoLockNever extends AutoLockStatus {
 /// of `lockImmediateOverrideContainers` for how it's actually enforced.
 class AutoLockImmediately extends AutoLockStatus {
   const AutoLockImmediately();
+
+  @override
+  bool operator ==(Object other) => other is AutoLockImmediately;
+
+  @override
+  int get hashCode => (AutoLockImmediately).hashCode;
 }
 
 /// Computes what will actually lock [record]'s container, falling back to
@@ -53,32 +77,53 @@ class AutoLockImmediately extends AutoLockStatus {
 /// [VaultDashboardScreen._lockAllMountedContainers] for the real sweep this
 /// mirrors, and [SessionLockController.handleScreenOff] for the app-wide
 /// screen-off/inactivity behavior a non-overridden container follows.
-/// Distinguishes whether the lock policy comes from a custom vault override
-/// or is inherited from the global app settings.
+/// Distinguishes whether the lock policy actually diverges from what this
+/// container would get by inheriting the global app settings, versus just
+/// happening to resolve to the same outcome. A container can have an
+/// explicit override on record (e.g. an explicit duration) and still be
+/// `false` here, if that value coincides with the current global default --
+/// see [computeAutoLockPolicy].
 class AutoLockPolicy {
   final AutoLockStatus status;
   final bool isCustomOverride;
   const AutoLockPolicy({required this.status, required this.isCustomOverride});
 }
 
+/// The status a container gets purely from [settings], with no
+/// per-container override of its own -- what [computeAutoLockPolicy] falls
+/// back to when [record] has no explicit choice, and the baseline any
+/// explicit choice is compared against to decide whether it actually
+/// changes anything.
+AutoLockStatus _globalDefaultStatus(AppSettings settings) {
+  if (!settings.lockContainersOnScreenLock) return const AutoLockNever();
+  if (settings.autoLockMins > 0) return AutoLockAfter(settings.autoLockMins);
+  return const AutoLockOnScreenOff();
+}
+
 AutoLockPolicy computeAutoLockPolicy(ContainerRecord? record, AppSettings settings) {
+  final defaultStatus = _globalDefaultStatus(settings);
+
+  final AutoLockStatus? explicitStatus;
   if (record?.autoCloseNever == true) {
-    return const AutoLockPolicy(status: AutoLockNever(), isCustomOverride: true);
+    explicitStatus = const AutoLockNever();
+  } else if (record?.autoCloseImmediately == true) {
+    explicitStatus = const AutoLockImmediately();
+  } else {
+    final perContainerMins = record?.autoCloseMins ?? 0;
+    explicitStatus = perContainerMins > 0 ? AutoLockAfter(perContainerMins) : null;
   }
-  if (record?.autoCloseImmediately == true) {
-    return const AutoLockPolicy(status: AutoLockImmediately(), isCustomOverride: true);
+
+  if (explicitStatus == null) {
+    return AutoLockPolicy(status: defaultStatus, isCustomOverride: false);
   }
-  final perContainerMins = record?.autoCloseMins ?? 0;
-  if (perContainerMins > 0) {
-    return AutoLockPolicy(status: AutoLockAfter(perContainerMins), isCustomOverride: true);
-  }
-  if (!settings.lockContainersOnScreenLock) {
-    return const AutoLockPolicy(status: AutoLockNever(), isCustomOverride: false);
-  }
-  if (settings.autoLockMins > 0) {
-    return AutoLockPolicy(status: AutoLockAfter(settings.autoLockMins), isCustomOverride: false);
-  }
-  return const AutoLockPolicy(status: AutoLockOnScreenOff(), isCustomOverride: false);
+  // The container has its own explicit choice, but it only reads as
+  // "custom" in the badge when it actually changes the outcome -- if it
+  // resolves to the same status inheriting the app-wide default would have
+  // produced anyway (e.g. an explicit 5-minute timer while the global
+  // default is also 5 minutes), show it exactly like an inherited
+  // container. This is re-evaluated against the current global settings on
+  // every call, so it stays in sync if the global default later changes.
+  return AutoLockPolicy(status: explicitStatus, isCustomOverride: explicitStatus != defaultStatus);
 }
 
 AutoLockStatus computeAutoLockStatus(ContainerRecord? record, AppSettings settings) =>
