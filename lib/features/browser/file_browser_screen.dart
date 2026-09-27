@@ -774,7 +774,8 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   }) {
     final effectiveAppSettings = appSettings ?? _appSettings;
     if (_toolbarConfig.rememberPerFolderLayout) {
-      final key = '${widget.container.uri}:$dirPath';
+      final key =
+          FileManagerToolbarConfig.folderKey(widget.container.uri, dirPath);
       final savedModeStr = _toolbarConfig.folderLayoutModes[key];
       if (savedModeStr != null) {
         final savedMode = BrowserLayoutMode.fromJson(savedModeStr);
@@ -782,6 +783,26 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       }
     }
     return effectiveAppSettings.defaultLayoutMode;
+  }
+
+  /// Sort-order counterpart to [_getLayoutModeForFolder]: this folder's own
+  /// saved sort if per-folder memory is on and one was saved, otherwise the
+  /// app-wide default sort. Called at every navigation point that changes
+  /// [_currentDirPath] so each folder shows the sort it was last given
+  /// rather than whatever folder the sort provider happened to be left on.
+  ({SortBy sortBy, bool sortAscending}) _getSortStateForFolder(
+    String dirPath, {
+    AppSettings? appSettings,
+  }) {
+    final effectiveAppSettings = appSettings ?? _appSettings;
+    final saved = decodeFolderSortState(
+      _toolbarConfig.getRawFolderSortMode(widget.container.uri, dirPath),
+    );
+    if (saved != null) return saved;
+    return (
+      sortBy: effectiveAppSettings.defaultFileSortBy,
+      sortAscending: effectiveAppSettings.defaultFileSortAscending,
+    );
   }
 
 void _showItemActionsSheet(RawEntry entry) {
@@ -1069,12 +1090,11 @@ void _showItemActionsSheet(RawEntry entry) {
         _navNotifier.setLayoutMode(
           _getLayoutModeForFolder(_currentDirPath, appSettings: appSettings),
         );
-        ref
-            .read(fileBrowserSortProvider(widget.container.volId).notifier)
-            .restore(
-              appSettings.defaultFileSortBy,
-              appSettings.defaultFileSortAscending,
-            );
+        final initialSort = _getSortStateForFolder(
+          _currentDirPath,
+          appSettings: appSettings,
+        );
+        _sortNotifier.restore(initialSort.sortBy, initialSort.sortAscending);
       }
       if (mounted &&
           widget.container.readOnly &&
@@ -1111,6 +1131,8 @@ void _showItemActionsSheet(RawEntry entry) {
       _appBarAnimController.value = 1.0;
     }
     _navNotifier.setLayoutMode(_getLayoutModeForFolder(_currentDirPath));
+    final currentSort = _getSortStateForFolder(_currentDirPath);
+    _sortNotifier.restore(currentSort.sortBy, currentSort.sortAscending);
     _pinsBookmarksNotifier.load(widget.container);
   }
 
@@ -1178,6 +1200,8 @@ void _showItemActionsSheet(RawEntry entry) {
         );
 
         if (ctx.status == ArchiveOpenStatus.ok) {
+          final archiveSort = _getSortStateForFolder(fullPath);
+          _sortNotifier.restore(archiveSort.sortBy, archiveSort.sortAscending);
           _clearSearch();
           return;
         }
@@ -1238,6 +1262,8 @@ void _enterDirectory(RawEntry entry) {
       layoutMode: _getLayoutModeForFolder(newPath),
       currentScrollOffset: currentOffset,
     );
+    final newSort = _getSortStateForFolder(newPath);
+    _sortNotifier.restore(newSort.sortBy, newSort.sortAscending);
     _resetBrowserScrollController(initialOffset: 0.0);
     _clearSearch();
     _loadDirectoryContents(newPath);
@@ -1257,6 +1283,8 @@ void _enterDirectory(RawEntry entry) {
         layoutMode: _getLayoutModeForFolder(fullPath),
         resolveLayoutMode: _getLayoutModeForFolder,
       );
+      final dirSort = _getSortStateForFolder(fullPath);
+      _sortNotifier.restore(dirSort.sortBy, dirSort.sortAscending);
       _clearSearch();
       await _loadDirectoryContents(newPath);
     } else {
@@ -1270,6 +1298,8 @@ void _enterDirectory(RawEntry entry) {
         layoutMode: _getLayoutModeForFolder(parentPath),
         resolveLayoutMode: _getLayoutModeForFolder,
       );
+      final parentSort = _getSortStateForFolder(parentPath);
+      _sortNotifier.restore(parentSort.sortBy, parentSort.sortAscending);
       _clearSearch();
       await _loadDirectoryContents(parentPath);
       final fileEntry = _currentItems.firstWhere(
@@ -1297,6 +1327,8 @@ void _navigateUp() {
 
     final newPath = _navNotifier.navigateUp(layoutMode: parentLayoutMode);
     if (newPath == null) return;
+    final parentSort = _getSortStateForFolder(parentPath);
+    _sortNotifier.restore(parentSort.sortBy, parentSort.sortAscending);
     _clearSearch();
     _loadDirectoryContents(newPath);
   }
@@ -1368,6 +1400,8 @@ void _navigateUp() {
     final newPath = _navNotifier.jumpTo(index);
     if (newPath == null) return;
     _navNotifier.setLayoutMode(_getLayoutModeForFolder(newPath));
+    final jumpSort = _getSortStateForFolder(newPath);
+    _sortNotifier.restore(jumpSort.sortBy, jumpSort.sortAscending);
     _clearSearch();
     _loadDirectoryContents(newPath);
   }
@@ -1409,6 +1443,8 @@ void _navigateUp() {
   // ── Sort (FileBrowserSort controller) ─────────────────────────────────────
   SortBy get sortBy => ref.read(fileBrowserSortProvider(widget.container.volId)).sortBy;
   bool get sortAscending => ref.read(fileBrowserSortProvider(widget.container.volId)).sortAscending;
+  FileBrowserSort get _sortNotifier =>
+      ref.read(fileBrowserSortProvider(widget.container.volId).notifier);
 
   void setSort(SortBy by) =>
       ref.read(fileBrowserSortProvider(widget.container.volId).notifier).setSort(by);
@@ -2857,14 +2893,22 @@ Future<void> _extractSelectedArchive() async {
   Future<void> _onGridAspectRatioChanged(GridAspectRatio ratio) async {
     try {
       if (_toolbarConfig.rememberPerFolderLayout) {
-        final key = '${widget.container.uri}:$_currentDirPath';
+        // Per-folder memory is on: record this folder's own aspect ratio
+        // only. The app-wide `gridAspectRatio` below is the fallback for
+        // folders that have never been set explicitly -- moving it here too
+        // would make every such folder silently pick up whatever ratio was
+        // last chosen in this one, the same bleed-through bug this whole
+        // per-folder feature exists to avoid.
+        final key = FileManagerToolbarConfig.folderKey(
+          widget.container.uri,
+          _currentDirPath,
+        );
         final updatedRatios = Map<String, String>.from(
           _toolbarConfig.folderGridAspectRatios,
         );
         updatedRatios[key] = ratio.toJson();
         setState(() {
           _toolbarConfig = _toolbarConfig.copyWith(
-            gridAspectRatio: ratio,
             folderGridAspectRatios: updatedRatios,
           );
         });
@@ -2891,16 +2935,16 @@ Future<void> _extractSelectedArchive() async {
   Future<void> _onLayoutModeChanged(BrowserLayoutMode mode) async {
     _navNotifier.setLayoutMode(mode);
     try {
-      // 1. Always update app-wide default layout mode so any folder without
-      // an override opens in the user's preferred view
-      final settings = await ref.read(appSettingsServiceProvider).loadSettings();
-      final updatedSettings = settings.copyWith(defaultLayoutMode: mode);
-      await ref.read(appSettingsServiceProvider).saveSettings(updatedSettings);
-      _appSettings = updatedSettings;
-
-      // 2. If per-folder memory is enabled, also record the choice for this path
       if (_toolbarConfig.rememberPerFolderLayout) {
-        final key = '${widget.container.uri}:$_currentDirPath';
+        // Per-folder memory is on: record this folder's own choice only --
+        // never touch the app-wide default here. That default is the
+        // fallback for folders that have never been set explicitly, and
+        // updating it on every in-folder change is exactly what made other,
+        // untouched folders appear to silently switch views on their own.
+        final key = FileManagerToolbarConfig.folderKey(
+          widget.container.uri,
+          _currentDirPath,
+        );
         final updatedFolderModes = Map<String, String>.from(
           _toolbarConfig.folderLayoutModes,
         );
@@ -2915,6 +2959,13 @@ Future<void> _extractSelectedArchive() async {
         ref
             .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
             .applyImportedConfig(_toolbarConfig);
+      } else {
+        // Per-folder memory is off: this is a single app-wide layout mode,
+        // same as before this feature existed.
+        final settings = await ref.read(appSettingsServiceProvider).loadSettings();
+        final updatedSettings = settings.copyWith(defaultLayoutMode: mode);
+        await ref.read(appSettingsServiceProvider).saveSettings(updatedSettings);
+        _appSettings = updatedSettings;
       }
     } catch (e) {
       if (mounted) {
@@ -2926,12 +2977,39 @@ Future<void> _extractSelectedArchive() async {
   Future<void> _onSortChanged(SortBy field) async {
     setSort(field);
     try {
-      final settings = await ref.read(appSettingsServiceProvider).loadSettings();
-      final updatedSettings = settings.copyWith(
-        defaultFileSortBy: sortBy,
-        defaultFileSortAscending: sortAscending,
-      );
-      await ref.read(appSettingsServiceProvider).saveSettings(updatedSettings);
+      if (_toolbarConfig.rememberPerFolderLayout) {
+        // Per-folder memory is on: record this folder's own sort only --
+        // see _onLayoutModeChanged for why the app-wide default must not
+        // also move.
+        final key = FileManagerToolbarConfig.folderKey(
+          widget.container.uri,
+          _currentDirPath,
+        );
+        final updatedFolderSorts = Map<String, String>.from(
+          _toolbarConfig.folderSortModes,
+        );
+        updatedFolderSorts[key] = encodeFolderSortState(sortBy, sortAscending);
+        _toolbarConfig = _toolbarConfig.copyWith(
+          folderSortModes: updatedFolderSorts,
+        );
+        await _toolbarSvc.save(_toolbarConfig);
+
+        final effectiveToolbarUri =
+            widget.container.isLocalStorage ? null : widget.container.uri;
+        ref
+            .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
+            .applyImportedConfig(_toolbarConfig);
+      } else {
+        // Per-folder memory is off: a single app-wide sort order, same as
+        // before per-folder sort existed.
+        final settings = await ref.read(appSettingsServiceProvider).loadSettings();
+        final updatedSettings = settings.copyWith(
+          defaultFileSortBy: sortBy,
+          defaultFileSortAscending: sortAscending,
+        );
+        await ref.read(appSettingsServiceProvider).saveSettings(updatedSettings);
+        _appSettings = updatedSettings;
+      }
     } catch (e) {
       if (mounted) {
         _setStatus(context.l10n.failedToSaveSettings, error: true);

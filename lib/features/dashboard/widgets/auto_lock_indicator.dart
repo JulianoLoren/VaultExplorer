@@ -50,11 +50,19 @@ class AutoLockPolicy {
 
 AutoLockPolicy computeAutoLockPolicy(ContainerRecord? record, AppSettings settings) {
   if (record?.autoCloseNever == true) {
-    return const AutoLockPolicy(status: AutoLockNever(), isCustomOverride: true);
+    // Only an override if global settings would have locked it.
+    final isCustom = settings.lockContainersOnScreenLock;
+    return AutoLockPolicy(status: const AutoLockNever(), isCustomOverride: isCustom);
   }
   final perContainerMins = record?.autoCloseMins ?? 0;
   if (perContainerMins > 0) {
-    return AutoLockPolicy(status: AutoLockAfter(perContainerMins), isCustomOverride: true);
+    // If global screen-lock is enabled and has the exact same duration, it matches global.
+    final matchesGlobal = settings.lockContainersOnScreenLock &&
+        settings.autoLockMins == perContainerMins;
+    return AutoLockPolicy(
+      status: AutoLockAfter(perContainerMins),
+      isCustomOverride: !matchesGlobal,
+    );
   }
   if (!settings.lockContainersOnScreenLock) {
     return const AutoLockPolicy(status: AutoLockNever(), isCustomOverride: false);
@@ -92,9 +100,8 @@ _AutoLockVisual? _visualFor(BuildContext context, AutoLockStatus status) {
   };
 }
 
-/// Subtle icon badge placed next to the vault title. Shows an icon (e.g. timer
-/// or screen lock) with an explanatory tooltip on tap/hover stating that the
-/// inactivity timer resets on interaction. Hidden when auto-lock is disabled.
+/// Subtle icon badge placed next to the vault title or on the container avatar.
+/// Shows an icon (e.g. timer or screen lock) with an explanatory tooltip on tap/hover.
 class AutoLockIconBadge extends StatelessWidget {
   const AutoLockIconBadge({super.key, required this.record, required this.settings});
   final ContainerRecord? record;
@@ -113,7 +120,7 @@ class AutoLockIconBadge extends StatelessWidget {
     };
 
     final IconData iconData = switch (policy.status) {
-      AutoLockAfter() => policy.isCustomOverride ? Icons.timer_rounded : Icons.timer_outlined,
+      AutoLockAfter() => policy.isCustomOverride ? Icons.lock_clock : Icons.timer_outlined,
       AutoLockOnScreenOff() => Icons.screen_lock_portrait_outlined,
       AutoLockNever() => Icons.timer_off_outlined,
     };
@@ -169,7 +176,7 @@ class DrawerAutoLockStatusText extends StatelessWidget {
         : cs.onSurfaceVariant.withValues(alpha: 0.75);
 
     final IconData iconData = switch (policy.status) {
-      AutoLockAfter() => policy.isCustomOverride ? Icons.timer_rounded : Icons.timer_outlined,
+      AutoLockAfter() => policy.isCustomOverride ? Icons.lock_clock : Icons.timer_outlined,
       AutoLockOnScreenOff() => Icons.screen_lock_portrait_outlined,
       AutoLockNever() => Icons.timer_off_outlined,
     };

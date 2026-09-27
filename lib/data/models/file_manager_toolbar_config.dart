@@ -57,6 +57,7 @@ class FileManagerToolbarConfig {
   final bool bottomSelectionBar;
   final Map<String, String> folderLayoutModes;
   final Map<String, String> folderGridAspectRatios;
+  final Map<String, String> folderSortModes;
   final List<FileDetailColumn> detailColumnsOrder;
   final Set<FileDetailColumn> hiddenDetailColumns;
   final bool showGridFileNames;
@@ -89,6 +90,7 @@ class FileManagerToolbarConfig {
     this.bottomSelectionBar = false,
     this.folderLayoutModes = const {},
     this.folderGridAspectRatios = const {},
+    this.folderSortModes = const {},
     this.detailColumnsOrder = const [
       FileDetailColumn.date,
       FileDetailColumn.size,
@@ -133,6 +135,7 @@ class FileManagerToolbarConfig {
         bottomSelectionBar: false,
         folderLayoutModes: {},
         folderGridAspectRatios: {},
+        folderSortModes: {},
         detailColumnsOrder: [
           FileDetailColumn.date,
           FileDetailColumn.size,
@@ -162,16 +165,34 @@ class FileManagerToolbarConfig {
       .where((c) => !hiddenDetailColumns.contains(c))
       .toList(growable: false);
 
+  /// Shared key format for every per-folder override map
+  /// ([folderLayoutModes], [folderGridAspectRatios], [folderSortModes]) so
+  /// all call sites disambiguate folders the same way -- a container's URI
+  /// followed by the directory's path within it. Centralized here instead
+  /// of being rebuilt inline at each call site so a future map can't drift
+  /// onto a subtly different key format.
+  static String folderKey(String containerUri, String dirPath) =>
+      '$containerUri:$dirPath';
+
   GridAspectRatio getGridAspectRatioForFolder(
       String containerUri, String dirPath) {
     if (rememberPerFolderLayout) {
-      final key = '$containerUri:$dirPath';
-      final saved = folderGridAspectRatios[key];
+      final saved = folderGridAspectRatios[folderKey(containerUri, dirPath)];
       if (saved != null) {
         return GridAspectRatio.fromJson(saved);
       }
     }
     return gridAspectRatio;
+  }
+
+  /// Raw (undecoded) per-folder sort value for [containerUri]/[dirPath], or
+  /// null when there's no saved override yet or per-folder memory is off.
+  /// Returned raw (rather than decoded to a `SortBy`) so this model doesn't
+  /// need to depend on the browser feature's `SortBy` type -- callers decode
+  /// it with `decodeFolderSortState` (see mixins/sort_mixin.dart).
+  String? getRawFolderSortMode(String containerUri, String dirPath) {
+    if (!rememberPerFolderLayout) return null;
+    return folderSortModes[folderKey(containerUri, dirPath)];
   }
 
   FileManagerToolbarConfig copyWith({
@@ -189,6 +210,7 @@ class FileManagerToolbarConfig {
     bool? bottomSelectionBar,
     Map<String, String>? folderLayoutModes,
     Map<String, String>? folderGridAspectRatios,
+    Map<String, String>? folderSortModes,
     List<FileDetailColumn>? detailColumnsOrder,
     Set<FileDetailColumn>? hiddenDetailColumns,
     bool? showGridFileNames,
@@ -224,6 +246,7 @@ class FileManagerToolbarConfig {
         folderLayoutModes: folderLayoutModes ?? this.folderLayoutModes,
         folderGridAspectRatios:
             folderGridAspectRatios ?? this.folderGridAspectRatios,
+        folderSortModes: folderSortModes ?? this.folderSortModes,
         detailColumnsOrder: detailColumnsOrder ?? this.detailColumnsOrder,
         hiddenDetailColumns: hiddenDetailColumns ?? this.hiddenDetailColumns,
         showGridFileNames: showGridFileNames ?? this.showGridFileNames,
@@ -265,6 +288,7 @@ class FileManagerToolbarConfig {
         'bottomSelectionBar': bottomSelectionBar,
         'folderLayoutModes': folderLayoutModes,
         'folderGridAspectRatios': folderGridAspectRatios,
+        'folderSortModes': folderSortModes,
         'detailColumnsOrder':
             detailColumnsOrder.map((c) => c.toJson()).toList(),
         'hiddenDetailColumns':
@@ -321,6 +345,11 @@ class FileManagerToolbarConfig {
               (k, v) => MapEntry(k, v as String),
             ) ??
             const <String, String>{};
+    final rawFolderSortModes =
+        (j['folderSortModes'] as Map<String, dynamic>?)?.map(
+              (k, v) => MapEntry(k, v as String),
+            ) ??
+            const <String, String>{};
     final defaultThumbnailCacheMode = ThumbnailCacheMode.fromJson(
           j['defaultThumbnailCacheMode'] as String?,
         ) ??
@@ -352,6 +381,7 @@ class FileManagerToolbarConfig {
       bottomSelectionBar: j['bottomSelectionBar'] as bool? ?? false,
       folderLayoutModes: rawFolderLayoutModes,
       folderGridAspectRatios: rawFolderGridAspectRatios,
+      folderSortModes: rawFolderSortModes,
       detailColumnsOrder: rawDetailColumns.isEmpty
           ? const [
               FileDetailColumn.date,

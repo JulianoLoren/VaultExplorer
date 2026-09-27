@@ -17,6 +17,29 @@ enum SortBy {
       };
 }
 
+/// Combined persisted representation of one folder's sort choice -- the
+/// value type stored in [FileManagerToolbarConfig.folderSortModes], keyed
+/// the same way as `folderLayoutModes` (see [FileManagerToolbarConfig.folderKey]).
+/// Kept here rather than on the model so the model doesn't need to depend
+/// on [SortBy].
+String encodeFolderSortState(SortBy sortBy, bool sortAscending) =>
+    '${sortBy.toJson()}:${sortAscending ? 'asc' : 'desc'}';
+
+/// Parses a value produced by [encodeFolderSortState]. Returns null for a
+/// missing or malformed entry (no saved override yet, or a corrupt/legacy
+/// value) so callers fall back to the app-wide default sort -- the same
+/// contract [BrowserLayoutMode.fromJson] returning null gives
+/// `folderLayoutModes` callers.
+({SortBy sortBy, bool sortAscending})? decodeFolderSortState(String? raw) {
+  if (raw == null) return null;
+  final sep = raw.indexOf(':');
+  if (sep == -1) return null;
+  return (
+    sortBy: SortBy.fromJson(raw.substring(0, sep)),
+    sortAscending: raw.substring(sep + 1) == 'asc',
+  );
+}
+
 /// Compares two entries the same way the file manager's sort toolbar does.
 ///
 /// Shared so any code that flattens a directory listing into a list (the

@@ -91,6 +91,7 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
       masonryColumnsLandscape: currentServiceConfig.masonryColumnsLandscape,
       folderLayoutModes: currentServiceConfig.folderLayoutModes,
       folderGridAspectRatios: currentServiceConfig.folderGridAspectRatios,
+      folderSortModes: currentServiceConfig.folderSortModes,
     );
     await ref.read(fileManagerToolbarServiceProvider).save(preservedConfig);
 
