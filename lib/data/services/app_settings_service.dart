@@ -396,21 +396,59 @@ AppSettingsService appSettingsService(Ref ref) => const AppSettingsService();
 class AppSettingsService {
   const AppSettingsService();
 
-  static Future<File> get _settingsFile async {
+  /// Storage key for the whole [AppSettings] blob (everything [toJson]
+  /// covers -- never the master-password hash/salt or pattern/PIN hashes,
+  /// which have their own dedicated [_secure] keys above and their own
+  /// load/save paths below). Kept behind [AppSecureStorage] rather than a
+  /// plain file for the same reason those hashes already were: this is
+  /// app-lock/theme/behavior config, not itself secret, but it's cheap to
+  /// encrypt at rest and there's no reason to leave it as the one plain-JSON
+  /// file sitting next to the (also now-encrypted, see
+  /// FileManagerToolbarService) toolbar config.
+  static const _kSettingsBlob = 'app_settings_blob_v1';
+
+  /// Where [AppSettings] lived before the switch to [_kSettingsBlob] above.
+  /// Consulted only by [_migrateLegacySettings], once per install, to move
+  /// an existing user's settings into the encrypted store; deleted once
+  /// migrated so plaintext doesn't linger alongside the encrypted copy.
+  static Future<File> get _legacySettingsFile async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/app_settings.json');
+  }
+
+  /// One-time migration from [_legacySettingsFile] to [_kSettingsBlob].
+  /// Returns null (caller falls back to [AppSettings] defaults) when
+  /// there's no legacy file -- i.e. this is a fresh install, not an
+  /// upgrade, so there's nothing to migrate.
+  Future<AppSettings?> _migrateLegacySettings() async {
+    final legacy = await _legacySettingsFile;
+    if (!await legacy.exists()) return null;
+    final raw = jsonDecode(await legacy.readAsString()) as Map<String, dynamic>;
+    final settings = AppSettings.fromJson(raw);
+    await _secure.write(
+      key: _kSettingsBlob,
+      value: jsonEncode(settings.toJson()),
+    );
+    try {
+      await legacy.delete();
+    } catch (_) {
+      // Best-effort: the encrypted copy written above is the source of
+      // truth from here on regardless (loadSettings checks it first, every
+      // time), so a failed delete only leaves a stale, never-read plaintext
+      // file behind rather than losing anything.
+    }
+    return settings;
   }
 
   Future<AppSettings> loadSettings() async {
     AppSettings settings;
     try {
-      final file = await _settingsFile;
-      if (await file.exists()) {
-        final raw =
-            jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-        settings = AppSettings.fromJson(raw);
+      final blob = await _secure.read(key: _kSettingsBlob);
+      if (blob != null) {
+        settings =
+            AppSettings.fromJson(jsonDecode(blob) as Map<String, dynamic>);
       } else {
-        settings = AppSettings();
+        settings = await _migrateLegacySettings() ?? AppSettings();
       }
     } catch (_) {
       settings = AppSettings();
@@ -441,8 +479,10 @@ class AppSettingsService {
 
   Future<void> saveSettings(AppSettings settings) async {
     try {
-      final file = await _settingsFile;
-      await file.writeAsString(jsonEncode(settings.toJson()));
+      await _secure.write(
+        key: _kSettingsBlob,
+        value: jsonEncode(settings.toJson()),
+      );
     } catch (_) {
       // Same reasoning as FileManagerToolbarService.save(): the caller's
       // in-memory settings object already reflects the change for this

@@ -66,6 +66,15 @@ class ImportedSettingsBundle {
 /// out of scope for this bundle entirely. Only app-wide preferences and
 /// the toolbar layout travel.
 ///
+/// The toolbar layout itself is *not* fully container-agnostic, though:
+/// [FileManagerToolbarConfig.folderLayoutModes]/`folderGridAspectRatios`/
+/// `folderSortModes` are keyed by `containerUri:dirPath` (see
+/// [FileManagerToolbarConfig.folderKey]) -- genuinely per-container path
+/// data, the exact thing excluded above. [_buildBundleJson] strips those
+/// three maps before serializing so the exported file matches that claim
+/// instead of silently carrying container URIs and folder paths out to
+/// wherever the user saves/shares the export.
+///
 /// This is deliberately an injected service rather than a static utility:
 /// settings backup is an app workflow with three dependencies. Keeping them
 /// explicit makes the workflow provider-overridable and prevents a
@@ -108,11 +117,24 @@ class SettingsBackupService {
     final panicKit = await _panicApi.getPanicKitStatus();
     final shareTarget = await _lifecycleApi.isShareTargetEnabled();
 
+    // See the class doc above: these three maps are per-container path
+    // data (containerUri:dirPath keys), not app-wide preferences, so they
+    // don't belong in a file meant to be portable/shareable. Strip them
+    // rather than exporting them and relying on the import side to ignore
+    // them -- a bundle sitting on cloud storage or in a chat attachment is
+    // the actual point where this data shouldn't be present in the first
+    // place.
+    final exportableToolbarConfig = toolbarConfig.copyWith(
+      folderLayoutModes: const {},
+      folderGridAspectRatios: const {},
+      folderSortModes: const {},
+    );
+
     final bundle = {
       'schemaVersion': _schemaVersion,
       'exportedAt': DateTime.now().toIso8601String(),
       'appSettings': settings.toJson(),
-      'fileManagerToolbar': toolbarConfig.toJson(),
+      'fileManagerToolbar': exportableToolbarConfig.toJson(),
       'panicTier': panicSettings.configuredTier.level,
       'quickTileEnabled': panicSettings.quickTileEnabled,
       'panicKitEnabled': panicKit.responderEnabled,
