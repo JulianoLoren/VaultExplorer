@@ -8774,4 +8774,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invalidQrCodeError => 'رمز الاستجابة السريعة للمصادقة غير صالح';
+
+  @override
+  String get immediateAutoLockOptionSubtitle =>
+      'يتم القفل بمجرد إيقاف تشغيل الشاشة أو انتقال التطبيق إلى الخلفية، بغض النظر عن مهلة القفل التلقائي للتطبيق';
+
+  @override
+  String get autoLockIndicatorLocksImmediately => 'قفل فوري';
 }

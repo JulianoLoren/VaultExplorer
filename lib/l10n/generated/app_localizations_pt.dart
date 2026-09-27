@@ -8719,4 +8719,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get invalidQrCodeError => 'Código QR 2FA inválido';
+
+  @override
+  String get immediateAutoLockOptionSubtitle =>
+      'Bloqueia assim que a tela desliga ou o aplicativo vai para segundo plano, independentemente do atraso de bloqueio automático do aplicativo';
+
+  @override
+  String get autoLockIndicatorLocksImmediately => 'Bloqueio imediato';
 }

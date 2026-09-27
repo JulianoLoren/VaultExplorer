@@ -8792,4 +8792,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get invalidQrCodeError => 'Недійсний 2FA QR-код';
+
+  @override
+  String get immediateAutoLockOptionSubtitle =>
+      'Блокується, щойно екран вимикається або програма переходить у фоновий режим, незалежно від затримки автоблокування програми';
+
+  @override
+  String get autoLockIndicatorLocksImmediately => 'Миттєве блокування';
 }

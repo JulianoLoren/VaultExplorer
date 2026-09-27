@@ -2376,5 +2376,7 @@
   "textEditorFormatDocumentMenuItem": "Dar formato al documento",
   "textEditorMinifyJsonMenuItem": "Minificar JSON",
   "textEditorFormatFailedMessage": "No se pudo formatear este archivo: comprueba primero que sea válido",
-  "defaultFolderLayoutLabel": "Diseño de carpeta predeterminado"
+  "defaultFolderLayoutLabel": "Diseño de carpeta predeterminado",
+  "immediateAutoLockOptionSubtitle": "Se bloquea tan pronto como se apaga la pantalla o la app pasa a segundo plano, independientemente del retraso de bloqueo automático de la app",
+  "autoLockIndicatorLocksImmediately": "Bloqueo inmediato"
 }

@@ -2376,5 +2376,7 @@
   "textEditorFormatDocumentMenuItem": "格式化文档",
   "textEditorMinifyJsonMenuItem": "压缩 JSON",
   "textEditorFormatFailedMessage": "无法格式化此文件，请先检查其是否有效",
-  "defaultFolderLayoutLabel": "默认文件夹布局"
+  "defaultFolderLayoutLabel": "默认文件夹布局",
+  "immediateAutoLockOptionSubtitle": "屏幕熄灭或应用进入后台时立即锁定，不受应用的自动锁定延迟影响",
+  "autoLockIndicatorLocksImmediately": "立即锁定"
 }

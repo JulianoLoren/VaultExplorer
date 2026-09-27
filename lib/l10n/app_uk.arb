@@ -2376,5 +2376,7 @@
   "textEditorFormatDocumentMenuItem": "Форматувати документ",
   "textEditorMinifyJsonMenuItem": "Мініфікувати JSON",
   "textEditorFormatFailedMessage": "Не вдалося відформатувати цей файл — спочатку перевірте його коректність",
-  "defaultFolderLayoutLabel": "Стандартний вигляд папки"
+  "defaultFolderLayoutLabel": "Стандартний вигляд папки",
+  "immediateAutoLockOptionSubtitle": "Блокується, щойно екран вимикається або програма переходить у фоновий режим, незалежно від затримки автоблокування програми",
+  "autoLockIndicatorLocksImmediately": "Миттєве блокування"
 }

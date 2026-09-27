@@ -8582,4 +8582,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidQrCodeError => 'Not a valid 2FA QR code';
+
+  @override
+  String get immediateAutoLockOptionSubtitle =>
+      'Locks as soon as the screen turns off or the app is backgrounded, regardless of the app\'s Auto-Lock delay';
+
+  @override
+  String get autoLockIndicatorLocksImmediately => 'Immediate lock';
 }

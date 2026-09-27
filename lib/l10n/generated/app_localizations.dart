@@ -14412,6 +14412,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not a valid 2FA QR code'**
   String get invalidQrCodeError;
+
+  /// Subtitle explaining the "Immediately" option, shown under it in the per-container auto-lock picker dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Locks as soon as the screen turns off or the app is backgrounded, regardless of the app\'s Auto-Lock delay'**
+  String get immediateAutoLockOptionSubtitle;
+
+  /// Concise auto-lock label when this container is configured to lock as soon as the screen turns off or the app is backgrounded, regardless of the app's Auto-Lock delay
+  ///
+  /// In en, this message translates to:
+  /// **'Immediate lock'**
+  String get autoLockIndicatorLocksImmediately;
 }
 
 class _AppLocalizationsDelegate

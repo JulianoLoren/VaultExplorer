@@ -8715,4 +8715,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get invalidQrCodeError => 'Ungültiger 2FA-QR-Code';
+
+  @override
+  String get immediateAutoLockOptionSubtitle =>
+      'Sperrt sofort beim Ausschalten des Bildschirms oder Wechsel der App in den Hintergrund, unabhängig von der automatischen Sperrverzögerung der App';
+
+  @override
+  String get autoLockIndicatorLocksImmediately => 'Sofortige Sperre';
 }

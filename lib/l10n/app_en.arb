@@ -10961,5 +10961,13 @@
   "invalidQrCodeError": "Not a valid 2FA QR code",
   "@invalidQrCodeError": {
     "description": "Error shown when a scanned QR code is not an otpauth URI"
+  },
+  "immediateAutoLockOptionSubtitle": "Locks as soon as the screen turns off or the app is backgrounded, regardless of the app's Auto-Lock delay",
+  "@immediateAutoLockOptionSubtitle": {
+    "description": "Subtitle explaining the \"Immediately\" option, shown under it in the per-container auto-lock picker dialog"
+  },
+  "autoLockIndicatorLocksImmediately": "Immediate lock",
+  "@autoLockIndicatorLocksImmediately": {
+    "description": "Concise auto-lock label when this container is configured to lock as soon as the screen turns off or the app is backgrounded, regardless of the app's Auto-Lock delay"
   }
 }

@@ -2376,5 +2376,7 @@
   "textEditorFormatDocumentMenuItem": "Mettre en forme le document",
   "textEditorMinifyJsonMenuItem": "Minifier le JSON",
   "textEditorFormatFailedMessage": "Impossible de formater ce fichier — vérifiez d'abord qu'il est valide",
-  "defaultFolderLayoutLabel": "Disposition par défaut des dossiers"
+  "defaultFolderLayoutLabel": "Disposition par défaut des dossiers",
+  "immediateAutoLockOptionSubtitle": "Se verrouille dès que l'écran s'éteint ou que l'application passe en arrière-plan, quel que soit le délai de verrouillage automatique de l'application",
+  "autoLockIndicatorLocksImmediately": "Verrouillage immédiat"
 }
