@@ -2327,6 +2327,73 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textEditorCaretScrubberLabel => '向左或向右拖动以移动光标';
 
   @override
+  String get textEditorFindTooltip => '在文件中查找';
+
+  @override
+  String get textEditorFindHint => '查找';
+
+  @override
+  String get textEditorReplaceHint => '替换';
+
+  @override
+  String get textEditorToggleReplaceTooltip => '切换替换';
+
+  @override
+  String get textEditorPreviousMatchTooltip => '上一个匹配项';
+
+  @override
+  String get textEditorNextMatchTooltip => '下一个匹配项';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => '区分大小写';
+
+  @override
+  String get textEditorRegexTooltip => '使用正则表达式';
+
+  @override
+  String get textEditorCloseFindTooltip => '关闭查找';
+
+  @override
+  String get textEditorNoMatches => '无结果';
+
+  @override
+  String get textEditorReplaceButton => '替换';
+
+  @override
+  String get textEditorReplaceAllButton => '全部替换';
+
+  @override
+  String get textEditorMoreActionsTooltip => '更多操作';
+
+  @override
+  String get textEditorGoToLineMenuItem => '转到行…';
+
+  @override
+  String get textEditorGoToStartMenuItem => '转到开头';
+
+  @override
+  String get textEditorGoToEndMenuItem => '转到末尾';
+
+  @override
+  String get textEditorGoToLineDialogTitle => '转到行';
+
+  @override
+  String get textEditorGoToLineFieldLabel => '行号';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return '请输入介于 1 和 $maxLine 之间的行号';
+  }
+
+  @override
+  String get goToLineButton => '转到';
+
+  @override
   String get textEditorSaveConfirmTitle => '未保存的更改';
 
   @override

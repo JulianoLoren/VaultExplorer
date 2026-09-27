@@ -3252,6 +3252,100 @@
   "@textEditorCaretScrubberLabel": {
     "description": "Accessibility label for the caret scrubber strip in the text editor's accessory key bar"
   },
+  "textEditorFindTooltip": "Find in file",
+  "@textEditorFindTooltip": {
+    "description": "AppBar tooltip for the button that opens the text editor's find panel"
+  },
+  "textEditorFindHint": "Find",
+  "@textEditorFindHint": {
+    "description": "Placeholder text in the text editor's find query field"
+  },
+  "textEditorReplaceHint": "Replace",
+  "@textEditorReplaceHint": {
+    "description": "Placeholder text in the text editor's replace field"
+  },
+  "textEditorToggleReplaceTooltip": "Toggle replace",
+  "@textEditorToggleReplaceTooltip": {
+    "description": "Tooltip for the chevron that expands/collapses the replace field in the find panel"
+  },
+  "textEditorPreviousMatchTooltip": "Previous match",
+  "@textEditorPreviousMatchTooltip": {
+    "description": "Tooltip for the find panel's previous-match button"
+  },
+  "textEditorNextMatchTooltip": "Next match",
+  "@textEditorNextMatchTooltip": {
+    "description": "Tooltip for the find panel's next-match button"
+  },
+  "textEditorCaseSensitiveTooltip": "Match case",
+  "@textEditorCaseSensitiveTooltip": {
+    "description": "Tooltip for the find panel's case-sensitivity toggle"
+  },
+  "textEditorRegexTooltip": "Use regular expression",
+  "@textEditorRegexTooltip": {
+    "description": "Tooltip for the find panel's regex toggle"
+  },
+  "textEditorCloseFindTooltip": "Close find",
+  "@textEditorCloseFindTooltip": {
+    "description": "Tooltip for the find panel's close button"
+  },
+  "textEditorNoMatches": "No results",
+  "@textEditorNoMatches": {
+    "description": "Shown in the find panel when the current query has zero matches"
+  },
+  "textEditorReplaceButton": "Replace",
+  "@textEditorReplaceButton": {
+    "description": "Label for the button that replaces the current match"
+  },
+  "textEditorReplaceAllButton": "Replace all",
+  "@textEditorReplaceAllButton": {
+    "description": "Label for the button that replaces every match"
+  },
+  "textEditorMoreActionsTooltip": "More actions",
+  "@textEditorMoreActionsTooltip": {
+    "description": "Tooltip for the text editor's overflow menu button"
+  },
+  "textEditorGoToLineMenuItem": "Go to line…",
+  "@textEditorGoToLineMenuItem": {
+    "description": "Overflow menu item that opens the go-to-line dialog"
+  },
+  "textEditorGoToStartMenuItem": "Go to start",
+  "@textEditorGoToStartMenuItem": {
+    "description": "Overflow menu item that jumps the cursor to the first line of the file"
+  },
+  "textEditorGoToEndMenuItem": "Go to end",
+  "@textEditorGoToEndMenuItem": {
+    "description": "Overflow menu item that jumps the cursor to the last line of the file"
+  },
+  "textEditorGoToLineDialogTitle": "Go to line",
+  "@textEditorGoToLineDialogTitle": {
+    "description": "Title of the go-to-line dialog"
+  },
+  "textEditorGoToLineFieldLabel": "Line number",
+  "@textEditorGoToLineFieldLabel": {
+    "description": "Label for the line-number text field in the go-to-line dialog"
+  },
+  "textEditorGoToLineHelperText": "1–{maxLine}",
+  "@textEditorGoToLineHelperText": {
+    "description": "Helper text under the go-to-line field showing the valid line range",
+    "placeholders": {
+      "maxLine": {
+        "type": "int"
+      }
+    }
+  },
+  "textEditorGoToLineInvalidNumber": "Enter a line number between 1 and {maxLine}",
+  "@textEditorGoToLineInvalidNumber": {
+    "description": "Validation error in the go-to-line dialog when the entered number is out of range or not a number",
+    "placeholders": {
+      "maxLine": {
+        "type": "int"
+      }
+    }
+  },
+  "goToLineButton": "Go",
+  "@goToLineButton": {
+    "description": "Confirm button label in the go-to-line dialog"
+  },
   "textEditorSaveConfirmTitle": "Unsaved Changes",
   "@textEditorSaveConfirmTitle": {
     "description": "Title for unsaved changes confirm dialog in text editor"
@@ -7517,13 +7611,13 @@
   "@incorrectPassword": {
     "description": "Error message when entering an incorrect password"
   },
-  "rememberPerFolderLayoutLabel": "Remember Per-Folder Layout & Sort",
+  "rememberPerFolderLayoutLabel": "Remember Per-Folder Layout",
   "@rememberPerFolderLayoutLabel": {
-    "description": "Toggle label for remembering layout mode and sort order per folder"
+    "description": "Toggle label for remembering layout mode per folder"
   },
-  "rememberPerFolderLayoutDesc": "Save each folder's view layout (list, grid, masonry) and sort order separately",
+  "rememberPerFolderLayoutDesc": "Save separate view layout (list, grid, masonry) for each folder",
   "@rememberPerFolderLayoutDesc": {
-    "description": "Toggle description for remembering layout mode and sort order per folder"
+    "description": "Toggle description for remembering layout mode per folder"
   },
   "fileInfoAction": "Info",
   "@fileInfoAction": {

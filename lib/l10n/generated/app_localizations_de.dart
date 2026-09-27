@@ -2507,6 +2507,73 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nach links oder rechts ziehen, um den Cursor zu bewegen';
 
   @override
+  String get textEditorFindTooltip => 'In Datei suchen';
+
+  @override
+  String get textEditorFindHint => 'Suchen';
+
+  @override
+  String get textEditorReplaceHint => 'Ersetzen';
+
+  @override
+  String get textEditorToggleReplaceTooltip => 'Ersetzen umschalten';
+
+  @override
+  String get textEditorPreviousMatchTooltip => 'Vorheriger Treffer';
+
+  @override
+  String get textEditorNextMatchTooltip => 'Nächster Treffer';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => 'Groß-/Kleinschreibung beachten';
+
+  @override
+  String get textEditorRegexTooltip => 'Regulären Ausdruck verwenden';
+
+  @override
+  String get textEditorCloseFindTooltip => 'Suche schließen';
+
+  @override
+  String get textEditorNoMatches => 'Keine Ergebnisse';
+
+  @override
+  String get textEditorReplaceButton => 'Ersetzen';
+
+  @override
+  String get textEditorReplaceAllButton => 'Alle ersetzen';
+
+  @override
+  String get textEditorMoreActionsTooltip => 'Weitere Aktionen';
+
+  @override
+  String get textEditorGoToLineMenuItem => 'Gehe zu Zeile…';
+
+  @override
+  String get textEditorGoToStartMenuItem => 'Zum Anfang';
+
+  @override
+  String get textEditorGoToEndMenuItem => 'Zum Ende';
+
+  @override
+  String get textEditorGoToLineDialogTitle => 'Gehe zu Zeile';
+
+  @override
+  String get textEditorGoToLineFieldLabel => 'Zeilennummer';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return 'Geben Sie eine Zeilennummer zwischen 1 und $maxLine ein';
+  }
+
+  @override
+  String get goToLineButton => 'Los';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Nicht gespeicherte Änderungen';
 
   @override

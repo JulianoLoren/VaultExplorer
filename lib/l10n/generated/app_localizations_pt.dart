@@ -2500,6 +2500,74 @@ class AppLocalizationsPt extends AppLocalizations {
       'Arraste para a esquerda ou direita para mover o cursor';
 
   @override
+  String get textEditorFindTooltip => 'Localizar no arquivo';
+
+  @override
+  String get textEditorFindHint => 'Localizar';
+
+  @override
+  String get textEditorReplaceHint => 'Substituir';
+
+  @override
+  String get textEditorToggleReplaceTooltip => 'Alternar substituir';
+
+  @override
+  String get textEditorPreviousMatchTooltip => 'Ocorrência anterior';
+
+  @override
+  String get textEditorNextMatchTooltip => 'Próxima ocorrência';
+
+  @override
+  String get textEditorCaseSensitiveTooltip =>
+      'Diferenciar maiúsculas/minúsculas';
+
+  @override
+  String get textEditorRegexTooltip => 'Usar expressão regular';
+
+  @override
+  String get textEditorCloseFindTooltip => 'Fechar busca';
+
+  @override
+  String get textEditorNoMatches => 'Nenhum resultado';
+
+  @override
+  String get textEditorReplaceButton => 'Substituir';
+
+  @override
+  String get textEditorReplaceAllButton => 'Substituir tudo';
+
+  @override
+  String get textEditorMoreActionsTooltip => 'Mais ações';
+
+  @override
+  String get textEditorGoToLineMenuItem => 'Ir para a linha…';
+
+  @override
+  String get textEditorGoToStartMenuItem => 'Ir para o início';
+
+  @override
+  String get textEditorGoToEndMenuItem => 'Ir para o fim';
+
+  @override
+  String get textEditorGoToLineDialogTitle => 'Ir para a linha';
+
+  @override
+  String get textEditorGoToLineFieldLabel => 'Número da linha';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return 'Digite um número de linha entre 1 e $maxLine';
+  }
+
+  @override
+  String get goToLineButton => 'Ir';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Alterações Não Salvas';
 
   @override

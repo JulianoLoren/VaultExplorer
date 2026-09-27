@@ -2499,6 +2499,73 @@ class AppLocalizationsIt extends AppLocalizations {
       'Trascina verso sinistra o destra per spostare il cursore';
 
   @override
+  String get textEditorFindTooltip => 'Cerca nel file';
+
+  @override
+  String get textEditorFindHint => 'Cerca';
+
+  @override
+  String get textEditorReplaceHint => 'Sostituisci';
+
+  @override
+  String get textEditorToggleReplaceTooltip => 'Mostra/nascondi sostituisci';
+
+  @override
+  String get textEditorPreviousMatchTooltip => 'Corrispondenza precedente';
+
+  @override
+  String get textEditorNextMatchTooltip => 'Corrispondenza successiva';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => 'Maiuscole/minuscole';
+
+  @override
+  String get textEditorRegexTooltip => 'Usa espressione regolare';
+
+  @override
+  String get textEditorCloseFindTooltip => 'Chiudi ricerca';
+
+  @override
+  String get textEditorNoMatches => 'Nessun risultato';
+
+  @override
+  String get textEditorReplaceButton => 'Sostituisci';
+
+  @override
+  String get textEditorReplaceAllButton => 'Sostituisci tutto';
+
+  @override
+  String get textEditorMoreActionsTooltip => 'Altre azioni';
+
+  @override
+  String get textEditorGoToLineMenuItem => 'Vai alla riga…';
+
+  @override
+  String get textEditorGoToStartMenuItem => 'Vai all\'inizio';
+
+  @override
+  String get textEditorGoToEndMenuItem => 'Vai alla fine';
+
+  @override
+  String get textEditorGoToLineDialogTitle => 'Vai alla riga';
+
+  @override
+  String get textEditorGoToLineFieldLabel => 'Numero di riga';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return 'Inserisci un numero di riga compreso tra 1 e $maxLine';
+  }
+
+  @override
+  String get goToLineButton => 'Vai';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Modifiche non salvate';
 
   @override

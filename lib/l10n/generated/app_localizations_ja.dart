@@ -2363,6 +2363,73 @@ class AppLocalizationsJa extends AppLocalizations {
   String get textEditorCaretScrubberLabel => '左右にドラッグしてカーソルを移動';
 
   @override
+  String get textEditorFindTooltip => 'ファイル内を検索';
+
+  @override
+  String get textEditorFindHint => '検索';
+
+  @override
+  String get textEditorReplaceHint => '置換';
+
+  @override
+  String get textEditorToggleReplaceTooltip => '置換の切り替え';
+
+  @override
+  String get textEditorPreviousMatchTooltip => '前の一致';
+
+  @override
+  String get textEditorNextMatchTooltip => '次の一致';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => '大文字と小文字を区別';
+
+  @override
+  String get textEditorRegexTooltip => '正規表現を使用';
+
+  @override
+  String get textEditorCloseFindTooltip => '検索を閉じる';
+
+  @override
+  String get textEditorNoMatches => '結果なし';
+
+  @override
+  String get textEditorReplaceButton => '置換';
+
+  @override
+  String get textEditorReplaceAllButton => 'すべて置換';
+
+  @override
+  String get textEditorMoreActionsTooltip => 'その他の操作';
+
+  @override
+  String get textEditorGoToLineMenuItem => '行へ移動…';
+
+  @override
+  String get textEditorGoToStartMenuItem => '先頭へ移動';
+
+  @override
+  String get textEditorGoToEndMenuItem => '末尾へ移動';
+
+  @override
+  String get textEditorGoToLineDialogTitle => '行へ移動';
+
+  @override
+  String get textEditorGoToLineFieldLabel => '行番号';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return '1 から $maxLine までの行番号を入力してください';
+  }
+
+  @override
+  String get goToLineButton => '移動';
+
+  @override
   String get textEditorSaveConfirmTitle => '未保存の変更';
 
   @override

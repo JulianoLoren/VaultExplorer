@@ -4116,6 +4116,132 @@ abstract class AppLocalizations {
   /// **'Drag left or right to move the cursor'**
   String get textEditorCaretScrubberLabel;
 
+  /// AppBar tooltip for the button that opens the text editor's find panel
+  ///
+  /// In en, this message translates to:
+  /// **'Find in file'**
+  String get textEditorFindTooltip;
+
+  /// Placeholder text in the text editor's find query field
+  ///
+  /// In en, this message translates to:
+  /// **'Find'**
+  String get textEditorFindHint;
+
+  /// Placeholder text in the text editor's replace field
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get textEditorReplaceHint;
+
+  /// Tooltip for the chevron that expands/collapses the replace field in the find panel
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle replace'**
+  String get textEditorToggleReplaceTooltip;
+
+  /// Tooltip for the find panel's previous-match button
+  ///
+  /// In en, this message translates to:
+  /// **'Previous match'**
+  String get textEditorPreviousMatchTooltip;
+
+  /// Tooltip for the find panel's next-match button
+  ///
+  /// In en, this message translates to:
+  /// **'Next match'**
+  String get textEditorNextMatchTooltip;
+
+  /// Tooltip for the find panel's case-sensitivity toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Match case'**
+  String get textEditorCaseSensitiveTooltip;
+
+  /// Tooltip for the find panel's regex toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Use regular expression'**
+  String get textEditorRegexTooltip;
+
+  /// Tooltip for the find panel's close button
+  ///
+  /// In en, this message translates to:
+  /// **'Close find'**
+  String get textEditorCloseFindTooltip;
+
+  /// Shown in the find panel when the current query has zero matches
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get textEditorNoMatches;
+
+  /// Label for the button that replaces the current match
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get textEditorReplaceButton;
+
+  /// Label for the button that replaces every match
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all'**
+  String get textEditorReplaceAllButton;
+
+  /// Tooltip for the text editor's overflow menu button
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get textEditorMoreActionsTooltip;
+
+  /// Overflow menu item that opens the go-to-line dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Go to line…'**
+  String get textEditorGoToLineMenuItem;
+
+  /// Overflow menu item that jumps the cursor to the first line of the file
+  ///
+  /// In en, this message translates to:
+  /// **'Go to start'**
+  String get textEditorGoToStartMenuItem;
+
+  /// Overflow menu item that jumps the cursor to the last line of the file
+  ///
+  /// In en, this message translates to:
+  /// **'Go to end'**
+  String get textEditorGoToEndMenuItem;
+
+  /// Title of the go-to-line dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Go to line'**
+  String get textEditorGoToLineDialogTitle;
+
+  /// Label for the line-number text field in the go-to-line dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Line number'**
+  String get textEditorGoToLineFieldLabel;
+
+  /// Helper text under the go-to-line field showing the valid line range
+  ///
+  /// In en, this message translates to:
+  /// **'1–{maxLine}'**
+  String textEditorGoToLineHelperText(int maxLine);
+
+  /// Validation error in the go-to-line dialog when the entered number is out of range or not a number
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a line number between 1 and {maxLine}'**
+  String textEditorGoToLineInvalidNumber(int maxLine);
+
+  /// Confirm button label in the go-to-line dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get goToLineButton;
+
   /// Title for unsaved changes confirm dialog in text editor
   ///
   /// In en, this message translates to:
@@ -9699,16 +9825,16 @@ abstract class AppLocalizations {
   /// **'Incorrect password'**
   String get incorrectPassword;
 
-  /// Toggle label for remembering layout mode and sort order per folder
+  /// Toggle label for remembering layout mode per folder
   ///
   /// In en, this message translates to:
-  /// **'Remember Per-Folder Layout & Sort'**
+  /// **'Remember Per-Folder Layout'**
   String get rememberPerFolderLayoutLabel;
 
-  /// Toggle description for remembering layout mode and sort order per folder
+  /// Toggle description for remembering layout mode per folder
   ///
   /// In en, this message translates to:
-  /// **'Save each folder\'s view layout (list, grid, masonry) and sort order separately'**
+  /// **'Save separate view layout (list, grid, masonry) for each folder'**
   String get rememberPerFolderLayoutDesc;
 
   /// Menu item label to view metadata, EXIF, and details of the selected file

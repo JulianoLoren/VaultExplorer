@@ -2525,6 +2525,73 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перетягніть ліворуч або праворуч, щоб перемістити курсор';
 
   @override
+  String get textEditorFindTooltip => 'Знайти у файлі';
+
+  @override
+  String get textEditorFindHint => 'Знайти';
+
+  @override
+  String get textEditorReplaceHint => 'Замінити';
+
+  @override
+  String get textEditorToggleReplaceTooltip => 'Перемкнути заміну';
+
+  @override
+  String get textEditorPreviousMatchTooltip => 'Попередній збіг';
+
+  @override
+  String get textEditorNextMatchTooltip => 'Наступний збіг';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => 'Враховувати регістр';
+
+  @override
+  String get textEditorRegexTooltip => 'Використовувати регулярний вираз';
+
+  @override
+  String get textEditorCloseFindTooltip => 'Закрити пошук';
+
+  @override
+  String get textEditorNoMatches => 'Немає результатів';
+
+  @override
+  String get textEditorReplaceButton => 'Замінити';
+
+  @override
+  String get textEditorReplaceAllButton => 'Замінити все';
+
+  @override
+  String get textEditorMoreActionsTooltip => 'Більше дій';
+
+  @override
+  String get textEditorGoToLineMenuItem => 'Перейти до рядка…';
+
+  @override
+  String get textEditorGoToStartMenuItem => 'Перейти на початок';
+
+  @override
+  String get textEditorGoToEndMenuItem => 'Перейти в кінець';
+
+  @override
+  String get textEditorGoToLineDialogTitle => 'Перейти до рядка';
+
+  @override
+  String get textEditorGoToLineFieldLabel => 'Номер рядка';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return 'Введіть номер рядка від 1 до $maxLine';
+  }
+
+  @override
+  String get goToLineButton => 'Перейти';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Незбережені зміни';
 
   @override

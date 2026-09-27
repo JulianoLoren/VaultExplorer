@@ -2363,6 +2363,73 @@ class AppLocalizationsKo extends AppLocalizations {
   String get textEditorCaretScrubberLabel => '커서를 이동하려면 좌우로 드래그하세요';
 
   @override
+  String get textEditorFindTooltip => '파일에서 찾기';
+
+  @override
+  String get textEditorFindHint => '찾기';
+
+  @override
+  String get textEditorReplaceHint => '바꾸기';
+
+  @override
+  String get textEditorToggleReplaceTooltip => '바꾸기 전환';
+
+  @override
+  String get textEditorPreviousMatchTooltip => '이전 일치 항목';
+
+  @override
+  String get textEditorNextMatchTooltip => '다음 일치 항목';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => '대/소문자 구분';
+
+  @override
+  String get textEditorRegexTooltip => '정규식 사용';
+
+  @override
+  String get textEditorCloseFindTooltip => '찾기 닫기';
+
+  @override
+  String get textEditorNoMatches => '결과 없음';
+
+  @override
+  String get textEditorReplaceButton => '바꾸기';
+
+  @override
+  String get textEditorReplaceAllButton => '모두 바꾸기';
+
+  @override
+  String get textEditorMoreActionsTooltip => '추가 작업';
+
+  @override
+  String get textEditorGoToLineMenuItem => '줄로 이동…';
+
+  @override
+  String get textEditorGoToStartMenuItem => '처음으로 이동';
+
+  @override
+  String get textEditorGoToEndMenuItem => '끝으로 이동';
+
+  @override
+  String get textEditorGoToLineDialogTitle => '줄로 이동';
+
+  @override
+  String get textEditorGoToLineFieldLabel => '줄 번호';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return '1에서 $maxLine 사이의 줄 번호를 입력하세요';
+  }
+
+  @override
+  String get goToLineButton => '이동';
+
+  @override
   String get textEditorSaveConfirmTitle => '저장되지 않은 변경 사항';
 
   @override

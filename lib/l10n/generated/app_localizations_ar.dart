@@ -2534,6 +2534,73 @@ class AppLocalizationsAr extends AppLocalizations {
       'اسحب لليسار أو لليمين لتحريك المؤشر';
 
   @override
+  String get textEditorFindTooltip => 'البحث في الملف';
+
+  @override
+  String get textEditorFindHint => 'بحث';
+
+  @override
+  String get textEditorReplaceHint => 'استبدال';
+
+  @override
+  String get textEditorToggleReplaceTooltip => 'تبديل الاستبدال';
+
+  @override
+  String get textEditorPreviousMatchTooltip => 'المطابقة السابقة';
+
+  @override
+  String get textEditorNextMatchTooltip => 'المطابقة التالية';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => 'مطابقة حالة الأحرف';
+
+  @override
+  String get textEditorRegexTooltip => 'استخدام تعبير نمطي';
+
+  @override
+  String get textEditorCloseFindTooltip => 'إغلاق البحث';
+
+  @override
+  String get textEditorNoMatches => 'لا توجد نتائج';
+
+  @override
+  String get textEditorReplaceButton => 'استبدال';
+
+  @override
+  String get textEditorReplaceAllButton => 'استبدال الكل';
+
+  @override
+  String get textEditorMoreActionsTooltip => 'المزيد من الإجراءات';
+
+  @override
+  String get textEditorGoToLineMenuItem => 'الانتقال إلى سطر…';
+
+  @override
+  String get textEditorGoToStartMenuItem => 'الانتقال إلى البداية';
+
+  @override
+  String get textEditorGoToEndMenuItem => 'الانتقال إلى النهاية';
+
+  @override
+  String get textEditorGoToLineDialogTitle => 'الانتقال إلى سطر';
+
+  @override
+  String get textEditorGoToLineFieldLabel => 'رقم السطر';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return 'أدخل رقم سطر بين 1 و $maxLine';
+  }
+
+  @override
+  String get goToLineButton => 'انتقال';
+
+  @override
   String get textEditorSaveConfirmTitle => 'تغييرات غير محفوظة';
 
   @override

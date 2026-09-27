@@ -2459,6 +2459,73 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag left or right to move the cursor';
 
   @override
+  String get textEditorFindTooltip => 'Find in file';
+
+  @override
+  String get textEditorFindHint => 'Find';
+
+  @override
+  String get textEditorReplaceHint => 'Replace';
+
+  @override
+  String get textEditorToggleReplaceTooltip => 'Toggle replace';
+
+  @override
+  String get textEditorPreviousMatchTooltip => 'Previous match';
+
+  @override
+  String get textEditorNextMatchTooltip => 'Next match';
+
+  @override
+  String get textEditorCaseSensitiveTooltip => 'Match case';
+
+  @override
+  String get textEditorRegexTooltip => 'Use regular expression';
+
+  @override
+  String get textEditorCloseFindTooltip => 'Close find';
+
+  @override
+  String get textEditorNoMatches => 'No results';
+
+  @override
+  String get textEditorReplaceButton => 'Replace';
+
+  @override
+  String get textEditorReplaceAllButton => 'Replace all';
+
+  @override
+  String get textEditorMoreActionsTooltip => 'More actions';
+
+  @override
+  String get textEditorGoToLineMenuItem => 'Go to line…';
+
+  @override
+  String get textEditorGoToStartMenuItem => 'Go to start';
+
+  @override
+  String get textEditorGoToEndMenuItem => 'Go to end';
+
+  @override
+  String get textEditorGoToLineDialogTitle => 'Go to line';
+
+  @override
+  String get textEditorGoToLineFieldLabel => 'Line number';
+
+  @override
+  String textEditorGoToLineHelperText(int maxLine) {
+    return '1–$maxLine';
+  }
+
+  @override
+  String textEditorGoToLineInvalidNumber(int maxLine) {
+    return 'Enter a line number between 1 and $maxLine';
+  }
+
+  @override
+  String get goToLineButton => 'Go';
+
+  @override
   String get textEditorSaveConfirmTitle => 'Unsaved Changes';
 
   @override
@@ -5861,12 +5928,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incorrectPassword => 'Incorrect password';
 
   @override
-  String get rememberPerFolderLayoutLabel =>
-      'Remember Per-Folder Layout & Sort';
+  String get rememberPerFolderLayoutLabel => 'Remember Per-Folder Layout';
 
   @override
   String get rememberPerFolderLayoutDesc =>
-      'Save each folder\'s view layout (list, grid, masonry) and sort order separately';
+      'Save separate view layout (list, grid, masonry) for each folder';
 
   @override
   String get fileInfoAction => 'Info';
