@@ -8748,4 +8748,56 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get quickActionLockModeLeaveOpenSubtitle =>
       'Lascia il vault sbloccato e segui i timer di blocco automatico';
+
+  @override
+  String get textEditorThemeMenuItem => 'Aspetto dell\'editor…';
+
+  @override
+  String get textEditorThemeSheetTitle => 'Aspetto dell\'editor';
+
+  @override
+  String get textEditorBackgroundSectionTitle => 'Sfondo';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => 'Tema della sintassi';
+
+  @override
+  String get textEditorBackgroundMatchTheme => 'Come il tema';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'Nero AMOLED';
+
+  @override
+  String get textEditorBackgroundDarkSlate => 'Ardesia scuro';
+
+  @override
+  String get textEditorBackgroundClassicLight => 'Chiaro classico';
+
+  @override
+  String get textEditorBackgroundSepia => 'Seppia';
+
+  @override
+  String get textEditorSyntaxThemeAuto => 'Automatico';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => 'Numeri di riga relativi';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      'Mostra la distanza di ciascuna riga dal cursore anziché il numero assoluto';
 }

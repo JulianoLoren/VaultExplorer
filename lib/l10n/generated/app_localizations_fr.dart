@@ -8827,4 +8827,56 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get quickActionLockModeLeaveOpenSubtitle =>
       'Laisser le coffre ouvert et suivre les minuteries de verrouillage automatique';
+
+  @override
+  String get textEditorThemeMenuItem => 'Apparence de l\'éditeur…';
+
+  @override
+  String get textEditorThemeSheetTitle => 'Apparence de l\'éditeur';
+
+  @override
+  String get textEditorBackgroundSectionTitle => 'Arrière-plan';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => 'Thème de syntaxe';
+
+  @override
+  String get textEditorBackgroundMatchTheme => 'Selon le thème';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'Noir AMOLED';
+
+  @override
+  String get textEditorBackgroundDarkSlate => 'Ardoise sombre';
+
+  @override
+  String get textEditorBackgroundClassicLight => 'Clair classique';
+
+  @override
+  String get textEditorBackgroundSepia => 'Sépia';
+
+  @override
+  String get textEditorSyntaxThemeAuto => 'Automatique';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => 'Numéros de ligne relatifs';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      'Afficher la distance de chaque ligne par rapport au curseur au lieu de son numéro absolu';
 }

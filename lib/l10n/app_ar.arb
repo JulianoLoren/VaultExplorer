@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "قفل دائمًا",
   "quickActionLockModeAlwaysLockSubtitle": "قفل الخزنة فورًا بعد الحفظ",
   "quickActionLockModeLeaveOpenLabel": "إبقاء القفل مفتوحًا",
-  "quickActionLockModeLeaveOpenSubtitle": "ترك الخزنة مفتوحة واتباع مؤقتات القفل التلقائي"
+  "quickActionLockModeLeaveOpenSubtitle": "ترك الخزنة مفتوحة واتباع مؤقتات القفل التلقائي",
+  "textEditorThemeMenuItem": "مظهر المحرر…",
+  "textEditorThemeSheetTitle": "مظهر المحرر",
+  "textEditorBackgroundSectionTitle": "الخلفية",
+  "textEditorSyntaxThemeSectionTitle": "سمة بناء الجملة",
+  "textEditorBackgroundMatchTheme": "مطابقة السمة",
+  "textEditorBackgroundAmoledBlack": "أسود AMOLED",
+  "textEditorBackgroundDarkSlate": "رمادي داكن",
+  "textEditorBackgroundClassicLight": "فاتح كلاسيكي",
+  "textEditorBackgroundSepia": "بني داكن (Sepia)",
+  "textEditorSyntaxThemeAuto": "تلقائي",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "أرقام الأسطر النسبية",
+  "textEditorRelativeLineNumbersDescription": "إظهار مسافة كل سطر من المؤشر بدلاً من رقمه المطلق"
 }

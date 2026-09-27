@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "始终锁定",
   "quickActionLockModeAlwaysLockSubtitle": "保存后立即锁定保险库",
   "quickActionLockModeLeaveOpenLabel": "保持解锁",
-  "quickActionLockModeLeaveOpenSubtitle": "保持保险库开启并遵循自动锁定计时器"
+  "quickActionLockModeLeaveOpenSubtitle": "保持保险库开启并遵循自动锁定计时器",
+  "textEditorThemeMenuItem": "编辑器外观…",
+  "textEditorThemeSheetTitle": "编辑器外观",
+  "textEditorBackgroundSectionTitle": "背景",
+  "textEditorSyntaxThemeSectionTitle": "语法主题",
+  "textEditorBackgroundMatchTheme": "跟随主题",
+  "textEditorBackgroundAmoledBlack": "AMOLED 纯黑",
+  "textEditorBackgroundDarkSlate": "深青灰",
+  "textEditorBackgroundClassicLight": "经典浅色",
+  "textEditorBackgroundSepia": "复古羊皮纸 (Sepia)",
+  "textEditorSyntaxThemeAuto": "自动",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "相对行号",
+  "textEditorRelativeLineNumbersDescription": "显示每行相对于光标的距离，而非绝对行号"
 }

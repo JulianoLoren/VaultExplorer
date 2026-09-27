@@ -11001,5 +11001,73 @@
   "quickActionLockModeLeaveOpenSubtitle": "Leave vault unlocked and follow auto-lock timers",
   "@quickActionLockModeLeaveOpenSubtitle": {
     "description": "Subtitle for leave open mode"
+  },
+  "textEditorThemeMenuItem": "Editor appearance…",
+  "@textEditorThemeMenuItem": {
+    "description": "Overflow menu item that opens the editor appearance (background/syntax theme) picker sheet"
+  },
+  "textEditorThemeSheetTitle": "Editor appearance",
+  "@textEditorThemeSheetTitle": {
+    "description": "Title of the editor appearance picker sheet"
+  },
+  "textEditorBackgroundSectionTitle": "Background",
+  "@textEditorBackgroundSectionTitle": {
+    "description": "Section header for the background color choices in the editor appearance sheet"
+  },
+  "textEditorSyntaxThemeSectionTitle": "Syntax theme",
+  "@textEditorSyntaxThemeSectionTitle": {
+    "description": "Section header for the syntax theme choices in the editor appearance sheet"
+  },
+  "textEditorBackgroundMatchTheme": "Match theme",
+  "@textEditorBackgroundMatchTheme": {
+    "description": "Background option: use the syntax theme's own background rather than overriding it"
+  },
+  "textEditorBackgroundAmoledBlack": "AMOLED Black",
+  "@textEditorBackgroundAmoledBlack": {
+    "description": "Background option: pure black, for AMOLED screens"
+  },
+  "textEditorBackgroundDarkSlate": "Dark Slate",
+  "@textEditorBackgroundDarkSlate": {
+    "description": "Background option: dark slate blue-grey"
+  },
+  "textEditorBackgroundClassicLight": "Classic Light",
+  "@textEditorBackgroundClassicLight": {
+    "description": "Background option: plain white"
+  },
+  "textEditorBackgroundSepia": "Sepia",
+  "@textEditorBackgroundSepia": {
+    "description": "Background option: warm cream/tan reading tone"
+  },
+  "textEditorSyntaxThemeAuto": "Auto",
+  "@textEditorSyntaxThemeAuto": {
+    "description": "Syntax theme option: follow the app's own light/dark setting"
+  },
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "@textEditorSyntaxThemeOneDark": {
+    "description": "Syntax theme option: Atom's One Dark color scheme"
+  },
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "@textEditorSyntaxThemeDracula": {
+    "description": "Syntax theme option: the Dracula color scheme"
+  },
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "@textEditorSyntaxThemeGithubLight": {
+    "description": "Syntax theme option: GitHub's light color scheme"
+  },
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "@textEditorSyntaxThemeMonokai": {
+    "description": "Syntax theme option: the Monokai color scheme"
+  },
+  "textEditorSyntaxThemeNord": "Nord",
+  "@textEditorSyntaxThemeNord": {
+    "description": "Syntax theme option: the Nord color scheme"
+  },
+  "textEditorRelativeLineNumbersLabel": "Relative line numbers",
+  "@textEditorRelativeLineNumbersLabel": {
+    "description": "Toggle label for relative (Vim-style) line numbers"
+  },
+  "textEditorRelativeLineNumbersDescription": "Show each line's distance from the cursor instead of its absolute number",
+  "@textEditorRelativeLineNumbersDescription": {
+    "description": "Description under the relative line numbers toggle"
   }
 }

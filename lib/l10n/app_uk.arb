@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "Завжди блокувати",
   "quickActionLockModeAlwaysLockSubtitle": "Блокувати сховище негайно після збереження",
   "quickActionLockModeLeaveOpenLabel": "Залишати розблокованим",
-  "quickActionLockModeLeaveOpenSubtitle": "Залишати сховище відкритим відповідно до таймерів автоблокування"
+  "quickActionLockModeLeaveOpenSubtitle": "Залишати сховище відкритим відповідно до таймерів автоблокування",
+  "textEditorThemeMenuItem": "Вигляд редактора…",
+  "textEditorThemeSheetTitle": "Вигляд редактора",
+  "textEditorBackgroundSectionTitle": "Фон",
+  "textEditorSyntaxThemeSectionTitle": "Тема синтаксису",
+  "textEditorBackgroundMatchTheme": "Як у темі",
+  "textEditorBackgroundAmoledBlack": "AMOLED чорний",
+  "textEditorBackgroundDarkSlate": "Темний грифельний",
+  "textEditorBackgroundClassicLight": "Класичний світлий",
+  "textEditorBackgroundSepia": "Сепія",
+  "textEditorSyntaxThemeAuto": "Авто",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "Відносні номери рядків",
+  "textEditorRelativeLineNumbersDescription": "Показувати відстань кожного рядка від курсора замість його абсолютного номера"
 }

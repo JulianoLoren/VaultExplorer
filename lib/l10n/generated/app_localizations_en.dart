@@ -8617,4 +8617,56 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get quickActionLockModeLeaveOpenSubtitle =>
       'Leave vault unlocked and follow auto-lock timers';
+
+  @override
+  String get textEditorThemeMenuItem => 'Editor appearance…';
+
+  @override
+  String get textEditorThemeSheetTitle => 'Editor appearance';
+
+  @override
+  String get textEditorBackgroundSectionTitle => 'Background';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => 'Syntax theme';
+
+  @override
+  String get textEditorBackgroundMatchTheme => 'Match theme';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'AMOLED Black';
+
+  @override
+  String get textEditorBackgroundDarkSlate => 'Dark Slate';
+
+  @override
+  String get textEditorBackgroundClassicLight => 'Classic Light';
+
+  @override
+  String get textEditorBackgroundSepia => 'Sepia';
+
+  @override
+  String get textEditorSyntaxThemeAuto => 'Auto';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => 'Relative line numbers';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      'Show each line\'s distance from the cursor instead of its absolute number';
 }

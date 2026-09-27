@@ -8827,4 +8827,56 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get quickActionLockModeLeaveOpenSubtitle =>
       'Залишати сховище відкритим відповідно до таймерів автоблокування';
+
+  @override
+  String get textEditorThemeMenuItem => 'Вигляд редактора…';
+
+  @override
+  String get textEditorThemeSheetTitle => 'Вигляд редактора';
+
+  @override
+  String get textEditorBackgroundSectionTitle => 'Фон';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => 'Тема синтаксису';
+
+  @override
+  String get textEditorBackgroundMatchTheme => 'Як у темі';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'AMOLED чорний';
+
+  @override
+  String get textEditorBackgroundDarkSlate => 'Темний грифельний';
+
+  @override
+  String get textEditorBackgroundClassicLight => 'Класичний світлий';
+
+  @override
+  String get textEditorBackgroundSepia => 'Сепія';
+
+  @override
+  String get textEditorSyntaxThemeAuto => 'Авто';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => 'Відносні номери рядків';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      'Показувати відстань кожного рядка від курсора замість його абсолютного номера';
 }

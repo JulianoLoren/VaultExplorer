@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "Immer sperren",
   "quickActionLockModeAlwaysLockSubtitle": "Tresor sofort nach dem Speichern sperren",
   "quickActionLockModeLeaveOpenLabel": "Entsperrt lassen",
-  "quickActionLockModeLeaveOpenSubtitle": "Tresor geöffnet lassen und automatische Sperr-Timer anwenden"
+  "quickActionLockModeLeaveOpenSubtitle": "Tresor geöffnet lassen und automatische Sperr-Timer anwenden",
+  "textEditorThemeMenuItem": "Editor-Erscheinungsbild…",
+  "textEditorThemeSheetTitle": "Editor-Erscheinungsbild",
+  "textEditorBackgroundSectionTitle": "Hintergrund",
+  "textEditorSyntaxThemeSectionTitle": "Syntax-Design",
+  "textEditorBackgroundMatchTheme": "Design übernehmen",
+  "textEditorBackgroundAmoledBlack": "AMOLED-Schwarz",
+  "textEditorBackgroundDarkSlate": "Dunkles Schiefergrau",
+  "textEditorBackgroundClassicLight": "Klassisch Hell",
+  "textEditorBackgroundSepia": "Sepia",
+  "textEditorSyntaxThemeAuto": "Automatisch",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "Relative Zeilennummern",
+  "textEditorRelativeLineNumbersDescription": "Abstand jeder Zeile zum Cursor anstelle der absoluten Zeilennummer anzeigen"
 }

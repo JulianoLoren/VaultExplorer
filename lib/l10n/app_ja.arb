@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "常にロック",
   "quickActionLockModeAlwaysLockSubtitle": "保存後すぐにボールトをロック",
   "quickActionLockModeLeaveOpenLabel": "ロック解除のまま維持",
-  "quickActionLockModeLeaveOpenSubtitle": "ボールトを開いたままにし、自動ロックタイマーに従う"
+  "quickActionLockModeLeaveOpenSubtitle": "ボールトを開いたままにし、自動ロックタイマーに従う",
+  "textEditorThemeMenuItem": "エディタの外観…",
+  "textEditorThemeSheetTitle": "エディタの外観",
+  "textEditorBackgroundSectionTitle": "背景",
+  "textEditorSyntaxThemeSectionTitle": "構文テーマ",
+  "textEditorBackgroundMatchTheme": "テーマに合わせる",
+  "textEditorBackgroundAmoledBlack": "AMOLEDブラック",
+  "textEditorBackgroundDarkSlate": "ダークスレート",
+  "textEditorBackgroundClassicLight": "クラシックライト",
+  "textEditorBackgroundSepia": "セピア",
+  "textEditorSyntaxThemeAuto": "自動",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "相対行番号",
+  "textEditorRelativeLineNumbersDescription": "絶対行番号の代わりにカーソルからの行数を表示"
 }

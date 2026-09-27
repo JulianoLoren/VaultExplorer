@@ -8163,4 +8163,55 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get quickActionLockModeLeaveOpenSubtitle => '保持保险库开启并遵循自动锁定计时器';
+
+  @override
+  String get textEditorThemeMenuItem => '编辑器外观…';
+
+  @override
+  String get textEditorThemeSheetTitle => '编辑器外观';
+
+  @override
+  String get textEditorBackgroundSectionTitle => '背景';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => '语法主题';
+
+  @override
+  String get textEditorBackgroundMatchTheme => '跟随主题';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'AMOLED 纯黑';
+
+  @override
+  String get textEditorBackgroundDarkSlate => '深青灰';
+
+  @override
+  String get textEditorBackgroundClassicLight => '经典浅色';
+
+  @override
+  String get textEditorBackgroundSepia => '复古羊皮纸 (Sepia)';
+
+  @override
+  String get textEditorSyntaxThemeAuto => '自动';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => '相对行号';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription => '显示每行相对于光标的距离，而非绝对行号';
 }

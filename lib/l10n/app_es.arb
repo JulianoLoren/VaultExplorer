@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "Bloquear siempre",
   "quickActionLockModeAlwaysLockSubtitle": "Bloquear la bóveda inmediatamente después de guardar",
   "quickActionLockModeLeaveOpenLabel": "Mantener desbloqueada",
-  "quickActionLockModeLeaveOpenSubtitle": "Dejar la bóveda abierta y seguir los temporizadores de autobloqueo"
+  "quickActionLockModeLeaveOpenSubtitle": "Dejar la bóveda abierta y seguir los temporizadores de autobloqueo",
+  "textEditorThemeMenuItem": "Apariencia del editor…",
+  "textEditorThemeSheetTitle": "Apariencia del editor",
+  "textEditorBackgroundSectionTitle": "Fondo",
+  "textEditorSyntaxThemeSectionTitle": "Tema de sintaxis",
+  "textEditorBackgroundMatchTheme": "Coincidir con el tema",
+  "textEditorBackgroundAmoledBlack": "Negro AMOLED",
+  "textEditorBackgroundDarkSlate": "Pizarra oscura",
+  "textEditorBackgroundClassicLight": "Claro clásico",
+  "textEditorBackgroundSepia": "Sepia",
+  "textEditorSyntaxThemeAuto": "Automático",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "Números de línea relativos",
+  "textEditorRelativeLineNumbersDescription": "Mostrar la distancia de cada línea respecto al cursor en vez de su número absoluto"
 }

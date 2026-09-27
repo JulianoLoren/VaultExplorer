@@ -8276,4 +8276,56 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get quickActionLockModeLeaveOpenSubtitle =>
       'ボールトを開いたままにし、自動ロックタイマーに従う';
+
+  @override
+  String get textEditorThemeMenuItem => 'エディタの外観…';
+
+  @override
+  String get textEditorThemeSheetTitle => 'エディタの外観';
+
+  @override
+  String get textEditorBackgroundSectionTitle => '背景';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => '構文テーマ';
+
+  @override
+  String get textEditorBackgroundMatchTheme => 'テーマに合わせる';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'AMOLEDブラック';
+
+  @override
+  String get textEditorBackgroundDarkSlate => 'ダークスレート';
+
+  @override
+  String get textEditorBackgroundClassicLight => 'クラシックライト';
+
+  @override
+  String get textEditorBackgroundSepia => 'セピア';
+
+  @override
+  String get textEditorSyntaxThemeAuto => '自動';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => '相対行番号';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      '絶対行番号の代わりにカーソルからの行数を表示';
 }

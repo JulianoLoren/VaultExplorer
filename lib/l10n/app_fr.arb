@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "Toujours verrouiller",
   "quickActionLockModeAlwaysLockSubtitle": "Verrouiller le coffre immédiatement après l'enregistrement",
   "quickActionLockModeLeaveOpenLabel": "Garder déverrouillé",
-  "quickActionLockModeLeaveOpenSubtitle": "Laisser le coffre ouvert et suivre les minuteries de verrouillage automatique"
+  "quickActionLockModeLeaveOpenSubtitle": "Laisser le coffre ouvert et suivre les minuteries de verrouillage automatique",
+  "textEditorThemeMenuItem": "Apparence de l'éditeur…",
+  "textEditorThemeSheetTitle": "Apparence de l'éditeur",
+  "textEditorBackgroundSectionTitle": "Arrière-plan",
+  "textEditorSyntaxThemeSectionTitle": "Thème de syntaxe",
+  "textEditorBackgroundMatchTheme": "Selon le thème",
+  "textEditorBackgroundAmoledBlack": "Noir AMOLED",
+  "textEditorBackgroundDarkSlate": "Ardoise sombre",
+  "textEditorBackgroundClassicLight": "Clair classique",
+  "textEditorBackgroundSepia": "Sépia",
+  "textEditorSyntaxThemeAuto": "Automatique",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "Numéros de ligne relatifs",
+  "textEditorRelativeLineNumbersDescription": "Afficher la distance de chaque ligne par rapport au curseur au lieu de son numéro absolu"
 }

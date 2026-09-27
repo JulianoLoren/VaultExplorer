@@ -8751,4 +8751,56 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get quickActionLockModeLeaveOpenSubtitle =>
       'Tresor geöffnet lassen und automatische Sperr-Timer anwenden';
+
+  @override
+  String get textEditorThemeMenuItem => 'Editor-Erscheinungsbild…';
+
+  @override
+  String get textEditorThemeSheetTitle => 'Editor-Erscheinungsbild';
+
+  @override
+  String get textEditorBackgroundSectionTitle => 'Hintergrund';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => 'Syntax-Design';
+
+  @override
+  String get textEditorBackgroundMatchTheme => 'Design übernehmen';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'AMOLED-Schwarz';
+
+  @override
+  String get textEditorBackgroundDarkSlate => 'Dunkles Schiefergrau';
+
+  @override
+  String get textEditorBackgroundClassicLight => 'Klassisch Hell';
+
+  @override
+  String get textEditorBackgroundSepia => 'Sepia';
+
+  @override
+  String get textEditorSyntaxThemeAuto => 'Automatisch';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => 'Relative Zeilennummern';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      'Abstand jeder Zeile zum Cursor anstelle der absoluten Zeilennummer anzeigen';
 }

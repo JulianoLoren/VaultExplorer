@@ -8810,4 +8810,56 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get quickActionLockModeLeaveOpenSubtitle =>
       'ترك الخزنة مفتوحة واتباع مؤقتات القفل التلقائي';
+
+  @override
+  String get textEditorThemeMenuItem => 'مظهر المحرر…';
+
+  @override
+  String get textEditorThemeSheetTitle => 'مظهر المحرر';
+
+  @override
+  String get textEditorBackgroundSectionTitle => 'الخلفية';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => 'سمة بناء الجملة';
+
+  @override
+  String get textEditorBackgroundMatchTheme => 'مطابقة السمة';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'أسود AMOLED';
+
+  @override
+  String get textEditorBackgroundDarkSlate => 'رمادي داكن';
+
+  @override
+  String get textEditorBackgroundClassicLight => 'فاتح كلاسيكي';
+
+  @override
+  String get textEditorBackgroundSepia => 'بني داكن (Sepia)';
+
+  @override
+  String get textEditorSyntaxThemeAuto => 'تلقائي';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => 'أرقام الأسطر النسبية';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      'إظهار مسافة كل سطر من المؤشر بدلاً من رقمه المطلق';
 }

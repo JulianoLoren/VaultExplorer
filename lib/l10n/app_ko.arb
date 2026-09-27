@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "항상 잠금",
   "quickActionLockModeAlwaysLockSubtitle": "저장 직후 보관함을 즉시 잠금",
   "quickActionLockModeLeaveOpenLabel": "잠금 해제 상태 유지",
-  "quickActionLockModeLeaveOpenSubtitle": "보관함을 열어두고 자동 잠금 타이머를 따름"
+  "quickActionLockModeLeaveOpenSubtitle": "보관함을 열어두고 자동 잠금 타이머를 따름",
+  "textEditorThemeMenuItem": "편집기 모양…",
+  "textEditorThemeSheetTitle": "편집기 모양",
+  "textEditorBackgroundSectionTitle": "배경",
+  "textEditorSyntaxThemeSectionTitle": "구문 테마",
+  "textEditorBackgroundMatchTheme": "테마 배경 사용",
+  "textEditorBackgroundAmoledBlack": "AMOLED 블랙",
+  "textEditorBackgroundDarkSlate": "다크 슬레이트",
+  "textEditorBackgroundClassicLight": "클래식 라이트",
+  "textEditorBackgroundSepia": "세피아",
+  "textEditorSyntaxThemeAuto": "자동",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "상대 줄 번호",
+  "textEditorRelativeLineNumbersDescription": "절대 줄 번호 대신 커서로부터의 거리 표시"
 }

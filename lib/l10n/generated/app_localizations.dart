@@ -14472,6 +14472,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Leave vault unlocked and follow auto-lock timers'**
   String get quickActionLockModeLeaveOpenSubtitle;
+
+  /// Overflow menu item that opens the editor appearance (background/syntax theme) picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Editor appearance…'**
+  String get textEditorThemeMenuItem;
+
+  /// Title of the editor appearance picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Editor appearance'**
+  String get textEditorThemeSheetTitle;
+
+  /// Section header for the background color choices in the editor appearance sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get textEditorBackgroundSectionTitle;
+
+  /// Section header for the syntax theme choices in the editor appearance sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Syntax theme'**
+  String get textEditorSyntaxThemeSectionTitle;
+
+  /// Background option: use the syntax theme's own background rather than overriding it
+  ///
+  /// In en, this message translates to:
+  /// **'Match theme'**
+  String get textEditorBackgroundMatchTheme;
+
+  /// Background option: pure black, for AMOLED screens
+  ///
+  /// In en, this message translates to:
+  /// **'AMOLED Black'**
+  String get textEditorBackgroundAmoledBlack;
+
+  /// Background option: dark slate blue-grey
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Slate'**
+  String get textEditorBackgroundDarkSlate;
+
+  /// Background option: plain white
+  ///
+  /// In en, this message translates to:
+  /// **'Classic Light'**
+  String get textEditorBackgroundClassicLight;
+
+  /// Background option: warm cream/tan reading tone
+  ///
+  /// In en, this message translates to:
+  /// **'Sepia'**
+  String get textEditorBackgroundSepia;
+
+  /// Syntax theme option: follow the app's own light/dark setting
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get textEditorSyntaxThemeAuto;
+
+  /// Syntax theme option: Atom's One Dark color scheme
+  ///
+  /// In en, this message translates to:
+  /// **'One Dark'**
+  String get textEditorSyntaxThemeOneDark;
+
+  /// Syntax theme option: the Dracula color scheme
+  ///
+  /// In en, this message translates to:
+  /// **'Dracula'**
+  String get textEditorSyntaxThemeDracula;
+
+  /// Syntax theme option: GitHub's light color scheme
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Light'**
+  String get textEditorSyntaxThemeGithubLight;
+
+  /// Syntax theme option: the Monokai color scheme
+  ///
+  /// In en, this message translates to:
+  /// **'Monokai'**
+  String get textEditorSyntaxThemeMonokai;
+
+  /// Syntax theme option: the Nord color scheme
+  ///
+  /// In en, this message translates to:
+  /// **'Nord'**
+  String get textEditorSyntaxThemeNord;
+
+  /// Toggle label for relative (Vim-style) line numbers
+  ///
+  /// In en, this message translates to:
+  /// **'Relative line numbers'**
+  String get textEditorRelativeLineNumbersLabel;
+
+  /// Description under the relative line numbers toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Show each line\'s distance from the cursor instead of its absolute number'**
+  String get textEditorRelativeLineNumbersDescription;
 }
 
 class _AppLocalizationsDelegate

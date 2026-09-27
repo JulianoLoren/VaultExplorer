@@ -2386,5 +2386,22 @@
   "quickActionLockModeAlwaysLockLabel": "Blocca sempre",
   "quickActionLockModeAlwaysLockSubtitle": "Blocca il vault immediatamente dopo il salvataggio",
   "quickActionLockModeLeaveOpenLabel": "Mantieni sbloccato",
-  "quickActionLockModeLeaveOpenSubtitle": "Lascia il vault sbloccato e segui i timer di blocco automatico"
+  "quickActionLockModeLeaveOpenSubtitle": "Lascia il vault sbloccato e segui i timer di blocco automatico",
+  "textEditorThemeMenuItem": "Aspetto dell'editor…",
+  "textEditorThemeSheetTitle": "Aspetto dell'editor",
+  "textEditorBackgroundSectionTitle": "Sfondo",
+  "textEditorSyntaxThemeSectionTitle": "Tema della sintassi",
+  "textEditorBackgroundMatchTheme": "Come il tema",
+  "textEditorBackgroundAmoledBlack": "Nero AMOLED",
+  "textEditorBackgroundDarkSlate": "Ardesia scuro",
+  "textEditorBackgroundClassicLight": "Chiaro classico",
+  "textEditorBackgroundSepia": "Seppia",
+  "textEditorSyntaxThemeAuto": "Automatico",
+  "textEditorSyntaxThemeOneDark": "One Dark",
+  "textEditorSyntaxThemeDracula": "Dracula",
+  "textEditorSyntaxThemeGithubLight": "GitHub Light",
+  "textEditorSyntaxThemeMonokai": "Monokai",
+  "textEditorSyntaxThemeNord": "Nord",
+  "textEditorRelativeLineNumbersLabel": "Numeri di riga relativi",
+  "textEditorRelativeLineNumbersDescription": "Mostra la distanza di ciascuna riga dal cursore anziché il numero assoluto"
 }

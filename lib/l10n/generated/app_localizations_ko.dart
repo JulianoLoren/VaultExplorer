@@ -8274,4 +8274,56 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get quickActionLockModeLeaveOpenSubtitle => '보관함을 열어두고 자동 잠금 타이머를 따름';
+
+  @override
+  String get textEditorThemeMenuItem => '편집기 모양…';
+
+  @override
+  String get textEditorThemeSheetTitle => '편집기 모양';
+
+  @override
+  String get textEditorBackgroundSectionTitle => '배경';
+
+  @override
+  String get textEditorSyntaxThemeSectionTitle => '구문 테마';
+
+  @override
+  String get textEditorBackgroundMatchTheme => '테마 배경 사용';
+
+  @override
+  String get textEditorBackgroundAmoledBlack => 'AMOLED 블랙';
+
+  @override
+  String get textEditorBackgroundDarkSlate => '다크 슬레이트';
+
+  @override
+  String get textEditorBackgroundClassicLight => '클래식 라이트';
+
+  @override
+  String get textEditorBackgroundSepia => '세피아';
+
+  @override
+  String get textEditorSyntaxThemeAuto => '자동';
+
+  @override
+  String get textEditorSyntaxThemeOneDark => 'One Dark';
+
+  @override
+  String get textEditorSyntaxThemeDracula => 'Dracula';
+
+  @override
+  String get textEditorSyntaxThemeGithubLight => 'GitHub Light';
+
+  @override
+  String get textEditorSyntaxThemeMonokai => 'Monokai';
+
+  @override
+  String get textEditorSyntaxThemeNord => 'Nord';
+
+  @override
+  String get textEditorRelativeLineNumbersLabel => '상대 줄 번호';
+
+  @override
+  String get textEditorRelativeLineNumbersDescription =>
+      '절대 줄 번호 대신 커서로부터의 거리 표시';
 }
