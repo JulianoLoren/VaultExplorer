@@ -56,14 +56,14 @@ void main() {
       expect(action, isA<OpenInHtmlViewer>());
     });
 
-    test("'markdown' opens the Markdown viewer", () {
+   test("'markdown' opens the editor", () {
       final action = decideFileOpenAction(
         ext: 'md',
         extensionPreference: 'markdown',
         needsSystemAppForLocal: false,
         isSupportedMedia: false,
       );
-      expect(action, isA<OpenInMarkdownViewer>());
+      expect(action, isA<OpenInEditor>());
     });
 
     test("'package:<name>' opens with that remembered app", () {
@@ -132,7 +132,7 @@ void main() {
       }
     });
 
-    test("'md' and 'markdown' both open the Markdown viewer", () {
+     test("'md' and 'markdown' both open the editor", () {
       for (final ext in ['md', 'markdown']) {
         final action = decideFileOpenAction(
           ext: ext,
@@ -140,7 +140,7 @@ void main() {
           needsSystemAppForLocal: false,
           isSupportedMedia: false,
         );
-        expect(action, isA<OpenInMarkdownViewer>(), reason: 'ext=$ext');
+        expect(action, isA<OpenInEditor>(), reason: 'ext=$ext');
       }
     });
 
