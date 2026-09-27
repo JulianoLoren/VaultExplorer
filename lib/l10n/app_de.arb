@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "Datei konnte nicht formatiert werden – prüfen Sie zuerst, ob sie gültig ist",
   "defaultFolderLayoutLabel": "Standard-Ordnerlayout",
   "immediateAutoLockOptionSubtitle": "Sperrt sofort beim Ausschalten des Bildschirms oder Wechsel der App in den Hintergrund",
-  "autoLockIndicatorLocksImmediately": "Sofortige Sperre"
+  "autoLockIndicatorLocksImmediately": "Sofortige Sperre",
+  "quickActionLockModeTitle": "Nach Schnellaktionen sperren",
+  "quickActionLockModeSubtitle": "Tresorsperrverhalten beim Speichern über Schnellerfassung oder Teilen",
+  "quickActionLockModeLeaveAsFoundLabel": "Ursprünglichen Zustand beibehalten",
+  "quickActionLockModeLeaveAsFoundSubtitle": "Nur sperren, wenn der Tresor vor dem Speichern gesperrt war",
+  "quickActionLockModeAlwaysLockLabel": "Immer sperren",
+  "quickActionLockModeAlwaysLockSubtitle": "Tresor sofort nach dem Speichern sperren",
+  "quickActionLockModeLeaveOpenLabel": "Entsperrt lassen",
+  "quickActionLockModeLeaveOpenSubtitle": "Tresor geöffnet lassen und automatische Sperr-Timer anwenden"
 }

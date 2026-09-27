@@ -8720,4 +8720,32 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Blocco immediato';
+
+  @override
+  String get quickActionLockModeTitle => 'Blocca dopo azioni rapide';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'Comportamento di blocco del vault durante il salvataggio da Acquisizione rapida o Condividi';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => 'Lascia come trovato';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'Blocca solo se il vault era bloccato prima del salvataggio';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'Blocca sempre';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'Blocca il vault immediatamente dopo il salvataggio';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'Mantieni sbloccato';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'Lascia il vault sbloccato e segui i timer di blocco automatico';
 }

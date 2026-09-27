@@ -8139,4 +8139,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => '立即锁定';
+
+  @override
+  String get quickActionLockModeTitle => '快捷操作后锁定';
+
+  @override
+  String get quickActionLockModeSubtitle => '从快捷捕获或分享保存时的保险库锁定行为';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => '保持原有状态';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle => '仅在保存前处于锁定状态时锁定';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => '始终锁定';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle => '保存后立即锁定保险库';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => '保持解锁';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle => '保持保险库开启并遵循自动锁定计时器';
 }

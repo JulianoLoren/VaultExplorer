@@ -10969,5 +10969,37 @@
   "autoLockIndicatorLocksImmediately": "Immediate lock",
   "@autoLockIndicatorLocksImmediately": {
     "description": "Concise auto-lock label when this container is configured to lock as soon as the screen turns off or the app is backgrounded"
+  },
+  "quickActionLockModeTitle": "Lock after quick actions",
+  "@quickActionLockModeTitle": {
+    "description": "Title for lock behavior setting after quick capture or share sheet import"
+  },
+  "quickActionLockModeSubtitle": "Vault lock behavior when saving from Quick Capture or Share Sheet",
+  "@quickActionLockModeSubtitle": {
+    "description": "Subtitle for lock behavior setting after quick capture or share sheet import"
+  },
+  "quickActionLockModeLeaveAsFoundLabel": "Leave as you found it",
+  "@quickActionLockModeLeaveAsFoundLabel": {
+    "description": "Label for leave as you found it lock mode"
+  },
+  "quickActionLockModeLeaveAsFoundSubtitle": "Lock only if the vault was locked before saving",
+  "@quickActionLockModeLeaveAsFoundSubtitle": {
+    "description": "Subtitle for leave as you found it lock mode"
+  },
+  "quickActionLockModeAlwaysLockLabel": "Always lock",
+  "@quickActionLockModeAlwaysLockLabel": {
+    "description": "Label for always lock mode"
+  },
+  "quickActionLockModeAlwaysLockSubtitle": "Lock the vault immediately after saving",
+  "@quickActionLockModeAlwaysLockSubtitle": {
+    "description": "Subtitle for always lock mode"
+  },
+  "quickActionLockModeLeaveOpenLabel": "Keep unlocked",
+  "@quickActionLockModeLeaveOpenLabel": {
+    "description": "Label for leave open mode"
+  },
+  "quickActionLockModeLeaveOpenSubtitle": "Leave vault unlocked and follow auto-lock timers",
+  "@quickActionLockModeLeaveOpenSubtitle": {
+    "description": "Subtitle for leave open mode"
   }
 }

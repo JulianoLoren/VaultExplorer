@@ -8799,4 +8799,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Verrouillage immédiat';
+
+  @override
+  String get quickActionLockModeTitle => 'Verrouiller après actions rapides';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'Comportement de verrouillage lors de l\'enregistrement via Capture rapide ou Partage';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => 'Laisser tel quel';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'Verrouiller uniquement si le coffre était verrouillé avant l\'enregistrement';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'Toujours verrouiller';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'Verrouiller le coffre immédiatement après l\'enregistrement';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'Garder déverrouillé';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'Laisser le coffre ouvert et suivre les minuteries de verrouillage automatique';
 }

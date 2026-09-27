@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "No se pudo formatear este archivo: comprueba primero que sea válido",
   "defaultFolderLayoutLabel": "Diseño de carpeta predeterminado",
   "immediateAutoLockOptionSubtitle": "Se bloquea tan pronto como se apaga la pantalla o la app pasa a segundo plano",
-  "autoLockIndicatorLocksImmediately": "Bloqueo inmediato"
+  "autoLockIndicatorLocksImmediately": "Bloqueo inmediato",
+  "quickActionLockModeTitle": "Bloquear tras acciones rápidas",
+  "quickActionLockModeSubtitle": "Comportamiento de bloqueo al guardar desde Captura rápida o Compartir",
+  "quickActionLockModeLeaveAsFoundLabel": "Dejar como estaba",
+  "quickActionLockModeLeaveAsFoundSubtitle": "Bloquear solo si la bóveda estaba bloqueada antes de guardar",
+  "quickActionLockModeAlwaysLockLabel": "Bloquear siempre",
+  "quickActionLockModeAlwaysLockSubtitle": "Bloquear la bóveda inmediatamente después de guardar",
+  "quickActionLockModeLeaveOpenLabel": "Mantener desbloqueada",
+  "quickActionLockModeLeaveOpenSubtitle": "Dejar la bóveda abierta y seguir los temporizadores de autobloqueo"
 }

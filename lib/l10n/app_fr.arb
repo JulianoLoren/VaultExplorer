@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "Impossible de formater ce fichier — vérifiez d'abord qu'il est valide",
   "defaultFolderLayoutLabel": "Disposition par défaut des dossiers",
   "immediateAutoLockOptionSubtitle": "Se verrouille dès que l'écran s'éteint ou que l'application passe en arrière-plan",
-  "autoLockIndicatorLocksImmediately": "Verrouillage immédiat"
+  "autoLockIndicatorLocksImmediately": "Verrouillage immédiat",
+  "quickActionLockModeTitle": "Verrouiller après actions rapides",
+  "quickActionLockModeSubtitle": "Comportement de verrouillage lors de l'enregistrement via Capture rapide ou Partage",
+  "quickActionLockModeLeaveAsFoundLabel": "Laisser tel quel",
+  "quickActionLockModeLeaveAsFoundSubtitle": "Verrouiller uniquement si le coffre était verrouillé avant l'enregistrement",
+  "quickActionLockModeAlwaysLockLabel": "Toujours verrouiller",
+  "quickActionLockModeAlwaysLockSubtitle": "Verrouiller le coffre immédiatement après l'enregistrement",
+  "quickActionLockModeLeaveOpenLabel": "Garder déverrouillé",
+  "quickActionLockModeLeaveOpenSubtitle": "Laisser le coffre ouvert et suivre les minuteries de verrouillage automatique"
 }

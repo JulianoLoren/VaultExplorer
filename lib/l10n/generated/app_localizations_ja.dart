@@ -8250,4 +8250,30 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => '即時ロック';
+
+  @override
+  String get quickActionLockModeTitle => 'クイック操作後にロック';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'クイックキャプチャまたは共有メニューからの保存時のボールトのロック動作';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => '元の状態を維持';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle => '保存前にロックされていた場合のみロック';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => '常にロック';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle => '保存後すぐにボールトをロック';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'ロック解除のまま維持';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'ボールトを開いたままにし、自動ロックタイマーに従う';
 }

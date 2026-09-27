@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "Não foi possível formatar este arquivo — verifique primeiro se ele é válido",
   "defaultFolderLayoutLabel": "Layout padrão da pasta",
   "immediateAutoLockOptionSubtitle": "Bloqueia assim que a tela desliga ou o aplicativo vai para segundo plano",
-  "autoLockIndicatorLocksImmediately": "Bloqueio imediato"
+  "autoLockIndicatorLocksImmediately": "Bloqueio imediato",
+  "quickActionLockModeTitle": "Bloquear após ações rápidas",
+  "quickActionLockModeSubtitle": "Comportamento de bloqueio ao salvar via Captura rápida ou Compartilhar",
+  "quickActionLockModeLeaveAsFoundLabel": "Deixar como estava",
+  "quickActionLockModeLeaveAsFoundSubtitle": "Bloquear apenas se o cofre estava bloqueado antes de salvar",
+  "quickActionLockModeAlwaysLockLabel": "Bloquear sempre",
+  "quickActionLockModeAlwaysLockSubtitle": "Bloquear o cofre imediatamente após salvar",
+  "quickActionLockModeLeaveOpenLabel": "Manter desbloqueado",
+  "quickActionLockModeLeaveOpenSubtitle": "Deixar o cofre aberto e seguir os temporizadores de bloqueio automático"
 }

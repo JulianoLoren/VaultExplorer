@@ -8781,4 +8781,33 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'قفل فوري';
+
+  @override
+  String get quickActionLockModeTitle => 'القفل بعد الإجراءات السريعة';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'سلوك قفل الخزنة عند الحفظ عبر الالتقاط السريع أو قائمة المشاركة';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel =>
+      'الإبقاء على الحالة السابقة';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'القفل فقط إذا كانت الخزنة مقفلة قبل الحفظ';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'قفل دائمًا';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'قفل الخزنة فورًا بعد الحفظ';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'إبقاء القفل مفتوحًا';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'ترك الخزنة مفتوحة واتباع مؤقتات القفل التلقائي';
 }

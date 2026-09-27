@@ -8739,4 +8739,32 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Bloqueo inmediato';
+
+  @override
+  String get quickActionLockModeTitle => 'Bloquear tras acciones rápidas';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'Comportamiento de bloqueo al guardar desde Captura rápida o Compartir';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => 'Dejar como estaba';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'Bloquear solo si la bóveda estaba bloqueada antes de guardar';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'Bloquear siempre';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'Bloquear la bóveda inmediatamente después de guardar';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'Mantener desbloqueada';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'Dejar la bóveda abierta y seguir los temporizadores de autobloqueo';
 }

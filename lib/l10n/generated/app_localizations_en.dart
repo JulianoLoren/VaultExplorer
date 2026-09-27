@@ -8589,4 +8589,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Immediate lock';
+
+  @override
+  String get quickActionLockModeTitle => 'Lock after quick actions';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'Vault lock behavior when saving from Quick Capture or Share Sheet';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => 'Leave as you found it';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'Lock only if the vault was locked before saving';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'Always lock';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'Lock the vault immediately after saving';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'Keep unlocked';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'Leave vault unlocked and follow auto-lock timers';
 }

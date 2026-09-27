@@ -8726,4 +8726,32 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Bloqueio imediato';
+
+  @override
+  String get quickActionLockModeTitle => 'Bloquear após ações rápidas';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'Comportamento de bloqueio ao salvar via Captura rápida ou Compartilhar';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => 'Deixar como estava';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'Bloquear apenas se o cofre estava bloqueado antes de salvar';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'Bloquear sempre';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'Bloquear o cofre imediatamente após salvar';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'Manter desbloqueado';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'Deixar o cofre aberto e seguir os temporizadores de bloqueio automático';
 }

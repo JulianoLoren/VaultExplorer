@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "Не вдалося відформатувати цей файл — спочатку перевірте його коректність",
   "defaultFolderLayoutLabel": "Стандартний вигляд папки",
   "immediateAutoLockOptionSubtitle": "Блокується, щойно екран вимикається або програма переходить у фоновий режим",
-  "autoLockIndicatorLocksImmediately": "Миттєве блокування"
+  "autoLockIndicatorLocksImmediately": "Миттєве блокування",
+  "quickActionLockModeTitle": "Блокувати після швидких дій",
+  "quickActionLockModeSubtitle": "Поведінка блокування сховища під час збереження зі швидкого знімка чи спільного доступу",
+  "quickActionLockModeLeaveAsFoundLabel": "Залишати як було",
+  "quickActionLockModeLeaveAsFoundSubtitle": "Блокувати лише якщо сховище було заблоковане перед збереженням",
+  "quickActionLockModeAlwaysLockLabel": "Завжди блокувати",
+  "quickActionLockModeAlwaysLockSubtitle": "Блокувати сховище негайно після збереження",
+  "quickActionLockModeLeaveOpenLabel": "Залишати розблокованим",
+  "quickActionLockModeLeaveOpenSubtitle": "Залишати сховище відкритим відповідно до таймерів автоблокування"
 }

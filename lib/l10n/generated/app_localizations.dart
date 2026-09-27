@@ -14424,6 +14424,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Immediate lock'**
   String get autoLockIndicatorLocksImmediately;
+
+  /// Title for lock behavior setting after quick capture or share sheet import
+  ///
+  /// In en, this message translates to:
+  /// **'Lock after quick actions'**
+  String get quickActionLockModeTitle;
+
+  /// Subtitle for lock behavior setting after quick capture or share sheet import
+  ///
+  /// In en, this message translates to:
+  /// **'Vault lock behavior when saving from Quick Capture or Share Sheet'**
+  String get quickActionLockModeSubtitle;
+
+  /// Label for leave as you found it lock mode
+  ///
+  /// In en, this message translates to:
+  /// **'Leave as you found it'**
+  String get quickActionLockModeLeaveAsFoundLabel;
+
+  /// Subtitle for leave as you found it lock mode
+  ///
+  /// In en, this message translates to:
+  /// **'Lock only if the vault was locked before saving'**
+  String get quickActionLockModeLeaveAsFoundSubtitle;
+
+  /// Label for always lock mode
+  ///
+  /// In en, this message translates to:
+  /// **'Always lock'**
+  String get quickActionLockModeAlwaysLockLabel;
+
+  /// Subtitle for always lock mode
+  ///
+  /// In en, this message translates to:
+  /// **'Lock the vault immediately after saving'**
+  String get quickActionLockModeAlwaysLockSubtitle;
+
+  /// Label for leave open mode
+  ///
+  /// In en, this message translates to:
+  /// **'Keep unlocked'**
+  String get quickActionLockModeLeaveOpenLabel;
+
+  /// Subtitle for leave open mode
+  ///
+  /// In en, this message translates to:
+  /// **'Leave vault unlocked and follow auto-lock timers'**
+  String get quickActionLockModeLeaveOpenSubtitle;
 }
 
 class _AppLocalizationsDelegate

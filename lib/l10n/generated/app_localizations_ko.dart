@@ -8249,4 +8249,29 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => '즉시 잠금';
+
+  @override
+  String get quickActionLockModeTitle => '빠른 작업 후 잠금';
+
+  @override
+  String get quickActionLockModeSubtitle => '빠른 캡처 또는 공유 메뉴에서 저장할 때의 보관함 잠금 동작';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => '이전 상태 유지';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      '저장 전에 보관함이 잠겨 있던 경우에만 잠금';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => '항상 잠금';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle => '저장 직후 보관함을 즉시 잠금';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => '잠금 해제 상태 유지';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle => '보관함을 열어두고 자동 잠금 타이머를 따름';
 }

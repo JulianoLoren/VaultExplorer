@@ -8722,4 +8722,33 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Sofortige Sperre';
+
+  @override
+  String get quickActionLockModeTitle => 'Nach Schnellaktionen sperren';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'Tresorsperrverhalten beim Speichern über Schnellerfassung oder Teilen';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel =>
+      'Ursprünglichen Zustand beibehalten';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'Nur sperren, wenn der Tresor vor dem Speichern gesperrt war';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'Immer sperren';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'Tresor sofort nach dem Speichern sperren';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'Entsperrt lassen';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'Tresor geöffnet lassen und automatische Sperr-Timer anwenden';
 }

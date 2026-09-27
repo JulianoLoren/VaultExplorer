@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "このファイルをフォーマットできませんでした。有効な形式か確認してください",
   "defaultFolderLayoutLabel": "デフォルトのフォルダーレイアウト",
   "immediateAutoLockOptionSubtitle": "画面が消灯するかアプリがバックグラウンドに移行するとすぐにロックされます",
-  "autoLockIndicatorLocksImmediately": "即時ロック"
+  "autoLockIndicatorLocksImmediately": "即時ロック",
+  "quickActionLockModeTitle": "クイック操作後にロック",
+  "quickActionLockModeSubtitle": "クイックキャプチャまたは共有メニューからの保存時のボールトのロック動作",
+  "quickActionLockModeLeaveAsFoundLabel": "元の状態を維持",
+  "quickActionLockModeLeaveAsFoundSubtitle": "保存前にロックされていた場合のみロック",
+  "quickActionLockModeAlwaysLockLabel": "常にロック",
+  "quickActionLockModeAlwaysLockSubtitle": "保存後すぐにボールトをロック",
+  "quickActionLockModeLeaveOpenLabel": "ロック解除のまま維持",
+  "quickActionLockModeLeaveOpenSubtitle": "ボールトを開いたままにし、自動ロックタイマーに従う"
 }

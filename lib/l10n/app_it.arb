@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "Impossibile formattare questo file: controlla prima che sia valido",
   "defaultFolderLayoutLabel": "Layout predefinito delle cartelle",
   "immediateAutoLockOptionSubtitle": "Si blocca non appena lo schermo si spegne o l'app passa in background",
-  "autoLockIndicatorLocksImmediately": "Blocco immediato"
+  "autoLockIndicatorLocksImmediately": "Blocco immediato",
+  "quickActionLockModeTitle": "Blocca dopo azioni rapide",
+  "quickActionLockModeSubtitle": "Comportamento di blocco del vault durante il salvataggio da Acquisizione rapida o Condividi",
+  "quickActionLockModeLeaveAsFoundLabel": "Lascia come trovato",
+  "quickActionLockModeLeaveAsFoundSubtitle": "Blocca solo se il vault era bloccato prima del salvataggio",
+  "quickActionLockModeAlwaysLockLabel": "Blocca sempre",
+  "quickActionLockModeAlwaysLockSubtitle": "Blocca il vault immediatamente dopo il salvataggio",
+  "quickActionLockModeLeaveOpenLabel": "Mantieni sbloccato",
+  "quickActionLockModeLeaveOpenSubtitle": "Lascia il vault sbloccato e segui i timer di blocco automatico"
 }

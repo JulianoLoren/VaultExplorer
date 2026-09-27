@@ -8799,4 +8799,32 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get autoLockIndicatorLocksImmediately => 'Миттєве блокування';
+
+  @override
+  String get quickActionLockModeTitle => 'Блокувати після швидких дій';
+
+  @override
+  String get quickActionLockModeSubtitle =>
+      'Поведінка блокування сховища під час збереження зі швидкого знімка чи спільного доступу';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundLabel => 'Залишати як було';
+
+  @override
+  String get quickActionLockModeLeaveAsFoundSubtitle =>
+      'Блокувати лише якщо сховище було заблоковане перед збереженням';
+
+  @override
+  String get quickActionLockModeAlwaysLockLabel => 'Завжди блокувати';
+
+  @override
+  String get quickActionLockModeAlwaysLockSubtitle =>
+      'Блокувати сховище негайно після збереження';
+
+  @override
+  String get quickActionLockModeLeaveOpenLabel => 'Залишати розблокованим';
+
+  @override
+  String get quickActionLockModeLeaveOpenSubtitle =>
+      'Залишати сховище відкритим відповідно до таймерів автоблокування';
 }

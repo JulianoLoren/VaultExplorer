@@ -2378,5 +2378,13 @@
   "textEditorFormatFailedMessage": "无法格式化此文件，请先检查其是否有效",
   "defaultFolderLayoutLabel": "默认文件夹布局",
   "immediateAutoLockOptionSubtitle": "屏幕熄灭或应用进入后台时立即锁定",
-  "autoLockIndicatorLocksImmediately": "立即锁定"
+  "autoLockIndicatorLocksImmediately": "立即锁定",
+  "quickActionLockModeTitle": "快捷操作后锁定",
+  "quickActionLockModeSubtitle": "从快捷捕获或分享保存时的保险库锁定行为",
+  "quickActionLockModeLeaveAsFoundLabel": "保持原有状态",
+  "quickActionLockModeLeaveAsFoundSubtitle": "仅在保存前处于锁定状态时锁定",
+  "quickActionLockModeAlwaysLockLabel": "始终锁定",
+  "quickActionLockModeAlwaysLockSubtitle": "保存后立即锁定保险库",
+  "quickActionLockModeLeaveOpenLabel": "保持解锁",
+  "quickActionLockModeLeaveOpenSubtitle": "保持保险库开启并遵循自动锁定计时器"
 }
