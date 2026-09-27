@@ -8739,4 +8739,91 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'Live preview';
+
+  @override
+  String get textEditorWordWrap => 'Word Wrap';
+
+  @override
+  String get textEditorReadOnly => 'Read Only';
+
+  @override
+  String get selectImageTitle => 'Select Image';
+
+  @override
+  String get noImagesFoundMessage => 'No images found in this folder.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'Show Symbols Row';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'Show quick punctuation and bracket shortcuts';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'Show Actions Row';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'Show shortcut buttons for editor actions';
+
+  @override
+  String get textEditorCustomizeActionsLabel => 'Customize Action Buttons';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'Select and reorder editor actions';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'Customize Actions';
+
+  @override
+  String get actionUndo => 'Undo';
+
+  @override
+  String get actionRedo => 'Redo';
+
+  @override
+  String get actionCursorLeft => 'Move Cursor Left';
+
+  @override
+  String get actionCursorRight => 'Move Cursor Right';
+
+  @override
+  String get actionSelectWord => 'Select Word';
+
+  @override
+  String get actionCopy => 'Copy';
+
+  @override
+  String get actionCut => 'Cut';
+
+  @override
+  String get actionPaste => 'Paste';
+
+  @override
+  String get actionFind => 'Find & Replace';
+
+  @override
+  String get actionWordWrap => 'Word Wrap';
+
+  @override
+  String get actionGoToLine => 'Go to Line';
+
+  @override
+  String get actionGoToStart => 'Go to Start';
+
+  @override
+  String get actionGoToEnd => 'Go to End';
+
+  @override
+  String get actionIndent => 'Indent';
+
+  @override
+  String get actionOutdent => 'Outdent';
+
+  @override
+  String get actionFormat => 'Format Code';
+
+  @override
+  String get actionReadOnly => 'Toggle Read-Only';
 }

@@ -8875,4 +8875,92 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'Live-Vorschau';
+
+  @override
+  String get textEditorWordWrap => 'Zeilenumbruch';
+
+  @override
+  String get textEditorReadOnly => 'Schreibgeschützt';
+
+  @override
+  String get selectImageTitle => 'Bild auswählen';
+
+  @override
+  String get noImagesFoundMessage =>
+      'In diesem Ordner wurden keine Bilder gefunden.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'Symbolleiste anzeigen';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'Schnellzugriff auf Sonderzeichen anzeigen';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'Aktionsleiste anzeigen';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'Aktionsschaltflächen für den Editor anzeigen';
+
+  @override
+  String get textEditorCustomizeActionsLabel => 'Aktionen anpassen';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'Editor-Aktionen auswählen und anordnen';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'Aktionen anpassen';
+
+  @override
+  String get actionUndo => 'Rückgängig';
+
+  @override
+  String get actionRedo => 'Wiederholen';
+
+  @override
+  String get actionCursorLeft => 'Cursor nach links';
+
+  @override
+  String get actionCursorRight => 'Cursor nach rechts';
+
+  @override
+  String get actionSelectWord => 'Wort auswählen';
+
+  @override
+  String get actionCopy => 'Kopieren';
+
+  @override
+  String get actionCut => 'Ausschneiden';
+
+  @override
+  String get actionPaste => 'Einfügen';
+
+  @override
+  String get actionFind => 'Suchen & Ersetzen';
+
+  @override
+  String get actionWordWrap => 'Zeilenumbruch';
+
+  @override
+  String get actionGoToLine => 'Gehe zu Zeile';
+
+  @override
+  String get actionGoToStart => 'Gehe zum Anfang';
+
+  @override
+  String get actionGoToEnd => 'Gehe zum Ende';
+
+  @override
+  String get actionIndent => 'Einzug vergrößern';
+
+  @override
+  String get actionOutdent => 'Einzug verkleinern';
+
+  @override
+  String get actionFormat => 'Code formatieren';
+
+  @override
+  String get actionReadOnly => 'Schreibgeschützt';
 }

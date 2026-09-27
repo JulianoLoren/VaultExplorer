@@ -8393,4 +8393,88 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'ライブプレビュー';
+
+  @override
+  String get textEditorWordWrap => 'テキストの折り返し';
+
+  @override
+  String get textEditorReadOnly => '読み取り専用';
+
+  @override
+  String get selectImageTitle => '画像を選択';
+
+  @override
+  String get noImagesFoundMessage => 'このフォルダーに画像は見つかりませんでした。';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => '記号バーを表示';
+
+  @override
+  String get textEditorShowSymbolsBarDescription => '記号と句読点のショートカットを表示';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'アクションバーを表示';
+
+  @override
+  String get textEditorShowActionsBarDescription => 'エディタのアクションボタンを表示';
+
+  @override
+  String get textEditorCustomizeActionsLabel => 'アクションボタンをカスタマイズ';
+
+  @override
+  String get textEditorCustomizeActionsDescription => 'エディタアクションの選択と並べ替え';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'アクションのカスタマイズ';
+
+  @override
+  String get actionUndo => '元に戻す';
+
+  @override
+  String get actionRedo => 'やり直し';
+
+  @override
+  String get actionCursorLeft => 'カーソルを左へ';
+
+  @override
+  String get actionCursorRight => 'カーソルを右へ';
+
+  @override
+  String get actionSelectWord => '単語を選択';
+
+  @override
+  String get actionCopy => 'コピー';
+
+  @override
+  String get actionCut => '切り取り';
+
+  @override
+  String get actionPaste => '貼り付け';
+
+  @override
+  String get actionFind => '検索と置換';
+
+  @override
+  String get actionWordWrap => 'テキストの折り返し';
+
+  @override
+  String get actionGoToLine => '指定行へ移動';
+
+  @override
+  String get actionGoToStart => '先頭へ移動';
+
+  @override
+  String get actionGoToEnd => '末尾へ移動';
+
+  @override
+  String get actionIndent => 'インデント';
+
+  @override
+  String get actionOutdent => 'インデント解除';
+
+  @override
+  String get actionFormat => 'コードの整形';
+
+  @override
+  String get actionReadOnly => '読み取り専用';
 }

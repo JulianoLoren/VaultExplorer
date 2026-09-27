@@ -11158,5 +11158,66 @@
   "textEditorLivePreviewTitle": "Live preview",
   "@textEditorLivePreviewTitle": {
     "description": "Section title for the live code editor preview box in appearance settings"
-  }
+  },
+  "textEditorWordWrap": "Word Wrap",
+  "@textEditorWordWrap": {
+    "description": "Label for word wrap option in text editor"
+  },
+  "textEditorReadOnly": "Read Only",
+  "@textEditorReadOnly": {
+    "description": "Label for read only option in text editor"
+  },
+  "selectImageTitle": "Select Image",
+  "@selectImageTitle": {
+    "description": "Title for image selection dialog in Markdown editor"
+  },
+  "noImagesFoundMessage": "No images found in this folder.",
+  "@noImagesFoundMessage": {
+    "description": "Message shown when no images are found in the current folder"
+  },
+  "textEditorShowSymbolsBarLabel": "Show Symbols Row",
+  "@textEditorShowSymbolsBarLabel": {
+    "description": "Label for showing symbols row in accessory bar"
+  },
+  "textEditorShowSymbolsBarDescription": "Show quick punctuation and bracket shortcuts",
+  "@textEditorShowSymbolsBarDescription": {
+    "description": "Description for showing symbols row in accessory bar"
+  },
+  "textEditorShowActionsBarLabel": "Show Actions Row",
+  "@textEditorShowActionsBarLabel": {
+    "description": "Label for showing actions row in accessory bar"
+  },
+  "textEditorShowActionsBarDescription": "Show shortcut buttons for editor actions",
+  "@textEditorShowActionsBarDescription": {
+    "description": "Description for showing actions row in accessory bar"
+  },
+  "textEditorCustomizeActionsLabel": "Customize Action Buttons",
+  "@textEditorCustomizeActionsLabel": {
+    "description": "Label for customizing action buttons in accessory bar"
+  },
+  "textEditorCustomizeActionsDescription": "Select and reorder editor actions",
+  "@textEditorCustomizeActionsDescription": {
+    "description": "Description for customizing action buttons"
+  },
+  "textEditorCustomizeActionsTitle": "Customize Actions",
+  "@textEditorCustomizeActionsTitle": {
+    "description": "Title for action customizer dialog"
+  },
+  "actionUndo": "Undo",
+  "actionRedo": "Redo",
+  "actionCursorLeft": "Move Cursor Left",
+  "actionCursorRight": "Move Cursor Right",
+  "actionSelectWord": "Select Word",
+  "actionCopy": "Copy",
+  "actionCut": "Cut",
+  "actionPaste": "Paste",
+  "actionFind": "Find & Replace",
+  "actionWordWrap": "Word Wrap",
+  "actionGoToLine": "Go to Line",
+  "actionGoToStart": "Go to Start",
+  "actionGoToEnd": "Go to End",
+  "actionIndent": "Indent",
+  "actionOutdent": "Outdent",
+  "actionFormat": "Format Code",
+  "actionReadOnly": "Toggle Read-Only"
 }

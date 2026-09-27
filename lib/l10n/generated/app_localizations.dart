@@ -14700,6 +14700,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Live preview'**
   String get textEditorLivePreviewTitle;
+
+  /// Label for word wrap option in text editor
+  ///
+  /// In en, this message translates to:
+  /// **'Word Wrap'**
+  String get textEditorWordWrap;
+
+  /// Label for read only option in text editor
+  ///
+  /// In en, this message translates to:
+  /// **'Read Only'**
+  String get textEditorReadOnly;
+
+  /// Title for image selection dialog in Markdown editor
+  ///
+  /// In en, this message translates to:
+  /// **'Select Image'**
+  String get selectImageTitle;
+
+  /// Message shown when no images are found in the current folder
+  ///
+  /// In en, this message translates to:
+  /// **'No images found in this folder.'**
+  String get noImagesFoundMessage;
+
+  /// Label for showing symbols row in accessory bar
+  ///
+  /// In en, this message translates to:
+  /// **'Show Symbols Row'**
+  String get textEditorShowSymbolsBarLabel;
+
+  /// Description for showing symbols row in accessory bar
+  ///
+  /// In en, this message translates to:
+  /// **'Show quick punctuation and bracket shortcuts'**
+  String get textEditorShowSymbolsBarDescription;
+
+  /// Label for showing actions row in accessory bar
+  ///
+  /// In en, this message translates to:
+  /// **'Show Actions Row'**
+  String get textEditorShowActionsBarLabel;
+
+  /// Description for showing actions row in accessory bar
+  ///
+  /// In en, this message translates to:
+  /// **'Show shortcut buttons for editor actions'**
+  String get textEditorShowActionsBarDescription;
+
+  /// Label for customizing action buttons in accessory bar
+  ///
+  /// In en, this message translates to:
+  /// **'Customize Action Buttons'**
+  String get textEditorCustomizeActionsLabel;
+
+  /// Description for customizing action buttons
+  ///
+  /// In en, this message translates to:
+  /// **'Select and reorder editor actions'**
+  String get textEditorCustomizeActionsDescription;
+
+  /// Title for action customizer dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Customize Actions'**
+  String get textEditorCustomizeActionsTitle;
+
+  /// No description provided for @actionUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get actionUndo;
+
+  /// No description provided for @actionRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get actionRedo;
+
+  /// No description provided for @actionCursorLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Cursor Left'**
+  String get actionCursorLeft;
+
+  /// No description provided for @actionCursorRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Cursor Right'**
+  String get actionCursorRight;
+
+  /// No description provided for @actionSelectWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Word'**
+  String get actionSelectWord;
+
+  /// No description provided for @actionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get actionCopy;
+
+  /// No description provided for @actionCut.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get actionCut;
+
+  /// No description provided for @actionPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get actionPaste;
+
+  /// No description provided for @actionFind.
+  ///
+  /// In en, this message translates to:
+  /// **'Find & Replace'**
+  String get actionFind;
+
+  /// No description provided for @actionWordWrap.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Wrap'**
+  String get actionWordWrap;
+
+  /// No description provided for @actionGoToLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Line'**
+  String get actionGoToLine;
+
+  /// No description provided for @actionGoToStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Start'**
+  String get actionGoToStart;
+
+  /// No description provided for @actionGoToEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to End'**
+  String get actionGoToEnd;
+
+  /// No description provided for @actionIndent.
+  ///
+  /// In en, this message translates to:
+  /// **'Indent'**
+  String get actionIndent;
+
+  /// No description provided for @actionOutdent.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdent'**
+  String get actionOutdent;
+
+  /// No description provided for @actionFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format Code'**
+  String get actionFormat;
+
+  /// No description provided for @actionReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Read-Only'**
+  String get actionReadOnly;
 }
 
 class _AppLocalizationsDelegate

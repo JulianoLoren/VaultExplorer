@@ -8890,4 +8890,93 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'Vista previa en vivo';
+
+  @override
+  String get textEditorWordWrap => 'Ajuste de línea';
+
+  @override
+  String get textEditorReadOnly => 'Solo lectura';
+
+  @override
+  String get selectImageTitle => 'Seleccionar imagen';
+
+  @override
+  String get noImagesFoundMessage =>
+      'No se encontraron imágenes en esta carpeta.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'Mostrar barra de símbolos';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'Mostrar barra rápida de caracteres y puntuación';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'Mostrar barra de acciones';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'Mostrar botones de acceso rápido para acciones del editor';
+
+  @override
+  String get textEditorCustomizeActionsLabel =>
+      'Personalizar botones de acción';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'Seleccionar y ordenar acciones del editor';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'Personalizar acciones';
+
+  @override
+  String get actionUndo => 'Deshacer';
+
+  @override
+  String get actionRedo => 'Rehacer';
+
+  @override
+  String get actionCursorLeft => 'Mover cursor a la izquierda';
+
+  @override
+  String get actionCursorRight => 'Mover cursor a la derecha';
+
+  @override
+  String get actionSelectWord => 'Seleccionar palabra';
+
+  @override
+  String get actionCopy => 'Copiar';
+
+  @override
+  String get actionCut => 'Cortar';
+
+  @override
+  String get actionPaste => 'Pegar';
+
+  @override
+  String get actionFind => 'Buscar y reemplazar';
+
+  @override
+  String get actionWordWrap => 'Ajuste de línea';
+
+  @override
+  String get actionGoToLine => 'Ir a la línea';
+
+  @override
+  String get actionGoToStart => 'Ir al inicio';
+
+  @override
+  String get actionGoToEnd => 'Ir al final';
+
+  @override
+  String get actionIndent => 'Aumentar sangría';
+
+  @override
+  String get actionOutdent => 'Reducir sangría';
+
+  @override
+  String get actionFormat => 'Formatear código';
+
+  @override
+  String get actionReadOnly => 'Solo lectura';
 }

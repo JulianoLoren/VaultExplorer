@@ -8878,4 +8878,91 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'Pré-visualização ao vivo';
+
+  @override
+  String get textEditorWordWrap => 'Quebra de linha';
+
+  @override
+  String get textEditorReadOnly => 'Somente leitura';
+
+  @override
+  String get selectImageTitle => 'Selecionar imagem';
+
+  @override
+  String get noImagesFoundMessage => 'Nenhuma imagem encontrada nesta pasta.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'Mostrar barra de símbolos';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'Mostrar atalhos de caracteres e pontuação';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'Mostrar barra de ações';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'Mostrar botões de atalho do editor';
+
+  @override
+  String get textEditorCustomizeActionsLabel => 'Personalizar botões de ação';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'Selecionar e reordenar ações do editor';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'Personalizar ações';
+
+  @override
+  String get actionUndo => 'Desfazer';
+
+  @override
+  String get actionRedo => 'Refazer';
+
+  @override
+  String get actionCursorLeft => 'Mover cursor para a esquerda';
+
+  @override
+  String get actionCursorRight => 'Mover cursor para a direita';
+
+  @override
+  String get actionSelectWord => 'Selecionar palavra';
+
+  @override
+  String get actionCopy => 'Copiar';
+
+  @override
+  String get actionCut => 'Recortar';
+
+  @override
+  String get actionPaste => 'Colar';
+
+  @override
+  String get actionFind => 'Localizar e substituir';
+
+  @override
+  String get actionWordWrap => 'Quebra de linha';
+
+  @override
+  String get actionGoToLine => 'Ir para linha';
+
+  @override
+  String get actionGoToStart => 'Ir para o início';
+
+  @override
+  String get actionGoToEnd => 'Ir para o fim';
+
+  @override
+  String get actionIndent => 'Aumentar recuo';
+
+  @override
+  String get actionOutdent => 'Diminuir recuo';
+
+  @override
+  String get actionFormat => 'Formatar código';
+
+  @override
+  String get actionReadOnly => 'Somente leitura';
 }

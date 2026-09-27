@@ -8950,4 +8950,91 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'Попередній перегляд';
+
+  @override
+  String get textEditorWordWrap => 'Перенесення слів';
+
+  @override
+  String get textEditorReadOnly => 'Тільки для читання';
+
+  @override
+  String get selectImageTitle => 'Вибрати зображення';
+
+  @override
+  String get noImagesFoundMessage => 'У цій папці не знайдено зображень.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'Показувати рядок символів';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'Показувати панель швидких символів і розділових знаків';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'Показувати рядок дій';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'Показувати кнопки швидких дій редактора';
+
+  @override
+  String get textEditorCustomizeActionsLabel => 'Налаштувати кнопки дій';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'Вибір і зміна порядку дій редактора';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'Налаштування дій';
+
+  @override
+  String get actionUndo => 'Скасувати';
+
+  @override
+  String get actionRedo => 'Повторити';
+
+  @override
+  String get actionCursorLeft => 'Курсор вліво';
+
+  @override
+  String get actionCursorRight => 'Курсор вправо';
+
+  @override
+  String get actionSelectWord => 'Виділити слово';
+
+  @override
+  String get actionCopy => 'Копіювати';
+
+  @override
+  String get actionCut => 'Вирізати';
+
+  @override
+  String get actionPaste => 'Вставити';
+
+  @override
+  String get actionFind => 'Знайти та замінити';
+
+  @override
+  String get actionWordWrap => 'Перенесення слів';
+
+  @override
+  String get actionGoToLine => 'Перейти до рядка';
+
+  @override
+  String get actionGoToStart => 'На початок';
+
+  @override
+  String get actionGoToEnd => 'В кінець';
+
+  @override
+  String get actionIndent => 'Збільшити відступ';
+
+  @override
+  String get actionOutdent => 'Зменшити відступ';
+
+  @override
+  String get actionFormat => 'Форматувати код';
+
+  @override
+  String get actionReadOnly => 'Тільки для читання';
 }

@@ -8279,4 +8279,88 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => '实时预览';
+
+  @override
+  String get textEditorWordWrap => '自动换行';
+
+  @override
+  String get textEditorReadOnly => '只读';
+
+  @override
+  String get selectImageTitle => '选择图片';
+
+  @override
+  String get noImagesFoundMessage => '此文件夹中未找到图片。';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => '显示符号栏';
+
+  @override
+  String get textEditorShowSymbolsBarDescription => '显示快速输入符号与标点栏';
+
+  @override
+  String get textEditorShowActionsBarLabel => '显示操作栏';
+
+  @override
+  String get textEditorShowActionsBarDescription => '显示编辑器快捷操作按钮栏';
+
+  @override
+  String get textEditorCustomizeActionsLabel => '自定义操作按钮';
+
+  @override
+  String get textEditorCustomizeActionsDescription => '选择并重排编辑器快捷操作';
+
+  @override
+  String get textEditorCustomizeActionsTitle => '自定义操作';
+
+  @override
+  String get actionUndo => '撤销';
+
+  @override
+  String get actionRedo => '重做';
+
+  @override
+  String get actionCursorLeft => '光标向左';
+
+  @override
+  String get actionCursorRight => '光标向右';
+
+  @override
+  String get actionSelectWord => '选择单词';
+
+  @override
+  String get actionCopy => '复制';
+
+  @override
+  String get actionCut => '剪切';
+
+  @override
+  String get actionPaste => '粘贴';
+
+  @override
+  String get actionFind => '查找与替换';
+
+  @override
+  String get actionWordWrap => '自动换行';
+
+  @override
+  String get actionGoToLine => '跳转到行';
+
+  @override
+  String get actionGoToStart => '跳转至开头';
+
+  @override
+  String get actionGoToEnd => '跳转至末尾';
+
+  @override
+  String get actionIndent => '增加缩进';
+
+  @override
+  String get actionOutdent => '减少缩进';
+
+  @override
+  String get actionFormat => '格式化代码';
+
+  @override
+  String get actionReadOnly => '只读';
 }

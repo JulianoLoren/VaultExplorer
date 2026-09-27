@@ -8951,4 +8951,92 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'Aperçu en direct';
+
+  @override
+  String get textEditorWordWrap => 'Retour à la ligne';
+
+  @override
+  String get textEditorReadOnly => 'Lecture seule';
+
+  @override
+  String get selectImageTitle => 'Sélectionner une image';
+
+  @override
+  String get noImagesFoundMessage => 'Aucune image trouvée dans ce dossier.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'Afficher la barre des symboles';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'Afficher les raccourcis de symboles et ponctuation';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'Afficher la barre d\'actions';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'Afficher les raccourcis d\'actions de l\'éditeur';
+
+  @override
+  String get textEditorCustomizeActionsLabel =>
+      'Personnaliser les boutons d\'action';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'Sélectionner et réorganiser les actions de l\'éditeur';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'Personnaliser les actions';
+
+  @override
+  String get actionUndo => 'Annuler';
+
+  @override
+  String get actionRedo => 'Rétablir';
+
+  @override
+  String get actionCursorLeft => 'Curseur à gauche';
+
+  @override
+  String get actionCursorRight => 'Curseur à droite';
+
+  @override
+  String get actionSelectWord => 'Sélectionner le mot';
+
+  @override
+  String get actionCopy => 'Copier';
+
+  @override
+  String get actionCut => 'Couper';
+
+  @override
+  String get actionPaste => 'Coller';
+
+  @override
+  String get actionFind => 'Rechercher et remplacer';
+
+  @override
+  String get actionWordWrap => 'Retour à la ligne';
+
+  @override
+  String get actionGoToLine => 'Aller à la ligne';
+
+  @override
+  String get actionGoToStart => 'Aller au début';
+
+  @override
+  String get actionGoToEnd => 'Aller à la fin';
+
+  @override
+  String get actionIndent => 'Indenter';
+
+  @override
+  String get actionOutdent => 'Désindenter';
+
+  @override
+  String get actionFormat => 'Formater le code';
+
+  @override
+  String get actionReadOnly => 'Lecture seule';
 }

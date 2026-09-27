@@ -8392,4 +8392,88 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => '실시간 미리보기';
+
+  @override
+  String get textEditorWordWrap => '자동 줄바꿈';
+
+  @override
+  String get textEditorReadOnly => '읽기 전용';
+
+  @override
+  String get selectImageTitle => '이미지 선택';
+
+  @override
+  String get noImagesFoundMessage => '이 폴더에서 이미지를 찾을 수 없습니다.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => '기호 바 표시';
+
+  @override
+  String get textEditorShowSymbolsBarDescription => '특수 문자 및 기호 바로가기 표시';
+
+  @override
+  String get textEditorShowActionsBarLabel => '동작 바 표시';
+
+  @override
+  String get textEditorShowActionsBarDescription => '편집기 동작 바로가기 버튼 표시';
+
+  @override
+  String get textEditorCustomizeActionsLabel => '동작 버튼 맞춤설정';
+
+  @override
+  String get textEditorCustomizeActionsDescription => '편집기 동작 선택 및 순서 변경';
+
+  @override
+  String get textEditorCustomizeActionsTitle => '동작 맞춤설정';
+
+  @override
+  String get actionUndo => '실행 취소';
+
+  @override
+  String get actionRedo => '다시 실행';
+
+  @override
+  String get actionCursorLeft => '커서 왼쪽 이동';
+
+  @override
+  String get actionCursorRight => '커서 오른쪽 이동';
+
+  @override
+  String get actionSelectWord => '단어 선택';
+
+  @override
+  String get actionCopy => '복사';
+
+  @override
+  String get actionCut => '잘라내기';
+
+  @override
+  String get actionPaste => '붙여넣기';
+
+  @override
+  String get actionFind => '찾기 및 바꾸기';
+
+  @override
+  String get actionWordWrap => '자동 줄바꿈';
+
+  @override
+  String get actionGoToLine => '줄로 이동';
+
+  @override
+  String get actionGoToStart => '문서 시작으로 이동';
+
+  @override
+  String get actionGoToEnd => '문서 끝으로 이동';
+
+  @override
+  String get actionIndent => '들여쓰기';
+
+  @override
+  String get actionOutdent => '내어쓰기';
+
+  @override
+  String get actionFormat => '코드 서식 지정';
+
+  @override
+  String get actionReadOnly => '읽기 전용';
 }

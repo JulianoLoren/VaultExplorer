@@ -8934,4 +8934,91 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'معاينة حية';
+
+  @override
+  String get textEditorWordWrap => 'التفاف النص';
+
+  @override
+  String get textEditorReadOnly => 'للقراءة فقط';
+
+  @override
+  String get selectImageTitle => 'اختر صورة';
+
+  @override
+  String get noImagesFoundMessage => 'لم يتم العثور على صور في هذا المجلد.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'إظهار شريط الرموز';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'إظهار اختصارات الرموز وعلامات الترقيم';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'إظهار شريط الإجراءات';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'إظهار أزرار الإجراءات السريعة في المحرر';
+
+  @override
+  String get textEditorCustomizeActionsLabel => 'تخصيص أزرار الإجراءات';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'اختيار وترتيب إجراءات المحرر';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'تخصيص الإجراءات';
+
+  @override
+  String get actionUndo => 'تراجع';
+
+  @override
+  String get actionRedo => 'إعادة';
+
+  @override
+  String get actionCursorLeft => 'تحريك المؤشر يساراً';
+
+  @override
+  String get actionCursorRight => 'تحريك المؤشر يميناً';
+
+  @override
+  String get actionSelectWord => 'تحديد كلمة';
+
+  @override
+  String get actionCopy => 'نسخ';
+
+  @override
+  String get actionCut => 'قص';
+
+  @override
+  String get actionPaste => 'لصق';
+
+  @override
+  String get actionFind => 'بحث واستبدال';
+
+  @override
+  String get actionWordWrap => 'التفاف النص';
+
+  @override
+  String get actionGoToLine => 'الانتقال إلى سطر';
+
+  @override
+  String get actionGoToStart => 'الانتقال للبداية';
+
+  @override
+  String get actionGoToEnd => 'الانتقال للنهاية';
+
+  @override
+  String get actionIndent => 'زيادة المسافة البادئة';
+
+  @override
+  String get actionOutdent => 'إنقاص المسافة البادئة';
+
+  @override
+  String get actionFormat => 'تنسيق الكود';
+
+  @override
+  String get actionReadOnly => 'للقراءة فقط';
 }

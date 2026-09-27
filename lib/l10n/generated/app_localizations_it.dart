@@ -8872,4 +8872,93 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get textEditorLivePreviewTitle => 'Anteprima dal vivo';
+
+  @override
+  String get textEditorWordWrap => 'A capo automatico';
+
+  @override
+  String get textEditorReadOnly => 'Sola lettura';
+
+  @override
+  String get selectImageTitle => 'Seleziona immagine';
+
+  @override
+  String get noImagesFoundMessage =>
+      'Nessuna immagine trovata in questa cartella.';
+
+  @override
+  String get textEditorShowSymbolsBarLabel => 'Mostra barra dei simboli';
+
+  @override
+  String get textEditorShowSymbolsBarDescription =>
+      'Mostra scorciatoie per caratteri e punteggiatura';
+
+  @override
+  String get textEditorShowActionsBarLabel => 'Mostra barra delle azioni';
+
+  @override
+  String get textEditorShowActionsBarDescription =>
+      'Mostra pulsanti di azione rapida dell\'editor';
+
+  @override
+  String get textEditorCustomizeActionsLabel =>
+      'Personalizza pulsanti di azione';
+
+  @override
+  String get textEditorCustomizeActionsDescription =>
+      'Seleziona e riordina le azioni dell\'editor';
+
+  @override
+  String get textEditorCustomizeActionsTitle => 'Personalizza azioni';
+
+  @override
+  String get actionUndo => 'Annulla';
+
+  @override
+  String get actionRedo => 'Ripeti';
+
+  @override
+  String get actionCursorLeft => 'Cursore a sinistra';
+
+  @override
+  String get actionCursorRight => 'Cursore a destra';
+
+  @override
+  String get actionSelectWord => 'Seleziona parola';
+
+  @override
+  String get actionCopy => 'Copia';
+
+  @override
+  String get actionCut => 'Taglia';
+
+  @override
+  String get actionPaste => 'Incolla';
+
+  @override
+  String get actionFind => 'Trova e sostituisci';
+
+  @override
+  String get actionWordWrap => 'A capo automatico';
+
+  @override
+  String get actionGoToLine => 'Vai alla riga';
+
+  @override
+  String get actionGoToStart => 'Vai all\'inizio';
+
+  @override
+  String get actionGoToEnd => 'Vai alla fine';
+
+  @override
+  String get actionIndent => 'Aumenta rientro';
+
+  @override
+  String get actionOutdent => 'Riduci rientro';
+
+  @override
+  String get actionFormat => 'Formatta codice';
+
+  @override
+  String get actionReadOnly => 'Sola lettura';
 }
