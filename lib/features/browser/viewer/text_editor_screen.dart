@@ -9,9 +9,11 @@ import 'package:vaultexplorer/core/theme/app_theme.dart';
 import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_controller.dart';
+import 'package:vaultexplorer/features/browser/viewer/text_editor_appearance_provider.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_formatters.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_accessory_key_bar.dart';
+import 'package:vaultexplorer/features/browser/viewer/widgets/editor_appearance_sheet.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_find_panel.dart';
 
 class TextEditorScreen extends ConsumerStatefulWidget {
@@ -51,6 +53,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   int _charCount = 0;
   DateTime? _lastSavedAt;
   bool _appliedInitialText = false;
+
+  // See the comment in _onTextChanged for why this is an approximation
+  // (a periodic full wipe) rather than a true capped sliding window.
+  static const _kMaxUndoHistoryOperations = 200;
+  int _editsSinceHistoryClear = 0;
   String _lastKnownText = '';
   Object? _lastCodeLines;
 
@@ -109,6 +116,24 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     }
     _lastCodeLines = codeLines;
     _lastKnownText = currentText;
+
+    // Undo-history capping (Phase 6, item 3). re_editor's own undo stack
+    // is an unbounded, private linked list of full-buffer snapshots --
+    // there's no public config to cap it at N entries the way the plan
+    // describes. clearHistory() (already used for the initial load,
+    // above) is the only lever this library exposes, so this
+    // approximates a cap by wiping it outright every
+    // _kMaxUndoHistoryOperations edits rather than keeping a true sliding
+    // window of the last N. That means undo can't reach earlier than the
+    // last wipe, which is a real behavior change during one very long
+    // editing session -- the tradeoff made deliberately in exchange for
+    // bounding memory on the low-RAM devices this is meant to protect,
+    // and disclosed rather than silently shipped.
+    _editsSinceHistoryClear++;
+    if (_editsSinceHistoryClear >= _kMaxUndoHistoryOperations) {
+      _codeController.clearHistory();
+      _editsSinceHistoryClear = 0;
+    }
 
     void updateState() {
       if (!mounted) return;
@@ -377,6 +402,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         _codeController.text = initialText;
         _lastCodeLines = _codeController.value.codeLines;
         _codeController.clearHistory();
+        _editsSinceHistoryClear = 0;
         _autosaveTimer?.cancel();
 
         void updateInitial() {
@@ -453,6 +479,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                     case 'minify':
                       _runFormatter(minifyJson);
                       break;
+                    case 'appearance':
+                      showEditorAppearanceSheet(context);
+                      break;
                   }
                 },
                 itemBuilder: (context) => [
@@ -480,6 +509,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                         child: Text(context.l10n.textEditorMinifyJsonMenuItem),
                       ),
                   ],
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'appearance',
+                    child: Text(context.l10n.textEditorThemeMenuItem),
+                  ),
                 ],
               ),
               IconButton(
@@ -556,7 +590,14 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       );
     }
 
-    final syntaxStyle = resolveEditorSyntaxStyle(widget.filePath, Theme.of(context).brightness, cs);
+    final appearance = ref.watch(textEditorAppearanceProvider);
+    final syntaxStyle = resolveEditorSyntaxStyle(
+      widget.filePath,
+      Theme.of(context).brightness,
+      cs,
+      background: appearance.background,
+      syntaxTheme: appearance.syntaxTheme,
+    );
     // The accessory key bar only makes sense while the soft keyboard (and
     // therefore touch typing) is actually up -- it tracks the same inset
     // a hardware keyboard never pushes, so it naturally stays out of the
@@ -576,12 +617,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
               wordWrap: _wordWrap,
               autofocus: false,
               findController: _findController,
-              // findBuilder is invoked on every rebuild CodeEditor makes in
+             // findBuilder is invoked on every rebuild CodeEditor makes in
               // response to _findController itself (it already listens),
               // so gating on value here is what actually shows/hides the
-              // panel. Since it expects a non-null PreferredSizeWidget, we
-              // return a zero-sized empty widget when inactive to give the
-              // padding it would have taken back to the code.
+              // panel -- returning a zero-size PreferredSize renders nothing
+              // and gives the padding it would have taken back to the code.
               findBuilder: (context, findController, readOnly) {
                 if (findController.value == null) {
                   return const PreferredSize(
@@ -624,6 +664,19 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
+                  // Vim-style relative numbers (Phase 3, item 2): every
+                  // line but the current one shows its distance from the
+                  // cursor's line; the current line still shows its real,
+                  // absolute number (focusedTextStyle above is what makes
+                  // it stand out visually too).
+                  customLineIndex2Text: appearance.relativeLineNumbers
+                      ? (lineIndex) {
+                          final current = editingController.selection.extentIndex;
+                          return lineIndex == current
+                              ? '${lineIndex + 1}'
+                              : '${(lineIndex - current).abs()}';
+                        }
+                      : null,
                 );
               },
             ),

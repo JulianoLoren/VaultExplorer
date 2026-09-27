@@ -47,6 +47,7 @@ import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/re_highlight.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:vaultexplorer/features/browser/viewer/text_editor_theme.dart';
 
 /// The [CodeHighlightThemeMode] for a single recognized language, along
 /// with a short id used both as its [CodeHighlightTheme.languages] key and
@@ -140,12 +141,12 @@ _LanguageMatch? _matchFor(String filePath) {
 /// `.txt`/`.log` files and anything else unmapped render as plain
 /// monospace text with no highlighting pass, which is both correct (there's
 /// no syntax to highlight) and cheaper for large files.
-CodeHighlightTheme? _resolveCodeHighlightTheme(String filePath, Brightness brightness) {
+CodeHighlightTheme? _resolveCodeHighlightTheme(String filePath, Brightness brightness, EditorSyntaxThemeOption syntaxTheme) {
   final match = _matchFor(filePath);
   if (match == null) return null;
   return CodeHighlightTheme(
     languages: {match.id: CodeHighlightThemeMode(mode: match.mode)},
-    theme: brightness == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+    theme: syntaxTheme.themeMap(brightness),
   );
 }
 
@@ -172,12 +173,22 @@ class EditorSyntaxStyle {
 /// `Theme.of(context).colorScheme`, so a plain `.txt`/`.log` file still
 /// blends with the app's own light/dark setting instead of picking a
 /// default that only looks right in one of the two.
-EditorSyntaxStyle resolveEditorSyntaxStyle(String filePath, Brightness brightness, ColorScheme fallback) {
-  final codeTheme = _resolveCodeHighlightTheme(filePath, brightness);
+EditorSyntaxStyle resolveEditorSyntaxStyle(
+  String filePath,
+  Brightness brightness,
+  ColorScheme fallback, {
+  required EditorBackgroundOption background,
+  required EditorSyntaxThemeOption syntaxTheme,
+}) {
+  final codeTheme = _resolveCodeHighlightTheme(filePath, brightness, syntaxTheme);
   final root = codeTheme?.theme['root'];
+  
   return EditorSyntaxStyle(
     codeTheme: codeTheme,
-    backgroundColor: root?.backgroundColor ?? fallback.surface,
-    textColor: root?.color ?? fallback.onSurface,
+    backgroundColor: background.overrideColor ?? root?.backgroundColor ?? fallback.surface,
+    textColor: root?.color ??
+        (background == EditorBackgroundOption.matchSyntaxTheme
+            ? fallback.onSurface
+            : background.fallbackTextColor),
   );
 }
