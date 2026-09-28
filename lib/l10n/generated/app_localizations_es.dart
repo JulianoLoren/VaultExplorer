@@ -8293,6 +8293,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta carpeta, o una que la contiene o está dentro de ella, ya tiene sincronización automática.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'Esta carpeta contiene los datos cifrados de una bóveda. Desbloquea la bóveda y elígela en la lista de bóvedas.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'Esta bóveda es de solo lectura, así que no se puede guardar la sincronización automática.';
 

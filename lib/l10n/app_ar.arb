@@ -2225,6 +2225,7 @@
   "autoSyncProblemNoTarget": "اختر مجلدًا للمزامنة معه.",
   "autoSyncProblemOverlapsTarget": "لا يمكن أن يكون مجلد المزامنة داخل هذا المجلد أو أن يحتويه.",
   "autoSyncProblemOverlapsOtherRule": "هذا المجلد، أو مجلد أعلى منه أو بداخله، لديه مزامنة تلقائية بالفعل.",
+  "autoSyncProblemTargetIsVault": "يحتوي هذا المجلد على البيانات المشفّرة لخزنة. افتح قفل الخزنة واخترها من قائمة الخزائن بدلًا من ذلك.",
   "autoSyncReadOnlyNotice": "هذه الخزنة للقراءة فقط، لذا لا يمكن حفظ المزامنة التلقائية.",
   "autoSyncConfigUnreadable": "تعذّرت قراءة إعدادات المزامنة التلقائية المحفوظة لهذه الخزنة.",
   "autoSyncBannerRunning": "جارٍ المزامنة مع {target} · {done} من {total}",

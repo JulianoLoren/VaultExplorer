@@ -2225,6 +2225,7 @@
   "autoSyncProblemNoTarget": "Escolha uma pasta para sincronizar.",
   "autoSyncProblemOverlapsTarget": "A pasta de sincronização não pode estar dentro desta pasta nem contê-la.",
   "autoSyncProblemOverlapsOtherRule": "Esta pasta, ou uma acima ou dentro dela, já tem sincronização automática.",
+  "autoSyncProblemTargetIsVault": "Esta pasta contém os dados criptografados de um cofre. Desbloqueie o cofre e escolha-o na lista de cofres.",
   "autoSyncReadOnlyNotice": "Este cofre é somente leitura, então a sincronização automática não pode ser salva.",
   "autoSyncConfigUnreadable": "Não foi possível ler as configurações de sincronização automática salvas para este cofre.",
   "autoSyncBannerRunning": "Sincronizando com {target} · {done} de {total}",

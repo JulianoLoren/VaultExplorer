@@ -7721,6 +7721,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoSyncProblemOverlapsOtherRule => '此文件夹或其上级、下级文件夹已设置自动同步。';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      '此文件夹包含某个保险库的加密数据。请先解锁该保险库，然后改为从保险库列表中选择它。';
+
+  @override
   String get autoSyncReadOnlyNotice => '此保险库为只读，无法保存自动同步。';
 
   @override

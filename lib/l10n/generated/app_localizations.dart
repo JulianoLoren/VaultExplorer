@@ -13717,6 +13717,12 @@ abstract class AppLocalizations {
   /// **'This folder, or one above or inside it, already has auto-sync.'**
   String get autoSyncProblemOverlapsOtherRule;
 
+  /// Validation message: the chosen folder is the encrypted storage of a vault; a vault must be picked from the unlocked vaults instead
+  ///
+  /// In en, this message translates to:
+  /// **'This folder holds the encrypted data of a vault. Unlock that vault and choose it from the vault list instead.'**
+  String get autoSyncProblemTargetIsVault;
+
   /// Notice shown when the vault is read-only so auto-sync settings can't be saved
   ///
   /// In en, this message translates to:

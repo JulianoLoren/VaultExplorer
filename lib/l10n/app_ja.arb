@@ -2225,6 +2225,7 @@
   "autoSyncProblemNoTarget": "同期するフォルダを選択してください。",
   "autoSyncProblemOverlapsTarget": "同期先のフォルダは、このフォルダの内側にあったり、このフォルダを含んでいたりしてはいけません。",
   "autoSyncProblemOverlapsOtherRule": "このフォルダ、またはその上位や内側のフォルダには、すでに自動同期が設定されています。",
+  "autoSyncProblemTargetIsVault": "このフォルダには保管庫の暗号化されたデータが入っています。保管庫のロックを解除し、代わりに保管庫の一覧から選択してください。",
   "autoSyncReadOnlyNotice": "この保管庫は読み取り専用のため、自動同期を保存できません。",
   "autoSyncConfigUnreadable": "この保管庫に保存されている自動同期の設定を読み取れませんでした。",
   "autoSyncBannerRunning": "{target} と同期中 · {done}/{total}",

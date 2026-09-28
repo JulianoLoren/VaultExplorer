@@ -2225,6 +2225,7 @@
   "autoSyncProblemNoTarget": "请选择要同步的文件夹。",
   "autoSyncProblemOverlapsTarget": "要同步的文件夹不能位于此文件夹内，也不能包含此文件夹。",
   "autoSyncProblemOverlapsOtherRule": "此文件夹或其上级、下级文件夹已设置自动同步。",
+  "autoSyncProblemTargetIsVault": "此文件夹包含某个保险库的加密数据。请先解锁该保险库，然后改为从保险库列表中选择它。",
   "autoSyncReadOnlyNotice": "此保险库为只读，无法保存自动同步。",
   "autoSyncConfigUnreadable": "无法读取此保险库已保存的自动同步设置。",
   "autoSyncBannerRunning": "正在与 {target} 同步 · {done}/{total}",

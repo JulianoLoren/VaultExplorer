@@ -7826,6 +7826,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'このフォルダ、またはその上位や内側のフォルダには、すでに自動同期が設定されています。';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'このフォルダには保管庫の暗号化されたデータが入っています。保管庫のロックを解除し、代わりに保管庫の一覧から選択してください。';
+
+  @override
   String get autoSyncReadOnlyNotice => 'この保管庫は読み取り専用のため、自動同期を保存できません。';
 
   @override

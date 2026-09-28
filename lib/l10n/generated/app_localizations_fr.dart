@@ -8346,6 +8346,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce dossier, ou un dossier qui le contient ou qui s\'y trouve, a déjà une synchronisation automatique.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'Ce dossier contient les données chiffrées d\'un coffre. Déverrouillez ce coffre et choisissez-le plutôt dans la liste des coffres.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'Ce coffre est en lecture seule ; la synchronisation automatique ne peut donc pas être enregistrée.';
 

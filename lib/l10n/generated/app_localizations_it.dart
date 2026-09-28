@@ -8275,6 +8275,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Questa cartella, o una che la contiene o si trova al suo interno, ha già la sincronizzazione automatica.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'Questa cartella contiene i dati cifrati di un vault. Sblocca il vault e sceglilo dall\'elenco dei vault.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'Questo vault è di sola lettura, quindi non è possibile salvare la sincronizzazione automatica.';
 

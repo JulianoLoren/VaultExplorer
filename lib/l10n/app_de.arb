@@ -2225,6 +2225,7 @@
   "autoSyncProblemNoTarget": "Wählen Sie einen Ordner zum Synchronisieren.",
   "autoSyncProblemOverlapsTarget": "Der Ordner, mit dem synchronisiert wird, darf nicht in diesem Ordner liegen und ihn nicht enthalten.",
   "autoSyncProblemOverlapsOtherRule": "Für diesen Ordner oder einen darüber oder darin liegenden Ordner ist die automatische Synchronisierung bereits eingerichtet.",
+  "autoSyncProblemTargetIsVault": "Dieser Ordner enthält die verschlüsselten Daten eines Tresors. Entsperren Sie den Tresor und wählen Sie ihn stattdessen in der Tresorliste aus.",
   "autoSyncReadOnlyNotice": "Dieser Tresor ist schreibgeschützt, daher kann die automatische Synchronisierung nicht gespeichert werden.",
   "autoSyncConfigUnreadable": "Die gespeicherten Einstellungen für die automatische Synchronisierung dieses Tresors konnten nicht gelesen werden.",
   "autoSyncBannerRunning": "Synchronisierung mit {target} · {done} von {total}",

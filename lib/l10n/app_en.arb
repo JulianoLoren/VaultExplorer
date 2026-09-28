@@ -10421,6 +10421,10 @@
   "@autoSyncProblemOverlapsOtherRule": {
     "description": "Validation message: another auto-sync rule already covers this folder or a folder above/inside it"
   },
+  "autoSyncProblemTargetIsVault": "This folder holds the encrypted data of a vault. Unlock that vault and choose it from the vault list instead.",
+  "@autoSyncProblemTargetIsVault": {
+    "description": "Validation message: the chosen folder is the encrypted storage of a vault; a vault must be picked from the unlocked vaults instead"
+  },
   "autoSyncReadOnlyNotice": "This vault is read-only, so auto-sync can't be saved.",
   "@autoSyncReadOnlyNotice": {
     "description": "Notice shown when the vault is read-only so auto-sync settings can't be saved"

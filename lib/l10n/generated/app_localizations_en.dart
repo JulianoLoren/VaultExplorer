@@ -8146,6 +8146,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This folder, or one above or inside it, already has auto-sync.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'This folder holds the encrypted data of a vault. Unlock that vault and choose it from the vault list instead.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'This vault is read-only, so auto-sync can\'t be saved.';
 

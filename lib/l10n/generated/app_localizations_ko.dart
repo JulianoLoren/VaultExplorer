@@ -7826,6 +7826,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 폴더 또는 상위·하위 폴더에 이미 자동 동기화가 설정되어 있습니다.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      '이 폴더에는 볼트의 암호화된 데이터가 들어 있습니다. 볼트를 잠금 해제한 다음 볼트 목록에서 선택하세요.';
+
+  @override
   String get autoSyncReadOnlyNotice => '이 볼트는 읽기 전용이므로 자동 동기화를 저장할 수 없습니다.';
 
   @override

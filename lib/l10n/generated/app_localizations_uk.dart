@@ -8342,6 +8342,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Для цієї папки або батьківської чи вкладеної в неї вже налаштовано автосинхронізацію.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'У цій папці зберігаються зашифровані дані сховища. Розблокуйте сховище та виберіть його у списку сховищ.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'Це сховище доступне лише для читання, тому автосинхронізацію не можна зберегти.';
 

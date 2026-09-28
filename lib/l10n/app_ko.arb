@@ -2225,6 +2225,7 @@
   "autoSyncProblemNoTarget": "동기화할 폴더를 선택하세요.",
   "autoSyncProblemOverlapsTarget": "동기화할 폴더는 이 폴더 안에 있거나 이 폴더를 포함할 수 없습니다.",
   "autoSyncProblemOverlapsOtherRule": "이 폴더 또는 상위·하위 폴더에 이미 자동 동기화가 설정되어 있습니다.",
+  "autoSyncProblemTargetIsVault": "이 폴더에는 볼트의 암호화된 데이터가 들어 있습니다. 볼트를 잠금 해제한 다음 볼트 목록에서 선택하세요.",
   "autoSyncReadOnlyNotice": "이 볼트는 읽기 전용이므로 자동 동기화를 저장할 수 없습니다.",
   "autoSyncConfigUnreadable": "이 볼트에 저장된 자동 동기화 설정을 읽을 수 없습니다.",
   "autoSyncBannerRunning": "{target}과(와) 동기화 중 · {done}/{total}",

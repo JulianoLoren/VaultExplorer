@@ -2225,6 +2225,7 @@
   "autoSyncProblemNoTarget": "Elige una carpeta con la que sincronizar.",
   "autoSyncProblemOverlapsTarget": "La carpeta con la que se sincroniza no puede estar dentro de esta carpeta ni contenerla.",
   "autoSyncProblemOverlapsOtherRule": "Esta carpeta, o una que la contiene o está dentro de ella, ya tiene sincronización automática.",
+  "autoSyncProblemTargetIsVault": "Esta carpeta contiene los datos cifrados de una bóveda. Desbloquea la bóveda y elígela en la lista de bóvedas.",
   "autoSyncReadOnlyNotice": "Esta bóveda es de solo lectura, así que no se puede guardar la sincronización automática.",
   "autoSyncConfigUnreadable": "No se pudieron leer los ajustes de sincronización automática guardados para esta bóveda.",
   "autoSyncBannerRunning": "Sincronizando con {target} · {done} de {total}",

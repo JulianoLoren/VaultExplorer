@@ -8338,6 +8338,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذا المجلد، أو مجلد أعلى منه أو بداخله، لديه مزامنة تلقائية بالفعل.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'يحتوي هذا المجلد على البيانات المشفّرة لخزنة. افتح قفل الخزنة واخترها من قائمة الخزائن بدلًا من ذلك.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'هذه الخزنة للقراءة فقط، لذا لا يمكن حفظ المزامنة التلقائية.';
 

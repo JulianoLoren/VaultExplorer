@@ -8283,6 +8283,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esta pasta, ou uma acima ou dentro dela, já tem sincronização automática.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'Esta pasta contém os dados criptografados de um cofre. Desbloqueie o cofre e escolha-o na lista de cofres.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'Este cofre é somente leitura, então a sincronização automática não pode ser salva.';
 

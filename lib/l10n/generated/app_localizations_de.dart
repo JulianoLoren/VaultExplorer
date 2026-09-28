@@ -8276,6 +8276,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Für diesen Ordner oder einen darüber oder darin liegenden Ordner ist die automatische Synchronisierung bereits eingerichtet.';
 
   @override
+  String get autoSyncProblemTargetIsVault =>
+      'Dieser Ordner enthält die verschlüsselten Daten eines Tresors. Entsperren Sie den Tresor und wählen Sie ihn stattdessen in der Tresorliste aus.';
+
+  @override
   String get autoSyncReadOnlyNotice =>
       'Dieser Tresor ist schreibgeschützt, daher kann die automatische Synchronisierung nicht gespeichert werden.';
 
