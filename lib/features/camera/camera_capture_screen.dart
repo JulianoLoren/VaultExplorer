@@ -52,7 +52,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
   bool _pendingStopAfterStart = false;
   bool _backgroundRecordingActive = false;
   bool _showShutterFlash = false;
-  double _selectedAspectRatio = 4 / 3; // 4:3 (1.333), 16:9 (1.777), 1:1 (1.0)
 
   double _baseZoom = 1.0;
   Timer? _exposureHideTimer;
@@ -71,18 +70,16 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
 
   StreamSubscription<({double x, double y, double z})>? _sensorSubscription;
   StreamSubscription<Map<String, dynamic>>? _cameraEventSubscription;
-  // Physical device rotation from the accelerometer (0, 0.25, 0.5, -0.25).
   double _deviceTurns = 0.0;
-  // Surface.ROTATION_* (0..3) of the display, i.e. how far the OS has rotated the UI.
   int _displayRotation = 0;
 
-  /// Icon rotation that is still needed on top of what the OS already applied.
   double get _iconTurns => cameraIconTurns(
     deviceTurns: _deviceTurns,
     displayRotation: _displayRotation,
   );
 
-  String get _captureControlsKey =>
+  static const String _captureControlsKey = 'camera_capture';
+  String get _captureSessionKey =>
       '${widget.container.uri}\u0000${widget.targetDirPath}';
 
   CameraCaptureControlsState get _captureControls =>
@@ -92,10 +89,10 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
       ref.read(cameraCaptureControlsProvider(_captureControlsKey).notifier);
 
   CameraCaptureSessionState get _captureSession =>
-      ref.read(cameraCaptureSessionProvider(_captureControlsKey));
+      ref.read(cameraCaptureSessionProvider(_captureSessionKey));
 
   CameraCaptureSession get _captureSessionController =>
-      ref.read(cameraCaptureSessionProvider(_captureControlsKey).notifier);
+      ref.read(cameraCaptureSessionProvider(_captureSessionKey).notifier);
 
   bool get _isInitialized => _captureSession.isInitialized;
   String get _selectedCameraId => _captureSession.selectedCameraId;
@@ -133,8 +130,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     _engineEvents.addBackgroundRecordingStopRequestedListener(
       _onBackgroundRecordingStopRequestedEvent,
     );
-    // Follow the device: the preview is counter-rotated by the display
-    // rotation (see CameraPreviewView), so no portrait lock is needed.
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
@@ -196,7 +191,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     setState(() => _displayRotation = rotation);
   }
 
-   void _scrollToEndOfTray() {
+  void _scrollToEndOfTray() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_trayScrollController.hasClients) {
         _trayScrollController.animateTo(
@@ -258,7 +253,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     _cameraEventSubscription?.cancel();
     unawaited(_cameraController.dispose());
 
-    // Safe disposal using local fields without calling ref.read
     if (_isRecording) {
       unawaited(_fileIoApi.setKeepScreenOn(false));
     }
@@ -320,6 +314,8 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     if (_isOpeningCamera) return;
     _isOpeningCamera = true;
     try {
+      await _captureControlsController.loadPersisted();
+
       final hasPerms = await VaultCameraController.hasPermissions();
       if (!hasPerms) {
         final granted = await _cameraController.requestPermissions();
@@ -335,7 +331,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
 
       final info = await _cameraController.open(
         cameraId: cameraId,
-        facing: 'back',
+        facing: _captureControls.preferredFacing,
         quality: _captureControls.videoQuality,
         photoResolution: _captureControls.photoResolution,
       );
@@ -388,6 +384,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     );
 
     if (targetLens.cameraId != _selectedCameraId) {
+      _captureControlsController.setPreferredFacing(targetFacing);
       _captureSessionController.setUninitialized(cancelCountdown: false);
       await _initCamera(cameraId: targetLens.cameraId);
     }
@@ -422,8 +419,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
   void _onTapToFocus(TapDownDetails details, BoxConstraints constraints) async {
     if (!_cameraController.isInitialized) return;
 
-    // Normalized in the displayed frame -> natural-orientation frame, which
-    // is what the native focus/metering mapping expects.
     final natural = cameraDisplayPointToNatural(
       details.localPosition.dx / constraints.maxWidth,
       details.localPosition.dy / constraints.maxHeight,
@@ -437,7 +432,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     });
     _captureSessionController.setShowExposureSlider(true);
 
-    // Hardware locks focus and exposure metering onto the tapped point
     await applyFocusAndExposurePoint(_cameraController, nx, ny, logTag: 'CameraCaptureScreen');
 
     _exposureHideTimer?.cancel();
@@ -447,7 +441,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
         setState(() {
           _focusPoint = null;
         });
-        // Returns sensor back to continuous autofocus once reticle disappears
         unawaited(_cameraController.resetFocusAndExposure());
       }
     });
@@ -505,14 +498,14 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     await _takePhoto();
   }
 
-   void _triggerShutterFlash() {
+  void _triggerShutterFlash() {
     setState(() => _showShutterFlash = true);
     Future.delayed(const Duration(milliseconds: 60), () {
       if (mounted) setState(() => _showShutterFlash = false);
     });
   }
 
- Future<void> _takePhoto() async {
+  Future<void> _takePhoto() async {
     if (!_cameraController.isInitialized || _isEncrypting || _isTakingPhoto) return;
     _isTakingPhoto = true;
 
@@ -765,11 +758,11 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
     );
   }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     ref.watch(cameraCaptureControlsProvider(_captureControlsKey));
-    ref.watch(cameraCaptureSessionProvider(_captureControlsKey));
+    ref.watch(cameraCaptureSessionProvider(_captureSessionKey));
     final isContainerLocked = ref.watch(
       cameraCaptureLockProvider(widget.container.volId),
     );
@@ -779,7 +772,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
         body: SizedBox.expand(),
       );
     }
-     if (_isReviewingMedia && _capturedMedia.isNotEmpty) {
+    if (_isReviewingMedia && _capturedMedia.isNotEmpty) {
       return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -846,8 +839,8 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
                         sensorOrientation: _cameraController.sensorOrientation,
                         displayRotation: _displayRotation,
                         frameAspectRatio: isLandscapeFrame
-                            ? _selectedAspectRatio
-                            : 1 / _selectedAspectRatio,
+                            ? _captureControls.aspectRatio
+                            : 1 / _captureControls.aspectRatio,
                         showShutterFlash: _showShutterFlash,
                       ),
                     ),
@@ -866,7 +859,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
                 child: CircularProgressIndicator(color: Colors.white),
               ),
 
-            // Exposure focus reticle and vertical slider
             CameraFocusExposureOverlay(
               focusPoint: _focusPoint,
               showExposureSlider: _showExposureSlider,
@@ -879,7 +871,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
               },
             ),
 
-             // Top Bar
             Positioned(
               top: 0,
               left: 0,
@@ -895,8 +886,8 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
                 videoQualities: _captureSession.videoQualities,
                 currentPhotoResolution: _captureSession.currentPhotoResolution,
                 currentVideoResolution: _captureSession.currentVideoResolution,
-                selectedAspectRatio: _selectedAspectRatio,
-                onAspectRatioChanged: (ratio) => setState(() => _selectedAspectRatio = ratio),
+                selectedAspectRatio: _captureControls.aspectRatio,
+                onAspectRatioChanged: _captureControlsController.selectAspectRatio,
                 timerDelaySeconds: _captureControls.timerDelaySeconds,
                 flashMode: _captureControls.flashMode,
                 iconTurns: _iconTurns,
@@ -911,7 +902,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
               ),
             ),
 
-         // Bottom Bar
             Positioned(
               bottom: 0,
               left: 0,
@@ -919,7 +909,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
               child: _buildBottomControls(),
             ),
 
-          // In LANDSCAPE, place the tray above the flip camera button on the left so they never overlap
             if (isLandscape && (_capturedMedia.isNotEmpty || _pendingPhotoCount > 0) && !_isRecording && !_isCountingDown)
               Positioned(
                 left: 16.0 + MediaQuery.paddingOf(context).left,
@@ -987,7 +976,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-         ConstrainedBox(
+          ConstrainedBox(
             constraints: BoxConstraints(maxWidth: isLandscape ? 160 : 180),
             child: SingleChildScrollView(
               controller: _trayScrollController,
@@ -1010,10 +999,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
                               child: Container(
                                 width: 44,
                                 height: 44,
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.white54, width: 1.5),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                              
                                 child: Stack(
                                   fit: StackFit.expand,
                                   children: [
@@ -1147,7 +1133,6 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-          // Live captured media tray: stacked above controls ONLY in PORTRAIT
             if (!isLandscape && (_capturedMedia.isNotEmpty || _pendingPhotoCount > 0) && !_isRecording && !_isCountingDown)
               _buildCapturedMediaTray(),
 
@@ -1168,7 +1153,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-               buildRotatedWidget(
+                buildRotatedWidget(
                   iconTurns: _iconTurns,
                   child: IconButton(
                     icon: const Icon(

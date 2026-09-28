@@ -28,6 +28,13 @@ String? Function(String)? formatterFor(String filePath) {
   if (dot == -1 || dot == filePath.length - 1) return null;
   switch (filePath.substring(dot + 1).toLowerCase()) {
     case 'json':
+    case 'password':
+    case 'paymentcard':
+    case 'identity':
+    case 'securenote':
+    case 'bankaccount':
+    case 'softwarelicense':
+    case 'authenticator':
       return formatJson;
     case 'txt':
     case 'log':

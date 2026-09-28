@@ -21,7 +21,7 @@ final class CameraCaptureControlsProvider
   }) : super(
          retry: null,
          name: r'cameraCaptureControlsProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -77,7 +77,7 @@ final class CameraCaptureControlsFamily extends $Family
         name: r'cameraCaptureControlsProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   CameraCaptureControlsProvider call(String sessionKey) =>

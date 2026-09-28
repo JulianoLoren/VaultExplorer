@@ -89,7 +89,8 @@ class ImageEditorScreen extends ConsumerStatefulWidget {
   ConsumerState<ImageEditorScreen> createState() => _ImageEditorScreenState();
 }
 
-class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen> {
+class _ImageEditorScreenState extends ConsumerState<ImageEditorScreen>
+    with SingleTickerProviderStateMixin {
   VaultFileIoApi get _fileIoApi => ref.read(vaultFileIoApiProvider);
   VaultCryptoApi get _cryptoApi => ref.read(vaultCryptoApiProvider);
 
@@ -170,9 +171,31 @@ String get _fileName {
     return dot == -1 ? '' : _fileName.substring(dot + 1).toLowerCase();
   }
 
+ late final TransformationController _transformationController;
+  late final AnimationController _zoomAnimationController;
+  late final CurvedAnimation _zoomCurvedAnimation;
+  Matrix4Tween? _zoomMatrixTween;
+   double _currentScale = 1.0;
+  Orientation? _lastOrientation;
+
   @override
   void initState() {
     super.initState();
+    _transformationController = TransformationController();
+    _transformationController.addListener(_onTransformationChanged);
+    _zoomAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _zoomCurvedAnimation = CurvedAnimation(
+      parent: _zoomAnimationController,
+      curve: Curves.easeOutCubic,
+    )..addListener(() {
+        if (_zoomMatrixTween != null) {
+          _transformationController.value =
+              _zoomMatrixTween!.evaluate(_zoomCurvedAnimation);
+        }
+      });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _load();
@@ -182,12 +205,67 @@ String get _fileName {
 
   @override
   void dispose() {
+    _zoomCurvedAnimation.dispose();
+    _zoomAnimationController.dispose();
+    _transformationController.removeListener(_onTransformationChanged);
+    _transformationController.dispose();
     for (final s in _undoStack) {
       s.dispose();
     }
     _workingImage?.dispose();
     _cropRectNotifier?.dispose();
     super.dispose();
+  }
+
+  void _onTransformationChanged() {
+    final scale = _transformationController.value.getMaxScaleOnAxis();
+    if ((scale - _currentScale).abs() > 0.01) {
+      setState(() {
+        _currentScale = scale;
+      });
+    }
+  }
+
+  void _resetZoom({bool animate = true}) {
+    if (_transformationController.value.isIdentity()) return;
+    if (animate) {
+      _animateTransformation(Matrix4.identity());
+    } else {
+      _zoomAnimationController.stop();
+      _transformationController.value = Matrix4.identity();
+      if (_currentScale != 1.0) {
+        setState(() {
+          _currentScale = 1.0;
+        });
+      }
+    }
+  }
+
+  void _animateTransformation(Matrix4 target) {
+    _zoomAnimationController.stop();
+    _zoomMatrixTween = Matrix4Tween(
+      begin: _transformationController.value,
+      end: target,
+    );
+    _zoomAnimationController.reset();
+    _zoomAnimationController.forward();
+  }
+
+  void _handleDoubleTap(Offset tapPos, Size viewportSize) {
+    if (_controls.activeTool != EditorTool.none) return;
+    if (_currentScale > 1.05) {
+      _resetZoom(animate: true);
+    } else {
+      const targetScale = 2.5;
+      final minDx = viewportSize.width * (1 - targetScale);
+      final minDy = viewportSize.height * (1 - targetScale);
+      final dx = (tapPos.dx * (1 - targetScale)).clamp(minDx, 0.0);
+      final dy = (tapPos.dy * (1 - targetScale)).clamp(minDy, 0.0);
+      final target = Matrix4.identity()
+        ..translate(dx, dy)
+        ..scale(targetScale);
+      _animateTransformation(target);
+    }
   }
 
   // -------------------------------------------------------------------
@@ -218,6 +296,12 @@ String get _fileName {
 
     final snapshot = _undoStack.removeLast();
     final oldImage = _workingImage;
+    final sizeChanged = oldImage == null ||
+        oldImage.width != snapshot.image.width ||
+        oldImage.height != snapshot.image.height;
+    if (sizeChanged) {
+      _resetZoom(animate: false);
+    }
 
     setState(() {
       _workingImage = snapshot.image.clone();
@@ -407,8 +491,11 @@ String get _fileName {
     oldImage?.dispose();
   }
 
-  Future<void> _selectTool(EditorTool tool) async {
+ Future<void> _selectTool(EditorTool tool) async {
     if (_document.isSaving) return;
+    if (tool == EditorTool.crop || _controls.activeTool == EditorTool.crop) {
+      _resetZoom(animate: false);
+    }
     _controlsController.toggleTool(tool);
   }
 
@@ -586,7 +673,8 @@ String get _fileName {
         image.dispose();
         return;
       }
-      final oldImage = _workingImage;
+     final oldImage = _workingImage;
+      _resetZoom(animate: false);
       setState(() {
         _workingImage = image;
         _cropRectNotifier = null;
@@ -1134,7 +1222,15 @@ String get _fileName {
       );
     }
 
-    final isCropping = _controls.activeTool == EditorTool.crop;
+   final isCropping = _controls.activeTool == EditorTool.crop;
+
+    final orientation = MediaQuery.of(context).orientation;
+    if (_lastOrientation != null && _lastOrientation != orientation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _resetZoom(animate: false);
+      });
+    }
+    _lastOrientation = orientation;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1162,54 +1258,96 @@ String get _fileName {
 
             final angleRad = _controls.cropRotationAngle * math.pi / 180.0;
 
+            final canvasContent = SizedBox(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              child: Stack(
+                children: [
+                  Positioned.fromRect(
+                    rect: fitted,
+                    child: ClipRect(
+                      child: CustomPaint(
+                        size: fitted.size,
+                        painter: _RotatedImagePreviewPainter(
+                          image: image,
+                          angleRad: isCropping ? angleRad : 0.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (isCropping && _cropRectNotifier != null)
+                    Positioned.fromRect(
+                      rect: fitted,
+                      child: AnimatedOpacity(
+                        opacity: animatedPadding > 18 ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: CropOverlay(
+                          imageSize: fitted.size,
+                          rectNotifier: _cropRectNotifier!,
+                          aspectRatio: _controls.cropAspectRatio,
+                        ),
+                      ),
+                    )
+                  else
+                    Positioned.fromRect(
+                      rect: fitted,
+                      child: IgnorePointer(
+                        ignoring: _controls.activeTool == EditorTool.none,
+                        child: AnnotationLayer(
+                          imageSize: fitted.size,
+                          annotations: _annotations,
+                          activeTool: _controls.activeTool,
+                          color: _controls.currentColor,
+                          strokeWidthFraction:
+                              _controls.currentStrokeWidthFraction,
+                          onAnnotationAdded: _addAnnotation,
+                          onAnnotationUpdated: (idx, ann) {
+                            _pushUndoSnapshot();
+                            _annotationsController.update(idx, ann);
+                          },
+                          onAnnotationRemoved: (idx) {
+                            _pushUndoSnapshot();
+                            _annotationsController.removeAt(idx);
+                          },
+                          onTextTapped: _handleTextTapped,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+
             return Stack(
               children: [
-                Positioned.fromRect(
-                  rect: fitted,
-                  child: ClipRect(
-                    child: CustomPaint(
-                      size: fitted.size,
-                      painter: _RotatedImagePreviewPainter(
-                        image: image,
-                        angleRad: isCropping ? angleRad : 0.0,
+                GestureDetector(
+                  onDoubleTapDown: (details) =>
+                      _handleDoubleTap(details.localPosition, constraints.biggest),
+                  child: InteractiveViewer(
+                    transformationController: _transformationController,
+                    minScale: 1.0,
+                    maxScale: 5.0,
+                    panEnabled:
+                        !isCropping && _controls.activeTool == EditorTool.none,
+                    scaleEnabled: !isCropping,
+                    clipBehavior: Clip.hardEdge,
+                    child: canvasContent,
+                  ),
+                ),
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: AnimatedOpacity(
+                    opacity: (!isCropping && _currentScale > 1.05) ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: IgnorePointer(
+                      ignoring: isCropping || _currentScale <= 1.05,
+                      child: _ZoomIndicatorPill(
+                        scale: _currentScale,
+                        onReset: () => _resetZoom(animate: true),
                       ),
                     ),
                   ),
                 ),
-                if (isCropping && _cropRectNotifier != null)
-                  Positioned.fromRect(
-                    rect: fitted,
-                    child: AnimatedOpacity(
-                      opacity: animatedPadding > 18 ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 150),
-                      child: CropOverlay(
-                        imageSize: fitted.size,
-                        rectNotifier: _cropRectNotifier!,
-                        aspectRatio: _controls.cropAspectRatio,
-                      ),
-                    ),
-                  )
-                else
-                  Positioned.fromRect(
-                    rect: fitted,
-                    child: AnnotationLayer(
-                      imageSize: fitted.size,
-                      annotations: _annotations,
-                      activeTool: _controls.activeTool,
-                      color: _controls.currentColor,
-                      strokeWidthFraction: _controls.currentStrokeWidthFraction,
-                      onAnnotationAdded: _addAnnotation,
-                      onAnnotationUpdated: (idx, ann) {
-                        _pushUndoSnapshot();
-                        _annotationsController.update(idx, ann);
-                      },
-                      onAnnotationRemoved: (idx) {
-                        _pushUndoSnapshot();
-                        _annotationsController.removeAt(idx);
-                      },
-                      onTextTapped: _handleTextTapped,
-                    ),
-                  ),
               ],
             );
           },
@@ -1796,11 +1934,63 @@ class _TextAnnotationDialogState extends State<_TextAnnotationDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(widget.cancelLabel),
         ),
-        FilledButton(
+       FilledButton(
           onPressed: _submit,
           child: Text(widget.addLabel),
         ),
       ],
+    );
+  }
+}
+
+class _ZoomIndicatorPill extends StatelessWidget {
+  final double scale;
+  final VoidCallback onReset;
+
+  const _ZoomIndicatorPill({
+    required this.scale,
+    required this.onReset,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.65),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onReset,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.fit_screen_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${(scale * 100).round()}%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  fontFeatures: [ui.FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:vaultexplorer/core/api/vault_file_io_api.dart';
 import 'package:vaultexplorer/core/utils/image_dimensions.dart';
 import 'package:vaultexplorer/core/utils/retry.dart';
-import 'package:vaultexplorer/core/utils/task_priority.dart';
 import 'package:vaultexplorer/core/utils/ve_log.dart';
 import 'package:vaultexplorer/core/widgets/thumbnail/thumbnail_concurrency.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';

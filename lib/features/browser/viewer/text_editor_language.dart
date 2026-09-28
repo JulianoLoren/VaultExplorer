@@ -74,6 +74,13 @@ final Map<String, _LanguageMatch> _filenameOverrides = {
 /// [resolveEditorSyntaxStyle]) rather than a wrong guess.
 final Map<String, _LanguageMatch> _extensionLanguages = {
   'json': _LanguageMatch('json', langJson),
+  'password': _LanguageMatch('json', langJson),
+  'paymentcard': _LanguageMatch('json', langJson),
+  'identity': _LanguageMatch('json', langJson),
+  'securenote': _LanguageMatch('json', langJson),
+  'bankaccount': _LanguageMatch('json', langJson),
+  'softwarelicense': _LanguageMatch('json', langJson),
+  'authenticator': _LanguageMatch('json', langJson),
   'js': _LanguageMatch('javascript', langJavascript),
   'mjs': _LanguageMatch('javascript', langJavascript),
   'cjs': _LanguageMatch('javascript', langJavascript),

@@ -19,9 +19,11 @@ import 'package:vaultexplorer/features/browser/viewer/text_editor_formatters.dar
 import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_accessory_key_bar.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_appearance_sheet.dart';
+import 'package:vaultexplorer/core/utils/file_type_utils.dart';
 import 'package:vaultexplorer/features/browser/controllers/file_browser_navigation_controller.dart' show PathSegment;
-import 'package:vaultexplorer/features/browser/widgets/breadcrumb_bar.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_find_panel.dart';
+import 'package:vaultexplorer/features/browser/viewer/widgets/markdown_image.dart';
+import 'package:vaultexplorer/features/browser/widgets/breadcrumb_bar.dart';
 
 class EditorTab {
   String filePath;
@@ -646,9 +648,24 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     }
   }
 
+  static const _jsonExtensions = {
+    'json',
+    'password',
+    'paymentcard',
+    'identity',
+    'securenote',
+    'bankaccount',
+    'softwarelicense',
+    'authenticator',
+  };
+
   String? Function(String)? get _formatter => formatterFor(_activeTab.filePath);
 
-  bool get _isJsonFile => _activeTab.filePath.toLowerCase().endsWith('.json');
+  bool get _isJsonFile {
+    final dot = _activeTab.filePath.lastIndexOf('.');
+    if (dot < 0) return false;
+    return _jsonExtensions.contains(_activeTab.filePath.substring(dot + 1).toLowerCase());
+  }
 
   void _runFormatter(String? Function(String) formatter) {
     final input = _activeTab.codeController.text;
@@ -915,7 +932,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   Widget _buildTabBar(ColorScheme cs) {
     return Container(
-      height: 42,
+      height: 40,
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         border: Border(bottom: BorderSide(color: cs.outlineVariant, width: 0.5)),
@@ -1002,17 +1019,82 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     return stack;
   }
 
-  IconData _fileIconFor(String fileName) {
+  static const _imageExtensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'};
+
+  bool _isImageFile(String fileName) {
+    final dot = fileName.lastIndexOf('.');
+    if (dot < 0) return false;
+    return _imageExtensions.contains(fileName.substring(dot + 1).toLowerCase());
+  }
+
+  void _showImagePreviewDialog(String fullPath, String fileName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(fileName),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 400),
+          child: SingleChildScrollView(
+            child: MarkdownImage(
+              container: widget.container,
+              resolvedPath: fullPath,
+              alt: fileName,
+            ),
+          ),
+        ),
+        actions: [
+          if (_activeTab.isMarkdownFile && !_readOnly)
+            TextButton.icon(
+              icon: const Icon(Icons.add_link_rounded),
+              label: Text(ctx.l10n.addFile),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                final template = '![$fileName]($fileName)';
+                _activeTab.codeController.replaceSelection(template);
+                _focusNode.requestFocus();
+              },
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const _unsupportedBinaryExtensions = {
+    'pdf', 'mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v', 'mpeg', 'mpg',
+    'mp3', 'flac', 'wav', 'm4a', 'zip', 'gz', 'tar', '7z', 'rar', 'bz2', 'xz',
+    'apk', 'vxenc', 'aes',
+  };
+
+  bool _isUnsupportedBinaryFile(String fileName) {
+    final dot = fileName.lastIndexOf('.');
+    if (dot < 0) return false;
+    return _unsupportedBinaryExtensions.contains(fileName.substring(dot + 1).toLowerCase());
+  }
+
+  (IconData, Color) _fileIconAndColor(String fileName, ColorScheme cs) {
+    final ext = fileName.contains('.') ? fileName.split('.').last : '';
+    final vaultIcon = vaultIconForExt(ext) ?? vaultIconForExt(ext.toLowerCase());
+    final vaultColor = vaultColorForExt(ext) ?? vaultColorForExt(ext.toLowerCase());
+    if (vaultIcon != null) {
+      return (vaultIcon, vaultColor ?? cs.primary);
+    }
+    if (_isImageFile(fileName)) {
+      return (Icons.image_outlined, colorForFile(fileName));
+    }
     final lower = fileName.toLowerCase();
     if (lower.endsWith('.md') || lower.endsWith('.markdown')) {
-      return Icons.article_outlined;
+      return (Icons.article_outlined, colorForFile(fileName));
     }
     if (lower.endsWith('.json') ||
         lower.endsWith('.xml') ||
         lower.endsWith('.html') ||
         lower.endsWith('.yaml') ||
         lower.endsWith('.yml')) {
-      return Icons.data_object_rounded;
+      return (Icons.data_object_rounded, colorForFile(fileName));
     }
     if (lower.endsWith('.dart') ||
         lower.endsWith('.js') ||
@@ -1025,9 +1107,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         lower.endsWith('.go') ||
         lower.endsWith('.rs') ||
         lower.endsWith('.sh')) {
-      return Icons.code_rounded;
+      return (Icons.code_rounded, cs.primary);
     }
-    return Icons.insert_drive_file_outlined;
+    return (iconForFile(fileName), colorForFile(fileName));
   }
 
   Widget _buildProjectDrawer(ColorScheme cs) {
@@ -1117,12 +1199,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     itemCount: entries.length,
                     itemBuilder: (context, index) {
-                      final entry = entries[index];
+                     final entry = entries[index];
                       final fullPath = _projectDirPath.isEmpty
                           ? entry.name
                           : '$_projectDirPath/${entry.name}';
                       final isOpen = _tabs.any((t) => t.filePath == fullPath);
                       final isCurrentActive = fullPath == _activeTab.filePath;
+                      final isUnsupported = _isUnsupportedBinaryFile(entry.name);
+                      final (iconData, iconColor) = entry.isDir
+                          ? (Icons.folder_rounded, cs.primary)
+                          : _fileIconAndColor(entry.name, cs);
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 2),
@@ -1137,10 +1223,10 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                             visualDensity: VisualDensity.compact,
                             dense: true,
                             leading: Icon(
-                              entry.isDir ? Icons.folder_rounded : _fileIconFor(entry.name),
-                              color: entry.isDir
+                              iconData,
+                              color: isCurrentActive
                                   ? cs.primary
-                                  : (isCurrentActive ? cs.primary : cs.onSurfaceVariant),
+                                  : (isUnsupported ? iconColor.withValues(alpha: 0.38) : iconColor),
                               size: 20,
                             ),
                             title: Text(
@@ -1148,7 +1234,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: (isCurrentActive || isOpen) ? FontWeight.w600 : FontWeight.normal,
-                                color: isCurrentActive ? cs.onSecondaryContainer : cs.onSurface,
+                                color: isUnsupported
+                                    ? cs.onSurface.withValues(alpha: 0.45)
+                                    : (isCurrentActive ? cs.onSecondaryContainer : cs.onSurface),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1167,6 +1255,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                             onTap: () {
                               if (entry.isDir) {
                                 setState(() => _projectDirPath = fullPath);
+                              } else if (_isImageFile(entry.name)) {
+                                Navigator.of(context).pop();
+                                _showImagePreviewDialog(fullPath, entry.name);
+                              } else if (isUnsupported) {
+                                Navigator.of(context).pop();
+                                showAppSnackBar(
+                                  context,
+                                  message: context.l10n.textEditorInvalidTextFileMessage,
+                                  tone: AppBannerTone.error,
+                                );
                               } else {
                                 Navigator.of(context).pop();
                                 _openFileInTab(fullPath);
@@ -1259,8 +1357,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     return Column(
       children: [
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: SizedBox(
             child: CodeEditor(
               key: ValueKey(activeTab.filePath),
               controller: activeTab.codeController,

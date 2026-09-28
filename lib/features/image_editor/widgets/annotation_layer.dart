@@ -166,7 +166,7 @@ class _AnnotationLayerState extends State<AnnotationLayer> {
     }
   }
 
-  void _onPanEnd(DragEndDetails details) {
+void _onPanEnd(DragEndDetails details) {
     if (widget.activeTool == EditorTool.draw && _currentDrawingPoints.isNotEmpty) {
       widget.onAnnotationAdded(
         DrawingAnnotation(
@@ -201,6 +201,16 @@ class _AnnotationLayerState extends State<AnnotationLayer> {
         _lastLocalPoint = null;
       });
     }
+  }
+
+  void _onPanCancel() {
+    setState(() {
+      _currentDrawingPoints.clear();
+      _redactStartNormalized = null;
+      _redactCurrentNormalized = null;
+      _isDraggingAnnotation = false;
+      _lastLocalPoint = null;
+    });
   }
 
   // ── HOLD TO MOVE (Long Press grabs any shape in any tool) ─────────────────
@@ -281,10 +291,12 @@ class _AnnotationLayerState extends State<AnnotationLayer> {
       onPanDown: _onPanDown,
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
+      onPanCancel: _onPanCancel,
       onTapUp: _onTapUp,
       onLongPressStart: _onLongPressStart,
       onLongPressMoveUpdate: _onLongPressMoveUpdate,
       onLongPressEnd: _onLongPressEnd,
+      onLongPressCancel: _onPanCancel,
       child: CustomPaint(
         size: widget.imageSize,
         painter: _AnnotationPainter(
