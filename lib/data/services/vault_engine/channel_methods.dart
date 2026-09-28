@@ -122,8 +122,9 @@ abstract final class ChannelMethods {
   static const setDerivedKeyExpiry = 'setDerivedKeyExpiry';
   static const getDerivedKeyExpiry = 'getDerivedKeyExpiry';
   static const purgeExpiredDerivedKeys = 'purgeExpiredDerivedKeys';
-  static const aesGcmEncrypt = 'aesGcmEncrypt';
+   static const aesGcmEncrypt = 'aesGcmEncrypt';
   static const aesGcmDecrypt = 'aesGcmDecrypt';
+  static const aesCbcDecrypt = 'aesCbcDecrypt';
   static const pbkdf2 = 'pbkdf2';
   static const scrypt = 'scrypt';
   static const readSecure = 'readSecure';

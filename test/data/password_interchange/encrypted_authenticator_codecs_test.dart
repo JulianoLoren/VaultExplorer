@@ -84,6 +84,16 @@ class _FakeCrypto extends VaultCryptoApi {
     final next = plaintexts.removeAt(0);
     return next == null ? null : Uint8List.fromList(next);
   }
+
+  @override
+  Future<Uint8List?> aesCbcDecrypt({
+    required Uint8List key,
+    required Uint8List iv,
+    required Uint8List ciphertext,
+  }) async {
+    final next = plaintexts.removeAt(0);
+    return next == null ? null : Uint8List.fromList(next);
+  }
 }
 
 Uint8List _u8(List<int> v) => Uint8List.fromList(v);

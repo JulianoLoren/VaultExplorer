@@ -1,5 +1,5 @@
-// Bitwarden's unencrypted JSON vault export
-// (Settings -> Export vault -> .json, NOT the password-protected export).
+// Bitwarden's JSON vault export (Settings -> Export vault -> .json,
+// plain or password-protected).
 // This format has a real type system (login/note/card/identity) that maps
 // onto VaultItemType almost one-to-one, and a generic `fields` array on
 // every item for anything that doesn't -- so, unlike CSV, this is a
@@ -10,8 +10,11 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' as crypto;
+import 'package:vaultexplorer/core/api/vault_crypto_api.dart';
 import 'package:vaultexplorer/data/models/password_exchange/exchange_record.dart';
 import 'package:vaultexplorer/data/models/vault_item.dart';
+import 'package:vaultexplorer/data/services/password_interchange/authenticator_backup_crypto.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_format_codec.dart';
 
 // Bitwarden's own item type numbers -- fixed by their export schema, not
@@ -22,7 +25,8 @@ const int _bwTypeCard = 3;
 const int _bwTypeIdentity = 4;
 
 class BitwardenJsonCodec implements PasswordFormatCodec {
-  const BitwardenJsonCodec();
+  final VaultCryptoApi _crypto;
+  const BitwardenJsonCodec({VaultCryptoApi crypto = kDefaultBackupCrypto}) : _crypto = crypto;
 
   @override
   String get id => 'bitwarden_json';
@@ -32,7 +36,7 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
 
   @override
   String get description =>
-      'Bitwarden\'s unencrypted vault export format. High fidelity for every item type, and readable by Bitwarden\'s own importer. Not encrypted -- delete the file once you\'re done with it.';
+      'Bitwarden vault export (.json) -- plain or password-protected. High fidelity for every item type.';
 
   @override
   bool get supportsImport => true;
@@ -44,15 +48,19 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
   bool get isEncrypted => false;
 
   @override
-  bool get isOptionallyEncrypted => false;
+  bool get isOptionallyEncrypted => true;
 
- @override
+  @override
   bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) {
-    if (!fileName.toLowerCase().endsWith('.json')) return false;
+    final lower = fileName.toLowerCase();
+    if (lower.contains('bitwarden') && lower.endsWith('.json')) return true;
+    if (!lower.endsWith('.json')) return false;
     if (bytes == null) return true;
     try {
       final text = utf8.decode(bytes.take(4096).toList(), allowMalformed: true);
-      return text.contains('"items"');
+      return text.contains('"items"') ||
+          (text.contains('"encrypted"') && text.contains('"passwordProtected"')) ||
+          text.contains('"encKeyValidation_DO_NOT_EDIT"');
     } catch (_) {
       return false;
     }
@@ -68,18 +76,27 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
     } catch (e) {
       throw PasswordFileFormatException('Could not parse this file as JSON: $e');
     }
+
+    final Map<String, dynamic> vault;
     if (root['encrypted'] == true) {
-      throw const PasswordFileFormatException(
-        'This is a password-protected Bitwarden export. Re-export from Bitwarden as an unencrypted (.json) export first.',
-      );
+      if (root['passwordProtected'] == true || root.containsKey('encKeyValidation_DO_NOT_EDIT')) {
+        vault = await _decryptPasswordProtected(root, password);
+      } else {
+        throw const PasswordFileFormatException(
+          'This is an account-restricted Bitwarden export. In Bitwarden, export using the "Password protected" option instead.',
+        );
+      }
+    } else {
+      vault = root;
     }
-    final rawItems = root['items'];
+
+    final rawItems = vault['items'];
     if (rawItems is! List) {
       throw const PasswordFileFormatException('This doesn\'t look like a Bitwarden vault export (no "items" array).');
     }
 
     final folderNames = <String, String>{};
-    final rawFolders = root['folders'];
+    final rawFolders = vault['folders'];
     if (rawFolders is List) {
       for (final f in rawFolders) {
         if (f is Map && f['id'] is String && f['name'] is String) {
@@ -103,6 +120,108 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
       throw const PasswordFileFormatException('No usable items were found in this export.');
     }
     return DecodedExchange(records, warnings: warnings);
+  }
+
+  Future<Map<String, dynamic>> _decryptPasswordProtected(
+    Map<String, dynamic> root,
+    String? password,
+  ) async {
+    if (password == null || password.isEmpty) {
+      throw const PasswordFileIncorrectPasswordException();
+    }
+    final rawSalt = root['salt'];
+    final kdfType = root['kdfType'] as int? ?? 0;
+    final kdfIterations = root['kdfIterations'] as int? ?? 100000;
+    final encKeyValidation = root['encKeyValidation_DO_NOT_EDIT'] as String?;
+    final data = root['data'] as String?;
+
+    if (rawSalt is! String || data == null) {
+      throw const PasswordFileFormatException('This Bitwarden export is malformed.');
+    }
+    if (kdfType != 0) {
+      throw const PasswordFileFormatException(
+        'Argon2id-encrypted Bitwarden exports are not supported. Re-export using PBKDF2.',
+      );
+    }
+
+    final saltBytes = Uint8List.fromList(utf8.encode(rawSalt));
+    final Uint8List masterKey;
+    try {
+      masterKey = await derivePbkdf2(
+        _crypto,
+        password: password,
+        salt: saltBytes,
+        iterations: kdfIterations,
+        keyLength: 32,
+        hash: Pbkdf2Hash.sha256,
+      );
+    } catch (_) {
+      throw const PasswordFileIncorrectPasswordException();
+    }
+
+    Uint8List hkdfExpand(Uint8List prk, String info) {
+      final hmac = crypto.Hmac(crypto.sha256, prk);
+      final bytes = hmac.convert([...utf8.encode(info), 1]).bytes;
+      return Uint8List.fromList(bytes.sublist(0, 32));
+    }
+
+    final encKey = hkdfExpand(masterKey, 'enc');
+    final macKey = hkdfExpand(masterKey, 'mac');
+
+    ({Uint8List iv, Uint8List ct, Uint8List mac}) parseCipherString(String cs) {
+      final dot = cs.indexOf('.');
+      if (dot < 0) throw const PasswordFileFormatException('Invalid cipher format.');
+      final parts = cs.substring(dot + 1).split('|');
+      if (parts.length < 3) throw const PasswordFileFormatException('Invalid cipher parts.');
+      return (
+        iv: base64.decode(base64.normalize(parts[0])),
+        ct: base64.decode(base64.normalize(parts[1])),
+        mac: base64.decode(base64.normalize(parts[2])),
+      );
+    }
+
+    bool verifyMac(Uint8List macKey, Uint8List iv, Uint8List ct, Uint8List expectedMac) {
+      final hmac = crypto.Hmac(crypto.sha256, macKey);
+      final computed = hmac.convert([...iv, ...ct]).bytes;
+      if (computed.length != expectedMac.length) return false;
+      var diff = 0;
+      for (var i = 0; i < computed.length; i++) {
+        diff |= computed[i] ^ expectedMac[i];
+      }
+      return diff == 0;
+    }
+
+    try {
+      if (encKeyValidation != null && encKeyValidation.isNotEmpty) {
+        final val = parseCipherString(encKeyValidation);
+        if (!verifyMac(macKey, val.iv, val.ct, val.mac)) {
+          throw const PasswordFileIncorrectPasswordException();
+        }
+      }
+
+      final d = parseCipherString(data);
+      if (!verifyMac(macKey, d.iv, d.ct, d.mac)) {
+        throw const PasswordFileIncorrectPasswordException();
+      }
+
+      final plain = await openAesCbc(
+        _crypto,
+        key: encKey,
+        iv: d.iv,
+        ciphertext: d.ct,
+      );
+
+      final jsonStr = utf8.decode(plain);
+      final decoded = jsonDecode(jsonStr);
+      if (decoded is! Map<String, dynamic>) {
+        throw const PasswordFileFormatException('Decrypted Bitwarden data is not valid JSON.');
+      }
+      return decoded;
+    } finally {
+      masterKey.fillRange(0, masterKey.length, 0);
+      encKey.fillRange(0, encKey.length, 0);
+      macKey.fillRange(0, macKey.length, 0);
+    }
   }
 
   ExchangeRecord? _itemToRecord(Map<String, dynamic> item, Map<String, String> folderNames) {
@@ -209,9 +328,6 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
         );
 
       default:
-        // An org-collection item, or a Bitwarden item type added after this
-        // codec was written -- keep everything as a secure note rather than
-        // dropping it silently.
         fields['content'] = notes;
         _mergeCustomFields(item, fields);
         return ExchangeRecord(
@@ -224,9 +340,6 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
     }
   }
 
-  /// Bitwarden's `login.totp` is either a raw base32 secret or a full
-  /// `otpauth://...` URI -- VaultExplorer's Item Vault only stores the raw
-  /// secret, so pull it out of the URI's `secret=` parameter when present.
   String _extractTotpSecret(String totp) {
     if (!totp.startsWith('otpauth://')) return totp;
     try {
@@ -251,7 +364,7 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
 
   @override
   Future<Uint8List> encode(List<ExchangeRecord> records, {String? password}) async {
-    final folderIds = <String, String>{}; // folder path -> generated id
+    final folderIds = <String, String>{};
     final folders = <Map<String, String>>[];
     String folderIdFor(List<String> path) {
       if (path.isEmpty) return '';
@@ -311,7 +424,7 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
         base['secureNote'] = {'type': 0};
         break;
       case VaultItemType.paymentCard:
-        final expiry = take('expiry'); // "MM/YY"
+        final expiry = take('expiry');
         final parts = expiry.split('/');
         base['notes'] = _emptyToNull(take('notes'));
         base['type'] = _bwTypeCard;
@@ -354,24 +467,11 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
         break;
       case VaultItemType.bankAccount:
       case VaultItemType.softwareLicense:
-        // No native Bitwarden item type for these -- a secure note with
-        // every field preserved individually in `fields` (which Bitwarden
-        // supports on every item type) keeps this lossless, unlike folding
-        // everything into one notes blob.
         base['notes'] = _emptyToNull(take('notes'));
         base['type'] = _bwTypeSecureNote;
         base['secureNote'] = {'type': 0};
         break;
       case VaultItemType.authenticator:
-        // Also no native Bitwarden type, but unlike bankAccount/
-        // softwareLicense above, `login.totp` *is* a real Bitwarden slot
-        // (it's exactly what Bitwarden itself uses for a login's 2FA) --
-        // exporting as a login with just totp/username set (no password)
-        // is a standalone-TOTP entry both Bitwarden's own app and its
-        // importer already understand, rather than an inert secure note.
-        // `issuer` has no matching slot; it rides along as a custom field
-        // via the generic `f.isNotEmpty` block below, same as any
-        // unmapped key.
         final account = take('account');
         final totp = take('totp_secret');
         base['notes'] = _emptyToNull(take('notes'));

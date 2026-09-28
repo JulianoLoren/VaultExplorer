@@ -48,8 +48,12 @@ class TwoFasJsonCodec implements PasswordFormatCodec {
   @override
   bool get isOptionallyEncrypted => true;
 
-  @override
+ @override
   bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.2fas') || (lower.contains('2fas') && lower.endsWith('.json'))) {
+      return true;
+    }
     final text = tryDecodeUtf8(bytes);
     if (text == null) return false;
     return text.contains('"schemaVersion"') &&

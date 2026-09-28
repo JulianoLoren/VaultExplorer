@@ -3,12 +3,15 @@
 // doesn't use `@riverpod` like most of this app's other controllers.
 library;
 
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/data/models/password_exchange/exchange_record.dart';
+import 'package:vaultexplorer/data/services/password_interchange/google_auth_migration_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/otpauth_uri_list_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_format_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_format_registry.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_interchange_providers.dart';
@@ -233,8 +236,38 @@ class PasswordInterchange extends Notifier<PasswordInterchangeState> {
   void setImportFormat(PasswordFormatCodec format) => state = state.copyWith(
         importFormat: format,
         clearDecoded: true,
+        clearError: true,
         selected: const {},
       );
+
+  Future<void> loadFromQrCode(String qrText) async {
+    state = PasswordInterchangeState(
+      mode: PasswordInterchangeMode.import,
+      busy: true,
+    );
+    try {
+      final clean = qrText.trim();
+      final bytes = Uint8List.fromList(utf8.encode(clean));
+      final isGoogleMigration = clean.startsWith('otpauth-migration://');
+      final format = isGoogleMigration
+          ? const GoogleAuthMigrationCodec()
+          : (clean.startsWith('otpauth://')
+              ? const OtpAuthUriListCodec()
+              : guessPasswordFormat(fileName: 'qrcode.txt', bytes: bytes));
+
+      state = state.copyWith(
+        busy: false,
+        importFileName: isGoogleMigration
+            ? 'Google Authenticator (QR code)'
+            : 'Scanned QR code',
+        importBytes: bytes,
+        importFormat: format,
+      );
+      await decodeImportFile();
+    } catch (e) {
+      if (ref.mounted) state = state.copyWith(busy: false, error: '$e');
+    }
+  }
 
   Future<void> decodeImportFile({String? password}) async {
     final bytes = state.importBytes;

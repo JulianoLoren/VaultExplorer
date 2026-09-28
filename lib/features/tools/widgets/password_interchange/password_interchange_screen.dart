@@ -12,6 +12,7 @@ import 'package:vaultexplorer/data/services/password_interchange/password_format
 import 'package:vaultexplorer/data/services/password_interchange/password_format_registry.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_interchange_service.dart';
 import 'package:vaultexplorer/data/services/session_lock_controller.dart';
+import 'package:vaultexplorer/features/authenticator/widgets/qr_scanner_screen.dart';
 import 'package:vaultexplorer/features/tools/models/tool_models.dart';
 import 'package:vaultexplorer/features/tools/widgets/password_interchange/password_interchange_controller.dart';
 import 'package:vaultexplorer/features/tools/widgets/vault_folder_picker_sheet.dart';
@@ -491,10 +492,19 @@ class _ImportBodyState extends ConsumerState<_ImportBody> {
     super.dispose();
   }
 
-  Future<void> _pickImportFile() async {
+ Future<void> _pickImportFile() async {
     await ref.read(sessionLockControllerProvider).withLockSuppression(
       () => ref.read(passwordInterchangeProvider.notifier).pickImportFile(),
     );
+  }
+
+  Future<void> _scanQrCodeImport() async {
+    final scanned = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+    );
+    if (scanned == null || scanned.trim().isEmpty || !mounted) return;
+    await ref.read(passwordInterchangeProvider.notifier).loadFromQrCode(scanned);
   }
 
   Future<void> _pickDestination() async {
@@ -549,7 +559,13 @@ class _ImportBodyState extends ConsumerState<_ImportBody> {
               ],
             ),
           ),
-          const SizedBox(width: 6),
+            const SizedBox(width: 6),
+          IconButton(
+            tooltip: context.l10n.scanQrCodeTooltip,
+            icon: Icon(Icons.qr_code_scanner_rounded, color: cs.primary),
+            onPressed: state.busy ? null : _scanQrCodeImport,
+          ),
+          const SizedBox(width: 4),
           Flexible(
             child: TextButton(
               style: TextButton.styleFrom(

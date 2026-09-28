@@ -68,7 +68,7 @@ class VaultCryptoApi {
     return result;
   }
 
-  /// AES-GCM decryption via the C++ mbedTLS layer.
+   /// AES-GCM decryption via the C++ mbedTLS layer.
   Future<Uint8List?> aesGcmDecrypt({
     required Uint8List key,
     required Uint8List iv,
@@ -77,6 +77,19 @@ class VaultCryptoApi {
     final result = await _channel.invokeMethod<Uint8List>(
       ChannelMethods.aesGcmDecrypt,
       {'key': key, 'iv': iv, 'ciphertextAndTag': ciphertextAndTag},
+    );
+    return result;
+  }
+
+  /// AES-256-CBC decryption with PKCS5/PKCS7 unpadding via the native engine.
+  Future<Uint8List?> aesCbcDecrypt({
+    required Uint8List key,
+    required Uint8List iv,
+    required Uint8List ciphertext,
+  }) async {
+    final result = await _channel.invokeMethod<Uint8List>(
+      ChannelMethods.aesCbcDecrypt,
+      {'key': key, 'iv': iv, 'ciphertext': ciphertext},
     );
     return result;
   }

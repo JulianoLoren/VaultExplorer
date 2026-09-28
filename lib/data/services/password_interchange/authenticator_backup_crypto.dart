@@ -59,6 +59,31 @@ Future<Uint8List> openAesGcm(
   }
 }
 
+/// AES-256-CBC decryption with PKCS7 unpadding.
+Future<Uint8List> openAesCbc(
+  VaultCryptoApi crypto, {
+  required Uint8List key,
+  required Uint8List iv,
+  required Uint8List ciphertext,
+}) async {
+  try {
+    final plain = await crypto.aesCbcDecrypt(
+      key: key,
+      iv: iv,
+      ciphertext: ciphertext,
+    );
+    if (plain == null) throw const PasswordFileIncorrectPasswordException();
+    return plain;
+  } on PlatformException catch (e) {
+    if (e.code == 'CRYPTO_FAILED') {
+      throw const PasswordFileIncorrectPasswordException();
+    }
+    throw PasswordFileFormatException(
+      'This backup couldn\'t be decrypted (${e.message ?? e.code}).',
+    );
+  }
+}
+
 /// PBKDF2-HMAC over the UTF-8 bytes of [password].
 Future<Uint8List> derivePbkdf2(
   VaultCryptoApi crypto, {

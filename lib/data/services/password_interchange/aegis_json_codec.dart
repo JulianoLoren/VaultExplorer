@@ -47,11 +47,14 @@ class AegisJsonCodec implements PasswordFormatCodec {
   @override
   bool get isOptionallyEncrypted => true;
 
-  @override
+ @override
   bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) {
+    final lower = fileName.toLowerCase();
+    if (lower.contains('aegis') && lower.endsWith('.json')) return true;
     final text = tryDecodeUtf8(bytes);
     if (text == null) return false;
-    return text.contains('"header"') && text.contains('"slots"') && text.contains('"db"');
+    return (text.contains('"header"') && text.contains('"db"')) ||
+        (text.contains('"slots"') && text.contains('"db"'));
   }
 
   @override

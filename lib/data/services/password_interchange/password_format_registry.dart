@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:vaultexplorer/data/services/password_interchange/aegis_json_codec.dart';
@@ -51,6 +52,28 @@ List<PasswordFormatCodec> get kExportablePasswordFormats =>
 PasswordFormatCodec guessPasswordFormat({required String fileName, Uint8List? bytes}) {
   for (final codec in kImportablePasswordFormats) {
     if (codec.looksLikeThisFormat(fileName: fileName, bytes: bytes)) return codec;
+  }
+  final lower = fileName.toLowerCase();
+  if (lower.endsWith('.json') || lower.endsWith('.2fas')) {
+    if (bytes != null) {
+      final sample = utf8.decode(bytes.take(4096).toList(), allowMalformed: true);
+      if (sample.contains('"slots"') || (sample.contains('"header"') && sample.contains('"db"'))) {
+        return kPasswordFormatCodecs.firstWhere((c) => c.id == 'aegis');
+      }
+      if (sample.contains('"servicesEncrypted"') || sample.contains('"schemaVersion"')) {
+        return kPasswordFormatCodecs.firstWhere((c) => c.id == 'twofas');
+      }
+      if (sample.contains('"encrypted"') || sample.contains('"passwordProtected"')) {
+        return kPasswordFormatCodecs.firstWhere((c) => c.id == 'bitwarden_json');
+      }
+      if (sample.contains('"entries"') || sample.contains('"vaults"')) {
+        return kPasswordFormatCodecs.firstWhere((c) => c.id == 'proton_json');
+      }
+      if (sample.contains('"accounts"')) {
+        return kPasswordFormatCodecs.firstWhere((c) => c.id == 'lastpass_authenticator');
+      }
+    }
+    return kPasswordFormatCodecs.firstWhere((c) => c.id == 'bitwarden_json');
   }
   return kPasswordFormatCodecs.firstWhere((c) => c.id == 'csv');
 }

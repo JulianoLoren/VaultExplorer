@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
@@ -8,12 +11,15 @@ import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/data/models/vault_item.dart';
 import 'package:vaultexplorer/data/services/app_settings_service.dart';
+import 'package:vaultexplorer/data/services/password_interchange/google_auth_migration_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/password_interchange_providers.dart';
 import 'package:vaultexplorer/features/authenticator/authenticator_registry_controller.dart';
 import 'package:vaultexplorer/features/authenticator/authenticator_settings_screen.dart';
 import 'package:vaultexplorer/features/authenticator/widgets/totp_code_tile.dart';
 import 'package:vaultexplorer/features/dashboard/vault_dashboard_controller.dart';
 import 'package:vaultexplorer/features/settings/app_settings_controller.dart';
 import 'package:vaultexplorer/features/authenticator/widgets/qr_scanner_screen.dart';
+import 'package:vaultexplorer/features/tools/widgets/password_interchange/password_interchange_screen.dart';
 import 'package:vaultexplorer/features/vault_item/vault_item_detail_screen.dart';
 import 'package:vaultexplorer/features/vault_item/vault_item_edit_controller.dart';
 import 'package:vaultexplorer/features/vault_item/vault_item_edit_screen.dart';
@@ -153,7 +159,7 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
     );
     if (target == null || !context.mounted) return;
 
-   final choice = await showModalBottomSheet<String>(
+  final choice = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
@@ -163,7 +169,14 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
             ListTile(
               leading: const Icon(Icons.qr_code_scanner_rounded),
               title: Text(context.l10n.scanQrCodeTooltip),
+              subtitle: const Text('Scan a single code or a Google Authenticator transfer QR code'),
               onTap: () => Navigator.pop(sheetContext, 'scan'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_download_outlined),
+              title: Text(context.l10n.toolPasswordInterchangeTitle),
+              subtitle: const Text('Import from Aegis, 2FAS, Bitwarden, or andOTP backups'),
+              onTap: () => Navigator.pop(sheetContext, 'import_file'),
             ),
             ListTile(
               leading: const Icon(Icons.edit_note_rounded),
@@ -176,22 +189,99 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
     );
     if (choice == null || !context.mounted) return;
 
+    if (choice == 'import_file') {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PasswordInterchangeScreen(
+            mountedContainers: ValueNotifier(mounted),
+          ),
+        ),
+      );
+      await ref.read(authenticatorRegistryProvider.notifier).refreshContainer(target);
+      return;
+    }
+
     if (choice == 'scan') {
-      final qrUri = await Navigator.push<String>(
+      var currentQr = await Navigator.push<String>(
         context,
         MaterialPageRoute(builder: (_) => const QrScannerScreen()),
       );
-      if (qrUri == null || !context.mounted) return;
+      if (currentQr == null || !context.mounted) return;
 
-      final config = TotpConfig.fromFields({'totp_secret': qrUri});
-      final uri = Uri.tryParse(qrUri);
+      while (currentQr != null && currentQr.trim().startsWith('otpauth-migration://')) {
+        try {
+          final decoded = await const GoogleAuthMigrationCodec().decode(
+            Uint8List.fromList(utf8.encode(currentQr.trim())),
+          );
+          if (!context.mounted) return;
+
+          if (decoded.records.isEmpty) {
+            showAppSnackBar(
+              context,
+              message: context.l10n.invalidQrCodeError,
+              tone: AppBannerTone.error,
+            );
+            return;
+          }
+
+          final outcome = await ref.read(passwordInterchangeServiceProvider).importIntoVault(
+            container: target,
+            destFolderPath: '',
+            records: decoded.records,
+            mirrorFolders: false,
+          );
+          await ref.read(authenticatorRegistryProvider.notifier).refreshContainer(target);
+
+          if (!context.mounted) return;
+          showAppSnackBar(
+            context,
+            message: 'Imported ${outcome.imported} account(s) from Google Authenticator',
+            tone: AppBannerTone.success,
+          );
+
+          final hasMultipleBatches = decoded.warnings.any((w) => w.contains('split this export'));
+          if (hasMultipleBatches && context.mounted) {
+            final scanNext = await showAppConfirmDialog(
+              context,
+              title: 'Additional QR Codes Detected',
+              message: 'Google Authenticator split this export across multiple QR codes. Scan the next one now?',
+              confirmLabel: 'Scan Next',
+              cancelLabel: context.l10n.close,
+            );
+            if (scanNext && context.mounted) {
+              currentQr = await Navigator.push<String>(
+                context,
+                MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+              );
+              continue;
+            }
+          }
+       return;
+        } catch (e) {
+          if (context.mounted) {
+            showAppSnackBar(
+              context,
+              message: 'Failed to import Google Authenticator QR: $e',
+              tone: AppBannerTone.error,
+            );
+          }
+          return;
+        }
+      }
+
+      if (currentQr == null || !context.mounted) return;
+      final qrText = currentQr;
+
+      final config = TotpConfig.fromFields({'totp_secret': qrText});
+      final uri = Uri.tryParse(qrText);
       final qp = uri?.queryParameters ?? {};
       final issuer = qp['issuer'] ?? '';
       final pathLabel = uri != null ? Uri.decodeComponent(uri.path.replaceFirst(RegExp(r'^/'), '')) : '';
 
       final title = issuer.isNotEmpty ? issuer : (pathLabel.isNotEmpty ? pathLabel : 'Authenticator');
 
-      final finalPath = await ref.read(vaultItemEditProvider(target!.volId).notifier).save(
+      final finalPath = await ref.read(vaultItemEditProvider(target.volId).notifier).save(
         container: target,
         type: VaultItemType.authenticator,
         existing: null,
@@ -205,9 +295,6 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
           'totp_algorithm': config.algorithm.wireName,
           'totp_digits': '${config.digits}',
           'totp_period': '${config.period}',
-          // An otpauth://hotp or otpauth://steam QR must keep its type --
-          // saved as a plain TOTP entry it would show codes the service
-          // rejects.
           if (config.kind != OtpKind.totp) 'totp_type': config.kind.wireName,
           if (config.kind == OtpKind.hotp) 'hotp_counter': '${config.counter}',
         },

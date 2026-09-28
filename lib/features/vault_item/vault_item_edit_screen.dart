@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
@@ -11,6 +14,7 @@ import 'package:vaultexplorer/core/filesystem/mounted_container_filesystem.dart'
 import 'package:vaultexplorer/core/filesystem/name_validation.dart';
 import 'package:vaultexplorer/core/utils/sensitive_clipboard.dart';
 import 'package:vaultexplorer/core/utils/totp_engine.dart';
+import 'package:vaultexplorer/data/services/password_interchange/google_auth_migration_codec.dart';
 import 'package:vaultexplorer/features/authenticator/widgets/qr_scanner_screen.dart';
 import 'package:vaultexplorer/features/vault_item/vault_item_edit_controller.dart';
 
@@ -58,7 +62,38 @@ class _VaultItemEditScreenState extends ConsumerState<VaultItemEditScreen> {
     );
     if (scannedUri == null || !mounted) return;
 
-    try {
+try {
+      if (scannedUri.trim().startsWith('otpauth-migration://')) {
+        final decoded = await const GoogleAuthMigrationCodec().decode(
+          Uint8List.fromList(utf8.encode(scannedUri.trim())),
+        );
+        if (decoded.records.isEmpty) {
+          showAppSnackBar(context, message: context.l10n.invalidQrCodeError, tone: AppBannerTone.error);
+          return;
+        }
+        final record = decoded.records.first;
+        setState(() {
+          _ctrls['totp_secret']?.text = record.fields['totp_secret'] ?? '';
+          if (_titleCtrl.text.isEmpty) _titleCtrl.text = record.title;
+          if (_ctrls['issuer'] != null) _ctrls['issuer']!.text = record.fields['issuer'] ?? '';
+          if (_ctrls['account'] != null) _ctrls['account']!.text = record.fields['account'] ?? '';
+          if (_ctrls['totp_type'] != null) _ctrls['totp_type']!.text = record.fields['totp_type'] ?? 'totp';
+          if (_ctrls['totp_algorithm'] != null) _ctrls['totp_algorithm']!.text = record.fields['totp_algorithm'] ?? 'SHA1';
+          if (_ctrls['totp_digits'] != null) _ctrls['totp_digits']!.text = record.fields['totp_digits'] ?? '6';
+          if (_ctrls['totp_period'] != null) _ctrls['totp_period']!.text = record.fields['totp_period'] ?? '30';
+          if (_ctrls['hotp_counter'] != null) _ctrls['hotp_counter']!.text = record.fields['hotp_counter'] ?? '0';
+        });
+        _onTextChanged();
+        showAppSnackBar(
+          context,
+          message: decoded.records.length > 1
+              ? 'Populated with 1st account (${record.title}). To import all accounts, scan in the Authenticator screen.'
+              : context.l10n.qrCodeScannedSuccess,
+          tone: AppBannerTone.success,
+        );
+        return;
+      }
+
       final uri = Uri.parse(scannedUri);
       final qp = uri.queryParameters;
       final secret = qp['secret'] ?? scannedUri;

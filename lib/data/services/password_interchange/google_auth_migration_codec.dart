@@ -33,10 +33,10 @@ class GoogleAuthMigrationCodec implements PasswordFormatCodec {
   @override
   String get displayName => 'Google Authenticator (transfer code)';
 
-  @override
+ @override
   String get description =>
       'The otpauth-migration:// code from Google Authenticator\'s "Export accounts" -- '
-      'save it (or several, one per line) in a text file. Not encrypted.';
+      'scan its QR code with the camera or import from a file. Not encrypted.';
 
   @override
   bool get supportsImport => true;
@@ -50,9 +50,12 @@ class GoogleAuthMigrationCodec implements PasswordFormatCodec {
   @override
   bool get isOptionallyEncrypted => false;
 
-  @override
-  bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) =>
-      tryDecodeUtf8(bytes)?.contains(_scheme) ?? false;
+ @override
+  bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) {
+    final lower = fileName.toLowerCase();
+    if (lower.contains('google') || lower.contains('migration')) return true;
+    return tryDecodeUtf8(bytes)?.contains(_scheme) ?? false;
+  }
 
   @override
   Future<DecodedExchange> decode(Uint8List bytes, {String? password}) async {

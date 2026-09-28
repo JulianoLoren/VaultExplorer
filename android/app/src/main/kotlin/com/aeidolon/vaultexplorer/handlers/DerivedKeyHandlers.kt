@@ -517,7 +517,7 @@ class DerivedKeyHandlers(
         }
     }
 
-    fun handleAesGcmDecrypt(call: MethodCall, result: MethodChannel.Result) {
+     fun handleAesGcmDecrypt(call: MethodCall, result: MethodChannel.Result) {
         val key = call.argument<ByteArray>("key")
         val iv = call.argument<ByteArray>("iv")
         val aad = call.argument<ByteArray>("aad")
@@ -535,6 +535,30 @@ class DerivedKeyHandlers(
                     if (decrypted != null) result.success(decrypted)
                     else result.error("CRYPTO_FAILED", "AES-GCM decryption failed", null)
                 }
+            } catch (e: Exception) {
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            }
+        }
+    }
+
+    fun handleAesCbcDecrypt(call: MethodCall, result: MethodChannel.Result) {
+        val key = call.argument<ByteArray>("key")
+        val iv = call.argument<ByteArray>("iv")
+        val ciphertext = call.argument<ByteArray>("ciphertext")
+
+        if (key == null || iv == null || ciphertext == null) {
+            result.error("INVALID_ARGS", "key, iv, and ciphertext required", null)
+            return
+        }
+
+        ioExecutor.execute {
+            try {
+                val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+                val keySpec = javax.crypto.spec.SecretKeySpec(key, "AES")
+                val ivSpec = javax.crypto.spec.IvParameterSpec(iv)
+                cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
+                val decrypted = cipher.doFinal(ciphertext)
+                activity.runOnUiThread { result.success(decrypted) }
             } catch (e: Exception) {
                 activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
             }
