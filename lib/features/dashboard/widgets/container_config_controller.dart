@@ -6,7 +6,7 @@ import 'package:vaultexplorer/core/api/vault_engine_types.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/utils/ve_log.dart';
 import 'package:vaultexplorer/core/widgets/inputs/auto_lock_duration_options.dart'
-    show kImmediateAutoLockDuration, kInheritAutoLockDuration;
+    show kImmediateAutoLockDuration, kInheritAutoLockDuration, kScreenLockOnlyAutoLockDuration;
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
 import 'package:vaultexplorer/data/models/thumbnail_quality.dart';
@@ -356,16 +356,19 @@ class ContainerConfigController extends _$ContainerConfigController {
     _initAsync(rec, appSettings);
   }
 
-  /// Maps a record's three persisted auto-close fields onto the single
+  /// Maps a record's four persisted auto-close fields onto the single
   /// UI-level int the picker in [ContainerConfigState.autoCloseMins] works
   /// with: an explicit duration (>0), [kImmediateAutoLockDuration] for an
-  /// explicit "Immediately" (`autoCloseImmediately`), 0 for an explicit
-  /// "Never" (`autoCloseNever`), or [kInheritAutoLockDuration] ("App
-  /// Default") for a brand-new container or one that predates these flags
-  /// and was just left at its default.
+  /// explicit "Immediately" (`autoCloseImmediately`),
+  /// [kScreenLockOnlyAutoLockDuration] for an explicit "Screen Lock Only"
+  /// (`autoCloseScreenLockOnly`), 0 for an explicit "Never"
+  /// (`autoCloseNever`), or [kInheritAutoLockDuration] ("App Default") for
+  /// a brand-new container or one that predates these flags and was just
+  /// left at its default.
   static int _resolveInitialAutoCloseMins(ContainerRecord? rec) {
     if (rec == null) return kInheritAutoLockDuration;
     if (rec.autoCloseImmediately) return kImmediateAutoLockDuration;
+    if (rec.autoCloseScreenLockOnly) return kScreenLockOnlyAutoLockDuration;
     if (rec.autoCloseNever) return 0;
     if (rec.autoCloseMins > 0) return rec.autoCloseMins;
     return kInheritAutoLockDuration;
@@ -630,16 +633,19 @@ class ContainerConfigController extends _$ContainerConfigController {
       rememberPassword: needsPassword,
       unlockMethod: state.unlockMethod,
       // state.autoCloseMins is the picker's UI-level value: 0 = "Never"
-      // (explicit exemption), kImmediateAutoLockDuration = "Immediately"
-      // (also explicit, but enforced differently -- see autoCloseImmediately
-      // on ContainerRecord), a positive number = an explicit duration, and
-      // kInheritAutoLockDuration (or anything else non-positive) = "App
-      // Default" / not configured -- stored as autoCloseMins: 0 with
-      // autoCloseNever: false and autoCloseImmediately: false, same as a
-      // never-touched container.
+      // (explicit exemption), kImmediateAutoLockDuration = "Immediately",
+      // kScreenLockOnlyAutoLockDuration = "Screen Lock Only" (both explicit,
+      // but enforced differently -- see autoCloseImmediately/
+      // autoCloseScreenLockOnly on ContainerRecord), a positive number = an
+      // explicit duration, and kInheritAutoLockDuration (or anything else
+      // non-positive) = "App Default" / not configured -- stored as
+      // autoCloseMins: 0 with autoCloseNever: false, autoCloseImmediately:
+      // false, and autoCloseScreenLockOnly: false, same as a never-touched
+      // container.
       autoCloseMins: state.autoCloseMins > 0 ? state.autoCloseMins : 0,
       autoCloseNever: state.autoCloseMins == 0,
       autoCloseImmediately: state.autoCloseMins == kImmediateAutoLockDuration,
+      autoCloseScreenLockOnly: state.autoCloseMins == kScreenLockOnlyAutoLockDuration,
       documentProvider: state.documentProvider,
       documentProviderFolders: existingRecord?.documentProviderFolders ?? const [],
       thumbnailCacheMode: state.thumbnailCacheMode,

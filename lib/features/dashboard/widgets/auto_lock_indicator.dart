@@ -71,6 +71,28 @@ class AutoLockImmediately extends AutoLockStatus {
   int get hashCode => (AutoLockImmediately).hashCode;
 }
 
+/// Locks only in response to a genuine screen-off/device-lock signal, and
+/// deliberately NOT in response to plain app backgrounding (switching to
+/// another app while the screen stays on) -- unlike [AutoLockImmediately],
+/// which treats both the same. Can come from either an explicit
+/// per-container choice ([ContainerRecord.autoCloseScreenLockOnly]) or the
+/// app-wide default ([AppSettings.autoLockScreenLockOnly]) when the
+/// container has no override of its own. See
+/// [SessionLockController.handleScreenOff] (the only place this ever fires
+/// from -- never `handleAppLifecycleState`'s resumed-after-backgrounding
+/// path, which is exactly what this status means to ignore) for how it's
+/// actually enforced, both for the app-wide case and via
+/// `lockScreenLockOnlyContainers` for the per-container case.
+class AutoLockOnlyOnScreenLock extends AutoLockStatus {
+  const AutoLockOnlyOnScreenLock();
+
+  @override
+  bool operator ==(Object other) => other is AutoLockOnlyOnScreenLock;
+
+  @override
+  int get hashCode => (AutoLockOnlyOnScreenLock).hashCode;
+}
+
 /// Computes what will actually lock [record]'s container, falling back to
 /// the app-wide [settings] when the container has no override of its own.
 /// See [ContainerRecord.isExemptFromGlobalLock] and
@@ -96,6 +118,7 @@ class AutoLockPolicy {
 /// changes anything.
 AutoLockStatus _globalDefaultStatus(AppSettings settings) {
   if (!settings.lockContainersOnScreenLock) return const AutoLockNever();
+  if (settings.autoLockScreenLockOnly) return const AutoLockOnlyOnScreenLock();
   if (settings.autoLockMins > 0) return AutoLockAfter(settings.autoLockMins);
   return const AutoLockOnScreenOff();
 }
@@ -108,6 +131,8 @@ AutoLockPolicy computeAutoLockPolicy(ContainerRecord? record, AppSettings settin
     explicitStatus = const AutoLockNever();
   } else if (record?.autoCloseImmediately == true) {
     explicitStatus = const AutoLockImmediately();
+  } else if (record?.autoCloseScreenLockOnly == true) {
+    explicitStatus = const AutoLockOnlyOnScreenLock();
   } else {
     final perContainerMins = record?.autoCloseMins ?? 0;
     explicitStatus = perContainerMins > 0 ? AutoLockAfter(perContainerMins) : null;
@@ -154,6 +179,11 @@ _AutoLockVisual? _visualFor(BuildContext context, AutoLockStatus status) {
         label: l10n.autoLockIndicatorLocksImmediately,
         tooltip: l10n.autoLockIndicatorLocksImmediately,
       ),
+    AutoLockOnlyOnScreenLock() => _AutoLockVisual(
+        icon: Icons.screen_lock_portrait_outlined,
+        label: l10n.screenLockOnlyAutoLockOption,
+        tooltip: l10n.screenLockOnlyAutoLockOptionSubtitle,
+      ),
     AutoLockNever() => null,
   };
 }
@@ -182,6 +212,7 @@ class AutoLockIconBadge extends StatelessWidget {
       AutoLockAfter() => policy.isCustomOverride ? Icons.timer_rounded : Icons.timer_outlined,
       AutoLockOnScreenOff() => Icons.screen_lock_portrait_outlined,
       AutoLockImmediately() => Icons.flash_on_outlined,
+      AutoLockOnlyOnScreenLock() => Icons.screen_lock_portrait_outlined,
       AutoLockNever() => Icons.timer_off_outlined,
     };
 
@@ -239,6 +270,7 @@ class DrawerAutoLockStatusText extends StatelessWidget {
       AutoLockAfter() => policy.isCustomOverride ? Icons.timer_rounded : Icons.timer_outlined,
       AutoLockOnScreenOff() => Icons.screen_lock_portrait_outlined,
       AutoLockImmediately() => Icons.flash_on_outlined,
+      AutoLockOnlyOnScreenLock() => Icons.screen_lock_portrait_outlined,
       AutoLockNever() => Icons.timer_off_outlined,
     };
 

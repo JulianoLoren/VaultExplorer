@@ -921,6 +921,11 @@ class _ContainerConfigScreenState extends ConsumerState<ContainerConfigScreen> {
                   label: context.l10n.immediately,
                   subtitle: context.l10n.immediateAutoLockOptionSubtitle,
                 ),
+                screenLockOnlyOption: SelectOption(
+                  value: kScreenLockOnlyAutoLockDuration,
+                  label: context.l10n.screenLockOnlyAutoLockOption,
+                  subtitle: context.l10n.screenLockOnlyAutoLockOptionSubtitle,
+                ),
                 zeroOption: SelectOption(
                   value: 0,
                   label: context.l10n.neverAutoLockOption,

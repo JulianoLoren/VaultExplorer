@@ -27,6 +27,18 @@ const int kInheritAutoLockDuration = -2;
 /// (value 0) and "App Default" ([kInheritAutoLockDuration]).
 const int kImmediateAutoLockDuration = -3;
 
+/// Sentinel [SelectOption] value meaning "no inactivity timer at all — the
+/// only thing that locks this is a genuine screen-off/device-lock event".
+/// Offered where a [screenLockOnlyOption] is passed to
+/// [autoLockDurationOptions] (both the global Vault Auto-Lock picker and the
+/// per-container picker). Distinct from [kImmediateAutoLockDuration]:
+/// "Immediately" also locks on plain app backgrounding (switching to another
+/// app while the screen stays on), whereas this sentinel ignores that and
+/// reacts only to the screen physically turning off. See
+/// AppSettings.autoLockScreenLockOnly / ContainerRecord.autoCloseScreenLockOnly
+/// and SessionLockController's handling of both.
+const int kScreenLockOnlyAutoLockDuration = -4;
+
 const List<int> _presetAutoLockMinutes = [1, 2, 5, 10, 15, 30, 60];
 
 /// Renders [minutes] as "N minutes", "N hours", or "N hours M minutes" for a
@@ -45,7 +57,9 @@ String formatAutoLockDuration(BuildContext context, int minutes) {
 /// [kImmediateAutoLockDuration]) for pickers that need "Immediately" as its
 /// own entry distinct from [zeroOption] (whose label differs by call site —
 /// "Immediately" for the two global pickers, "Never" for the per-container
-/// picker, which is also the only one that passes [immediateOption]), the
+/// picker, which is also the only one that passes [immediateOption]), an
+/// optional [screenLockOnlyOption] (value [kScreenLockOnlyAutoLockDuration])
+/// for pickers that offer "locks only on screen lock" as its own entry, the
 /// standard minute/hour presets, the currently configured duration if it
 /// isn't one of those presets (so it still shows up correctly selected), and
 /// a trailing "Custom…" entry (value [kCustomAutoLockDuration]) that opens a
@@ -56,10 +70,12 @@ List<SelectOption<int>> autoLockDurationOptions(
   required int currentMinutes,
   SelectOption<int>? defaultOption,
   SelectOption<int>? immediateOption,
+  SelectOption<int>? screenLockOnlyOption,
 }) {
   final options = <SelectOption<int>>[
     if (defaultOption != null) defaultOption,
     if (immediateOption != null) immediateOption,
+    if (screenLockOnlyOption != null) screenLockOnlyOption,
     zeroOption,
     for (final mins in _presetAutoLockMinutes)
       SelectOption(value: mins, label: formatAutoLockDuration(context, mins)),

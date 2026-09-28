@@ -969,31 +969,45 @@ class _SecuritySettingsScreenState
                             (s) => s.copyWith(
                               lockContainersOnScreenLock: v,
                               autoLockMins: v && s.autoLockMins == 0 ? 5 : (!v ? 0 : s.autoLockMins),
+                              autoLockScreenLockOnly: !v ? false : s.autoLockScreenLockOnly,
                             ),
                           ),
                     ),
                     if (state.settings.lockContainersOnScreenLock)
                       OptionPickerTile<int>(
                         label: context.l10n.autoLockTimeoutLabel,
-                        value: state.settings.autoLockMins,
+                        value: state.settings.autoLockScreenLockOnly
+                            ? kScreenLockOnlyAutoLockDuration
+                            : state.settings.autoLockMins,
                         options: autoLockDurationOptions(
                           context,
                           zeroOption: SelectOption(value: 0, label: context.l10n.immediately),
-                          currentMinutes: state.settings.autoLockMins,
+                          screenLockOnlyOption: SelectOption(
+                            value: kScreenLockOnlyAutoLockDuration,
+                            label: context.l10n.screenLockOnlyAutoLockOption,
+                            subtitle: context.l10n.screenLockOnlyAutoLockOptionSubtitle,
+                          ),
+                          currentMinutes: state.settings.autoLockScreenLockOnly
+                              ? kScreenLockOnlyAutoLockDuration
+                              : state.settings.autoLockMins,
                         ),
                         onChanged: (v) {
                           if (v == kCustomAutoLockDuration) {
                             pickCustomAutoLockDuration(
                               context,
                               currentMinutes: state.settings.autoLockMins,
-                              onPicked: (mins) => ref
-                                  .read(appSettingsControllerProvider.notifier)
-                                  .updateSettings((s) => s.copyWith(autoLockMins: mins)),
+                              onPicked: (mins) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
+                                    (s) => s.copyWith(autoLockMins: mins, autoLockScreenLockOnly: false),
+                                  ),
                             );
+                          } else if (v == kScreenLockOnlyAutoLockDuration) {
+                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
+                                  (s) => s.copyWith(autoLockMins: 0, autoLockScreenLockOnly: true),
+                                );
                           } else {
-                            ref
-                                .read(appSettingsControllerProvider.notifier)
-                                .updateSettings((s) => s.copyWith(autoLockMins: v));
+                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
+                                  (s) => s.copyWith(autoLockMins: v, autoLockScreenLockOnly: false),
+                                );
                           }
                         },
                       ),
@@ -1297,20 +1311,20 @@ class StorageServicesSettingsScreen extends ConsumerWidget {
                         }
                       },
                     ),
-                     OptionPickerTile<QuickActionLockMode>(
-                      label: context.l10n.quickActionLockModeTitle,
-                      value: state.settings.quickActionLockMode,
-                      subtitle: state.settings.quickActionLockMode.getLocalizedLabel(context.l10n),
-                      options: QuickActionLockMode.values.map((mode) {
-                        return SelectOption(
-                          value: mode,
-                          label: mode.getLocalizedLabel(context.l10n),
-                          subtitle: mode.getLocalizedSubtitle(context.l10n),
-                        );
-                      }).toList(),
+                    SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      title: Text(
+                        context.l10n.autoLockOnShareImportTitle,
+                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        context.l10n.autoLockOnShareImportSubtitle,
+                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      value: state.settings.autoLockOnShareImport,
                       onChanged: (v) => ref
                           .read(appSettingsControllerProvider.notifier)
-                          .updateSettings((s) => s.copyWith(quickActionLockMode: v)),
+                          .updateSettings((s) => s.copyWith(autoLockOnShareImport: v)),
                     ),
                   ],
                 ),

@@ -117,6 +117,16 @@ class AppSettings {
   bool defaultDerivedKeyCacheEnabled;
   bool lockContainersOnScreenLock;
   int autoLockMins;
+  // When true, autoLockMins is ignored for vault auto-lock -- there's no
+  // inactivity timer at all (foreground or away-duration-based); the vault
+  // only locks on a genuine screen-off/device-lock signal, and explicitly
+  // NOT on plain app backgrounding (switching to another app while the
+  // screen stays on). Distinct from autoLockMins == 0 ("Immediately"),
+  // which locks on both. Mutually exclusive with a positive autoLockMins by
+  // construction (the picker only ever sets one at a time) -- see
+  // SessionLockController's use of this flag in _scheduleVaultLockTimer,
+  // handleScreenOff, and handleAppLifecycleState.
+  bool autoLockScreenLockOnly;
   // App-lock behavior below (lockAppOnScreenLock/appLockAfterMins) is
   // intentionally separate from vault auto-lock above
   // (lockContainersOnScreenLock/autoLockMins). Vault auto-lock unmounts
@@ -162,6 +172,7 @@ class AppSettings {
     this.lockContainersOnScreenLock = true,
     this.defaultDerivedKeyCacheEnabled = false,
     this.autoLockMins = 0,
+    this.autoLockScreenLockOnly = false,
     this.lockAppOnScreenLock = true,
     this.appLockAfterMins = 0,
     this.defaultLayoutMode = BrowserLayoutMode.list,
@@ -233,6 +244,7 @@ class AppSettings {
     bool? defaultDerivedKeyCacheEnabled,
     bool? lockContainersOnScreenLock,
     int? autoLockMins,
+    bool? autoLockScreenLockOnly,
     bool? lockAppOnScreenLock,
     int? appLockAfterMins,
     ContainerSortMode? containerSortMode,
@@ -273,6 +285,7 @@ class AppSettings {
       defaultDerivedKeyCacheEnabled: defaultDerivedKeyCacheEnabled ?? this.defaultDerivedKeyCacheEnabled,
       lockContainersOnScreenLock: lockContainersOnScreenLock ?? this.lockContainersOnScreenLock,
       autoLockMins: autoLockMins ?? this.autoLockMins,
+      autoLockScreenLockOnly: autoLockScreenLockOnly ?? this.autoLockScreenLockOnly,
     lockAppOnScreenLock: lockAppOnScreenLock ?? this.lockAppOnScreenLock,
       appLockAfterMins: appLockAfterMins ?? this.appLockAfterMins,
       defaultLayoutMode: defaultLayoutMode ?? this.defaultLayoutMode,
@@ -320,6 +333,7 @@ class AppSettings {
     'defaultDerivedKeyCacheEnabled': defaultDerivedKeyCacheEnabled,
     'lockContainersOnScreenLock': lockContainersOnScreenLock,
     'autoLockMins': autoLockMins,
+    'autoLockScreenLockOnly': autoLockScreenLockOnly,
    'lockAppOnScreenLock': lockAppOnScreenLock,
     'appLockAfterMins': appLockAfterMins,
     'defaultLayoutMode': defaultLayoutMode.toJson(),
@@ -371,6 +385,7 @@ class AppSettings {
     useOledBlackTheme: j['useOledBlackTheme'] as bool? ?? false,
     lockContainersOnScreenLock: j['lockContainersOnScreenLock'] as bool? ?? true,
     autoLockMins: j['autoLockMins'] as int? ?? 0,
+    autoLockScreenLockOnly: j['autoLockScreenLockOnly'] as bool? ?? false,
     // Migrates installs from before App Lock and Vault Auto-Lock had
     // separate timeouts: they used to share lockContainersOnScreenLock/
     // autoLockMins for both. A settings file with no 'lockAppOnScreenLock'/

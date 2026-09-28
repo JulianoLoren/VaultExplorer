@@ -518,6 +518,27 @@ class ContainerRecord {
   // Records written before this field existed have no key for it in the
   // JSON file and deserialize to false, same reasoning as autoCloseNever.
   final bool autoCloseImmediately;
+  // A third explicit extreme, alongside autoCloseNever and
+  // autoCloseImmediately: true only when the user has explicitly picked
+  // "Screen Lock Only" in the per-container Auto-Lock Duration picker.
+  // Like autoCloseImmediately, this locks with no delay -- but only in
+  // response to a genuine screen-off/device-lock signal, deliberately NOT
+  // in response to plain app backgrounding (switching to another app while
+  // the screen stays on), which autoCloseImmediately treats the same as a
+  // screen-off. Mutually exclusive with autoCloseNever and
+  // autoCloseImmediately by construction (the picker only ever sets one at
+  // a time). Also exempts the container from the app-wide lock-all sweep,
+  // same as the other two -- but is enforced through its own dedicated
+  // path, never the per-container inactivity timer (which a 0-minute
+  // foreground idle timer can't safely stand in for -- see
+  // autoCloseImmediately's comment) and never the app-lifecycle-resumed
+  // path that autoCloseImmediately also hooks into (that's exactly the
+  // "plain backgrounding" case this flag is meant to ignore). See
+  // SessionLockController.handleScreenOff's use of
+  // lockScreenLockOnlyContainers. Records written before this field
+  // existed have no key for it in the JSON file and deserialize to false,
+  // same reasoning as autoCloseNever.
+  final bool autoCloseScreenLockOnly;
   final bool documentProvider;
   final List<DocumentProviderFolder> documentProviderFolders;
   final ThumbnailCacheMode? thumbnailCacheMode;
@@ -549,6 +570,7 @@ class ContainerRecord {
     this.autoCloseMins = 0,
     this.autoCloseNever = false,
     this.autoCloseImmediately = false,
+    this.autoCloseScreenLockOnly = false,
     this.documentProvider = false,
     this.documentProviderFolders = const [],
     this.thumbnailCacheMode,
@@ -574,13 +596,14 @@ class ContainerRecord {
   /// sweep (VaultDashboardScreen._lockAllMountedContainers, triggered by
   /// SessionLockController on the global auto-lock timeout or screen lock).
   /// True when the user explicitly configured this specific container to
-  /// "Never" (autoCloseNever), "Immediately" (autoCloseImmediately), or an
-  /// explicit duration (autoCloseMins > 0). Only false when the container
-  /// follows "App Default" (autoCloseMins == 0 && !autoCloseNever &&
-  /// !autoCloseImmediately), which is also the default for every container
-  /// that's never had this setting touched.
+  /// "Never" (autoCloseNever), "Immediately" (autoCloseImmediately),
+  /// "Screen Lock Only" (autoCloseScreenLockOnly), or an explicit duration
+  /// (autoCloseMins > 0). Only false when the container follows "App
+  /// Default" (autoCloseMins == 0 && !autoCloseNever && !autoCloseImmediately
+  /// && !autoCloseScreenLockOnly), which is also the default for every
+  /// container that's never had this setting touched.
   bool get isExemptFromGlobalLock =>
-      autoCloseNever || autoCloseImmediately || autoCloseMins > 0;
+      autoCloseNever || autoCloseImmediately || autoCloseScreenLockOnly || autoCloseMins > 0;
 
   ContainerRecord copyWith({
     String? label,
@@ -589,6 +612,7 @@ class ContainerRecord {
     int? autoCloseMins,
     bool? autoCloseNever,
     bool? autoCloseImmediately,
+    bool? autoCloseScreenLockOnly,
     bool? documentProvider,
     List<DocumentProviderFolder>? documentProviderFolders,
     Object? thumbnailCacheMode = _keep,
@@ -614,6 +638,7 @@ class ContainerRecord {
       autoCloseMins: autoCloseMins ?? this.autoCloseMins,
       autoCloseNever: autoCloseNever ?? this.autoCloseNever,
       autoCloseImmediately: autoCloseImmediately ?? this.autoCloseImmediately,
+      autoCloseScreenLockOnly: autoCloseScreenLockOnly ?? this.autoCloseScreenLockOnly,
       documentProvider: documentProvider ?? this.documentProvider,
       documentProviderFolders:
           documentProviderFolders ?? this.documentProviderFolders,
@@ -646,6 +671,7 @@ class ContainerRecord {
     'autoCloseMins': autoCloseMins,
     'autoCloseNever': autoCloseNever,
     'autoCloseImmediately': autoCloseImmediately,
+    'autoCloseScreenLockOnly': autoCloseScreenLockOnly,
     'documentProvider': documentProvider,
     if (thumbnailCacheMode != null)
       'thumbnailCacheMode': thumbnailCacheMode!.toJson(),
@@ -677,6 +703,7 @@ class ContainerRecord {
       // field doc comment above for why this default matters.
       autoCloseNever: j['autoCloseNever'] as bool? ?? false,
       autoCloseImmediately: j['autoCloseImmediately'] as bool? ?? false,
+      autoCloseScreenLockOnly: j['autoCloseScreenLockOnly'] as bool? ?? false,
       documentProvider: j['documentProvider'] as bool? ?? false,
       // Populated from secure storage in _hydrate(), not from this file.
       documentProviderFolders: const [],

@@ -15,7 +15,7 @@ SessionLockController sessionLockController(Ref ref) {
   return controller;
 }
 
-/// Arms and fires two independent auto-lock timers, plus one direct action:
+/// Arms and fires two independent auto-lock timers, plus two direct actions:
 ///
 /// - **App lock** ([performAppLock]) re-shows `LockGateScreen` via
 ///   [_enforceAppLock]. Cheap to reverse -- mounted containers are left
@@ -27,12 +27,21 @@ SessionLockController sessionLockController(Ref ref) {
 ///   [_lockAllMountedContainers]. Expensive to reverse -- the user has to
 ///   re-decrypt. Gated by its own [AppSettings.autoLockMins] (inactivity)
 ///   and [AppSettings.lockContainersOnScreenLock] (screen-off).
+///   [AppSettings.autoLockScreenLockOnly] switches this from an inactivity
+///   timer to reacting only to a genuine screen-off signal -- see
+///   [handleScreenOff]/[handleAppLifecycleState]'s use of it.
 /// - **Immediate overrides** ([_lockImmediateOverrides]) unmounts only the
 ///   containers explicitly configured to "Immediately"
 ///   (`ContainerRecord.autoCloseImmediately`), on every real screen-off or
 ///   backgrounding event, regardless of either toggle above -- a stronger,
 ///   per-container choice that isn't gated by the app-wide vault-lock
 ///   settings any more than an explicit per-container duration is.
+/// - **Screen-lock-only overrides** ([_lockScreenLockOnlyOverrides])
+///   unmounts only the containers explicitly configured to "Screen Lock
+///   Only" (`ContainerRecord.autoCloseScreenLockOnly`), but ONLY on a
+///   genuine screen-off signal ([handleScreenOff]) -- deliberately never on
+///   mere backgrounding ([handleAppLifecycleState]'s resumed branch), which
+///   is exactly the case this mode exists to ignore.
 ///
 /// The two timers are independent on purpose: a container can keep running
 /// while the app still asks for the master password again, or the app gate
@@ -41,6 +50,7 @@ class SessionLockController {
   AppSettings Function()? _settings;
   Future<void> Function()? _lockAllMountedContainers;
   Future<void> Function()? _lockImmediateOverrideContainers;
+  Future<void> Function()? _lockScreenLockOnlyContainers;
   void Function()? _enforceAppLock;
   DateTime Function() _now;
 
@@ -105,11 +115,13 @@ class SessionLockController {
     required Future<void> Function() lockAllMountedContainers,
     required void Function() enforceAppLock,
     Future<void> Function()? lockImmediateOverrideContainers,
+    Future<void> Function()? lockScreenLockOnlyContainers,
     DateTime Function()? now,
   }) {
     _settings = settings;
     _lockAllMountedContainers = lockAllMountedContainers;
     _lockImmediateOverrideContainers = lockImmediateOverrideContainers;
+    _lockScreenLockOnlyContainers = lockScreenLockOnlyContainers;
     _enforceAppLock = enforceAppLock;
     if (now != null) _now = now;
   }
@@ -147,6 +159,26 @@ class SessionLockController {
     unawaited(_lockImmediateOverrideContainers!.call());
   }
 
+  /// Locks any mounted container explicitly configured to "Screen Lock
+  /// Only" (`ContainerRecord.autoCloseScreenLockOnly`), regardless of
+  /// [AppSettings.lockContainersOnScreenLock] -- same reasoning as
+  /// [_lockImmediateOverrides]: a stronger, per-container choice that isn't
+  /// gated by the app-wide toggle. Unlike [_lockImmediateOverrides],
+  /// deliberately only ever called from [handleScreenOff] below, never from
+  /// [handleAppLifecycleState]'s resumed-after-backgrounding branch -- a
+  /// container in this mode must NOT lock just because the app was
+  /// backgrounded (switching to another app while the screen stayed on);
+  /// only a genuine screen-off signal should trigger it. Also deliberately
+  /// separate from the per-container inactivity timer
+  /// (`VaultDashboardController.scheduleAutoClose`), for the same reason
+  /// [_lockImmediateOverrides] is: there's no inactivity duration in this
+  /// mode at all, foreground or otherwise.
+  void _lockScreenLockOnlyOverrides() {
+    if (_lockScreenLockOnlyContainers == null) return;
+    VeLog.i(_kLogTag, '_lockScreenLockOnlyOverrides: locking any Screen-Lock-Only containers');
+    unawaited(_lockScreenLockOnlyContainers!.call());
+  }
+
   /// Re-arms both inactivity timers from current settings, measured from
   /// now. Called on every user interaction (pointer-down on the dashboard)
   /// and after data loads, so idle time resets on real activity.
@@ -162,11 +194,12 @@ class SessionLockController {
     final settings = _settings!();
     final mins = settings.autoLockMins;
 
-    if (!settings.lockContainersOnScreenLock || mins <= 0) {
+    if (!settings.lockContainersOnScreenLock || settings.autoLockScreenLockOnly || mins <= 0) {
       VeLog.d(
         _kLogTag,
         '_scheduleVaultLockTimer: skipped '
-        '(lockContainersOnScreenLock=${settings.lockContainersOnScreenLock}, autoLockMins=$mins)',
+        '(lockContainersOnScreenLock=${settings.lockContainersOnScreenLock}, '
+        'autoLockScreenLockOnly=${settings.autoLockScreenLockOnly}, autoLockMins=$mins)',
       );
       return;
     }
@@ -321,14 +354,26 @@ class SessionLockController {
       }
 
       if (settings.lockContainersOnScreenLock && !lockedVaultOnScreenOff) {
-        final shouldLockVault = settings.autoLockMins == 0 ||
-            (settings.autoLockMins > 0 &&
-                awayDuration >= Duration(minutes: settings.autoLockMins));
-        if (shouldLockVault) {
-          VeLog.i(_kLogTag, 'handleAppLifecycleState: away >= autoLockMins -> performVaultLock');
-          performVaultLock();
+        if (settings.autoLockScreenLockOnly) {
+          // This mode ignores mere backgrounding entirely -- only a genuine
+          // screen-off signal (handleScreenOff) should lock the vault. If
+          // the screen actually turned off during this background period,
+          // handleScreenOff already handled it independently, and
+          // lockedVaultOnScreenOff above would be true in that case anyway.
+          VeLog.d(
+            _kLogTag,
+            'handleAppLifecycleState: autoLockScreenLockOnly is set, ignoring mere backgrounding',
+          );
         } else {
-          _scheduleVaultLockTimer();
+          final shouldLockVault = settings.autoLockMins == 0 ||
+              (settings.autoLockMins > 0 &&
+                  awayDuration >= Duration(minutes: settings.autoLockMins));
+          if (shouldLockVault) {
+            VeLog.i(_kLogTag, 'handleAppLifecycleState: away >= autoLockMins -> performVaultLock');
+            performVaultLock();
+          } else {
+            _scheduleVaultLockTimer();
+          }
         }
       } else {
         _scheduleVaultLockTimer();
@@ -347,8 +392,10 @@ class SessionLockController {
       'lockContainersOnScreenLock=${settings.lockContainersOnScreenLock}, autoLockMins=${settings.autoLockMins})',
     );
 
-    // Independent of both toggles above -- see _lockImmediateOverrides.
+    // Independent of both toggles above -- see _lockImmediateOverrides and
+    // _lockScreenLockOnlyOverrides.
     _lockImmediateOverrides();
+    _lockScreenLockOnlyOverrides();
 
      if (hasMasterPassword && settings.lockAppOnScreenLock) {
       if (settings.appLockAfterMins <= 0) {
@@ -370,8 +417,12 @@ class SessionLockController {
     }
 
     if (settings.lockContainersOnScreenLock) {
-      if (settings.autoLockMins <= 0) {
-        VeLog.i(_kLogTag, 'handleScreenOff: autoLockMins<=0 -> performVaultLock immediately');
+      if (settings.autoLockScreenLockOnly || settings.autoLockMins <= 0) {
+        VeLog.i(
+          _kLogTag,
+          'handleScreenOff: autoLockScreenLockOnly=${settings.autoLockScreenLockOnly}, '
+          'autoLockMins=${settings.autoLockMins} -> performVaultLock immediately',
+        );
         _vaultLockedOnScreenOff = true;
         performVaultLock();
       } else {

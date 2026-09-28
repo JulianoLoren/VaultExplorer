@@ -124,6 +124,7 @@ class VaultDashboardState extends ConsumerState<VaultDashboard> with WidgetsBind
       settings: () => _container.read(appSettingsControllerProvider).settings,
       lockAllMountedContainers: _lockAllMountedContainers,
       lockImmediateOverrideContainers: _lockImmediateOverrideContainers,
+      lockScreenLockOnlyContainers: _lockScreenLockOnlyContainers,
       enforceAppLock: _enforceAppLock,
     );
     _lockController.notifyAppUnlocked();
@@ -303,6 +304,47 @@ class VaultDashboardState extends ConsumerState<VaultDashboard> with WidgetsBind
     for (final c in targets) {
       if (!controller.acquireLockGuard(c.volId)) {
         VeLog.d(_kLogTag, '_lockImmediateOverrideContainers: volId=${c.volId} guard busy, skipping');
+        continue;
+      }
+      try {
+        await lifecycle.lockContainer(c.uri);
+        controller.onContainerLocked(c.volId);
+      } finally {
+        controller.releaseLockGuard(c.volId);
+      }
+    }
+  }
+
+  // Companion to _lockImmediateOverrideContainers, for containers
+  // explicitly configured to "Screen Lock Only"
+  // (ContainerRecord.autoCloseScreenLockOnly). Called by
+  // SessionLockController ONLY from handleScreenOff -- never from
+  // handleAppLifecycleState's resumed-after-backgrounding branch, since
+  // ignoring mere app-backgrounding (screen still on) is exactly what this
+  // mode means -- see SessionLockController's class doc comment and
+  // _lockScreenLockOnlyOverrides. These containers are also exempt from
+  // _lockAllMountedContainers (they're "isExemptFromGlobalLock"), so
+  // there's no overlap/double-locking between the two methods.
+  Future<void> _lockScreenLockOnlyContainers() async {
+    final state = _container.read(vaultDashboardControllerProvider);
+    final mountedList = state.mounted;
+    final lifecycle = _container.read(vaultLifecycleApiProvider);
+    final controller = _container.read(vaultDashboardControllerProvider.notifier);
+
+    final targets = mountedList
+        .where((c) => state.records[c.uri]?.autoCloseScreenLockOnly == true)
+        .toList(growable: false);
+    if (targets.isEmpty) return;
+
+    VeLog.i(
+      _kLogTag,
+      '_lockScreenLockOnlyContainers: locking ${targets.length} '
+      'Screen-Lock-Only container(s): ${targets.map((c) => c.volId).toList()}',
+    );
+
+    for (final c in targets) {
+      if (!controller.acquireLockGuard(c.volId)) {
+        VeLog.d(_kLogTag, '_lockScreenLockOnlyContainers: volId=${c.volId} guard busy, skipping');
         continue;
       }
       try {
