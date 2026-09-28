@@ -11,6 +11,7 @@ import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/features/sync/data/config/sync_config_store.dart';
 import 'package:vaultexplorer/features/sync/data/ledger/sync_ledger_repository.dart';
 import 'package:vaultexplorer/features/sync/domain/endpoints/container_sync_endpoint.dart';
+import 'package:vaultexplorer/features/sync/domain/folder_vault_detector.dart';
 import 'package:vaultexplorer/features/sync/domain/models/sync_plan.dart';
 import 'package:vaultexplorer/features/sync/domain/models/sync_rule.dart';
 import 'package:vaultexplorer/features/sync/domain/sync_cancellation.dart';
@@ -609,11 +610,11 @@ class SyncCoordinatorService {
     if (uri.startsWith('content://')) {
       // SAF tree. Whether the grant is still valid can't be probed here;
       // a dead grant lists as unreadable and the run skips everything.
-      return _ResolvedTarget(_folderContainer(rule, uri, label), label, subPath, uri);
+      return _resolveFolderTarget(session, rule, uri, label, subPath);
     }
 
     if (await Directory(uri).exists()) {
-      return _ResolvedTarget(_folderContainer(rule, uri, label), label, subPath, uri);
+      return _resolveFolderTarget(session, rule, uri, label, subPath);
     }
 
     // Not a folder we can see: most likely a vault that isn't unlocked
@@ -622,6 +623,39 @@ class SyncCoordinatorService {
     session.waitingOnTargets.putIfAbsent(uri, () => <String>{}).add(rule.id);
     VeLog.d(_tag, 'rule target unavailable; will retry');
     return null;
+  }
+
+  /// A device / SAF folder as a sync target -- unless that folder is the
+  /// storage directory of a folder vault (gocryptfs / Cryptomator / CryFS).
+  ///
+  /// A folder vault's uri *is* a directory, so when the vault a rule points
+  /// at isn't unlocked, it lands here looking like any other folder. Synced
+  /// as one, the run would read the vault's ciphertext as "target files"
+  /// (copying encrypted blobs into the source vault) and write the source's
+  /// plaintext into the vault's storage. So such a target is held back like
+  /// any other target that isn't available: the rule waits until the vault
+  /// is unlocked ([onVaultUnlocked] re-queues it, and the [_unlocked] lookup
+  /// above then resolves it to the mounted -- decrypted -- view).
+  Future<_ResolvedTarget?> _resolveFolderTarget(
+    _VaultSession session,
+    SyncRule rule,
+    String uri,
+    String label,
+    String subPath,
+  ) async {
+    final container = _folderContainer(rule, uri, label);
+    final vaultHit = await findFolderVaultAlong(_io, container, subPath);
+    if (vaultHit != null) {
+      session.waitingOnTargets.putIfAbsent(uri, () => <String>{}).add(rule.id);
+      VeLog.w(
+        _tag,
+        'rule target is the encrypted storage of a ${vaultHit.format.wire} '
+        'vault, not a plain folder; not syncing until that vault is unlocked',
+        'vault-folder-target',
+      );
+      return null;
+    }
+    return _ResolvedTarget(container, label, subPath, uri);
   }
 
   MountedContainer _folderContainer(SyncRule rule, String uri, String label) =>

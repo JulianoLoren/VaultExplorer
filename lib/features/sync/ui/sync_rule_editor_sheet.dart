@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
+import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/utils/format_utils.dart';
 import 'package:vaultexplorer/core/utils/ve_log.dart';
 import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/features/dashboard/vault_dashboard_controller.dart';
 import 'package:vaultexplorer/features/sync/data/config/sync_config_store.dart';
+import 'package:vaultexplorer/features/sync/domain/folder_vault_detector.dart';
 import 'package:vaultexplorer/features/sync/domain/models/sync_plan.dart';
 import 'package:vaultexplorer/features/sync/domain/models/sync_rule.dart';
 import 'package:vaultexplorer/features/sync/domain/sync_rule_validation.dart';
@@ -230,6 +232,29 @@ class _SyncRuleEditorSheetState extends ConsumerState<SyncRuleEditorSheet> {
     if (side == null || !mounted) return;
 
     final sub = normalizeSyncPath(side.relativePath);
+
+    // A vault's own storage folder, reached as plain device storage, is
+    // ciphertext: syncing with it would fill this vault with encrypted
+    // files and drop plaintext into that one. A vault has to be chosen
+    // from the list of unlocked vaults instead, so the engine does the
+    // encrypting/decrypting.
+    if (!side.isEncrypted) {
+      final vaultHit = await findFolderVaultAlong(
+        ref.read(vaultFileIoApiProvider),
+        side.container,
+        sub,
+      );
+      if (!mounted) return;
+      if (vaultHit != null) {
+        showAppSnackBar(
+          context,
+          message: context.l10n.autoSyncProblemTargetIsVault,
+          tone: AppBannerTone.error,
+        );
+        return;
+      }
+    }
+
     setState(() {
       _targetUri = side.container.uri;
       _targetSub = sub;
