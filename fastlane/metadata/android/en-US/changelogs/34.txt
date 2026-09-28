@@ -1,0 +1,15 @@
+### New Features
+• TOTP Authenticator: Integrated a built-in two-factor authenticator capable of securely storing TOTP accounts inside encrypted vaults via manual entry, QR code scanning, or imports from external authenticators (including Proton, Bitwarden, Aegis, and Google Authenticator), with an aggregated codes view accessible from the dashboard once enabled under Security and Privacy settings
+
+### Improvements
+• Multi-Tab Text Editor: Expanded the built-in text editor and viewer with multi-tab support for concurrent document editing, introducing custom themes, configurable interface controls, and dedicated keyboard shortcuts
+• Media Capture Review Workflow: Added an intermediate review step when capturing photos and videos, allowing users to discard, retain, or take sequential shots before committing all media in a single batch save
+• Folder View & Sort Persistence: Added per-folder sort order persistence and updated layout behavior to enforce a consistent global default, ensuring directories without an explicitly assigned layout cleanly revert to standard defaults rather than inheriting the previous folder's layout
+• Quick Action Vault Lifecycle: Introduced an application setting to configure vault behavior after completing quick actions (such as direct sharing or camera capture), with options to automatically lock, remain unlocked, or preserve the container's pre-action state
+• Granular Auto-Lock Policies: Expanded auto-lock functionality with a dedicated screen-off/lock-only trigger, while introducing per-vault configuration options to enforce immediate locking as soon as the app transitions to the background
+• Storage Provider Loop Safeguard: Implemented safeguards and exception handling to prevent users from linking external storage locations or document providers exposed by the app itself, eliminating redundant self-referential storage paths
+• Image Editor Pinch-to-Zoom: Added pinch-to-zoom gesture support within the image editor, enabling smooth viewport scaling and precise canvas inspection
+
+### Bug Fixes
+• Search View Synchronization: Fixed an issue where deleting files directly through file manager search results failed to update the active view, and resolved a layout conflict where bottom-anchored selection bars were not properly concealed by the software keyboard
+• Folder Vault Auto-Sync: Resolved an issue where auto-sync treated folder-based vaults as standard directories, adding validation safeguards to prevent synchronization tasks from executing while target folder vaults remain locked

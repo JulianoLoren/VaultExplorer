@@ -3,13 +3,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vaultexplorer/features/camera/camera_capture_controls_controller.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late ProviderContainer container;
+  final mockStore = <String, String>{};
 
   setUp(() {
+    mockStore.clear();
+    CameraCaptureControls.cachedStates.clear();
+    CameraCaptureControls.storageReadOverride = (key) async => mockStore[key];
+    CameraCaptureControls.storageWriteOverride = (key, val) async {
+      mockStore[key] = val;
+    };
     container = ProviderContainer();
   });
 
   tearDown(() {
+    CameraCaptureControls.storageReadOverride = null;
+    CameraCaptureControls.storageWriteOverride = null;
     container.dispose();
   });
 
@@ -20,7 +30,10 @@ void main() {
       expect(state.isVideoMode, isFalse);
       expect(state.flashMode, 'auto');
       expect(state.videoQuality, 'fhd');
+      expect(state.photoResolution, 'max');
       expect(state.timerDelaySeconds, 0);
+      expect(state.aspectRatio, 4 / 3);
+      expect(state.preferredFacing, 'back');
     });
 
     test('owns the video mode and corresponding flash default', () {
@@ -89,6 +102,47 @@ void main() {
         container.read(cameraCaptureControlsProvider('session-b')).isVideoMode,
         isTrue,
       );
+    });
+
+    test('persists camera settings across sessions', () async {
+      final controllerA = container.read(
+        cameraCaptureControlsProvider('camera_capture').notifier,
+      );
+
+      controllerA.selectVideoQuality('uhd');
+      controllerA.selectPhotoResolution('high');
+      controllerA.selectAspectRatio(16 / 9);
+      controllerA.setPreferredFacing('front');
+      controllerA.cycleTimerDelay();
+      controllerA.cyclePhotoFlashMode();
+      controllerA.setVideoMode(true);
+
+      final stateA = container.read(cameraCaptureControlsProvider('camera_capture'));
+      expect(stateA.videoQuality, 'uhd');
+      expect(stateA.photoResolution, 'high');
+      expect(stateA.aspectRatio, 16 / 9);
+      expect(stateA.preferredFacing, 'front');
+      expect(stateA.timerDelaySeconds, 3);
+      expect(stateA.flashMode, 'off');
+      expect(stateA.isVideoMode, isTrue);
+
+      CameraCaptureControls.cachedStates.clear();
+      final newContainer = ProviderContainer();
+      addTearDown(newContainer.dispose);
+
+      final controllerB = newContainer.read(
+        cameraCaptureControlsProvider('camera_capture').notifier,
+      );
+      await controllerB.loadPersisted();
+
+      final stateB = newContainer.read(cameraCaptureControlsProvider('camera_capture'));
+      expect(stateB.videoQuality, 'uhd');
+      expect(stateB.photoResolution, 'high');
+      expect(stateB.aspectRatio, 16 / 9);
+      expect(stateB.preferredFacing, 'front');
+      expect(stateB.timerDelaySeconds, 3);
+      expect(stateB.flashMode, 'off');
+      expect(stateB.isVideoMode, isTrue);
     });
   });
 }
