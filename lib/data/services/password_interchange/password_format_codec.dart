@@ -53,6 +53,16 @@ abstract class PasswordFormatCodec {
   /// requires one to be set before calling [encode].
   bool get isEncrypted;
 
+  /// True for formats that *may* be password-protected but aren't always
+  /// (an Aegis, andOTP or 2FAS backup is encrypted or plain depending on
+  /// how the person exported it). Unlike [isEncrypted], the password is
+  /// never demanded up front: the file is first read without one, and the
+  /// password field is offered as an optional extra. [decode] itself finds
+  /// out whether this particular file needs a password, and throws
+  /// [PasswordFileIncorrectPasswordException] if it does and [password] is
+  /// missing or wrong -- which is what makes the UI ask for one.
+  bool get isOptionallyEncrypted;
+
   /// Whether a byte sequence looks like this format, used to suggest a
   /// format from a picked file's name/content before the person confirms
   /// it. Should be cheap and never throw -- a `false` here just means "not

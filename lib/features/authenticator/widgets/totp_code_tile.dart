@@ -17,6 +17,10 @@ class TotpCodeTile extends StatefulWidget {
   final VoidCallback onCopy;
   final VoidCallback? onCopyNext;
   final VoidCallback onOpen;
+
+  /// Advances an HOTP entry's counter (and so shows its next code). Only
+  /// used for counter-based entries, which have no countdown to show.
+  final VoidCallback? onAdvance;
   final bool showNumbers;
 
   const TotpCodeTile({
@@ -25,6 +29,7 @@ class TotpCodeTile extends StatefulWidget {
     required this.onCopy,
     this.onCopyNext,
     required this.onOpen,
+    this.onAdvance,
     this.showNumbers = true,
   });
 
@@ -52,10 +57,17 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
   @override
   void didUpdateWidget(covariant TotpCodeTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.entry.item.fields['totp_secret'] != widget.entry.item.fields['totp_secret'] ||
-        oldWidget.entry.item.fields['totp_algorithm'] != widget.entry.item.fields['totp_algorithm'] ||
-        oldWidget.entry.item.fields['totp_digits'] != widget.entry.item.fields['totp_digits'] ||
-        oldWidget.entry.item.fields['totp_period'] != widget.entry.item.fields['totp_period']) {
+    const configKeys = [
+      'totp_secret',
+      'totp_algorithm',
+      'totp_digits',
+      'totp_period',
+      'totp_type',
+      'hotp_counter',
+    ];
+    final oldFields = oldWidget.entry.item.fields;
+    final newFields = widget.entry.item.fields;
+    if (configKeys.any((k) => oldFields[k] != newFields[k])) {
       _config = TotpConfig.fromFields(widget.entry.item.fields);
       _tick();
     }
@@ -68,7 +80,11 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
     String? error;
     try {
       code = TotpEngine.generateCode(_config, at: now);
-      nextCode = TotpEngine.generateNextCode(_config, at: now);
+      // A counter-based code has no "next period" to preview -- the next
+      // one only exists once the counter is advanced (see onAdvance).
+      if (_config.isTimeBased) {
+        nextCode = TotpEngine.generateNextCode(_config, at: now);
+      }
     } on TotpCodeException catch (e) {
       error = e.message;
     }
@@ -89,6 +105,10 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
     _timer?.cancel();
     super.dispose();
   }
+
+  /// Bullets shown in place of a hidden code -- one per character, so a
+  /// five-character Steam code doesn't look like a six-digit one.
+  static String _maskFor(TotpConfig config) => '•' * config.digits;
 
   String? get _subtitle {
     final issuer = (widget.entry.item.fields['issuer'] ?? '').trim();
@@ -190,11 +210,18 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      _CountdownRing(
-                        fraction: _fraction,
-                        secondsLeft: _secondsLeft,
-                        color: hasError ? cs.error : cs.primary,
-                      ),
+                      if (_config.isTimeBased)
+                        _CountdownRing(
+                          fraction: _fraction,
+                          secondsLeft: _secondsLeft,
+                          color: hasError ? cs.error : cs.primary,
+                        )
+                      else
+                        IconButton(
+                          tooltip: 'Generate next code',
+                          icon: Icon(Icons.refresh_rounded, color: cs.primary),
+                          onPressed: hasError ? null : widget.onAdvance,
+                        ),
                     ],
                   ),
                 ),
@@ -227,8 +254,8 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
                     Expanded(
                       child: Text(
                         widget.showNumbers
-                            ? formatTotpCode(_code ?? '')
-                            : '••••••',
+                            ? formatOtpCode(_code ?? '', _config.kind)
+                            : _maskFor(_config),
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontFeatures: const [FontFeature.tabularFigures()],
                           fontFamily: 'monospace',
@@ -259,8 +286,8 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
                                 const SizedBox(height: 2),
                                 Text(
                                   widget.showNumbers
-                                      ? formatTotpCode(_nextCode!)
-                                      : '••••••',
+                                      ? formatOtpCode(_nextCode!, _config.kind)
+                                      : _maskFor(_config),
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontFeatures: const [FontFeature.tabularFigures()],
                                     fontFamily: 'monospace',

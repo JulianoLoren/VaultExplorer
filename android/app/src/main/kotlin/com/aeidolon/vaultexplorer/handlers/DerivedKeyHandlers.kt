@@ -541,6 +541,75 @@ class DerivedKeyHandlers(
         }
     }
 
+    /**
+     * PBKDF2-HMAC (SHA-1 or SHA-256) over raw password bytes -- used to open
+     * other authenticator apps' encrypted backups (andOTP, 2FAS) on import.
+     */
+    fun handlePbkdf2(call: MethodCall, result: MethodChannel.Result) {
+        val password   = call.argument<ByteArray>("password")
+        val salt       = call.argument<ByteArray>("salt")
+        val iterations = call.argument<Int>("iterations")
+        val outputLen  = call.argument<Int>("outputLen")
+        val hash       = call.argument<String>("hash")
+        val hashKind = when (hash) { "sha1" -> 1; "sha256" -> 2; else -> 0 }
+
+        if (password == null || salt == null || salt.isEmpty() ||
+            iterations == null || iterations <= 0 ||
+            outputLen == null || outputLen <= 0 || hashKind == 0) {
+            result.error("INVALID_ARGS", "password, salt, iterations, outputLen and hash (sha1|sha256) required", null)
+            return
+        }
+
+        ioExecutor.execute {
+            try {
+                val derived = NativeEngine.pbkdf2Native(password, salt, iterations, outputLen, hashKind)
+                password.fill(0)
+                activity.runOnUiThread {
+                    if (derived != null) result.success(derived)
+                    else result.error("KDF_FAILED", "PBKDF2 derivation failed", null)
+                }
+            } catch (e: Exception) {
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            }
+        }
+    }
+
+    /**
+     * scrypt over raw password bytes (native engine, with the pure-JVM
+     * fallback in [com.aeidolon.vaultexplorer.crypto.Scrypt]) -- used to open
+     * Aegis's password-protected vault exports on import.
+     */
+    fun handleScrypt(call: MethodCall, result: MethodChannel.Result) {
+        val password = call.argument<ByteArray>("password")
+        val salt     = call.argument<ByteArray>("salt")
+        val n        = call.argument<Int>("n")
+        val r        = call.argument<Int>("r")
+        val p        = call.argument<Int>("p")
+        val dkLen    = call.argument<Int>("dkLen")
+
+        // The cost parameters come straight out of an imported file, so bound
+        // them here too (the Dart side checks as well): 128 * r * n bytes is
+        // what scrypt allocates.
+        if (password == null || salt == null || n == null || r == null ||
+            p == null || dkLen == null ||
+            n <= 1 || (n and (n - 1)) != 0 || r <= 0 || p <= 0 || dkLen <= 0 ||
+            128L * r * n > 256L * 1024 * 1024) {
+            result.error("INVALID_ARGS", "valid password, salt, n (power of 2), r, p and dkLen required", null)
+            return
+        }
+
+        ioExecutor.execute {
+            try {
+                val derived = com.aeidolon.vaultexplorer.crypto.Scrypt.scrypt(
+                    password, salt, n, r, dkLen, p)
+                password.fill(0)
+                activity.runOnUiThread { result.success(derived) }
+            } catch (e: Exception) {
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            }
+        }
+    }
+
     private companion object {
         const val DERIVED_KEYS_PREFS = "vc2_derived_keys"
     }

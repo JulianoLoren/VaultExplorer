@@ -35,7 +35,7 @@ class UnlockSheet extends ConsumerStatefulWidget {
   final bool documentProvider;
   final List<String> autoMountFolders;
   final List<String> mountedUris;
-  final List<String>? initialCompositeCarriers;
+  final List<KeyfileRef>? initialCompositeCarriers;
 
   const UnlockSheet({
     super.key,
@@ -94,6 +94,11 @@ class _UnlockSheetState extends ConsumerState<UnlockSheet> with WidgetsBindingOb
   /// via the show/hide toggle or copied via text selection — see
   /// [_prefillCleared].
    bool get _revealLocked => (widget.prefillPassword?.isNotEmpty ?? false) && !_prefillCleared;
+
+  /// Opened from the composite-create wizard's "already have one?" shortcut:
+  /// this screen is a dedicated composite unlock (carriers can be added or
+  /// removed, but it can't turn into a different kind of vault).
+  bool get _isCompositeShortcut => widget.initialCompositeCarriers != null;
 
   bool _isKnownFormat(UnlockState state) =>
       widget.initialUri != null ||
@@ -611,8 +616,7 @@ Widget _buildVaultKindSegmentedButton(
         ),
         if (state.isComposite &&
             state.compositeCarrierCount > 0 &&
-            widget.initialUri == null &&
-            widget.initialCompositeCarriers == null) ...[
+            widget.initialUri == null) ...[
           if (state.compositeCarrierCount == 1) ...[
             const SizedBox(height: 8),
             InlineBanner(
@@ -804,7 +808,15 @@ Widget _buildVaultKindSegmentedButton(
                         onPressed: state.loading
                             ? null
                             : () {
-                                if (carriers.length == 1) _resetInputFields();
+                                if (carriers.length == 1) {
+                                  // Nothing left to unlock: go back to where the
+                                  // user came from rather than an empty form.
+                                  if (_isCompositeShortcut) {
+                                    Navigator.of(context).pop();
+                                    return;
+                                  }
+                                  _resetInputFields();
+                                }
                                 notifier.removeCompositeCarrier(carrier.uri);
                               },
                       ),

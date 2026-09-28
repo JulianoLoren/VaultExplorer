@@ -78,6 +78,68 @@ void main() {
     });
   });
 
+  group('pbkdf2', () {
+    test('sends raw password bytes, salt, iterations, length and hash name', () async {
+      final password = Uint8List.fromList(utf8.encode('hunter2'));
+      final salt = Uint8List.fromList(List.generate(12, (i) => i));
+      nextResult = Uint8List.fromList(List.filled(32, 3));
+
+      final result = await api.pbkdf2(
+        password: password,
+        salt: salt,
+        iterations: 150000,
+        outputLen: 32,
+        hash: Pbkdf2Hash.sha1,
+      );
+
+      expect(calls.single.method, 'pbkdf2');
+      expect(calls.single.arguments['password'], password);
+      expect(calls.single.arguments['salt'], salt);
+      expect(calls.single.arguments['iterations'], 150000);
+      expect(calls.single.arguments['outputLen'], 32);
+      expect(calls.single.arguments['hash'], 'sha1');
+      expect(result, nextResult);
+    });
+
+    test('names SHA-256 as sha256', () async {
+      nextResult = Uint8List(32);
+      await api.pbkdf2(
+        password: Uint8List(1),
+        salt: Uint8List(1),
+        iterations: 1,
+        outputLen: 32,
+        hash: Pbkdf2Hash.sha256,
+      );
+      expect(calls.single.arguments['hash'], 'sha256');
+    });
+  });
+
+  group('scrypt', () {
+    test('sends password, salt and the cost parameters', () async {
+      final password = Uint8List.fromList(utf8.encode('hunter2'));
+      final salt = Uint8List.fromList(List.generate(32, (i) => i));
+      nextResult = Uint8List.fromList(List.filled(32, 4));
+
+      final result = await api.scrypt(
+        password: password,
+        salt: salt,
+        n: 32768,
+        r: 8,
+        p: 1,
+        dkLen: 32,
+      );
+
+      expect(calls.single.method, 'scrypt');
+      expect(calls.single.arguments['password'], password);
+      expect(calls.single.arguments['salt'], salt);
+      expect(calls.single.arguments['n'], 32768);
+      expect(calls.single.arguments['r'], 8);
+      expect(calls.single.arguments['p'], 1);
+      expect(calls.single.arguments['dkLen'], 32);
+      expect(result, nextResult);
+    });
+  });
+
   group('aesGcmEncrypt / aesGcmDecrypt', () {
     test('encrypt sends key, iv and plaintext, returns raw bytes', () async {
       final key = Uint8List.fromList(List.filled(32, 1));

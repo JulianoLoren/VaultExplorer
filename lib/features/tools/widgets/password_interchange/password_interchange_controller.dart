@@ -256,7 +256,19 @@ class PasswordInterchange extends Notifier<PasswordInterchangeState> {
       );
     } on PasswordFileIncorrectPasswordException {
       if (ref.mounted) {
-        state = state.copyWith(busy: false, error: 'Incorrect password, or this file needs a keyfile VaultExplorer doesn\'t support.');
+        // Backups that are only sometimes encrypted (Aegis, andOTP, 2FAS) are
+        // first read without a password, so "wrong password" here usually
+        // means "this one needs a password" -- and there's no keyfile
+        // concept for them at all.
+        final optional = format.isOptionallyEncrypted;
+        state = state.copyWith(
+          busy: false,
+          error: optional
+              ? ((password ?? '').isEmpty
+                  ? 'This backup is password-protected. Enter its password and try again.'
+                  : 'Incorrect password for this backup.')
+              : 'Incorrect password, or this file needs a keyfile VaultExplorer doesn\'t support.',
+        );
       }
     } catch (e) {
       if (ref.mounted) state = state.copyWith(busy: false, error: '$e');

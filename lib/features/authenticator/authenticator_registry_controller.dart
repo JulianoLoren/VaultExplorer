@@ -17,6 +17,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
+import 'package:vaultexplorer/core/utils/totp_engine.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/data/models/vault_item.dart';
 import 'package:vaultexplorer/data/services/vault_items_service.dart';
@@ -224,6 +225,44 @@ class AuthenticatorRegistry extends _$AuthenticatorRegistry {
         .any((c) => c.volId == container.volId);
     if (!stillMounted) return;
     await _scheduleScan(container);
+  }
+
+  /// Moves an HOTP entry's counter forward by one and writes it back to its
+  /// vault -- what "generate the next code" means for a counter-based
+  /// entry. Re-reads the item from the vault first so a concurrent edit
+  /// isn't overwritten with this entry's possibly-stale copy, and updates
+  /// just this entry in place (no whole-vault rescan) so the tile shows the
+  /// new code straight away.
+  ///
+  /// Returns false, changing nothing, if the vault is read-only or the write
+  /// fails -- the counter must never appear to advance in the UI without
+  /// having been saved, or the next unlock would show an already-used code.
+  Future<bool> advanceHotpCounter(TotpVaultEntry entry) async {
+    if (entry.container.readOnly) return false;
+    final itemsService = ref.read(vaultItemsServiceProvider);
+    final fresh =
+        await itemsService.loadItem(entry.container, entry.relativePath) ?? entry.item;
+    final base = TotpConfig.fromFields(fresh.fields).counter;
+    final newFields = Map<String, String>.from(fresh.fields)
+      ..['hotp_counter'] = '${base + 1}';
+    final updated = fresh.copyWithFields(newFields, fresh.title);
+    final saved =
+        await itemsService.saveItem(entry.container, entry.relativePath, updated);
+    if (!saved || !ref.mounted) return saved;
+
+    final list = _byVolId[entry.container.volId];
+    if (list != null) {
+      final index = list.indexWhere((e) => e.relativePath == entry.relativePath);
+      if (index >= 0) {
+        list[index] = TotpVaultEntry(
+          container: entry.container,
+          relativePath: entry.relativePath,
+          item: updated,
+        );
+        _publish();
+      }
+    }
+    return true;
   }
 
   /// Full manual re-scan of every currently mounted vault -- backs

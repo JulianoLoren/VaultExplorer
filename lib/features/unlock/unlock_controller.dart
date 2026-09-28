@@ -27,7 +27,11 @@ class UnlockParams {
   final bool documentProvider;
   final List<String> autoMountFolders;
   final List<String> mountedUris;
-  final List<String>? initialCompositeCarriers;
+  /// Carriers to pre-select (uri + picker display name), e.g. when the
+  /// composite-create wizard's "already have one?" shortcut opens the unlock
+  /// screen. The user can still add/remove carriers there, same as after
+  /// picking one from the normal unlock screen.
+  final List<KeyfileRef>? initialCompositeCarriers;
 
   const UnlockParams({
     this.initialUri,
@@ -334,10 +338,11 @@ class UnlockController extends _$UnlockController {
     final initialCarriers = params.initialCompositeCarriers ?? const [];
     final isComposite = initialCarriers.isNotEmpty || (initialUri?.startsWith('composite:') ?? false);
     final initial = UnlockState(
-      selectedUri: initialUri ?? (initialCarriers.isNotEmpty ? 'composite:${initialCarriers.first}' : null),
-      selectedName: params.initialName ?? (initialCarriers.isNotEmpty ? 'Composite Container (${initialCarriers.length} files)' : null),
+      selectedUri: initialUri ?? (initialCarriers.isNotEmpty ? 'composite:${initialCarriers.first.uri}' : null),
+      selectedName: params.initialName ?? (initialCarriers.isNotEmpty ? _autoCompositeName(initialCarriers) : null),
       containerFormat: isComposite ? 'composite' : 'container',
-      compositeCarrierUris: initialCarriers,
+      compositeCarrierUris: [for (final c in initialCarriers) c.uri],
+      compositeCarrierNames: {for (final c in initialCarriers) c.uri: c.displayName},
       remember: initialUri != null,
       loadingAuth: true,
     );
@@ -390,6 +395,9 @@ class UnlockController extends _$UnlockController {
       await _initUnlockMethod(params.initialUri!);
     } else {
       state = state._copy(loadingAuth: false);
+      // Carriers handed in via [UnlockParams.initialCompositeCarriers] have no
+      // profile yet; analyze them so the carrier list shows real status.
+      unawaited(_profilePendingCarriers());
     }
   }
 
@@ -655,10 +663,12 @@ class UnlockController extends _$UnlockController {
           (state.selectedUri == null || state.selectedUri == previousAutoUri)
               ? 'composite:${carriers.first.uri}'
               : state.selectedUri,
-      selectedName:
-          (state.selectedName == null || state.selectedName == previousAutoName)
-              ? _autoCompositeName(carriers)
-              : state.selectedName,
+      selectedName: (state.selectedName == null ||
+              state.selectedName == previousAutoName ||
+              (params.initialCompositeCarriers != null &&
+                  state.selectedName == params.initialName))
+          ? _autoCompositeName(carriers)
+          : state.selectedName,
       compositeCarrierUris: carriers.map((c) => c.uri).toList(),
       compositeCarrierNames: {for (final c in carriers) c.uri: c.displayName},
       compositeCarrierProfiles: {

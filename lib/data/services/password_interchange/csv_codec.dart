@@ -79,6 +79,9 @@ class CsvCodec implements PasswordFormatCodec {
   bool get isEncrypted => false;
 
   @override
+  bool get isOptionallyEncrypted => false;
+
+  @override
   bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) => fileName.toLowerCase().endsWith('.csv');
 
   @override

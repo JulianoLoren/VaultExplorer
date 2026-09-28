@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
+import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
 import 'package:vaultexplorer/core/utils/format_utils.dart';
 import 'package:vaultexplorer/core/utils/sensitive_clipboard.dart';
@@ -93,6 +94,46 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
       });
       await ref.read(sensitiveClipboardProvider).copy(password);
     }
+  }
+
+  /// "Already have one? Unlock it" shortcut.
+  ///
+  /// Picks the carriers straight from the system picker and hands them to the
+  /// unlock screen, without touching this wizard's own carrier list. Going back
+  /// from the unlock screen therefore returns to the wizard exactly as the user
+  /// left it (nothing preselected, nothing merged with the carriers they had
+  /// already chosen for creating a new container).
+  Future<void> _openUnlockShortcut() async {
+    final picked = await _suppressLock(
+      () => ref.read(vaultLifecycleApiProvider).pickCryptoFiles(),
+    );
+    if (!mounted || picked.isEmpty) return;
+
+    MountedContainer? newlyMountedContainer;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UnlockSheet(
+          initialCompositeCarriers: picked,
+          initialName: context.l10n.compositeDefaultContainerName(picked.length),
+          onMounted: (container, {record}) {
+            ref
+                .read(vaultDashboardControllerProvider.notifier)
+                .onContainerMounted(container, record: record);
+            newlyMountedContainer = container;
+          },
+        ),
+      ),
+    );
+    if (!mounted) return;
+    final unlocked = newlyMountedContainer;
+    if (unlocked == null) return; // backed out: stay on the wizard as it was
+
+    final dashboard = ref.read(vaultDashboardControllerProvider.notifier);
+    await dashboard.loadAll();
+    dashboard.refreshContainerSpace(unlocked.volId);
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    widget.onCreated?.call();
   }
 
   bool _canProceedFor(_CompositeWizStep step, CompositeContainerState state) =>
@@ -412,40 +453,7 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
         const SizedBox(height: 16),
         Center(
           child: TextButton.icon(
-            onPressed: state.isOperating
-                ? null
-                : () async {
-                    await _suppressLock(ctrl.pickCarriers);
-                    if (!context.mounted) return;
-                    final carriers = ref.read(compositeContainerProvider).pickedCarriers;
-                    if (carriers.isEmpty || !context.mounted) return;
-
-                    MountedContainer? newlyMountedContainer;
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => UnlockSheet(
-                          initialCompositeCarriers: carriers.map((c) => c.uri).toList(),
-                          initialName: context.l10n.compositeDefaultContainerName(carriers.length),
-                          onMounted: (container, {record}) {
-                            ref
-                                .read(vaultDashboardControllerProvider.notifier)
-                                .onContainerMounted(container, record: record);
-                            newlyMountedContainer = container;
-                          },
-                        ),
-                      ),
-                    );
-                    if (!context.mounted) return;
-                    if (newlyMountedContainer != null) {
-                      await ref.read(vaultDashboardControllerProvider.notifier).loadAll();
-                      ref
-                          .read(vaultDashboardControllerProvider.notifier)
-                          .refreshContainerSpace(newlyMountedContainer!.volId);
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop();
-                      widget.onCreated?.call();
-                    }
-                  },
+            onPressed: state.isOperating ? null : _openUnlockShortcut,
             icon: const Icon(Icons.lock_open_rounded, size: 18),
             label: Text(l10n.compositeAlreadyHaveUnlockPrompt),
           ),

@@ -91,7 +91,10 @@ void main() {
 
     test('initializes correctly when initialCompositeCarriers are provided', () {
       const compositeParams = UnlockParams(
-        initialCompositeCarriers: ['file:///carrier1.png', 'file:///carrier2.mp4'],
+        initialCompositeCarriers: [
+          (uri: 'file:///carrier1.png', displayName: 'carrier1.png'),
+          (uri: 'file:///carrier2.mp4', displayName: 'carrier2.mp4'),
+        ],
         initialName: 'My Composite Vault',
       );
 
@@ -102,6 +105,33 @@ void main() {
       expect(state.compositeCarrierCount, 2);
       expect(state.containerFormat, 'composite');
       expect(state.hasAdvancedSettings, isTrue);
+      // Picker display names carry over so the carrier list is readable.
+      expect(state.compositeCarriers.map((c) => c.displayName),
+          ['carrier1.png', 'carrier2.mp4']);
+    });
+
+    test('carriers pre-selected via the shortcut can be edited like a normal pick', () {
+      const compositeParams = UnlockParams(
+        initialCompositeCarriers: [
+          (uri: 'file:///carrier1.png', displayName: 'carrier1.png'),
+          (uri: 'file:///carrier2.mp4', displayName: 'carrier2.mp4'),
+        ],
+        initialName: 'Composite Container (2 files)',
+      );
+      final controller =
+          container.read(unlockControllerProvider(compositeParams).notifier);
+
+      controller.removeCompositeCarrier('file:///carrier2.mp4');
+      var state = container.read(unlockControllerProvider(compositeParams));
+      expect(state.compositeCarrierUris, ['file:///carrier1.png']);
+      expect(state.isComposite, isTrue);
+      // Caller-supplied default name follows the edited carrier set.
+      expect(state.selectedName, isNot('Composite Container (2 files)'));
+
+      controller.removeCompositeCarrier('file:///carrier1.png');
+      state = container.read(unlockControllerProvider(compositeParams));
+      expect(state.isComposite, isFalse);
+      expect(state.selectedUri, isNull);
     });
 
     test('initializes correctly when initialUri has composite scheme', () {

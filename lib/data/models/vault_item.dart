@@ -166,6 +166,13 @@ class VaultItemTemplate {
             {'key': 'totp_algorithm', 'label': l10n.fieldTotpAlgorithm, 'type': 'text'},
             {'key': 'totp_digits', 'label': l10n.fieldTotpDigits, 'type': 'number'},
             {'key': 'totp_period', 'label': l10n.fieldTotpPeriod, 'type': 'number'},
+            // Left blank both default to a plain time-based (TOTP) code. Set
+            // by imports from apps that also hold counter-based (HOTP) or
+            // Steam Guard entries -- see OtpKind in totp_engine.dart. Plain
+            // English labels, not l10n keys, so adding them doesn't need a
+            // gen-l10n pass.
+            {'key': 'totp_type', 'label': 'Type (totp, hotp or steam)', 'type': 'text'},
+            {'key': 'hotp_counter', 'label': 'HOTP counter', 'type': 'number'},
             {'key': 'notes', 'label': l10n.fieldNotes, 'type': 'multiline'},
           ],
       };

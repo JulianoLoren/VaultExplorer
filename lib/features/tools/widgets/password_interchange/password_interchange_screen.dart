@@ -789,7 +789,7 @@ class _ImportBodyState extends ConsumerState<_ImportBody> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!isDecoded && state.importBytes != null) ...[
-          if (state.importFormat.isEncrypted) ...[
+          if (state.importFormat.isEncrypted || state.importFormat.isOptionallyEncrypted) ...[
             TextField(
               controller: _passwordController,
               obscureText: _obscure,
@@ -797,6 +797,9 @@ class _ImportBodyState extends ConsumerState<_ImportBody> {
               decoration: InputDecoration(
                 isDense: widget.isLandscape,
                 labelText: l10n.passwordInterchangeMasterPassword,
+                helperText: state.importFormat.isOptionallyEncrypted
+                    ? 'Only needed if this backup is password-protected'
+                    : null,
                 prefixIcon: Icon(Icons.key_rounded, size: 20, color: cs.primary),
                 suffixIcon: PasswordVisibilityToggle(
                   obscured: _obscure,
@@ -820,7 +823,9 @@ class _ImportBodyState extends ConsumerState<_ImportBody> {
             onPressed: state.busy
                 ? null
                 : () => notifier.decodeImportFile(
-                      password: state.importFormat.isEncrypted ? _passwordController.text : null,
+                      password: (state.importFormat.isEncrypted || state.importFormat.isOptionallyEncrypted)
+                          ? _passwordController.text
+                          : null,
                     ),
           ),
         ],

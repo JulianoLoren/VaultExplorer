@@ -576,6 +576,55 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_hashPasswordSha256Native(
     JNI_CATCH_RETURN(nullptr)
 }
 
+// PBKDF2-HMAC over a raw *byte-array* password, SHA-1 or SHA-256.
+//
+// Added for importing other authenticator apps' encrypted backups (andOTP
+// needs PBKDF2WithHmacSHA1, 2FAS needs PBKDF2-HMAC-SHA256). Two deliberate
+// choices vs. the existing hashPassword*Native functions above:
+//  * SHA-1 is NOT added to HashId (cipher_shim.h) -- that enum is walked by
+//    the VeraCrypt header-probing code, and adding it would make volume
+//    unlock try SHA-1 header KDFs too. This function is standalone.
+//  * The password arrives as UTF-8 bytes from Dart, not a jstring:
+//    GetStringUTFChars returns *modified* UTF-8 (supplementary characters,
+//    e.g. emoji, as 6-byte surrogate pairs), which would derive the wrong
+//    key for a backup made with a password containing one.
+// hashKind: 1 = SHA-1, 2 = SHA-256.
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_com_aeidolon_vaultexplorer_NativeEngine_pbkdf2Native(
+        JNIEnv* env, jobject,
+        jbyteArray password, jbyteArray salt, jint iterations, jint outputLen, jint hashKind) {
+    JNI_TRY
+    if (password == nullptr || salt == nullptr || outputLen <= 0 || iterations <= 0) return nullptr;
+    const EVP_MD* md = nullptr;
+    if (hashKind == 1) md = EVP_sha1();
+    else if (hashKind == 2) md = EVP_sha256();
+    if (md == nullptr) return nullptr;
+
+    const jsize pwLen   = env->GetArrayLength(password);
+    const jsize saltLen = env->GetArrayLength(salt);
+    if (saltLen == 0) return nullptr;
+    jbyte* pwData   = env->GetByteArrayElements(password, nullptr);
+    jbyte* saltData = env->GetByteArrayElements(salt, nullptr);
+    std::vector<unsigned char> out(static_cast<size_t>(outputLen), 0);
+    const int rc = PKCS5_PBKDF2_HMAC(
+        reinterpret_cast<const char*>(pwData), static_cast<size_t>(pwLen),
+        reinterpret_cast<const uint8_t*>(saltData), static_cast<size_t>(saltLen),
+        static_cast<unsigned>(iterations), md, out.size(), out.data());
+    mbedtls_platform_zeroize(pwData, static_cast<size_t>(pwLen));
+    env->ReleaseByteArrayElements(password, pwData, JNI_ABORT);
+    env->ReleaseByteArrayElements(salt, saltData, JNI_ABORT);
+    if (rc != 1) {
+        mbedtls_platform_zeroize(out.data(), out.size());
+        return nullptr;
+    }
+    jbyteArray result = env->NewByteArray(static_cast<jsize>(out.size()));
+    env->SetByteArrayRegion(result, 0, static_cast<jsize>(out.size()),
+                            reinterpret_cast<jbyte*>(out.data()));
+    mbedtls_platform_zeroize(out.data(), out.size());
+    return result;
+    JNI_CATCH_RETURN(nullptr)
+}
+
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_com_aeidolon_vaultexplorer_NativeEngine_xchacha20Poly1305SealNative(
         JNIEnv* env, jobject,

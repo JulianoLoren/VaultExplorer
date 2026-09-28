@@ -138,6 +138,8 @@ private object ChannelMethods {
     const val HASH_PASSWORD_SHA256      = "hashPasswordSha256"
     const val AES_GCM_ENCRYPT           = "aesGcmEncrypt"
     const val AES_GCM_DECRYPT           = "aesGcmDecrypt"
+    const val PBKDF2                    = "pbkdf2"
+    const val SCRYPT                    = "scrypt"
     const val READ_SECURE               = "readSecure"
     const val WRITE_SECURE              = "writeSecure"
     const val DELETE_SECURE             = "deleteSecure"
@@ -915,6 +917,8 @@ open class MainActivity : FlutterFragmentActivity() {
                 ChannelMethods.HASH_PASSWORD_SHA256 -> derivedKeyHandlers.handleHashPasswordSha256(call, result)
                 ChannelMethods.AES_GCM_ENCRYPT -> derivedKeyHandlers.handleAesGcmEncrypt(call, result)
                 ChannelMethods.AES_GCM_DECRYPT -> derivedKeyHandlers.handleAesGcmDecrypt(call, result)
+                ChannelMethods.PBKDF2 -> derivedKeyHandlers.handlePbkdf2(call, result)
+                ChannelMethods.SCRYPT -> derivedKeyHandlers.handleScrypt(call, result)
                 ChannelMethods.READ_SECURE -> secureStorageHandlers.handleRead(call, result)
                 ChannelMethods.WRITE_SECURE -> secureStorageHandlers.handleWrite(call, result)
                 ChannelMethods.DELETE_SECURE -> secureStorageHandlers.handleDelete(call, result)

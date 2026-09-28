@@ -66,6 +66,32 @@ Uint8List base32Decode(String input) {
   return Uint8List.fromList(bytes);
 }
 
+/// Encodes raw bytes into an RFC 4648 base32 string, no '=' padding --
+/// [base32Decode]'s counterpart, needed by codecs that receive a secret as
+/// raw bytes (e.g. Google Authenticator's migration export) rather than an
+/// already-base32 string.
+String base32Encode(Uint8List bytes) {
+  if (bytes.isEmpty) return '';
+  final buffer = StringBuffer();
+  int bitBuffer = 0;
+  int bitsLeft = 0;
+  for (final byte in bytes) {
+    bitBuffer = (bitBuffer << 8) | byte;
+    bitsLeft += 8;
+    while (bitsLeft >= 5) {
+      bitsLeft -= 5;
+      buffer.write(_base32Alphabet[(bitBuffer >> bitsLeft) & 0x1F]);
+    }
+    // Keep only the not-yet-emitted bits so the buffer can't grow without
+    // bound on a long input.
+    bitBuffer &= (1 << bitsLeft) - 1;
+  }
+  if (bitsLeft > 0) {
+    buffer.write(_base32Alphabet[(bitBuffer << (5 - bitsLeft)) & 0x1F]);
+  }
+  return buffer.toString();
+}
+
 enum TotpAlgorithm {
   sha1,
   sha256,
@@ -99,6 +125,43 @@ enum TotpAlgorithm {
   };
 }
 
+/// Which one-time-password scheme an entry uses.
+enum OtpKind {
+  /// RFC 6238 time-based codes -- the overwhelming majority of entries.
+  totp,
+
+  /// RFC 4226 counter-based codes. The counter lives on the item
+  /// (`hotp_counter`) and only moves when the person asks for a new code --
+  /// see AuthenticatorRegistry.advanceHotpCounter.
+  hotp,
+
+  /// Steam Guard: the same HMAC-SHA1 over a 30-second counter as TOTP, but
+  /// the truncated value is rendered as five characters from Steam's own
+  /// 26-letter alphabet rather than as decimal digits.
+  steam;
+
+  /// Parses the free-text `totp_type` field (or an otpauth:// host);
+  /// anything blank or unrecognized is plain TOTP.
+  static OtpKind fromFieldValue(String? raw) {
+    return switch ((raw ?? '').trim().toLowerCase()) {
+      'hotp' => OtpKind.hotp,
+      'steam' => OtpKind.steam,
+      _ => OtpKind.totp,
+    };
+  }
+
+  /// Lower-case name as written into an item's `totp_type` field and an
+  /// exported `otpauth://` URI's host.
+  String get wireName => name;
+}
+
+/// Steam Guard's 26-character code alphabet (no vowels or easily confused
+/// characters), in the order Steam maps a code's base-26 digits onto it.
+const String _steamAlphabet = '23456789BCDFGHJKMNPQRTVWXY';
+
+/// Length of a Steam Guard code.
+const int kSteamCodeLength = 5;
+
 /// Everything [TotpEngine] needs to generate a code, parsed from a
 /// [VaultItem]'s raw field map (works the same whether the item is a
 /// dedicated [VaultItemType.authenticator] entry or a `password` item's
@@ -111,34 +174,61 @@ class TotpConfig {
   final int digits;
   final int period;
 
+  /// Time-based (default), counter-based or Steam Guard -- see [OtpKind].
+  final OtpKind kind;
+
+  /// The HOTP counter the next code is generated for. Ignored unless
+  /// [kind] is [OtpKind.hotp].
+  final int counter;
+
   const TotpConfig({
     required this.secret,
     this.algorithm = TotpAlgorithm.sha1,
     this.digits = 6,
     this.period = 30,
+    this.kind = OtpKind.totp,
+    this.counter = 0,
   });
 
   /// True when [secret] has any non-whitespace content -- doesn't validate
   /// it's *decodable* base32 (that's [generateCode]'s job); just enough to
-  /// decide whether an item is TOTP-capable at all, e.g. for the aggregate
+  /// decide whether an item is OTP-capable at all, e.g. for the aggregate
   /// Authenticator registry scan.
   bool get hasSecret => secret.trim().isNotEmpty;
 
-  /// Reads `totp_secret`/`totp_algorithm`/`totp_digits`/`totp_period` out
-  /// of a [VaultItem.fields] map (or an [ExchangeRecord.fields] map --
-  /// same keys either way), applying the same SHA1/6-digit/30-second
-  /// defaults every mainstream issuer uses when the advanced fields are
-  /// left blank.
-   factory TotpConfig.fromFields(Map<String, String> fields) {
+  /// False for HOTP, whose code changes when the counter is advanced rather
+  /// than when a period rolls over -- so there's no countdown to show.
+  bool get isTimeBased => kind != OtpKind.hotp;
+
+  /// This config with a different HOTP [counter].
+  TotpConfig withCounter(int newCounter) => TotpConfig(
+        secret: secret,
+        algorithm: algorithm,
+        digits: digits,
+        period: period,
+        kind: kind,
+        counter: newCounter,
+      );
+
+  /// Reads `totp_secret`/`totp_algorithm`/`totp_digits`/`totp_period`
+  /// (plus `totp_type`/`hotp_counter` for HOTP and Steam Guard entries) out
+  /// of a [VaultItem.fields] map (or an [ExchangeRecord.fields] map -- same
+  /// keys either way), applying the same SHA1/6-digit/30-second defaults
+  /// every mainstream issuer uses when the advanced fields are left blank.
+  /// A full `otpauth://` URI in `totp_secret` is also understood.
+  factory TotpConfig.fromFields(Map<String, String> fields) {
     var rawSecret = (fields['totp_secret'] ?? '').trim();
     String? uriAlgorithm;
+    String? uriKind;
     int? uriDigits;
     int? uriPeriod;
+    int? uriCounter;
 
     if (rawSecret.toLowerCase().startsWith('otpauth://')) {
       try {
         final uri = Uri.parse(rawSecret);
         final qp = uri.queryParameters;
+        uriKind = uri.host;
         if (qp.containsKey('secret')) {
           rawSecret = qp['secret'] ?? rawSecret;
         }
@@ -151,7 +241,29 @@ class TotpConfig {
         if (qp.containsKey('period')) {
           uriPeriod = int.tryParse(qp['period']!);
         }
+        if (qp.containsKey('counter')) {
+          uriCounter = int.tryParse(qp['counter']!);
+        }
       } catch (_) {}
+    }
+
+    final typeField = (fields['totp_type'] ?? '').trim();
+    final kind = OtpKind.fromFieldValue(typeField.isNotEmpty ? typeField : uriKind);
+
+    final rawCounter = int.tryParse((fields['hotp_counter'] ?? '').trim()) ?? uriCounter ?? 0;
+    final counter = rawCounter < 0 ? 0 : rawCounter;
+
+    // Steam Guard is fixed by its own protocol -- HMAC-SHA1, 30-second
+    // steps, five characters -- whatever a source app happened to write
+    // into the advanced fields.
+    if (kind == OtpKind.steam) {
+      return TotpConfig(
+        secret: rawSecret,
+        algorithm: TotpAlgorithm.sha1,
+        digits: kSteamCodeLength,
+        period: 30,
+        kind: kind,
+      );
     }
 
     final parsedDigits = int.tryParse((fields['totp_digits'] ?? '').trim()) ?? uriDigits ?? 6;
@@ -165,15 +277,19 @@ class TotpConfig {
       // authenticator app (including this one, elsewhere) would agree on.
       digits: (parsedDigits >= 6 && parsedDigits <= 10) ? parsedDigits : 6,
       period: parsedPeriod > 0 ? parsedPeriod : 30,
+      kind: kind,
+      counter: counter,
     );
   }
 }
 
-/// RFC 6238 (TOTP) code generation, dynamic truncation per RFC 4226 §5.3.
+/// RFC 6238 (TOTP) / RFC 4226 (HOTP) code generation, plus Steam Guard's
+/// variant. Dynamic truncation per RFC 4226 §5.3 is shared by all three.
 class TotpEngine {
   const TotpEngine._();
 
-  /// Generates the current code for [config] at [at] (defaults to now).
+  /// Generates the current code for [config] at [at] (defaults to now --
+  /// ignored for HOTP, whose code depends only on [TotpConfig.counter]).
   /// Throws [TotpCodeException] if [config.secret] isn't valid base32 --
   /// callers should catch this and show an error state rather than a wrong
   /// code.
@@ -188,29 +304,35 @@ class TotpEngine {
       throw const TotpCodeException('Secret is empty.');
     }
 
-    final counter = _counterFor(config, at);
-    final counterBytes = ByteData(8)..setUint64(0, counter, Endian.big);
-   final hash = crypto.Hmac(config.algorithm._hash, keyBytes).convert(counterBytes.buffer.asUint8List()).bytes;
-
-    // RFC 4226 §5.3 dynamic truncation.
-    final offset = hash[hash.length - 1] & 0x0f;
-    final binCode = ((hash[offset] & 0x7f) << 24) |
-        ((hash[offset + 1] & 0xff) << 16) |
-        ((hash[offset + 2] & 0xff) << 8) |
-        (hash[offset + 3] & 0xff);
-  final code = binCode % _pow10(config.digits);
-    return code.toString().padLeft(config.digits, '0');
+    switch (config.kind) {
+      case OtpKind.hotp:
+        final value = _truncate(_hmac(config.algorithm, keyBytes, config.counter));
+        return _decimal(value, config.digits);
+      case OtpKind.steam:
+        final value = _truncate(_hmac(TotpAlgorithm.sha1, keyBytes, _counterFor(config, at)));
+        return _steam(value);
+      case OtpKind.totp:
+        final value = _truncate(_hmac(config.algorithm, keyBytes, _counterFor(config, at)));
+        return _decimal(value, config.digits);
+    }
   }
 
-  /// Generates the code for the period immediately following [at] (defaults to now).
+  /// The code that follows the current one: for TOTP/Steam, the code for
+  /// the period immediately following [at] (defaults to now); for HOTP, the
+  /// code for the *next counter value* (the tile doesn't preview this --
+  /// see AuthenticatorRegistry.advanceHotpCounter for how a counter
+  /// actually moves).
   static String generateNextCode(TotpConfig config, {DateTime? at}) {
+    if (config.kind == OtpKind.hotp) {
+      return generateCode(config.withCounter(config.counter + 1));
+    }
     final period = config.period > 0 ? config.period : 30;
     final nextTime = (at ?? DateTime.now()).add(Duration(seconds: period));
     return generateCode(config, at: nextTime);
   }
 
   /// Seconds remaining in the current period at [at] (defaults to now) --
-  /// drives a per-second countdown label.
+  /// drives a per-second countdown label. Meaningless for HOTP.
   static int secondsRemaining(TotpConfig config, {DateTime? at}) {
     final period = config.period > 0 ? config.period : 30;
     final secs = (at ?? DateTime.now()).toUtc().millisecondsSinceEpoch ~/ 1000;
@@ -221,7 +343,7 @@ class TotpEngine {
   /// new code is generated, approaching 1 just before it rolls over. Meant
   /// to be sampled frequently (e.g. every 100-200ms) against real
   /// wall-clock time to drive a smoothly-animating countdown ring without
-  /// drifting, rather than stepping once a second.
+  /// drifting, rather than stepping once a second. Meaningless for HOTP.
   static double fractionElapsed(TotpConfig config, {DateTime? at}) {
     final period = config.period > 0 ? config.period : 30;
     final millis = (at ?? DateTime.now()).toUtc().millisecondsSinceEpoch;
@@ -233,6 +355,35 @@ class TotpEngine {
     final period = config.period > 0 ? config.period : 30;
     final secs = (at ?? DateTime.now()).toUtc().millisecondsSinceEpoch ~/ 1000;
     return secs ~/ period;
+  }
+
+  static List<int> _hmac(TotpAlgorithm algorithm, Uint8List key, int counter) {
+    final counterBytes = ByteData(8)..setUint64(0, counter, Endian.big);
+    return crypto.Hmac(algorithm._hash, key).convert(counterBytes.buffer.asUint8List()).bytes;
+  }
+
+  /// RFC 4226 §5.3 dynamic truncation -> a 31-bit integer.
+  static int _truncate(List<int> hash) {
+    final offset = hash[hash.length - 1] & 0x0f;
+    return ((hash[offset] & 0x7f) << 24) |
+        ((hash[offset + 1] & 0xff) << 16) |
+        ((hash[offset + 2] & 0xff) << 8) |
+        (hash[offset + 3] & 0xff);
+  }
+
+  static String _decimal(int value, int digits) =>
+      (value % _pow10(digits)).toString().padLeft(digits, '0');
+
+  /// Steam Guard: the truncated value's base-26 digits, least significant
+  /// first, each mapped through [_steamAlphabet].
+  static String _steam(int value) {
+    final out = StringBuffer();
+    var v = value;
+    for (var i = 0; i < kSteamCodeLength; i++) {
+      out.write(_steamAlphabet[v % _steamAlphabet.length]);
+      v ~/= _steamAlphabet.length;
+    }
+    return out.toString();
   }
 
   static int _pow10(int n) {
@@ -252,3 +403,8 @@ String formatTotpCode(String code) {
   final mid = (code.length / 2).ceil();
   return '${code.substring(0, mid)} ${code.substring(mid)}';
 }
+
+/// [formatTotpCode] for any [OtpKind]: Steam Guard's five-character codes
+/// are shown as one unbroken word, the way the Steam app itself shows them.
+String formatOtpCode(String code, OtpKind kind) =>
+    kind == OtpKind.steam ? code : formatTotpCode(code);

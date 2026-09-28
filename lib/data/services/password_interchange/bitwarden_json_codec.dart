@@ -43,6 +43,9 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
   @override
   bool get isEncrypted => false;
 
+  @override
+  bool get isOptionallyEncrypted => false;
+
  @override
   bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) {
     if (!fileName.toLowerCase().endsWith('.json')) return false;

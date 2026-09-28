@@ -79,6 +79,18 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
     showAppSnackBar(context, message: context.l10n.labelCopiedToClipboard(label), tone: AppBannerTone.success);
   }
 
+  Future<void> _advanceHotp(BuildContext context, TotpVaultEntry entry) async {
+    final ok = await ref.read(authenticatorRegistryProvider.notifier).advanceHotpCounter(entry);
+    if (!context.mounted || ok) return;
+    showAppSnackBar(
+      context,
+      message: entry.container.readOnly
+          ? 'This vault is read-only, so the HOTP counter can\'t be advanced.'
+          : 'Couldn\'t save the new HOTP counter.',
+      tone: AppBannerTone.error,
+    );
+  }
+
   String? _generateOrNull(Map<String, String> fields) {
     try {
       return TotpEngine.generateCode(TotpConfig.fromFields(fields));
@@ -193,6 +205,11 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
           'totp_algorithm': config.algorithm.wireName,
           'totp_digits': '${config.digits}',
           'totp_period': '${config.period}',
+          // An otpauth://hotp or otpauth://steam QR must keep its type --
+          // saved as a plain TOTP entry it would show codes the service
+          // rejects.
+          if (config.kind != OtpKind.totp) 'totp_type': config.kind.wireName,
+          if (config.kind == OtpKind.hotp) 'hotp_counter': '${config.counter}',
         },
       );
       if (finalPath != null && context.mounted) {
@@ -359,6 +376,7 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
                                   onCopy: () => _copy(context, entries[i]),
                                   onCopyNext: () => _copyNext(context, entries[i]),
                                   onOpen: () => _open(context, entries[i]),
+                                  onAdvance: () => _advanceHotp(context, entries[i]),
                                 ),
                               ],
                             ],

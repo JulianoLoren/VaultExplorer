@@ -1,10 +1,17 @@
 import 'dart:typed_data';
 
+import 'package:vaultexplorer/data/services/password_interchange/aegis_json_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/andotp_json_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/bitwarden_json_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/csv_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/google_auth_migration_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/kdbx_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/lastpass_authenticator_json_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/otpauth_uri_list_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_format_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/proton_json_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/raivo_json_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/twofas_json_codec.dart';
 
 /// Every interchange format this build understands, in the order they
 /// should be offered in the UI. Adding a new format is just adding another
@@ -12,6 +19,19 @@ import 'package:vaultexplorer/data/services/password_interchange/proton_json_cod
 /// about individual formats.
 const List<PasswordFormatCodec> kPasswordFormatCodecs = [
   KdbxCodec(),
+  // Order matters beyond the picker: guessPasswordFormat returns the first
+  // codec whose looksLikeThisFormat says yes. Proton's sniffer accepts any
+  // .json mentioning "entries" -- which every plain Aegis export does -- so
+  // the dedicated authenticator apps (whose sniffers all require markers
+  // specific to their own format) are checked before Proton and Bitwarden.
+  // KDBX stays first so it remains the default import/export format.
+  AegisJsonCodec(),
+  AndOtpJsonCodec(),
+  TwoFasJsonCodec(),
+  GoogleAuthMigrationCodec(),
+  LastPassAuthenticatorJsonCodec(),
+  RaivoJsonCodec(),
+  OtpAuthUriListCodec(),
   ProtonJsonCodec(),
   BitwardenJsonCodec(),
   CsvCodec(),

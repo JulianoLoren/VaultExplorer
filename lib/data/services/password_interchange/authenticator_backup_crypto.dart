@@ -1,0 +1,155 @@
+// Key derivation and AEAD decryption for the *encrypted* backups of other
+// authenticator apps (Aegis, andOTP, 2FAS), routed through the app's native
+// C++ engine (BoringSSL / mbedTLS / the bundled scrypt) via [VaultCryptoApi]
+// -- the same primitives that already open volumes -- rather than a
+// pure-Dart crypto package.
+//
+//   Aegis   scrypt                + AES-256-GCM
+//   andOTP  PBKDF2-HMAC-SHA1      + AES-256-GCM
+//   2FAS    PBKDF2-HMAC-SHA256    + AES-256-GCM
+library;
+
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart';
+import 'package:vaultexplorer/core/api/vault_crypto_api.dart';
+import 'package:vaultexplorer/data/services/password_interchange/password_format_codec.dart';
+
+/// The native crypto the codecs use unless a caller (a test, say) injects
+/// another [VaultCryptoApi]. Same channel `vaultCryptoApiProvider` wraps;
+/// constructed directly, as `app_secure_storage.dart` does, because a
+/// codec is a plain const object with no `ref` to read a provider from.
+const VaultCryptoApi kDefaultBackupCrypto = VaultCryptoApi(
+  MethodChannel('com.aeidolon.vaultexplorer/engine'),
+);
+
+/// Limits on the key-derivation cost a backup file may ask for. The
+/// parameters are read straight out of the (untrusted) file, so without a
+/// ceiling a hostile one could make an import chew through minutes of CPU
+/// or gigabytes of memory.
+const int kMaxBackupPbkdf2Iterations = 10000000;
+const int kMaxBackupScryptBytes = 256 * 1024 * 1024; // 128 * r * N
+
+/// AES-256-GCM decryption of `ciphertext || 16-byte tag` (the layout all
+/// three apps use once their tag is appended). A tag mismatch -- the
+/// signature of a wrong password, since the key came from it -- surfaces as
+/// [PasswordFileIncorrectPasswordException].
+Future<Uint8List> openAesGcm(
+  VaultCryptoApi crypto, {
+  required Uint8List key,
+  required Uint8List iv,
+  required Uint8List ciphertextAndTag,
+}) async {
+  try {
+    final plain = await crypto.aesGcmDecrypt(
+      key: key,
+      iv: iv,
+      ciphertextAndTag: ciphertextAndTag,
+    );
+    if (plain == null) throw const PasswordFileIncorrectPasswordException();
+    return plain;
+  } on PlatformException catch (e) {
+    if (e.code == 'CRYPTO_FAILED') {
+      throw const PasswordFileIncorrectPasswordException();
+    }
+    throw PasswordFileFormatException(
+      'This backup couldn\'t be decrypted (${e.message ?? e.code}).',
+    );
+  }
+}
+
+/// PBKDF2-HMAC over the UTF-8 bytes of [password].
+Future<Uint8List> derivePbkdf2(
+  VaultCryptoApi crypto, {
+  required String password,
+  required Uint8List salt,
+  required int iterations,
+  required int keyLength,
+  required Pbkdf2Hash hash,
+}) async {
+  if (iterations < 1 || iterations > kMaxBackupPbkdf2Iterations) {
+    throw const PasswordFileFormatException(
+      'This backup asks for an unreasonable amount of key-derivation work, so it was not opened.',
+    );
+  }
+  if (salt.isEmpty) {
+    throw const PasswordFileFormatException('This backup is missing its salt.');
+  }
+  final pw = Uint8List.fromList(utf8.encode(password));
+  try {
+    final key = await crypto.pbkdf2(
+      password: pw,
+      salt: salt,
+      iterations: iterations,
+      outputLen: keyLength,
+      hash: hash,
+    );
+    if (key == null) {
+      throw const PasswordFileFormatException('Key derivation failed.');
+    }
+    return key;
+  } on PlatformException catch (e) {
+    throw PasswordFileFormatException('Key derivation failed (${e.message ?? e.code}).');
+  } finally {
+    pw.fillRange(0, pw.length, 0);
+  }
+}
+
+/// scrypt over the UTF-8 bytes of [password].
+Future<Uint8List> deriveScrypt(
+  VaultCryptoApi crypto, {
+  required String password,
+  required Uint8List salt,
+  required int n,
+  required int r,
+  required int p,
+  required int dkLen,
+}) async {
+  final validCost = n > 1 && (n & (n - 1)) == 0 && r > 0 && r <= 32 && p > 0 && p <= 16;
+  if (!validCost || 128 * r * n > kMaxBackupScryptBytes) {
+    throw const PasswordFileFormatException(
+      'This backup asks for an unreasonable amount of key-derivation work, so it was not opened.',
+    );
+  }
+  final pw = Uint8List.fromList(utf8.encode(password));
+  try {
+    final key = await crypto.scrypt(
+      password: pw,
+      salt: salt,
+      n: n,
+      r: r,
+      p: p,
+      dkLen: dkLen,
+    );
+    if (key == null) {
+      throw const PasswordFileFormatException('Key derivation failed.');
+    }
+    return key;
+  } on PlatformException catch (e) {
+    throw PasswordFileFormatException('Key derivation failed (${e.message ?? e.code}).');
+  } finally {
+    pw.fillRange(0, pw.length, 0);
+  }
+}
+
+/// Decodes a hex string ("0a1b...") into bytes; throws [FormatException]
+/// if it isn't valid hex.
+Uint8List hexDecode(String hex) {
+  final s = hex.trim();
+  if (s.length.isOdd) throw const FormatException('Odd-length hex string');
+  final out = Uint8List(s.length ~/ 2);
+  for (var i = 0; i < out.length; i++) {
+    final v = int.tryParse(s.substring(i * 2, i * 2 + 2), radix: 16);
+    if (v == null) throw const FormatException('Invalid hex string');
+    out[i] = v;
+  }
+  return out;
+}
+
+Uint8List concatBytes(Uint8List a, Uint8List b) {
+  final out = Uint8List(a.length + b.length);
+  out.setRange(0, a.length, a);
+  out.setRange(a.length, out.length, b);
+  return out;
+}

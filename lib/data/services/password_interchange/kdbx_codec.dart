@@ -138,6 +138,9 @@ class KdbxCodec implements PasswordFormatCodec {
   bool get isEncrypted => true;
 
   @override
+  bool get isOptionallyEncrypted => false;
+
+  @override
   bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) {
     if (bytes != null && bytes.length >= 8) {
       var matches = true;

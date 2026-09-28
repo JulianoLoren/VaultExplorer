@@ -189,6 +189,12 @@ internal object NativeEngine {
         deviceSectorCount: Long = 0L, operationId: String = "",
     ): Map<String, Any?>?
 
+    /** PBKDF2-HMAC over raw password bytes. [hashKind]: 1 = SHA-1, 2 = SHA-256. */
+    @JvmStatic
+    external fun pbkdf2Native(
+        password: ByteArray, salt: ByteArray, iterations: Int, outputLen: Int, hashKind: Int
+    ): ByteArray?
+
     @JvmStatic
     external fun scryptNative(
         passphrase: ByteArray, salt: ByteArray, N: Int, r: Int, p: Int, dkLen: Int

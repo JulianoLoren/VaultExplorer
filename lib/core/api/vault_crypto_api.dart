@@ -7,6 +7,9 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:vaultexplorer/data/services/vault_engine/channel_methods.dart';
 
+/// Hash functions [VaultCryptoApi.pbkdf2] can run.
+enum Pbkdf2Hash { sha1, sha256 }
+
 /// Password hashing and derived-key storage: PBKDF2 hashing used by the
 /// unlock/create flows, plus the Keystore-backed derived-key cache, plus
 /// AES-GCM and AVIF decode primitives that also live in the native crypto
@@ -74,6 +77,53 @@ class VaultCryptoApi {
     final result = await _channel.invokeMethod<Uint8List>(
       ChannelMethods.aesGcmDecrypt,
       {'key': key, 'iv': iv, 'ciphertextAndTag': ciphertextAndTag},
+    );
+    return result;
+  }
+
+  /// PBKDF2-HMAC over raw password bytes, via the native engine.
+  ///
+  /// Unlike [hashPassword]/[hashPasswordSha256] this takes the password as
+  /// bytes (encode the string as UTF-8 first): the String-taking variants go
+  /// through JNI's *modified* UTF-8, which differs from standard UTF-8 for
+  /// emoji and other supplementary characters. Used to open other
+  /// authenticator apps' encrypted backups (andOTP: SHA-1, 2FAS: SHA-256).
+  ///
+  /// Returns null if the derivation failed.
+  Future<Uint8List?> pbkdf2({
+    required Uint8List password,
+    required Uint8List salt,
+    required int iterations,
+    required int outputLen,
+    required Pbkdf2Hash hash,
+  }) async {
+    final result = await _channel.invokeMethod<Uint8List>(
+      ChannelMethods.pbkdf2,
+      {
+        'password': password,
+        'salt': salt,
+        'iterations': iterations,
+        'outputLen': outputLen,
+        'hash': hash.name,
+      },
+    );
+    return result;
+  }
+
+  /// scrypt over raw password bytes, via the native engine. Used to open
+  /// Aegis's password-protected vault exports. The native side rejects
+  /// parameters that would need more than 256 MiB.
+  Future<Uint8List?> scrypt({
+    required Uint8List password,
+    required Uint8List salt,
+    required int n,
+    required int r,
+    required int p,
+    required int dkLen,
+  }) async {
+    final result = await _channel.invokeMethod<Uint8List>(
+      ChannelMethods.scrypt,
+      {'password': password, 'salt': salt, 'n': n, 'r': r, 'p': p, 'dkLen': dkLen},
     );
     return result;
   }
