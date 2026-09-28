@@ -814,7 +814,7 @@ class _ImportBodyState extends ConsumerState<_ImportBody> {
                 isDense: widget.isLandscape,
                 labelText: l10n.passwordInterchangeMasterPassword,
                 helperText: state.importFormat.isOptionallyEncrypted
-                    ? 'Only needed if this backup is password-protected'
+                    ? context.l10n.passwordInterchangeOptionalPasswordHelper
                     : null,
                 prefixIcon: Icon(Icons.key_rounded, size: 20, color: cs.primary),
                 suffixIcon: PasswordVisibilityToggle(

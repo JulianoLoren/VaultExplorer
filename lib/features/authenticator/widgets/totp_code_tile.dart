@@ -218,7 +218,7 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
                         )
                       else
                         IconButton(
-                          tooltip: 'Generate next code',
+                          tooltip: context.l10n.authenticatorGenerateNextCode,
                           icon: Icon(Icons.refresh_rounded, color: cs.primary),
                           onPressed: hasError ? null : widget.onAdvance,
                         ),

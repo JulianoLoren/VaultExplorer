@@ -91,8 +91,8 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
     showAppSnackBar(
       context,
       message: entry.container.readOnly
-          ? 'This vault is read-only, so the HOTP counter can\'t be advanced.'
-          : 'Couldn\'t save the new HOTP counter.',
+          ? context.l10n.authenticatorHotpReadOnlyError
+          : context.l10n.authenticatorHotpSaveError,
       tone: AppBannerTone.error,
     );
   }
@@ -169,13 +169,13 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
             ListTile(
               leading: const Icon(Icons.qr_code_scanner_rounded),
               title: Text(context.l10n.scanQrCodeTooltip),
-              subtitle: const Text('Scan a single code or a Google Authenticator transfer QR code'),
+              subtitle: Text(context.l10n.authenticatorScanQrSubtitle),
               onTap: () => Navigator.pop(sheetContext, 'scan'),
             ),
             ListTile(
               leading: const Icon(Icons.file_download_outlined),
               title: Text(context.l10n.toolPasswordInterchangeTitle),
-              subtitle: const Text('Import from Aegis, 2FAS, Bitwarden, or andOTP backups'),
+              subtitle: Text(context.l10n.authenticatorImportBackupsSubtitle),
               onTap: () => Navigator.pop(sheetContext, 'import_file'),
             ),
             ListTile(
@@ -233,10 +233,10 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
           );
           await ref.read(authenticatorRegistryProvider.notifier).refreshContainer(target);
 
-          if (!context.mounted) return;
+         if (!context.mounted) return;
           showAppSnackBar(
             context,
-            message: 'Imported ${outcome.imported} account(s) from Google Authenticator',
+            message: context.l10n.authenticatorGoogleAuthImportSuccess(outcome.imported),
             tone: AppBannerTone.success,
           );
 
@@ -244,9 +244,9 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
           if (hasMultipleBatches && context.mounted) {
             final scanNext = await showAppConfirmDialog(
               context,
-              title: 'Additional QR Codes Detected',
-              message: 'Google Authenticator split this export across multiple QR codes. Scan the next one now?',
-              confirmLabel: 'Scan Next',
+              title: context.l10n.authenticatorMultiQrTitle,
+              message: context.l10n.authenticatorMultiQrMessage,
+              confirmLabel: context.l10n.authenticatorScanNextQr,
               cancelLabel: context.l10n.close,
             );
             if (scanNext && context.mounted) {
@@ -257,12 +257,12 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
               continue;
             }
           }
-       return;
+          return;
         } catch (e) {
           if (context.mounted) {
             showAppSnackBar(
               context,
-              message: 'Failed to import Google Authenticator QR: $e',
+              message: context.l10n.authenticatorGoogleAuthImportError(e.toString()),
               tone: AppBannerTone.error,
             );
           }

@@ -1,5 +1,5 @@
 // Import-only codec for Ente Auth's encrypted export format and local backups
-// (EnteAuthExport: Argon2id KDF + XChaCha20/XSalsa20-Poly1305).
+// (EnteAuthExport: Argon2id KDF + libsodium crypto_secretstream_xchacha20poly1305).
 library;
 
 import 'dart:convert';
@@ -25,7 +25,7 @@ class EnteAuthJsonCodec implements PasswordFormatCodec {
 
   @override
   String get description =>
-      'Ente Auth encrypted export or local backup. Uses Argon2id and XChaCha20/XSalsa20-Poly1305.';
+      'Ente Auth encrypted export or local backup. Uses Argon2id and libsodium Secretstream.';
 
   @override
   bool get supportsImport => true;
@@ -104,44 +104,19 @@ class EnteAuthJsonCodec implements PasswordFormatCodec {
     Uint8List? plain;
     try {
       final ciphertextWithMac = _decodeBase64(jsonStr(root['encryptedData']));
-      final nonce = _decodeBase64(jsonStr(root['encryptionNonce']));
+      final nonceHeader = _decodeBase64(jsonStr(root['encryptionNonce']));
 
-      // Attempt 1: Ente's newer format (libsodium XChaCha20-Poly1305 with appended tag)
-      try {
-        plain = await openXchacha20Poly1305(
-          _crypto,
-          key: key,
-          nonce: nonce,
-          ciphertextAndTag: ciphertextWithMac,
-          aad: null,
-        );
-        debugPrint('EnteAuthJsonCodec: Successfully decrypted using XChaCha20-Poly1305');
-      } catch (e) {
-        debugPrint('EnteAuthJsonCodec: XChaCha20-Poly1305 failed ($e). Falling back to XSalsa20-Poly1305.');
-        
-        // Attempt 2: Ente's older format (libsodium crypto_secretbox_easy: XSalsa20-Poly1305 with prepended tag)
-        plain = _XSalsa20Poly1305.open(key, nonce, ciphertextWithMac);
-        if (plain != null) {
-           debugPrint('EnteAuthJsonCodec: Successfully decrypted using XSalsa20-Poly1305');
-        } else {
-           debugPrint('EnteAuthJsonCodec: XSalsa20-Poly1305 MAC failed. Attempting AES-GCM as final fallback.');
-           
-           // Attempt 3: AES-GCM just in case Ente uses it on specific platforms
-           try {
-             plain = await openAesGcm(
-               _crypto,
-               key: key,
-               iv: nonce.length > 12 ? nonce.sublist(0, 12) : nonce,
-               ciphertextAndTag: ciphertextWithMac,
-               aad: null,
-             );
-             debugPrint('EnteAuthJsonCodec: Successfully decrypted using AES-GCM');
-           } catch (e2) {
-             debugPrint('EnteAuthJsonCodec: AES-GCM also failed ($e2). Incorrect password.');
-             throw const PasswordFileIncorrectPasswordException();
-           }
-        }
+      plain = _openSecretstreamXChaCha20Poly1305(
+        key: key,
+        header: nonceHeader,
+        ciphertext: ciphertextWithMac,
+      );
+      
+      if (plain == null) {
+        debugPrint('EnteAuthJsonCodec: Secretstream MAC verification failed. Incorrect password.');
+        throw const PasswordFileIncorrectPasswordException();
       }
+      debugPrint('EnteAuthJsonCodec: Successfully decrypted using Secretstream XChaCha20-Poly1305');
     } finally {
       zeroizeBytes(key);
     }
@@ -202,188 +177,179 @@ class EnteAuthJsonCodec implements PasswordFormatCodec {
       throw UnsupportedError('Exporting to Ente Auth format isn\'t supported.');
 }
 
-// Pure Dart implementation of libsodium's crypto_secretbox_easy (XSalsa20-Poly1305).
-class _XSalsa20Poly1305 {
-  static Uint8List? open(Uint8List key, Uint8List nonce, Uint8List ciphertextWithMac) {
-    if (ciphertextWithMac.length < 16) {
-      debugPrint('EnteAuthJsonCodec: Ciphertext too short for XSalsa20 MAC');
-      return null;
-    }
-    
-    // crypto_secretbox_easy prepends the 16-byte Poly1305 MAC to the ciphertext
-    final mac = ciphertextWithMac.sublist(0, 16);
-    final ciphertext = ciphertextWithMac.sublist(16);
+// ---------------------------------------------------------------------------
+// Read-only, pure-Dart port of libsodium's crypto_secretstream_xchacha20poly1305 
+// (pull side), specifically for parsing a single-message stream pushed with TAG_FINAL.
+// ---------------------------------------------------------------------------
 
-    // Subkey generation via HSalsa20
-    final subkey = _hsalsa20(key, nonce.sublist(0, 16));
+const int _kSecretstreamHeaderBytes = 24;
+const int _kSecretstreamABytes = 17; // 1 encrypted tag byte + 16-byte MAC
 
-    // Stream generation via Salsa20
-    final inp = Uint32List(16);
-    inp[0] = 0x61707865; inp[5] = 0x3320646e; inp[10] = 0x79622d32; inp[15] = 0x6b206574;
-    final sk = _bytesToU32(subkey);
-    inp[1] = sk[0]; inp[2] = sk[1]; inp[3] = sk[2]; inp[4] = sk[3];
-    inp[11] = sk[4]; inp[12] = sk[5]; inp[13] = sk[6]; inp[14] = sk[7];
-    final n = _bytesToU32(nonce.sublist(16, 24));
-    inp[6] = n[0]; inp[7] = n[1];
-    inp[8] = 0; inp[9] = 0;
-
-    final block = Uint32List(16);
-    
-    // Block 0: Bytes 0..31 are the Poly1305 Key. Bytes 32..63 are used for XORing the message.
-    _salsa20Block(block, inp);
-    final blockBytes0 = _u32ToBytes(block);
-    final polyKey = blockBytes0.sublist(0, 32);
-
-    if (!_verifyPoly1305(polyKey, ciphertext, mac)) {
-      debugPrint('EnteAuthJsonCodec: Poly1305 MAC verification failed.');
-      return null;
-    }
-
-    final plaintext = Uint8List(ciphertext.length);
-    int cPos = 0;
-    int pPos = 0;
-    int len = ciphertext.length;
-
-    // Process the remaining 32 bytes from Block 0 keystream
-    int take0 = len > 32 ? 32 : len;
-    for (int i = 0; i < take0; i++) {
-      plaintext[pPos + i] = ciphertext[cPos + i] ^ blockBytes0[32 + i];
-    }
-    cPos += take0;
-    pPos += take0;
-    len -= take0;
-
-    // Process all subsequent blocks
-    inp[8] = 1;
-    while (len > 0) {
-      _salsa20Block(block, inp);
-      final blockBytes = _u32ToBytes(block);
-      int take = len > 64 ? 64 : len;
-      for (int i = 0; i < take; i++) {
-        plaintext[pPos + i] = ciphertext[cPos + i] ^ blockBytes[i];
-      }
-      cPos += take;
-      pPos += take;
-      len -= take;
-      
-      inp[8] = (inp[8] + 1) & 0xFFFFFFFF;
-      if (inp[8] == 0) inp[9] = (inp[9] + 1) & 0xFFFFFFFF;
-    }
-    return plaintext;
+Uint8List? _openSecretstreamXChaCha20Poly1305({
+  required Uint8List key,
+  required Uint8List header,
+  required Uint8List ciphertext,
+}) {
+  if (key.length != 32) throw ArgumentError('key must be 32 bytes');
+  if (header.length != _kSecretstreamHeaderBytes) {
+    throw ArgumentError('header must be $_kSecretstreamHeaderBytes bytes');
+  }
+  if (ciphertext.length < _kSecretstreamABytes) {
+    throw ArgumentError('ciphertext is too short');
   }
 
-  static int _rotl32(int x, int n) => ((x << n) | (x >>> (32 - n))) & 0xFFFFFFFF;
+  final subkey = _hchacha20(key, header.sublist(0, 16));
+  final subkeyWords = _wordsLE(subkey, 8);
+  final nonce = Uint32List(3)
+    ..[0] = 1
+    ..[1] = _readU32LE(header, 16)
+    ..[2] = _readU32LE(header, 20);
 
-  static void _quarterRoundSalsa(Uint32List x, int a, int b, int c, int d) {
-    x[b] ^= _rotl32((x[a] + x[d]) & 0xFFFFFFFF, 7);
-    x[c] ^= _rotl32((x[b] + x[a]) & 0xFFFFFFFF, 9);
-    x[d] ^= _rotl32((x[c] + x[b]) & 0xFFFFFFFF, 13);
-    x[a] ^= _rotl32((x[d] + x[c]) & 0xFFFFFFFF, 18);
+  final messageLen = ciphertext.length - _kSecretstreamABytes;
+  final macStart = 1 + messageLen;
+  final expectedMac = ciphertext.sublist(macStart);
+
+  final polyKey = _chachaBlock(subkeyWords, 0, nonce).sublist(0, 32);
+  final tagBlockKeystream = _chachaBlock(subkeyWords, 1, nonce);
+
+  final macInput = BytesBuilder(copy: false)
+    ..addByte(ciphertext[0])
+    ..add(tagBlockKeystream.sublist(1))
+    ..add(Uint8List.sublistView(ciphertext, 1, macStart))
+    ..add(Uint8List((0x10 - 64 + messageLen) & 0xf));
+  final lengths = ByteData(16)
+    ..setUint64(0, 0, Endian.little) 
+    ..setUint64(8, 64 + messageLen, Endian.little);
+  macInput.add(lengths.buffer.asUint8List());
+
+  final mac = _poly1305(polyKey, macInput.toBytes());
+  var diff = 0;
+  for (var i = 0; i < 16; i++) {
+    diff |= mac[i] ^ expectedMac[i];
   }
+  if (diff != 0) return null;
 
-  static void _salsa20Block(Uint32List out, Uint32List inp) {
-    for (int i = 0; i < 16; i++) out[i] = inp[i];
-    for (int i = 0; i < 10; i++) {
-      _quarterRoundSalsa(out, 0, 4, 8, 12);
-      _quarterRoundSalsa(out, 5, 9, 13, 1);
-      _quarterRoundSalsa(out, 10, 14, 2, 6);
-      _quarterRoundSalsa(out, 15, 3, 7, 11);
-      _quarterRoundSalsa(out, 0, 1, 2, 3);
-      _quarterRoundSalsa(out, 5, 6, 7, 4);
-      _quarterRoundSalsa(out, 10, 11, 8, 9);
-      _quarterRoundSalsa(out, 15, 12, 13, 14);
+  final plain = Uint8List(messageLen);
+  var counter = 2;
+  for (var offset = 0; offset < messageLen; offset += 64) {
+    final ks = _chachaBlock(subkeyWords, counter++, nonce);
+    final n = messageLen - offset < 64 ? messageLen - offset : 64;
+    for (var i = 0; i < n; i++) {
+      plain[offset + i] = ciphertext[1 + offset + i] ^ ks[i];
     }
-    for (int i = 0; i < 16; i++) out[i] = (out[i] + inp[i]) & 0xFFFFFFFF;
   }
+  return plain;
+}
 
-  static Uint8List _hsalsa20(Uint8List key, Uint8List nonce) {
-    final inp = Uint32List(16);
-    inp[0] = 0x61707865; inp[5] = 0x3320646e; inp[10] = 0x79622d32; inp[15] = 0x6b206574;
-    final k = _bytesToU32(key);
-    final n = _bytesToU32(nonce);
-    inp[1] = k[0]; inp[2] = k[1]; inp[3] = k[2]; inp[4] = k[3];
-    inp[11] = k[4]; inp[12] = k[5]; inp[13] = k[6]; inp[14] = k[7];
-    inp[6] = n[0]; inp[7] = n[1]; inp[8] = n[2]; inp[9] = n[3];
+// ---- ChaCha20 / HChaCha20 (RFC 8439, draft-irtf-cfrg-xchacha) ------------
 
-    final x = Uint32List.fromList(inp);
-    for (int i = 0; i < 10; i++) {
-      _quarterRoundSalsa(x, 0, 4, 8, 12);
-      _quarterRoundSalsa(x, 5, 9, 13, 1);
-      _quarterRoundSalsa(x, 10, 14, 2, 6);
-      _quarterRoundSalsa(x, 15, 3, 7, 11);
-      _quarterRoundSalsa(x, 0, 1, 2, 3);
-      _quarterRoundSalsa(x, 5, 6, 7, 4);
-      _quarterRoundSalsa(x, 10, 11, 8, 9);
-      _quarterRoundSalsa(x, 15, 12, 13, 14);
-    }
-    final out = Uint32List(8);
-    out[0] = x[0]; out[1] = x[5]; out[2] = x[10]; out[3] = x[15];
-    out[4] = x[6]; out[5] = x[7]; out[6] = x[8]; out[7] = x[9];
-    return _u32ToBytes(out);
+const List<int> _sigma = [0x61707865, 0x3320646e, 0x79622d32, 0x6b206574];
+
+int _rotl32(int x, int n) => ((x << n) | (x >>> (32 - n))) & 0xFFFFFFFF;
+
+void _quarterRound(Uint32List s, int a, int b, int c, int d) {
+  s[a] = (s[a] + s[b]) & 0xFFFFFFFF;
+  s[d] = _rotl32(s[d] ^ s[a], 16);
+  s[c] = (s[c] + s[d]) & 0xFFFFFFFF;
+  s[b] = _rotl32(s[b] ^ s[c], 12);
+  s[a] = (s[a] + s[b]) & 0xFFFFFFFF;
+  s[d] = _rotl32(s[d] ^ s[a], 8);
+  s[c] = (s[c] + s[d]) & 0xFFFFFFFF;
+  s[b] = _rotl32(s[b] ^ s[c], 7);
+}
+
+void _twentyRounds(Uint32List s) {
+  for (var i = 0; i < 10; i++) {
+    _quarterRound(s, 0, 4, 8, 12);
+    _quarterRound(s, 1, 5, 9, 13);
+    _quarterRound(s, 2, 6, 10, 14);
+    _quarterRound(s, 3, 7, 11, 15);
+    _quarterRound(s, 0, 5, 10, 15);
+    _quarterRound(s, 1, 6, 11, 12);
+    _quarterRound(s, 2, 7, 8, 13);
+    _quarterRound(s, 3, 4, 9, 14);
   }
+}
 
-  static bool _verifyPoly1305(Uint8List key, Uint8List ciphertext, Uint8List expectedMac) {
-    final rBytes = Uint8List.fromList(key.sublist(0, 16));
-    rBytes[3] &= 15; rBytes[7] &= 15; rBytes[11] &= 15; rBytes[15] &= 15;
-    rBytes[4] &= 252; rBytes[8] &= 252; rBytes[12] &= 252;
-    final r = _readLE(rBytes);
-    final s = _readLE(key.sublist(16, 32));
-    final p = (BigInt.one << 130) - BigInt.from(5);
-    BigInt a = BigInt.zero;
-
-    for (int i = 0; i < ciphertext.length; i += 16) {
-      int end = i + 16;
-      if (end > ciphertext.length) end = ciphertext.length;
-      final block = Uint8List(17);
-      block.setRange(0, end - i, ciphertext.sublist(i, end));
-      block[end - i] = 1;
-      a = (a + _readLE(block)) % p;
-      a = (a * r) % p;
-    }
-    final mac = (a + s) & ((BigInt.one << 128) - BigInt.one);
-    final macBytes = _writeLE(mac, 16);
-    
-    int diff = 0;
-    for (int i = 0; i < 16; i++) {
-      diff |= expectedMac[i] ^ macBytes[i];
-    }
-    return diff == 0;
+Uint8List _chachaBlock(Uint32List keyWords, int counter, Uint32List nonce) {
+  final init = Uint32List(16)
+    ..setRange(0, 4, _sigma)
+    ..setRange(4, 12, keyWords)
+    ..[12] = counter
+    ..setRange(13, 16, nonce);
+  final work = Uint32List.fromList(init);
+  _twentyRounds(work);
+  final out = ByteData(64);
+  for (var i = 0; i < 16; i++) {
+    out.setUint32(i * 4, (work[i] + init[i]) & 0xFFFFFFFF, Endian.little);
   }
+  return out.buffer.asUint8List();
+}
 
-  static BigInt _readLE(Uint8List bytes) {
-    BigInt result = BigInt.zero;
-    for (int i = bytes.length - 1; i >= 0; i--) {
-      result = (result << 8) | BigInt.from(bytes[i]);
-    }
-    return result;
+Uint8List _hchacha20(Uint8List key, Uint8List nonce16) {
+  final s = Uint32List(16)
+    ..setRange(0, 4, _sigma)
+    ..setRange(4, 12, _wordsLE(key, 8))
+    ..setRange(12, 16, _wordsLE(nonce16, 4));
+  _twentyRounds(s);
+  final out = ByteData(32);
+  for (var i = 0; i < 4; i++) {
+    out.setUint32(i * 4, s[i], Endian.little);
+    out.setUint32(16 + i * 4, s[12 + i], Endian.little);
   }
+  return out.buffer.asUint8List();
+}
 
-  static Uint8List _writeLE(BigInt value, int length) {
-    final bytes = Uint8List(length);
-    for (int i = 0; i < length; i++) {
-      bytes[i] = (value & BigInt.from(0xFF)).toInt();
-      value >>= 8;
-    }
-    return bytes;
-  }
+int _readU32LE(Uint8List b, int offset) =>
+    ByteData.sublistView(b).getUint32(offset, Endian.little);
 
-  static Uint32List _bytesToU32(Uint8List bytes) {
-    final res = Uint32List(bytes.length ~/ 4);
-    for (int i = 0; i < bytes.length; i += 4) {
-      res[i ~/ 4] = bytes[i] | (bytes[i+1] << 8) | (bytes[i+2] << 16) | (bytes[i+3] << 24);
-    }
-    return res;
+Uint32List _wordsLE(Uint8List b, int count) {
+  final out = Uint32List(count);
+  final view = ByteData.sublistView(b);
+  for (var i = 0; i < count; i++) {
+    out[i] = view.getUint32(i * 4, Endian.little);
   }
+  return out;
+}
 
-  static Uint8List _u32ToBytes(Uint32List u32) {
-    final bytes = Uint8List(u32.length * 4);
-    for (int i = 0; i < u32.length; i++) {
-      final v = u32[i];
-      bytes[i * 4] = v & 0xFF;
-      bytes[i * 4 + 1] = (v >> 8) & 0xFF;
-      bytes[i * 4 + 2] = (v >> 16) & 0xFF;
-      bytes[i * 4 + 3] = (v >> 24) & 0xFF;
-    }
-    return bytes;
+// ---- Poly1305 (RFC 8439 §2.5) ---------------------------------------------
+
+final BigInt _poly1305Prime = (BigInt.one << 130) - BigInt.from(5);
+final BigInt _mask128 = (BigInt.one << 128) - BigInt.one;
+
+Uint8List _poly1305(Uint8List key, Uint8List message) {
+  final rBytes = Uint8List.fromList(key.sublist(0, 16));
+  rBytes[3] &= 15;
+  rBytes[7] &= 15;
+  rBytes[11] &= 15;
+  rBytes[15] &= 15;
+  rBytes[4] &= 252;
+  rBytes[8] &= 252;
+  rBytes[12] &= 252;
+  final r = _readLEBig(rBytes);
+  final s = _readLEBig(key.sublist(16, 32));
+
+  var acc = BigInt.zero;
+  for (var i = 0; i < message.length; i += 16) {
+    final end = i + 16 < message.length ? i + 16 : message.length;
+    final block = Uint8List(17)..setRange(0, end - i, message, i);
+    block[end - i] = 1;
+    acc = ((acc + _readLEBig(block)) * r) % _poly1305Prime;
   }
+  var tag = (acc + s) & _mask128;
+
+  final out = Uint8List(16);
+  for (var i = 0; i < 16; i++) {
+    out[i] = (tag & BigInt.from(0xFF)).toInt();
+    tag >>= 8;
+  }
+  return out;
+}
+
+BigInt _readLEBig(Uint8List bytes) {
+  var result = BigInt.zero;
+  for (var i = bytes.length - 1; i >= 0; i--) {
+    result = (result << 8) | BigInt.from(bytes[i]);
+  }
+  return result;
 }

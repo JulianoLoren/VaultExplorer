@@ -84,10 +84,10 @@ try {
           if (_ctrls['hotp_counter'] != null) _ctrls['hotp_counter']!.text = record.fields['hotp_counter'] ?? '0';
         });
         _onTextChanged();
-        showAppSnackBar(
+       showAppSnackBar(
           context,
           message: decoded.records.length > 1
-              ? 'Populated with 1st account (${record.title}). To import all accounts, scan in the Authenticator screen.'
+              ? context.l10n.authenticatorSingleAccountImportedHint(record.title)
               : context.l10n.qrCodeScannedSuccess,
           tone: AppBannerTone.success,
         );
