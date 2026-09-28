@@ -54,8 +54,18 @@ void main() {
       expect(policy.isCustomOverride, isTrue);
     });
 
-    test('explicit Immediately is always custom, regardless of settings', () {
+    test('explicit Immediately matches a global default of Immediately', () {
       final settings = AppSettings(lockContainersOnScreenLock: true, autoLockMins: 0);
+      const record = ContainerRecord(uri: 'file:///v.hc', label: 'V', autoCloseImmediately: true);
+
+      final policy = computeAutoLockPolicy(record, settings);
+
+      expect(policy.status, const AutoLockImmediately());
+      expect(policy.isCustomOverride, isFalse);
+    });
+
+    test('explicit Immediately is custom when the global default is a timer', () {
+      final settings = AppSettings(lockContainersOnScreenLock: true, autoLockMins: 5);
       const record = ContainerRecord(uri: 'file:///v.hc', label: 'V', autoCloseImmediately: true);
 
       final policy = computeAutoLockPolicy(record, settings);
@@ -64,13 +74,60 @@ void main() {
       expect(policy.isCustomOverride, isTrue);
     });
 
-    test('no override falls back to on-screen-off when the global default has no delay', () {
+    test('a global 0-minute default resolves to Immediately, same as per-container', () {
       final settings = AppSettings(lockContainersOnScreenLock: true, autoLockMins: 0);
 
       final policy = computeAutoLockPolicy(null, settings);
 
-      expect(policy.status, const AutoLockOnScreenOff());
+      expect(policy.status, const AutoLockImmediately());
       expect(policy.isCustomOverride, isFalse);
+    });
+
+    test('explicit Screen Lock Only matches a global default of Screen Lock Only', () {
+      final settings = AppSettings(lockContainersOnScreenLock: true, autoLockScreenLockOnly: true);
+      const record = ContainerRecord(
+        uri: 'file:///v.hc',
+        label: 'V',
+        autoCloseScreenLockOnly: true,
+      );
+
+      final policy = computeAutoLockPolicy(record, settings);
+
+      expect(policy.status, const AutoLockOnlyOnScreenLock());
+      expect(policy.isCustomOverride, isFalse);
+    });
+
+    test('no override follows a global default of Screen Lock Only', () {
+      final settings = AppSettings(lockContainersOnScreenLock: true, autoLockScreenLockOnly: true);
+
+      final policy = computeAutoLockPolicy(null, settings);
+
+      expect(policy.status, const AutoLockOnlyOnScreenLock());
+      expect(policy.isCustomOverride, isFalse);
+    });
+
+    test('explicit Screen Lock Only is custom when the global default is Immediately', () {
+      final settings = AppSettings(lockContainersOnScreenLock: true, autoLockMins: 0);
+      const record = ContainerRecord(
+        uri: 'file:///v.hc',
+        label: 'V',
+        autoCloseScreenLockOnly: true,
+      );
+
+      final policy = computeAutoLockPolicy(record, settings);
+
+      expect(policy.status, const AutoLockOnlyOnScreenLock());
+      expect(policy.isCustomOverride, isTrue);
+    });
+
+    test('explicit Immediately is custom when the global default is Screen Lock Only', () {
+      final settings = AppSettings(lockContainersOnScreenLock: true, autoLockScreenLockOnly: true);
+      const record = ContainerRecord(uri: 'file:///v.hc', label: 'V', autoCloseImmediately: true);
+
+      final policy = computeAutoLockPolicy(record, settings);
+
+      expect(policy.status, const AutoLockImmediately());
+      expect(policy.isCustomOverride, isTrue);
     });
 
     test('a matching duration becomes custom again once the global default diverges', () {
@@ -90,7 +147,8 @@ void main() {
     });
 
     test('different status kinds are never equal', () {
-      expect(const AutoLockNever() == const AutoLockOnScreenOff(), isFalse);
+      expect(const AutoLockImmediately() == const AutoLockOnlyOnScreenLock(), isFalse);
+      expect(const AutoLockNever() == const AutoLockImmediately(), isFalse);
     });
   });
 }
