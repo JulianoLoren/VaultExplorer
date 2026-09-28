@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/api/vault_engine_events.dart';
 import 'package:vaultexplorer/core/api/vault_file_io_api.dart';
 import 'package:vaultexplorer/core/api/vault_lifecycle_api.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
+import 'package:vaultexplorer/features/camera/camera_capture_controls_controller.dart';
 import 'package:vaultexplorer/features/camera/camera_capture_screen.dart';
 import 'package:vaultexplorer/features/camera/quick_capture_screen.dart';
 import 'package:vaultexplorer/l10n/generated/app_localizations.dart';
@@ -45,6 +46,17 @@ void main() {
     methodCalls.clear();
     openCount = 0;
     closeCount = 0;
+
+    // Both screens call CameraCaptureControls.loadPersisted() as the very
+    // first step of _initCamera(). Left alone it goes through AppSecureStorage
+    // to the 'com.aeidolon.vaultexplorer/engine' channel, which this test does
+    // not mock -- so the future never completes under the test's fake clock,
+    // the camera never opens, and the viewfinder spinner animates forever
+    // (hence "pumpAndSettle timed out"). Use the controller's test hooks, the
+    // same way camera_capture_controls_controller_test.dart does.
+    CameraCaptureControls.cachedStates.clear();
+    CameraCaptureControls.storageReadOverride = (key) async => null;
+    CameraCaptureControls.storageWriteOverride = (key, value) async {};
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(cameraChannel, (call) async {
@@ -95,6 +107,9 @@ void main() {
   });
 
   tearDown(() {
+    CameraCaptureControls.storageReadOverride = null;
+    CameraCaptureControls.storageWriteOverride = null;
+    CameraCaptureControls.cachedStates.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(cameraChannel, null);
   });
