@@ -320,30 +320,40 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
     }
   }
 
-  Widget _buildSearchBar(ColorScheme cs) {
+  Widget _buildSearchBar(ColorScheme cs, {Widget? trailing}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: cs.surface,
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: context.l10n.search,
-          prefixIcon: const Icon(Icons.search_rounded, size: 20),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear_rounded, size: 20),
-                  tooltip: context.l10n.closeSearchTooltip,
-                  onPressed: () => _searchController.clear(),
-                )
-              : null,
-          filled: true,
-          fillColor: cs.surfaceContainerHighest,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            borderSide: BorderSide.none,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: context.l10n.search,
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 20),
+                        tooltip: context.l10n.closeSearchTooltip,
+                        onPressed: () => _searchController.clear(),
+                      )
+                    : null,
+                filled: true,
+                fillColor: cs.surfaceContainerHighest,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
           ),
-        ),
+          if (trailing != null) ...[
+            const SizedBox(width: 10),
+            trailing,
+          ],
+        ],
       ),
     );
   }
@@ -368,6 +378,9 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
     }
     final orderedVaults = mounted.where((c) => byVault.containsKey(c.volId)).toList();
     final writableMounted = mounted.where((c) => !c.readOnly).toList();
+    final isBottomSearch = settings.authenticatorSearchPlacement == AuthenticatorSearchPlacement.bottom &&
+        registry.hasAnyEntry &&
+        settings.enableAuthenticator;
 
     return Scaffold(
       appBar: AppBar(
@@ -383,7 +396,7 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
           ),
         ],
       ),
-      floatingActionButton: writableMounted.isEmpty || !settings.enableAuthenticator
+      floatingActionButton: (isBottomSearch || writableMounted.isEmpty || !settings.enableAuthenticator)
           ? null
           : FloatingActionButton(
               tooltip: context.l10n.authenticatorAddButtonTooltip,
@@ -472,10 +485,28 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
                       ),
               ),
             ),
-            if (settings.authenticatorSearchPlacement == AuthenticatorSearchPlacement.bottom &&
-                registry.hasAnyEntry &&
-                settings.enableAuthenticator)
-              _buildSearchBar(cs),
+           if (isBottomSearch)
+              _buildSearchBar(
+                cs,
+                trailing: writableMounted.isNotEmpty
+                    ? SizedBox(
+                        height: 48,
+                        width: 48,
+                        child: IconButton.filled(
+                          style: IconButton.styleFrom(
+                            backgroundColor: cs.primary,
+                            foregroundColor: cs.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.xl),
+                            ),
+                          ),
+                          tooltip: context.l10n.authenticatorAddButtonTooltip,
+                          onPressed: () => _addNew(context, mounted),
+                          icon: const Icon(Icons.add_rounded, size: 24),
+                        ),
+                      )
+                    : null,
+              ),
           ],
         ),
       ),

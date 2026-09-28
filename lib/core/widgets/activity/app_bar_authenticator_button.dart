@@ -19,11 +19,10 @@ class AppBarAuthenticatorButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(appSettingsControllerProvider.select((s) => s.settings.enableAuthenticator));
+    final enabled = ref.watch(
+      appSettingsControllerProvider.select((s) => s.settings.enableAuthenticator),
+    );
     if (!enabled) return const SizedBox.shrink();
-
-    final hasEntries = ref.watch(authenticatorRegistryProvider.select((s) => s.hasAnyEntry));
-    if (!hasEntries) return const SizedBox.shrink();
 
     return Tooltip(
       message: context.l10n.authenticatorAppBarTooltip,

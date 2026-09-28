@@ -39,7 +39,11 @@ file is always a preview first.
 | Format | Import | Export | Encrypted | Fidelity |
 |---|:-:|:-:|:-:|---|
 | **KeePass (.kdbx)** | ✓ | ✓ | Yes (its own master password) | Full -- every item type round-trips losslessly, and the file is directly usable in real KeePass/KeePassXC/Strongbox, not just in VaultExplorer |
-| **Bitwarden (.json)** | ✓ | ✓ | No (must be an *unencrypted* Bitwarden export) | Full -- Bitwarden's `fields[]` array carries anything without a native Bitwarden equivalent |
+| **Bitwarden (.json)** | ✓ | ✓ | Yes (plain or password-protected) | Full -- Bitwarden's `fields[]` array carries anything without a native Bitwarden equivalent |
+| **Proton (.json)** | ✓ | ✓ | Yes (plain or password-protected) | Proton Pass & Proton Authenticator exports. Full import for logins, cards, notes, and 2FA codes |
+| **Ente Auth (.json)** | ✓ | ✗ | Yes (Argon2id + Secretstream) | Authenticator codes losslessly imported from Ente Auth encrypted exports or local backups |
+| **Google Authenticator** | ✓ | ✗ | No | Authenticator accounts scanned directly from "Export accounts" transfer QR codes |
+| **Aegis / 2FAS / andOTP** | ✓ | ✗ | Yes (plain or password-protected) | Authenticator codes imported directly from their respective backup files |
 | **CSV** | ✓ | ✓ | No | Best-effort on import (see below); the export schema round-trips through VaultExplorer losslessly but a plain CSV can't hold as much as the other two formats |
 
 CSV import auto-detects columns from VaultExplorer's own export, **Bitwarden**,
