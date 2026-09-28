@@ -27,6 +27,12 @@ class EditorTab {
   String filePath;
   final CodeLineEditingController codeController;
   late final CodeFindController findController;
+  final ScrollController verticalScrollController = ScrollController();
+  final ScrollController horizontalScrollController = ScrollController();
+  late final CodeScrollController scrollController;
+  final GlobalKey<MarkdownBodyViewState> previewKey = GlobalKey<MarkdownBodyViewState>();
+  final ScrollController previewScrollController = ScrollController();
+
   bool isLoading = true;
   bool hasError = false;
   String errorMessage = '';
@@ -40,9 +46,9 @@ class EditorTab {
   bool appliedInitialText = false;
   String lastKnownText = '';
   Object? lastCodeLines;
-  int editsSinceHistoryClear = 0;
   bool showMarkdownPreview;
-  final ScrollController previewScrollController = ScrollController();
+  Timer? autosaveTimer;
+  VoidCallback? textListener;
 
   EditorTab({
     required this.filePath,
@@ -51,6 +57,10 @@ class EditorTab {
   })  : codeController = CodeLineEditingController.fromText(initialText),
         showMarkdownPreview = isMarkdown {
     findController = CodeFindController(codeController);
+    scrollController = CodeScrollController(
+      verticalScroller: verticalScrollController,
+      horizontalScroller: horizontalScrollController,
+    );
   }
 
   String get fileName => filePath.contains('/') ? filePath.split('/').last : filePath;
@@ -60,9 +70,12 @@ class EditorTab {
       filePath.toLowerCase().endsWith('.markdown');
 
   void dispose() {
+    autosaveTimer?.cancel();
     findController.dispose();
     codeController.dispose();
     previewScrollController.dispose();
+    verticalScrollController.dispose();
+    horizontalScrollController.dispose();
   }
 }
 
@@ -85,11 +98,8 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   final List<EditorTab> _tabs = [];
   int _activeTabIndex = 0;
 
-  static const _kMaxUndoHistoryOperations = 200;
-
   bool _readOnly = false;
   bool _wordWrap = true;
-  Timer? _autosaveTimer;
   final EditorFocusNode _focusNode = EditorFocusNode();
 
   late String _projectDirPath;
@@ -114,12 +124,17 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   }
 
   void _bindTabController(EditorTab tab) {
-    tab.codeController.addListener(_onTextChanged);
+    tab.textListener = () => _onTabTextChanged(tab);
+    tab.codeController.addListener(tab.textListener!);
     tab.findController.addListener(_onFindChanged);
   }
 
   void _unbindTabController(EditorTab tab) {
-    tab.codeController.removeListener(_onTextChanged);
+    tab.autosaveTimer?.cancel();
+    if (tab.textListener != null) {
+      tab.codeController.removeListener(tab.textListener!);
+      tab.textListener = null;
+    }
     tab.findController.removeListener(_onFindChanged);
   }
 
@@ -152,7 +167,6 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       tab.codeController.text = text;
       tab.lastCodeLines = tab.codeController.value.codeLines;
       tab.codeController.clearHistory();
-      tab.editsSinceHistoryClear = 0;
       tab.lineCount = tab.codeController.lineCount;
       tab.charCount = text.length;
       tab.isLoading = false;
@@ -169,7 +183,6 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   @override
   void dispose() {
-    _autosaveTimer?.cancel();
     for (final tab in _tabs) {
       _unbindTabController(tab);
       tab.dispose();
@@ -178,9 +191,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     super.dispose();
   }
 
-  void _onTextChanged() {
-    if (_tabs.isEmpty) return;
-    final tab = _activeTab;
+  void _onTabTextChanged(EditorTab tab) {
     final codeLines = tab.codeController.value.codeLines;
     if (identical(codeLines, tab.lastCodeLines)) return;
 
@@ -191,12 +202,6 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     }
     tab.lastCodeLines = codeLines;
     tab.lastKnownText = currentText;
-
-    tab.editsSinceHistoryClear++;
-    if (tab.editsSinceHistoryClear >= _kMaxUndoHistoryOperations) {
-      tab.codeController.clearHistory();
-      tab.editsSinceHistoryClear = 0;
-    }
 
     void updateState() {
       if (!mounted) return;
@@ -213,11 +218,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       updateState();
     }
 
-    _autosaveTimer?.cancel();
+    tab.autosaveTimer?.cancel();
     final appearance = ref.read(textEditorAppearanceProvider);
 
     if (appearance.autoSave && !tab.isLoading && !tab.hasError) {
-      _autosaveTimer = Timer(const Duration(milliseconds: 2500), () {
+      tab.autosaveTimer = Timer(const Duration(milliseconds: 2500), () {
         final currentAppearance = ref.read(textEditorAppearanceProvider);
         if (mounted && currentAppearance.autoSave && tab.isDirty && !tab.isSaving && !tab.isAutosaving) {
           _saveFile(tab, isAutosave: true);
@@ -227,7 +232,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   }
 
   Future<bool> _saveFile(EditorTab tab, {bool isAutosave = false}) async {
-    _autosaveTimer?.cancel();
+    tab.autosaveTimer?.cancel();
 
     setState(() {
       if (isAutosave) {
@@ -519,19 +524,58 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   void _toggleWordWrap() => setState(() => _wordWrap = !_wordWrap);
 
- Future<void> _insertImageTemplate() async {
+  void _toggleMarkdownPreview() {
+    final tab = _activeTab;
+    if (!tab.showMarkdownPreview) {
+      final cursorLine = tab.codeController.selection.extentIndex.clamp(0, tab.codeController.lineCount - 1);
+      setState(() => tab.showMarkdownPreview = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        tab.previewKey.currentState?.scrollToLine(cursorLine);
+      });
+    } else {
+      final visibleLine = tab.previewKey.currentState?.getFirstVisibleLine() ?? 0;
+      setState(() => tab.showMarkdownPreview = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _goToLineIndex(visibleLine);
+      });
+    }
+  }
+
+  void _toggleMarkdownTask(int sourceLine, bool currentChecked) {
+    final tab = _activeTab;
+    if (_readOnly || tab.codeController.lineCount <= sourceLine) return;
+
+    final lineText = tab.codeController.codeLines[sourceLine].text;
+    String updatedLine;
+    if (currentChecked) {
+      updatedLine = lineText.replaceFirst(RegExp(r'\[[xX]\]'), '[ ]');
+    } else {
+      updatedLine = lineText.replaceFirst(RegExp(r'\[ \]'), '[x]');
+    }
+
+    if (updatedLine == lineText) return;
+
+    final lines = tab.codeController.text.split('\n');
+    if (sourceLine >= 0 && sourceLine < lines.length) {
+      lines[sourceLine] = updatedLine;
+      tab.codeController.text = lines.join('\n');
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _insertImageTemplate() async {
     final imageExts = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'};
     final currentTab = _activeTab;
     final lastSlash = currentTab.filePath.lastIndexOf('/');
     final parentDir = lastSlash >= 0 ? currentTab.filePath.substring(0, lastSlash) : '';
-    
+
     final rawList = await ref.read(vaultFileIoApiProvider).listDirectory(
           widget.container,
           parentDir,
         );
-        
-    final images = rawList == null 
-        ? <RawEntry>[] 
+
+    final images = rawList == null
+        ? <RawEntry>[]
         : RawEntry.parseAll(rawList).where((e) {
             if (e.isDir) return false;
             final dot = e.name.lastIndexOf('.');
@@ -637,15 +681,14 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
     ref.listen<TextEditorAppearancePrefs>(textEditorAppearanceProvider, (previous, next) {
       if (!next.autoSave) {
-        _autosaveTimer?.cancel();
-        _autosaveTimer = null;
+        for (final tab in _tabs) {
+          tab.autosaveTimer?.cancel();
+          tab.autosaveTimer = null;
+        }
       }
     });
 
     final anyDirty = _tabs.any((t) => t.isDirty);
-    final isSearching = activeTab.findController.value != null;
-    final isReplaceMode = activeTab.findController.value?.replaceMode ?? false;
-    final findBarHeight = (isReplaceMode && !_readOnly) ? 88.0 : 48.0;
 
     return PopScope(
       canPop: !anyDirty,
@@ -659,224 +702,210 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       child: Scaffold(
         key: _scaffoldKey,
         drawer: _buildProjectDrawer(cs),
-        appBar: isSearching
-            ? AppBar(
-                automaticallyImplyLeading: false,
-                toolbarHeight: findBarHeight,
-                titleSpacing: 0,
-                title: EditorFindPanel(
-                  controller: activeTab.findController,
-                  readOnly: _readOnly,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.menu_rounded),
+            tooltip: context.l10n.textEditorProjectFilesTitle,
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
+          title: Text(activeTab.fileName),
+          actions: [
+            if (!activeTab.isLoading && !activeTab.hasError) ...[
+              if (activeTab.isMarkdownFile) ...[
+                if (!activeTab.showMarkdownPreview && !_readOnly)
+                  IconButton(
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    tooltip: context.l10n.addFile,
+                    onPressed: _insertImageTemplate,
+                  ),
+                IconButton(
+                  icon: Icon(activeTab.showMarkdownPreview ? Icons.edit_note_rounded : Icons.visibility_outlined),
+                  tooltip: activeTab.showMarkdownPreview
+                      ? context.l10n.markdownViewerEditTooltip
+                      : context.l10n.markdownViewerPreviewTooltip,
+                  onPressed: _toggleMarkdownPreview,
                 ),
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(42),
-                  child: _buildTabBar(cs),
-                ),
-              )
-            : AppBar(
-                leading: IconButton(
-                  icon: const Icon(Icons.menu_rounded),
-                  tooltip: context.l10n.textEditorProjectFilesTitle,
-                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                ),
-                title: Text(activeTab.fileName),
-                actions: [
-                  if (!activeTab.isLoading && !activeTab.hasError) ...[
-                    if (activeTab.isMarkdownFile) ...[
-                      if (!activeTab.showMarkdownPreview && !_readOnly)
-                        IconButton(
-                          icon: const Icon(Icons.add_photo_alternate_outlined),
-                          tooltip: context.l10n.addFile,
-                          onPressed: _insertImageTemplate,
+              ],
+              IconButton(
+                icon: const Icon(Icons.search_rounded),
+                tooltip: context.l10n.textEditorFindTooltip,
+                onPressed: () {
+                  if (activeTab.showMarkdownPreview) {
+                    _toggleMarkdownPreview();
+                  }
+                  activeTab.findController.findMode();
+                },
+              ),
+              PopupMenuButton<String>(
+                tooltip: context.l10n.textEditorMoreActionsTooltip,
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'save':
+                      _saveFile(activeTab);
+                      break;
+                    case 'saveAs':
+                      _showSaveAsDialog();
+                      break;
+                    case 'readOnly':
+                      _toggleReadOnly();
+                      break;
+                    case 'wordWrap':
+                      _toggleWordWrap();
+                      break;
+                    case 'goToLine':
+                      _showGoToLineDialog();
+                      break;
+                    case 'goToStart':
+                      _goToStart();
+                      break;
+                    case 'goToEnd':
+                      _goToEnd();
+                      break;
+                    case 'format':
+                      final formatter = _formatter;
+                      if (formatter != null) _runFormatter(formatter);
+                      break;
+                    case 'minify':
+                      _runFormatter(minifyJson);
+                      break;
+                    case 'appearance':
+                      showEditorAppearanceSheet(context);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'save',
+                    enabled: activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.save_rounded,
+                          size: 20,
+                          color: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
+                              ? cs.primary
+                              : cs.onSurface.withValues(alpha: 0.38),
                         ),
-                      IconButton(
-                        icon: Icon(activeTab.showMarkdownPreview ? Icons.edit_note_rounded : Icons.visibility_outlined),
-                        tooltip: activeTab.showMarkdownPreview
-                            ? context.l10n.markdownViewerEditTooltip
-                            : context.l10n.markdownViewerPreviewTooltip,
-                        onPressed: () => setState(() => activeTab.showMarkdownPreview = !activeTab.showMarkdownPreview),
-                      ),
-                    ],
-                    IconButton(
-                      icon: const Icon(Icons.search_rounded),
-                      tooltip: context.l10n.textEditorFindTooltip,
-                      onPressed: () {
-                        if (activeTab.showMarkdownPreview) {
-                          setState(() => activeTab.showMarkdownPreview = false);
-                        }
-                        activeTab.findController.findMode();
-                      },
-                    ),
-                    PopupMenuButton<String>(
-                      tooltip: context.l10n.textEditorMoreActionsTooltip,
-                      icon: const Icon(Icons.more_vert_rounded),
-                      onSelected: (value) {
-                        switch (value) {
-                          case 'save':
-                            _saveFile(activeTab);
-                            break;
-                          case 'saveAs':
-                            _showSaveAsDialog();
-                            break;
-                          case 'readOnly':
-                            _toggleReadOnly();
-                            break;
-                          case 'wordWrap':
-                            _toggleWordWrap();
-                            break;
-                          case 'goToLine':
-                            _showGoToLineDialog();
-                            break;
-                          case 'goToStart':
-                            _goToStart();
-                            break;
-                          case 'goToEnd':
-                            _goToEnd();
-                            break;
-                          case 'format':
-                            final formatter = _formatter;
-                            if (formatter != null) _runFormatter(formatter);
-                            break;
-                          case 'minify':
-                            _runFormatter(minifyJson);
-                            break;
-                          case 'appearance':
-                            showEditorAppearanceSheet(context);
-                            break;
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'save',
-                          enabled: activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving,
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.save_rounded,
-                                size: 20,
-                                color: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
-                                    ? cs.primary
-                                    : cs.onSurface.withValues(alpha: 0.38),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(context.l10n.save),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'saveAs',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.save_as_rounded, size: 20),
-                              const SizedBox(width: 12),
-                              Text(context.l10n.textEditorSaveAsMenuItem),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuDivider(),
-                        PopupMenuItem(
-                          value: 'wordWrap',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.wrap_text_rounded, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(context.l10n.textEditorWordWrap),
-                              ),
-                              if (_wordWrap)
-                                Icon(Icons.check_rounded, size: 18, color: cs.primary),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'readOnly',
-                          child: Row(
-                            children: [
-                              Icon(_readOnly ? Icons.lock_rounded : Icons.lock_open_rounded, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(context.l10n.textEditorReadOnly),
-                              ),
-                              if (_readOnly)
-                                Icon(Icons.check_rounded, size: 18, color: cs.primary),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuDivider(),
-                        PopupMenuItem(
-                          value: 'goToLine',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.redo_rounded, size: 20),
-                              const SizedBox(width: 12),
-                              Text(context.l10n.textEditorGoToLineMenuItem),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'goToStart',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.vertical_align_top_rounded, size: 20),
-                              const SizedBox(width: 12),
-                              Text(context.l10n.textEditorGoToStartMenuItem),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'goToEnd',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.vertical_align_bottom_rounded, size: 20),
-                              const SizedBox(width: 12),
-                              Text(context.l10n.textEditorGoToEndMenuItem),
-                            ],
-                          ),
-                        ),
-                        if (_formatter != null && !_readOnly) ...[
-                          const PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: 'format',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.auto_fix_high_rounded, size: 20),
-                                const SizedBox(width: 12),
-                                Text(context.l10n.textEditorFormatDocumentMenuItem),
-                              ],
-                            ),
-                          ),
-                          if (_isJsonFile)
-                            PopupMenuItem(
-                              value: 'minify',
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.compress_rounded, size: 20),
-                                  const SizedBox(width: 12),
-                                  Text(context.l10n.textEditorMinifyJsonMenuItem),
-                                ],
-                              ),
-                            ),
-                        ],
-                        const PopupMenuDivider(),
-                        PopupMenuItem(
-                          value: 'appearance',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.palette_outlined, size: 20),
-                              const SizedBox(width: 12),
-                              Text(context.l10n.textEditorThemeMenuItem),
-                            ],
-                          ),
-                        ),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.save),
                       ],
                     ),
+                  ),
+                  PopupMenuItem(
+                    value: 'saveAs',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.save_as_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorSaveAsMenuItem),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'wordWrap',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.wrap_text_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(context.l10n.textEditorWordWrap),
+                        ),
+                        if (_wordWrap)
+                          Icon(Icons.check_rounded, size: 18, color: cs.primary),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'readOnly',
+                    child: Row(
+                      children: [
+                        Icon(_readOnly ? Icons.lock_rounded : Icons.lock_open_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(context.l10n.textEditorReadOnly),
+                        ),
+                        if (_readOnly)
+                          Icon(Icons.check_rounded, size: 18, color: cs.primary),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'goToLine',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.redo_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorGoToLineMenuItem),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'goToStart',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.vertical_align_top_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorGoToStartMenuItem),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'goToEnd',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.vertical_align_bottom_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorGoToEndMenuItem),
+                      ],
+                    ),
+                  ),
+                  if (_formatter != null && !_readOnly) ...[
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'format',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.auto_fix_high_rounded, size: 20),
+                          const SizedBox(width: 12),
+                          Text(context.l10n.textEditorFormatDocumentMenuItem),
+                        ],
+                      ),
+                    ),
+                    if (_isJsonFile)
+                      PopupMenuItem(
+                        value: 'minify',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.compress_rounded, size: 20),
+                            const SizedBox(width: 12),
+                            Text(context.l10n.textEditorMinifyJsonMenuItem),
+                          ],
+                        ),
+                      ),
                   ],
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'appearance',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.palette_outlined, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorThemeMenuItem),
+                      ],
+                    ),
+                  ),
                 ],
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(42),
-                  child: _buildTabBar(cs),
-                ),
               ),
+            ],
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(42),
+            child: _buildTabBar(cs),
+          ),
+        ),
         body: _buildBody(cs, Theme.of(context).textTheme),
         bottomNavigationBar:
             activeTab.isLoading || activeTab.hasError ? null : _buildBottomBar(cs),
@@ -956,7 +985,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     );
   }
 
-List<PathSegment> get _drawerPathStack {
+  List<PathSegment> get _drawerPathStack {
     final rootLabel = context.l10n.rootFolderLabel;
     final stack = <PathSegment>[
       PathSegment(rootLabel, ''),
@@ -1007,12 +1036,10 @@ List<PathSegment> get _drawerPathStack {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drawer Header
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHigh,
-               
               ),
               child: Row(
                 children: [
@@ -1039,11 +1066,9 @@ List<PathSegment> get _drawerPathStack {
                 ],
               ),
             ),
-            // Reused BreadcrumbBar
             Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainer,
-               
               ),
               child: BreadcrumbBar(
                 stack: _drawerPathStack,
@@ -1054,7 +1079,6 @@ List<PathSegment> get _drawerPathStack {
                 },
               ),
             ),
-            // File & Directory List
             Expanded(
               child: FutureBuilder<List<String>?>(
                 future: ref.read(vaultFileIoApiProvider).listDirectory(
@@ -1211,11 +1235,13 @@ List<PathSegment> get _drawerPathStack {
     if (activeTab.isMarkdownFile && activeTab.showMarkdownPreview) {
       return SelectionArea(
         child: MarkdownBodyView(
+          key: activeTab.previewKey,
           source: activeTab.codeController.text,
           container: widget.container,
           currentFilePath: activeTab.filePath,
           onLinkTap: _handleLinkTap,
           scrollController: activeTab.previewScrollController,
+          onTaskToggled: _toggleMarkdownTask,
         ),
       );
     }
@@ -1235,18 +1261,20 @@ List<PathSegment> get _drawerPathStack {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-       child: CodeEditor(
-              key: ValueKey(
-                '${activeTab.filePath}_${appearance.background.name}_${appearance.syntaxTheme.name}_${appearance.fontSize}_${appearance.showLineNumbers}_${appearance.relativeLineNumbers}_${Theme.of(context).brightness.name}',
-              ),
+            child: CodeEditor(
+              key: ValueKey(activeTab.filePath),
               controller: activeTab.codeController,
+              scrollController: activeTab.scrollController,
               focusNode: _focusNode,
               readOnly: _readOnly,
               showCursorWhenReadOnly: true,
               wordWrap: _wordWrap,
               autofocus: false,
-             findController: activeTab.findController,
-              findBuilder: null,
+              findController: activeTab.findController,
+              findBuilder: (context, controller, readOnly) => EditorFindPanel(
+                controller: controller,
+                readOnly: readOnly,
+              ),
               chunkAnalyzer: const NonCodeChunkAnalyzer(),
               style: CodeEditorStyle(
                 fontFamily: 'JetBrains Mono',
@@ -1260,7 +1288,7 @@ List<PathSegment> get _drawerPathStack {
                 selectionColor: cs.primary.withValues(alpha: 0.28),
                 codeTheme: syntaxStyle.codeTheme,
               ),
-             indicatorBuilder: appearance.showLineNumbers
+              indicatorBuilder: appearance.showLineNumbers
                   ? (context, editingController, chunkController, notifier) {
                       return DefaultCodeLineNumber(
                         controller: editingController,
@@ -1309,7 +1337,7 @@ List<PathSegment> get _drawerPathStack {
             isReadOnly: _readOnly,
             onSearch: () {
               if (activeTab.showMarkdownPreview) {
-                setState(() => activeTab.showMarkdownPreview = false);
+                _toggleMarkdownPreview();
               }
               activeTab.findController.findMode();
             },

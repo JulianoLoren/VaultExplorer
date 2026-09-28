@@ -184,9 +184,8 @@ EditorSyntaxStyle resolveEditorSyntaxStyle(
   return EditorSyntaxStyle(
     codeTheme: codeTheme,
     backgroundColor: background.overrideColor ?? root?.backgroundColor ?? fallback.surface,
-    textColor: root?.color ??
-        (background == EditorBackgroundOption.matchSyntaxTheme
-            ? fallback.onSurface
-            : background.fallbackTextColor),
+    textColor: (background == EditorBackgroundOption.matchSyntaxTheme)
+        ? (root?.color ?? fallback.onSurface)
+        : background.fallbackTextColor,
   );
 }

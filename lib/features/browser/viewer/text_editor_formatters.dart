@@ -31,9 +31,10 @@ String? Function(String)? formatterFor(String filePath) {
       return formatJson;
     case 'txt':
     case 'log':
+      return formatPlainText;
     case 'md':
     case 'markdown':
-      return formatPlainText;
+      return formatMarkdown;
     case 'html':
     case 'htm':
     case 'xhtml':
@@ -64,6 +65,36 @@ String? minifyJson(String input) {
   } on FormatException {
     return null;
   }
+}
+
+/// Formats Markdown text while preserving trailing double-spaces that
+/// indicate hard line breaks (<br>).
+String formatMarkdown(String input) {
+  final hadTrailingNewline = input.endsWith('\n') || input.endsWith('\r');
+  final normalized = input.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  final rawLines = normalized.split('\n');
+  if (hadTrailingNewline && rawLines.isNotEmpty && rawLines.last.isEmpty) {
+    rawLines.removeLast();
+  }
+
+  final trimmedLines = rawLines.map((line) {
+    if (line.endsWith('  ')) {
+      final base = line.substring(0, line.length - 2).trimRight();
+      return '$base  ';
+    }
+    return line.trimRight();
+  });
+
+  final collapsed = <String>[];
+  for (final line in trimmedLines) {
+    if (line.isEmpty && collapsed.isNotEmpty && collapsed.last.isEmpty) {
+      continue;
+    }
+    collapsed.add(line);
+  }
+
+  final result = collapsed.join('\n');
+  return hadTrailingNewline ? '$result\n' : result;
 }
 
 /// Trims trailing whitespace on every line, normalizes CRLF/CR line

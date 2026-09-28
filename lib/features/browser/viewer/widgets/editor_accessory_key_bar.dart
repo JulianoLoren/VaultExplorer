@@ -22,7 +22,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart';
-import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart';
 
 class EditorFocusNode extends FocusNode {
   bool keepFocusLocked = false;

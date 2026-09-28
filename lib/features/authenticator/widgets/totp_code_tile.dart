@@ -160,7 +160,7 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
       margin: EdgeInsets.zero,
       elevation: 0,
 
-      color: cs.surfaceContainer,
+      color: cs.surfaceContainerHigh,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.lg),

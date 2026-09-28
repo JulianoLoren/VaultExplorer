@@ -18,6 +18,7 @@ class MarkdownBodyView extends StatefulWidget {
   final String? searchQuery;
   final int searchMatchIndex;
   final void Function(int totalMatches)? onMatchesFound;
+  final void Function(int sourceLine, bool currentChecked)? onTaskToggled;
 
   const MarkdownBodyView({
     super.key,
@@ -29,6 +30,7 @@ class MarkdownBodyView extends StatefulWidget {
     this.searchQuery,
     this.searchMatchIndex = 0,
     this.onMatchesFound,
+    this.onTaskToggled,
   });
 
   @override
@@ -469,16 +471,22 @@ class MarkdownBodyViewState extends State<MarkdownBodyView> {
     Widget markerWidget;
 
     if (item.checked != null) {
-      markerWidget = SizedBox(
-        width: 22,
-        height: 22,
-        child: Center(
-          child: Icon(
-            item.checked!
-                ? Icons.check_box_rounded
-                : Icons.check_box_outline_blank_rounded,
-            size: 18,
-            color: item.checked! ? cs.primary : cs.onSurfaceVariant,
+      markerWidget = InkWell(
+        borderRadius: BorderRadius.circular(4),
+        onTap: widget.onTaskToggled != null
+            ? () => widget.onTaskToggled!(item.sourceLine, item.checked!)
+            : null,
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: Center(
+            child: Icon(
+              item.checked!
+                  ? Icons.check_box_rounded
+                  : Icons.check_box_outline_blank_rounded,
+              size: 18,
+              color: item.checked! ? cs.primary : cs.onSurfaceVariant,
+            ),
           ),
         ),
       );
