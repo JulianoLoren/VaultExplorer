@@ -76,6 +76,30 @@ void main() {
       expect(fields.single['type'], 'multiline');
       expect(fields.single['required'], isTrue);
     });
+    test('authenticator template configures select fields with options and defaults', () {
+      final fields = VaultItemTemplate.fieldsFor(VaultItemType.authenticator, l10n);
+      final byKey = {for (final f in fields) f['key'] as String: f};
+
+      expect(byKey['totp_type']?['type'], 'select');
+      expect(byKey['totp_type']?['defaultValue'], 'totp');
+      final typeOptions = byKey['totp_type']?['options'] as List<VaultFieldOption>;
+      expect(typeOptions.map((o) => o.value), ['totp', 'hotp', 'steam']);
+
+      expect(byKey['totp_algorithm']?['type'], 'select');
+      expect(byKey['totp_algorithm']?['defaultValue'], 'SHA1');
+      final algoOptions = byKey['totp_algorithm']?['options'] as List<VaultFieldOption>;
+      expect(algoOptions.map((o) => o.value), ['SHA1', 'SHA256', 'SHA512']);
+
+      expect(byKey['totp_digits']?['type'], 'select');
+      expect(byKey['totp_digits']?['defaultValue'], '6');
+      final digitOptions = byKey['totp_digits']?['options'] as List<VaultFieldOption>;
+      expect(digitOptions.map((o) => o.value), ['6', '7', '8']);
+
+      expect(byKey['totp_period']?['type'], 'select');
+      expect(byKey['totp_period']?['defaultValue'], '30');
+      final periodOptions = byKey['totp_period']?['options'] as List<VaultFieldOption>;
+      expect(periodOptions.map((o) => o.value), ['30', '60', '15']);
+    });
   });
 
   group('VaultField.fromTemplate', () {
@@ -91,13 +115,47 @@ void main() {
       expect(field.value, 'alice');
     });
 
-    test('defaults value to empty string when the key is absent', () {
+    test('defaults value to empty string when the key is absent and no defaultValue is set', () {
       final field = VaultField.fromTemplate(
         {'key': 'notes', 'label': 'Notes', 'type': 'multiline'},
         {},
       );
       expect(field.value, '');
       expect(field.required, isFalse);
+    });
+
+    test('defaults value to defaultValue when the key is absent in values map', () {
+      final field = VaultField.fromTemplate(
+        {
+          'key': 'totp_algorithm',
+          'label': 'Algorithm',
+          'type': 'select',
+          'defaultValue': 'SHA1',
+          'options': [
+            {'value': 'SHA1', 'label': 'SHA1'},
+            {'value': 'SHA256', 'label': 'SHA256'},
+          ],
+        },
+        {},
+      );
+      expect(field.value, 'SHA1');
+      expect(field.type, FieldType.select);
+      expect(field.options, hasLength(2));
+      expect(field.displayValue, 'SHA1');
+    });
+
+    test('displayValue returns the option label when matching value is found', () {
+      final field = VaultField(
+        key: 'totp_type',
+        label: 'Type',
+        type: FieldType.select,
+        options: const [
+          VaultFieldOption(value: 'totp', label: 'TOTP (Time-based)'),
+          VaultFieldOption(value: 'hotp', label: 'HOTP (Counter-based)'),
+        ],
+        value: 'totp',
+      );
+      expect(field.displayValue, 'TOTP (Time-based)');
     });
 
     test('an unrecognized type string falls back to FieldType.text', () {
