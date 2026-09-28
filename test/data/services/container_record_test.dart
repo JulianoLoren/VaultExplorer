@@ -52,6 +52,16 @@ void main() {
       );
       expect(record.isExemptFromGlobalLock, isTrue);
     });
+
+    test('is true when container explicitly has autoCloseScreenLockOnly set to true', () {
+      const record = ContainerRecord(
+        uri: 'file:///vault.hc',
+        label: 'Screen Lock Only Vault',
+        autoCloseMins: 0,
+        autoCloseScreenLockOnly: true,
+      );
+      expect(record.isExemptFromGlobalLock, isTrue);
+    });
   });
 
   group('ContainerRecord.autoCloseImmediately', () {
@@ -92,6 +102,53 @@ void main() {
       final never = immediate.copyWith(autoCloseImmediately: false, autoCloseNever: true);
       expect(never.autoCloseImmediately, isFalse);
       expect(never.autoCloseNever, isTrue);
+    });
+  });
+
+  group('ContainerRecord.autoCloseScreenLockOnly', () {
+    test('defaults to false, same as pre-upgrade records with no key for it', () {
+      const record = ContainerRecord(uri: 'file:///vault.hc', label: 'Default Vault');
+      expect(record.autoCloseScreenLockOnly, isFalse);
+
+      final fromLegacyJson = ContainerRecord.fromJson({
+        'uri': 'file:///vault.hc',
+        'label': 'Default Vault',
+        'autoCloseMins': 0,
+        'autoCloseNever': false,
+        'autoCloseImmediately': false,
+      });
+      expect(fromLegacyJson.autoCloseScreenLockOnly, isFalse);
+    });
+
+    test('round-trips through toJson/fromJson', () {
+      const record = ContainerRecord(
+        uri: 'file:///vault.hc',
+        label: 'Screen Lock Only Vault',
+        autoCloseScreenLockOnly: true,
+      );
+
+      final restored = ContainerRecord.fromJson(record.toJson());
+
+      expect(restored.autoCloseScreenLockOnly, isTrue);
+      expect(restored.autoCloseImmediately, isFalse);
+      expect(restored.autoCloseNever, isFalse);
+      expect(restored.autoCloseMins, 0);
+    });
+
+    test('copyWith can set and clear it independently of the other explicit flags', () {
+      const record = ContainerRecord(uri: 'file:///vault.hc', label: 'Vault');
+
+      final screenLockOnly = record.copyWith(autoCloseScreenLockOnly: true);
+      expect(screenLockOnly.autoCloseScreenLockOnly, isTrue);
+      expect(screenLockOnly.autoCloseImmediately, isFalse);
+      expect(screenLockOnly.autoCloseNever, isFalse);
+
+      final immediate = screenLockOnly.copyWith(
+        autoCloseScreenLockOnly: false,
+        autoCloseImmediately: true,
+      );
+      expect(immediate.autoCloseScreenLockOnly, isFalse);
+      expect(immediate.autoCloseImmediately, isTrue);
     });
   });
 }

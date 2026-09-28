@@ -4,7 +4,7 @@ import 'package:vaultexplorer/core/api/vault_crypto_api.dart';
 import 'package:vaultexplorer/core/api/vault_lifecycle_api.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/widgets/inputs/auto_lock_duration_options.dart'
-    show kImmediateAutoLockDuration, kInheritAutoLockDuration;
+    show kImmediateAutoLockDuration, kInheritAutoLockDuration, kScreenLockOnlyAutoLockDuration;
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
 import 'package:vaultexplorer/data/models/thumbnail_quality.dart';
 import 'package:vaultexplorer/data/services/app_secure_storage.dart';
@@ -351,6 +351,50 @@ void main() {
       expect(saved, isNotNull);
       expect(saved!.autoCloseNever, isFalse);
       expect(saved.autoCloseImmediately, isTrue);
+    });
+
+    test('a container explicitly set to Screen Lock Only round-trips through load and save', () async {
+      await initFromRecord(
+        const ContainerRecord(
+          uri: 'file:///vault.hc',
+          label: 'My Vault',
+          autoCloseScreenLockOnly: true,
+        ),
+      );
+      // Distinct from "Never" (0), "Immediately" (kImmediateAutoLockDuration),
+      // and "App Default" (kInheritAutoLockDuration) -- see
+      // _resolveInitialAutoCloseMins.
+      expect(localContainer.read(provider).autoCloseMins, kScreenLockOnlyAutoLockDuration);
+
+      final saved = await save(
+        const ContainerRecord(uri: 'file:///vault.hc', label: 'My Vault'),
+      );
+
+      expect(saved, isNotNull);
+      // Persisted as its own flag, not folded into autoCloseMins (which
+      // stays 0) -- see the field doc comment on
+      // ContainerRecord.autoCloseScreenLockOnly.
+      expect(saved!.autoCloseMins, 0);
+      expect(saved.autoCloseNever, isFalse);
+      expect(saved.autoCloseImmediately, isFalse);
+      expect(saved.autoCloseScreenLockOnly, isTrue);
+      expect(saved.isExemptFromGlobalLock, isTrue);
+    });
+
+    test('picking Screen Lock Only after a stored Immediately replaces it, not adds to it', () async {
+      await initFromRecord(
+        const ContainerRecord(uri: 'file:///vault.hc', label: 'My Vault', autoCloseImmediately: true),
+      );
+      expect(localContainer.read(provider).autoCloseMins, kImmediateAutoLockDuration);
+
+      localContainer.read(provider.notifier).setAutoCloseMins(kScreenLockOnlyAutoLockDuration);
+      final saved = await save(
+        const ContainerRecord(uri: 'file:///vault.hc', label: 'My Vault', autoCloseImmediately: true),
+      );
+
+      expect(saved, isNotNull);
+      expect(saved!.autoCloseImmediately, isFalse);
+      expect(saved.autoCloseScreenLockOnly, isTrue);
     });
   });
 }

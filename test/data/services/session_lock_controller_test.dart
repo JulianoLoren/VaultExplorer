@@ -9,13 +9,18 @@ void main() {
   late int enforceAppLockCalls;
   late int lockAllMountedContainersCalls;
   late int lockImmediateOverrideContainersCalls;
+  late int lockScreenLockOnlyContainersCalls;
   late SessionLockController controller;
   DateTime Function() now = DateTime.now;
 
-  void buildController({bool withImmediateOverrideCallback = true}) {
+  void buildController({
+    bool withImmediateOverrideCallback = true,
+    bool withScreenLockOnlyCallback = true,
+  }) {
     enforceAppLockCalls = 0;
     lockAllMountedContainersCalls = 0;
     lockImmediateOverrideContainersCalls = 0;
+    lockScreenLockOnlyContainersCalls = 0;
     controller = SessionLockController(now: now)
       ..configure(
         settings: () => settings,
@@ -28,6 +33,11 @@ void main() {
         lockImmediateOverrideContainers: withImmediateOverrideCallback
             ? () async {
                 lockImmediateOverrideContainersCalls++;
+              }
+            : null,
+        lockScreenLockOnlyContainers: withScreenLockOnlyCallback
+            ? () async {
+                lockScreenLockOnlyContainersCalls++;
               }
             : null,
         now: now,
@@ -655,6 +665,223 @@ void main() {
       buildController(withImmediateOverrideCallback: false);
 
       expect(() => controller.handleScreenOff(), returnsNormally);
+      expect(lockAllMountedContainersCalls, 1);
+    });
+  });
+
+  group('lockScreenLockOnlyContainers (per-container Screen Lock Only)', () {
+    test('handleScreenOff invokes it regardless of the screen-lock toggles', () {
+      settings = AppSettings(
+        lockAppOnScreenLock: false,
+        lockContainersOnScreenLock: false,
+      );
+      buildController();
+
+      controller.handleScreenOff();
+
+      expect(lockScreenLockOnlyContainersCalls, 1);
+      // The two gated sweeps stay untouched -- this is a separate, always-on action.
+      expect(enforceAppLockCalls, 0);
+      expect(lockAllMountedContainersCalls, 0);
+    });
+
+    test('handleScreenOff does not invoke it while lock is suppressed', () {
+      settings = AppSettings();
+      buildController();
+      controller.suppressLock();
+
+      controller.handleScreenOff();
+
+      expect(lockScreenLockOnlyContainersCalls, 0);
+    });
+
+    test('resuming after a genuine background period does NOT invoke it, however long the absence', () {
+      fakeAsync((async) {
+        settings = AppSettings(lockContainersOnScreenLock: false);
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        fakeNow = fakeNow.add(const Duration(hours: 3));
+        async.elapse(const Duration(hours: 3));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        // The whole point of "Screen Lock Only": plain app backgrounding
+        // (screen still on) must not lock it. Contrast with
+        // lockImmediateOverrideContainers, which does fire here.
+        expect(lockScreenLockOnlyContainersCalls, 0);
+        expect(lockImmediateOverrideContainersCalls, 1);
+
+        controller.dispose();
+      });
+    });
+
+    test('backgrounding alone (paused/hidden) does not invoke it', () {
+      settings = AppSettings();
+      buildController();
+
+      controller.handleAppLifecycleState(AppLifecycleState.paused);
+      controller.handleAppLifecycleState(AppLifecycleState.hidden);
+
+      expect(lockScreenLockOnlyContainersCalls, 0);
+    });
+
+    test('a genuine screen-off during a background period still invokes it', () {
+      fakeAsync((async) {
+        settings = AppSettings();
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        controller.handleScreenOff();
+        fakeNow = fakeNow.add(const Duration(minutes: 1));
+        async.elapse(const Duration(minutes: 1));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        // Invoked once, by the screen-off -- not a second time by the resume.
+        expect(lockScreenLockOnlyContainersCalls, 1);
+
+        controller.dispose();
+      });
+    });
+
+    test('a caller that never supplies the callback is unaffected (it is optional)', () {
+      settings = AppSettings(lockContainersOnScreenLock: true, autoLockMins: 0);
+      buildController(withScreenLockOnlyCallback: false);
+
+      expect(() => controller.handleScreenOff(), returnsNormally);
+      expect(lockAllMountedContainersCalls, 1);
+    });
+  });
+
+  group('autoLockScreenLockOnly (global Vault Lock mode)', () {
+    test('does not arm the inactivity timer, even with a positive autoLockMins', () {
+      fakeAsync((async) {
+        settings = AppSettings(
+          lockContainersOnScreenLock: true,
+          autoLockMins: 5,
+          autoLockScreenLockOnly: true,
+        );
+        buildController();
+
+        controller.scheduleAutoLock();
+        async.elapse(const Duration(hours: 1));
+
+        expect(lockAllMountedContainersCalls, 0);
+        controller.dispose();
+      });
+    });
+
+    test('handleScreenOff locks the vault immediately, even with a positive autoLockMins', () {
+      fakeAsync((async) {
+        settings = AppSettings(
+          lockContainersOnScreenLock: true,
+          autoLockMins: 5,
+          autoLockScreenLockOnly: true,
+        );
+        buildController();
+
+        controller.handleScreenOff();
+
+        // No countdown to wait out -- unlike a plain autoLockMins: 5, which
+        // arms a 5-minute timer here instead.
+        expect(lockAllMountedContainersCalls, 1);
+        controller.dispose();
+      });
+    });
+
+    test('resuming after backgrounding does NOT lock the vault, however long the absence', () {
+      fakeAsync((async) {
+        settings = AppSettings(
+          lockContainersOnScreenLock: true,
+          autoLockMins: 0,
+          autoLockScreenLockOnly: true,
+        );
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        fakeNow = fakeNow.add(const Duration(hours: 3));
+        async.elapse(const Duration(hours: 3));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        expect(lockAllMountedContainersCalls, 0);
+        controller.dispose();
+      });
+    });
+
+    test('contrast: plain "Immediately" (autoLockMins 0) DOES lock the vault on the same resume', () {
+      fakeAsync((async) {
+        settings = AppSettings(
+          lockContainersOnScreenLock: true,
+          autoLockMins: 0,
+          autoLockScreenLockOnly: false,
+        );
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        fakeNow = fakeNow.add(const Duration(seconds: 1));
+        async.elapse(const Duration(seconds: 1));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        expect(lockAllMountedContainersCalls, 1);
+        controller.dispose();
+      });
+    });
+
+    test('a genuine screen-off during a background period locks once, and resume does not lock again', () {
+      fakeAsync((async) {
+        settings = AppSettings(
+          lockContainersOnScreenLock: true,
+          autoLockMins: 0,
+          autoLockScreenLockOnly: true,
+        );
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        controller.handleScreenOff();
+        fakeNow = fakeNow.add(const Duration(minutes: 1));
+        async.elapse(const Duration(minutes: 1));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        expect(lockAllMountedContainersCalls, 1);
+        controller.dispose();
+      });
+    });
+
+    test('is still gated by the lockContainersOnScreenLock master toggle', () {
+      settings = AppSettings(
+        lockContainersOnScreenLock: false,
+        autoLockScreenLockOnly: true,
+      );
+      buildController();
+
+      controller.handleScreenOff();
+
+      expect(lockAllMountedContainersCalls, 0);
+    });
+
+    test('does not affect App Lock, which has its own independent settings', () {
+      settings = AppSettings(
+        useMasterPassword: true,
+        masterPasswordHash: 'h',
+        lockAppOnScreenLock: true,
+        appLockAfterMins: 0,
+        lockContainersOnScreenLock: true,
+        autoLockScreenLockOnly: true,
+      );
+      buildController();
+
+      controller.handleScreenOff();
+
+      expect(enforceAppLockCalls, 1);
       expect(lockAllMountedContainersCalls, 1);
     });
   });
