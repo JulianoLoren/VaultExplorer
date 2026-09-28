@@ -886,6 +886,135 @@ void main() {
     });
   });
 
+  group('appLockScreenLockOnly (global App Lock mode)', () {
+    AppSettings appLockSettings({
+      int appLockAfterMins = 0,
+      bool lockAppOnScreenLock = true,
+      bool screenLockOnly = true,
+      bool useMasterPassword = true,
+    }) =>
+        AppSettings(
+          useMasterPassword: useMasterPassword,
+          masterPasswordHash: 'h',
+          appLockAfterMins: appLockAfterMins,
+          lockAppOnScreenLock: lockAppOnScreenLock,
+          appLockScreenLockOnly: screenLockOnly,
+        );
+
+    test('does not arm the inactivity timer, even with a positive appLockAfterMins', () {
+      fakeAsync((async) {
+        settings = appLockSettings(appLockAfterMins: 5);
+        buildController();
+
+        controller.scheduleAutoLock();
+        async.elapse(const Duration(hours: 1));
+
+        expect(enforceAppLockCalls, 0);
+        controller.dispose();
+      });
+    });
+
+    test('handleScreenOff locks the app immediately, even with a positive appLockAfterMins', () {
+      settings = appLockSettings(appLockAfterMins: 5);
+      buildController();
+
+      controller.handleScreenOff();
+
+      // No countdown to wait out -- unlike a plain appLockAfterMins: 5,
+      // which arms a 5-minute timer here instead.
+      expect(enforceAppLockCalls, 1);
+    });
+
+    test('handleScreenOff locks the app even when lockAppOnScreenLock is off (the mode implies it)', () {
+      settings = appLockSettings(lockAppOnScreenLock: false);
+      buildController();
+
+      controller.handleScreenOff();
+
+      expect(enforceAppLockCalls, 1);
+    });
+
+    test('resuming after backgrounding does NOT lock the app, however long the absence', () {
+      fakeAsync((async) {
+        settings = appLockSettings();
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        fakeNow = fakeNow.add(const Duration(hours: 3));
+        async.elapse(const Duration(hours: 3));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        expect(enforceAppLockCalls, 0);
+        controller.dispose();
+      });
+    });
+
+    test('contrast: plain "Immediately" (appLockAfterMins 0) DOES lock the app on the same resume', () {
+      fakeAsync((async) {
+        settings = appLockSettings(screenLockOnly: false);
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        fakeNow = fakeNow.add(const Duration(seconds: 1));
+        async.elapse(const Duration(seconds: 1));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        expect(enforceAppLockCalls, 1);
+        controller.dispose();
+      });
+    });
+
+    test('a genuine screen-off during a background period locks once, and resume does not lock again', () {
+      fakeAsync((async) {
+        settings = appLockSettings();
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        controller.handleScreenOff();
+        fakeNow = fakeNow.add(const Duration(minutes: 1));
+        async.elapse(const Duration(minutes: 1));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        expect(enforceAppLockCalls, 1);
+        controller.dispose();
+      });
+    });
+
+    test('never locks without a master password configured', () {
+      settings = appLockSettings(useMasterPassword: false);
+      buildController();
+
+      controller.handleScreenOff();
+
+      expect(enforceAppLockCalls, 0);
+    });
+
+    test('does not affect Vault Lock, which has its own independent settings', () {
+      fakeAsync((async) {
+        // App Lock: screen-lock-only. Vault Lock: plain "Immediately".
+        settings = appLockSettings();
+        var fakeNow = DateTime(2024);
+        now = () => fakeNow;
+        buildController();
+
+        controller.handleAppLifecycleState(AppLifecycleState.paused);
+        fakeNow = fakeNow.add(const Duration(seconds: 1));
+        async.elapse(const Duration(seconds: 1));
+        controller.handleAppLifecycleState(AppLifecycleState.resumed);
+
+        expect(enforceAppLockCalls, 0);
+        expect(lockAllMountedContainersCalls, 1);
+        controller.dispose();
+      });
+    });
+  });
+
   group('notifyAppUnlocked, dispose, and suppression', () {
     test('notifyAppUnlocked resets isAppLocked and reschedules auto-lock', () {
       fakeAsync((async) {

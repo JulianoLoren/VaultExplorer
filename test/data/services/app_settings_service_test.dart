@@ -24,6 +24,7 @@ void main() {
       expect(s.defaultDerivedKeyCacheEnabled, isFalse);
       expect(s.autoLockMins, 0);
       expect(s.autoLockScreenLockOnly, isFalse);
+      expect(s.appLockScreenLockOnly, isFalse);
       expect(s.defaultLayoutMode, BrowserLayoutMode.list);
       expect(s.containerSortMode, ContainerSortMode.manual);
       expect(s.themeMode, ThemeMode.system);
@@ -60,6 +61,7 @@ void main() {
         defaultDerivedKeyCacheEnabled: true,
         autoLockMins: 5,
         autoLockScreenLockOnly: true,
+        appLockScreenLockOnly: true,
         defaultLayoutMode: BrowserLayoutMode.masonry,
         containerSortMode: ContainerSortMode.newest,
         themeMode: ThemeMode.dark,
@@ -87,6 +89,7 @@ void main() {
       expect(roundTripped.defaultDerivedKeyCacheEnabled, original.defaultDerivedKeyCacheEnabled);
       expect(roundTripped.autoLockMins, original.autoLockMins);
       expect(roundTripped.autoLockScreenLockOnly, original.autoLockScreenLockOnly);
+      expect(roundTripped.appLockScreenLockOnly, original.appLockScreenLockOnly);
       expect(roundTripped.defaultLayoutMode, original.defaultLayoutMode);
       expect(roundTripped.containerSortMode, original.containerSortMode);
       expect(roundTripped.themeMode, original.themeMode);
@@ -196,6 +199,7 @@ void main() {
       expect(s.videoAutoPlay, isTrue);
       expect(s.autoLockMins, 0);
       expect(s.autoLockScreenLockOnly, isFalse);
+      expect(s.appLockScreenLockOnly, isFalse);
       expect(s.defaultLayoutMode, BrowserLayoutMode.list);
       expect(s.containerSortMode, ContainerSortMode.manual);
       expect(s.themeMode, ThemeMode.system);

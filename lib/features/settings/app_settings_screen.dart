@@ -908,43 +908,62 @@ class _SecuritySettingsScreenState
                     children: [
                       OptionPickerTile<int>(
                         label: context.l10n.autoLockTimeoutLabel,
-                        value: state.settings.appLockAfterMins,
+                        value: state.settings.appLockScreenLockOnly
+                            ? kScreenLockOnlyAutoLockDuration
+                            : state.settings.appLockAfterMins,
                         options: autoLockDurationOptions(
                           context,
                           zeroOption: SelectOption(value: 0, label: context.l10n.immediately),
-                          currentMinutes: state.settings.appLockAfterMins,
+                          screenLockOnlyOption: SelectOption(
+                            value: kScreenLockOnlyAutoLockDuration,
+                            label: context.l10n.screenLockOnlyAutoLockOption,
+                            subtitle: context.l10n.screenLockOnlyAutoLockOptionSubtitle,
+                          ),
+                          currentMinutes: state.settings.appLockScreenLockOnly
+                              ? kScreenLockOnlyAutoLockDuration
+                              : state.settings.appLockAfterMins,
                         ),
                         onChanged: (v) {
                           if (v == kCustomAutoLockDuration) {
                             pickCustomAutoLockDuration(
                               context,
                               currentMinutes: state.settings.appLockAfterMins,
-                              onPicked: (mins) => ref
-                                  .read(appSettingsControllerProvider.notifier)
-                                  .updateSettings((s) => s.copyWith(appLockAfterMins: mins)),
+                              onPicked: (mins) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
+                                    (s) => s.copyWith(appLockAfterMins: mins, appLockScreenLockOnly: false),
+                                  ),
                             );
+                          } else if (v == kScreenLockOnlyAutoLockDuration) {
+                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
+                                  (s) => s.copyWith(appLockAfterMins: 0, appLockScreenLockOnly: true),
+                                );
                           } else {
-                            ref
-                                .read(appSettingsControllerProvider.notifier)
-                                .updateSettings((s) => s.copyWith(appLockAfterMins: v));
+                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
+                                  (s) => s.copyWith(appLockAfterMins: v, appLockScreenLockOnly: false),
+                                );
                           }
                         },
                       ),
-                      SwitchListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        title: Text(
-                          context.l10n.lockAppOnScreenOffTitle,
-                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      // "Screen Lock Only" already means "lock on screen
+                      // off", so this toggle would be redundant (and
+                      // turning it off would contradict the mode) -- hide
+                      // it while that's selected. Its stored value is kept
+                      // for when another option is picked again.
+                      if (!state.settings.appLockScreenLockOnly)
+                        SwitchListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          title: Text(
+                            context.l10n.lockAppOnScreenOffTitle,
+                            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            context.l10n.lockAppOnScreenOffSubtitle,
+                            style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          ),
+                          value: state.settings.lockAppOnScreenLock,
+                          onChanged: (v) => ref
+                              .read(appSettingsControllerProvider.notifier)
+                              .updateSettings((s) => s.copyWith(lockAppOnScreenLock: v)),
                         ),
-                        subtitle: Text(
-                          context.l10n.lockAppOnScreenOffSubtitle,
-                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                        value: state.settings.lockAppOnScreenLock,
-                        onChanged: (v) => ref
-                            .read(appSettingsControllerProvider.notifier)
-                            .updateSettings((s) => s.copyWith(lockAppOnScreenLock: v)),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 16),

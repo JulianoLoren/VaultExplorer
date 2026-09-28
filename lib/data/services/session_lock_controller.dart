@@ -23,6 +23,10 @@ SessionLockController sessionLockController(Ref ref) {
 ///   Gated by [AppSettings.useMasterPassword] (a password must actually be
 ///   set) plus its own timing settings, [AppSettings.appLockAfterMins]
 ///   (inactivity) and [AppSettings.lockAppOnScreenLock] (screen-off).
+///   [AppSettings.appLockScreenLockOnly] switches this from an inactivity
+///   timer to reacting only to a genuine screen-off signal (ignoring plain
+///   backgrounding, and independent of [AppSettings.lockAppOnScreenLock]) --
+///   see [handleScreenOff]/[handleAppLifecycleState]'s use of it.
 /// - **Vault lock** ([performVaultLock]) unmounts every open container via
 ///   [_lockAllMountedContainers]. Expensive to reverse -- the user has to
 ///   re-decrypt. Gated by its own [AppSettings.autoLockMins] (inactivity)
@@ -221,11 +225,12 @@ class SessionLockController {
     final hasMasterPassword = _hasMasterPassword(settings);
     final mins = settings.appLockAfterMins;
 
-    if (!hasMasterPassword || mins <= 0) {
+    if (!hasMasterPassword || settings.appLockScreenLockOnly || mins <= 0) {
       VeLog.d(
         _kLogTag,
         '_scheduleAppLockTimer: skipped '
-        '(hasMasterPassword=$hasMasterPassword, appLockAfterMins=$mins)',
+        '(hasMasterPassword=$hasMasterPassword, '
+        'appLockScreenLockOnly=${settings.appLockScreenLockOnly}, appLockAfterMins=$mins)',
       );
       return;
     }
@@ -340,14 +345,26 @@ class SessionLockController {
       );
 
       if (hasMasterPassword && !_isAppLocked && !lockedAppOnScreenOff) {
-        final shouldLock = settings.appLockAfterMins == 0 ||
-            (settings.appLockAfterMins > 0 &&
-                awayDuration >= Duration(minutes: settings.appLockAfterMins));
-        if (shouldLock) {
-          VeLog.i(_kLogTag, 'handleAppLifecycleState: away timeout reached -> performAppLock');
-          performAppLock();
+        if (settings.appLockScreenLockOnly) {
+          // This mode ignores mere backgrounding entirely -- only a genuine
+          // screen-off signal (handleScreenOff) should re-show the lock
+          // gate. If the screen actually turned off during this background
+          // period, handleScreenOff already handled it independently, and
+          // lockedAppOnScreenOff above would be true in that case anyway.
+          VeLog.d(
+            _kLogTag,
+            'handleAppLifecycleState: appLockScreenLockOnly is set, ignoring mere backgrounding',
+          );
         } else {
-          _scheduleAppLockTimer();
+          final shouldLock = settings.appLockAfterMins == 0 ||
+              (settings.appLockAfterMins > 0 &&
+                  awayDuration >= Duration(minutes: settings.appLockAfterMins));
+          if (shouldLock) {
+            VeLog.i(_kLogTag, 'handleAppLifecycleState: away timeout reached -> performAppLock');
+            performAppLock();
+          } else {
+            _scheduleAppLockTimer();
+          }
         }
       } else if (!_isAppLocked) {
         _scheduleAppLockTimer();
@@ -397,11 +414,17 @@ class SessionLockController {
     _lockImmediateOverrides();
     _lockScreenLockOnlyOverrides();
 
-     if (hasMasterPassword && settings.lockAppOnScreenLock) {
-      if (settings.appLockAfterMins <= 0) {
-        // "Immediately" is selected -- lock the app gate as soon as the
-        // screen goes off.
-        VeLog.i(_kLogTag, 'handleScreenOff: appLockAfterMins<=0 -> performAppLock immediately');
+     // appLockScreenLockOnly implies screen-off locking, so it applies
+     // regardless of lockAppOnScreenLock -- see AppSettings.appLockScreenLockOnly.
+     if (hasMasterPassword && (settings.appLockScreenLockOnly || settings.lockAppOnScreenLock)) {
+      if (settings.appLockScreenLockOnly || settings.appLockAfterMins <= 0) {
+        // "Screen Lock Only" or "Immediately" is selected -- lock the app
+        // gate as soon as the screen goes off.
+        VeLog.i(
+          _kLogTag,
+          'handleScreenOff: appLockScreenLockOnly=${settings.appLockScreenLockOnly}, '
+          'appLockAfterMins=${settings.appLockAfterMins} -> performAppLock immediately',
+        );
         _appLockedOnScreenOff = true;
         performAppLock();
       } else {

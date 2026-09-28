@@ -136,6 +136,7 @@ class AppSettings {
   // password again, or vice versa. See SessionLockController.
   bool lockAppOnScreenLock;
   int appLockAfterMins;
+  bool appLockScreenLockOnly;
   ContainerSortMode containerSortMode;
   ThemeMode themeMode;
   bool useDynamicColor;
@@ -175,6 +176,7 @@ class AppSettings {
     this.autoLockScreenLockOnly = false,
     this.lockAppOnScreenLock = true,
     this.appLockAfterMins = 0,
+    this.appLockScreenLockOnly = false,
     this.defaultLayoutMode = BrowserLayoutMode.list,
     this.containerSortMode = ContainerSortMode.manual,
     this.themeMode = ThemeMode.system,
@@ -247,6 +249,7 @@ class AppSettings {
     bool? autoLockScreenLockOnly,
     bool? lockAppOnScreenLock,
     int? appLockAfterMins,
+    bool? appLockScreenLockOnly,
     ContainerSortMode? containerSortMode,
     ThemeMode? themeMode,
     bool? useDynamicColor,
@@ -288,6 +291,7 @@ class AppSettings {
       autoLockScreenLockOnly: autoLockScreenLockOnly ?? this.autoLockScreenLockOnly,
     lockAppOnScreenLock: lockAppOnScreenLock ?? this.lockAppOnScreenLock,
       appLockAfterMins: appLockAfterMins ?? this.appLockAfterMins,
+      appLockScreenLockOnly: appLockScreenLockOnly ?? this.appLockScreenLockOnly,
       defaultLayoutMode: defaultLayoutMode ?? this.defaultLayoutMode,
       containerSortMode: containerSortMode ?? this.containerSortMode,
       themeMode: themeMode ?? this.themeMode,
@@ -336,6 +340,7 @@ class AppSettings {
     'autoLockScreenLockOnly': autoLockScreenLockOnly,
    'lockAppOnScreenLock': lockAppOnScreenLock,
     'appLockAfterMins': appLockAfterMins,
+    'appLockScreenLockOnly': appLockScreenLockOnly,
     'defaultLayoutMode': defaultLayoutMode.toJson(),
     'containerSortMode': containerSortMode.toJson(),
     'themeMode': themeMode.index,
@@ -402,6 +407,7 @@ class AppSettings {
         ((j['useMasterPassword'] as bool? ?? false)
             ? (j['autoLockMins'] as int? ?? 0)
             : 0),
+    appLockScreenLockOnly: j['appLockScreenLockOnly'] as bool? ?? false,
     defaultLayoutMode:
         BrowserLayoutMode.fromJson(
           j['defaultLayoutMode'] as String?,
