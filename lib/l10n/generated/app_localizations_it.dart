@@ -8972,4 +8972,52 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
       'Si blocca solo quando lo schermo si spegne — non quando l\'app passa in background';
+
+  @override
+  String get authenticatorScanQrSubtitle =>
+      'Scansiona un codice singolo o un codice QR di trasferimento di Google Authenticator';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      'Importa da backup di Aegis, 2FAS, Bitwarden, Ente, Proton o andOTP';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return '$count account importati da Google Authenticator';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => 'Rilevati ulteriori codici QR';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'Google Authenticator ha suddiviso questa esportazione su più codici QR. Vuoi scansionare il prossimo ora?';
+
+  @override
+  String get authenticatorScanNextQr => 'Scansiona successivo';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return 'Impossibile importare il QR di Google Authenticator: $error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper =>
+      'Necessario solo se questo backup è protetto da password';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return 'Compilato con il primo account ($title). Per importare tutti gli account, scansiona nella schermata Authenticator.';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError =>
+      'Questa cassaforte è di sola lettura, quindi il contatore HOTP non può essere avanzato.';
+
+  @override
+  String get authenticatorHotpSaveError =>
+      'Impossibile salvare il nuovo contatore HOTP.';
+
+  @override
+  String get authenticatorGenerateNextCode => 'Genera codice successivo';
 }

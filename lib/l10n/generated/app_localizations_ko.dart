@@ -8487,4 +8487,50 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
       '화면이 꺼질 때만 잠김 — 앱이 백그라운드로 이동할 때는 잠기지 않음';
+
+  @override
+  String get authenticatorScanQrSubtitle => '단일 코드 또는 Google OTP 전송 QR 코드 스캔';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      'Aegis, 2FAS, Bitwarden, Ente, Proton 또는 andOTP 백업에서 가져오기';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return 'Google OTP에서 $count개의 계정을 가져왔습니다';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => '추가 QR 코드 감지됨';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'Google OTP에서 이 내보내기를 여러 QR 코드로 분할했습니다. 지금 다음 코드를 스캔하시겠습니까?';
+
+  @override
+  String get authenticatorScanNextQr => '다음 스캔';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return 'Google OTP QR 코드를 가져오지 못했습니다: $error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper =>
+      '이 백업이 비밀번호로 보호되어 있는 경우에만 필요합니다';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return '첫 번째 계정($title)으로 입력되었습니다. 모든 계정을 가져오려면 OTP 화면에서 스캔하세요.';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError =>
+      '이 보관함은 읽기 전용이므로 HOTP 카운터를 증가시킬 수 없습니다.';
+
+  @override
+  String get authenticatorHotpSaveError => '새 HOTP 카운터를 저장할 수 없습니다.';
+
+  @override
+  String get authenticatorGenerateNextCode => '다음 코드 생성';
 }

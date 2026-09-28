@@ -11231,5 +11231,68 @@
   "screenLockOnlyAutoLockOptionSubtitle": "Locks only when the screen turns off — not when the app is backgrounded",
   "@screenLockOnlyAutoLockOptionSubtitle": {
     "description": "Subtitle explaining the \"Screen Lock Only\" option, shown under it in the auto-lock picker dialog and reused as the dashboard auto-lock badge tooltip"
+  },
+  "authenticatorScanQrSubtitle": "Scan a single code or a Google Authenticator transfer QR code",
+  "@authenticatorScanQrSubtitle": {
+    "description": "Subtitle in authenticator add sheet for scan option"
+  },
+  "authenticatorImportBackupsSubtitle": "Import from Aegis, 2FAS, Bitwarden, Ente, Proton, or andOTP backups",
+  "@authenticatorImportBackupsSubtitle": {
+    "description": "Subtitle in authenticator add sheet for backup file import option"
+  },
+  "authenticatorGoogleAuthImportSuccess": "Imported {count} account(s) from Google Authenticator",
+  "@authenticatorGoogleAuthImportSuccess": {
+    "description": "Success snackbar message after importing Google Authenticator codes",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "authenticatorMultiQrTitle": "Additional QR Codes Detected",
+  "@authenticatorMultiQrTitle": {
+    "description": "Dialog title when Google Authenticator export is split across multiple QR codes"
+  },
+  "authenticatorMultiQrMessage": "Google Authenticator split this export across multiple QR codes. Scan the next one now?",
+  "@authenticatorMultiQrMessage": {
+    "description": "Dialog prompt asking to scan the next QR code in a multi-part export"
+  },
+  "authenticatorScanNextQr": "Scan Next",
+  "@authenticatorScanNextQr": {
+    "description": "Confirmation button label to scan the next QR code in a multi-part export"
+  },
+  "authenticatorGoogleAuthImportError": "Failed to import Google Authenticator QR: {error}",
+  "@authenticatorGoogleAuthImportError": {
+    "description": "Error message when importing Google Authenticator QR code fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordInterchangeOptionalPasswordHelper": "Only needed if this backup is password-protected",
+  "@passwordInterchangeOptionalPasswordHelper": {
+    "description": "Helper text for the password field when importing an optionally encrypted backup"
+  },
+  "authenticatorSingleAccountImportedHint": "Populated with first account ({title}). To import all accounts, scan in the Authenticator screen.",
+  "@authenticatorSingleAccountImportedHint": {
+    "description": "Hint when a multi-account QR code was scanned in the single item edit screen",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "authenticatorHotpReadOnlyError": "This vault is read-only, so the HOTP counter cannot be advanced.",
+  "@authenticatorHotpReadOnlyError": {
+    "description": "Error message when attempting to advance HOTP in a read-only vault"
+  },
+  "authenticatorHotpSaveError": "Could not save the new HOTP counter.",
+  "@authenticatorHotpSaveError": {
+    "description": "Error message when saving updated HOTP counter fails"
+  },
+  "authenticatorGenerateNextCode": "Generate next code",
+  "@authenticatorGenerateNextCode": {
+    "description": "Tooltip on the HOTP tile advance button"
   }
 }

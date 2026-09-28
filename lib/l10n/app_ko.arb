@@ -2455,5 +2455,17 @@
   "actionFormat": "코드 서식 지정",
   "actionReadOnly": "읽기 전용",
   "screenLockOnlyAutoLockOption": "화면 잠금만",
-  "screenLockOnlyAutoLockOptionSubtitle": "화면이 꺼질 때만 잠김 — 앱이 백그라운드로 이동할 때는 잠기지 않음"
+  "screenLockOnlyAutoLockOptionSubtitle": "화면이 꺼질 때만 잠김 — 앱이 백그라운드로 이동할 때는 잠기지 않음",
+  "authenticatorScanQrSubtitle": "단일 코드 또는 Google OTP 전송 QR 코드 스캔",
+  "authenticatorImportBackupsSubtitle": "Aegis, 2FAS, Bitwarden, Ente, Proton 또는 andOTP 백업에서 가져오기",
+  "authenticatorGoogleAuthImportSuccess": "Google OTP에서 {count}개의 계정을 가져왔습니다",
+  "authenticatorMultiQrTitle": "추가 QR 코드 감지됨",
+  "authenticatorMultiQrMessage": "Google OTP에서 이 내보내기를 여러 QR 코드로 분할했습니다. 지금 다음 코드를 스캔하시겠습니까?",
+  "authenticatorScanNextQr": "다음 스캔",
+  "authenticatorGoogleAuthImportError": "Google OTP QR 코드를 가져오지 못했습니다: {error}",
+  "passwordInterchangeOptionalPasswordHelper": "이 백업이 비밀번호로 보호되어 있는 경우에만 필요합니다",
+  "authenticatorSingleAccountImportedHint": "첫 번째 계정({title})으로 입력되었습니다. 모든 계정을 가져오려면 OTP 화면에서 스캔하세요.",
+  "authenticatorHotpReadOnlyError": "이 보관함은 읽기 전용이므로 HOTP 카운터를 증가시킬 수 없습니다.",
+  "authenticatorHotpSaveError": "새 HOTP 카운터를 저장할 수 없습니다.",
+  "authenticatorGenerateNextCode": "다음 코드 생성"
 }

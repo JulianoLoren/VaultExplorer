@@ -8373,4 +8373,48 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get screenLockOnlyAutoLockOptionSubtitle => '仅在屏幕关闭时锁定 — 应用进入后台时不锁定';
+
+  @override
+  String get authenticatorScanQrSubtitle => '扫描单个验证码或 Google 身份验证器转移二维码';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      '从 Aegis、2FAS、Bitwarden、Ente、Proton 或 andOTP 备份导入';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return '已从 Google 身份验证器导入 $count 个账号';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => '检测到其他二维码';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'Google 身份验证器将此导出分成了多个二维码。现在扫描下一个吗？';
+
+  @override
+  String get authenticatorScanNextQr => '扫描下一个';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return '导入 Google 身份验证器二维码失败：$error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper => '仅当此备份受密码保护时才需要';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return '已填入第一个账号（$title）。若要导入所有账号，请在身份验证器界面中扫描。';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError => '此保管库为只读状态，因此无法推进 HOTP 计数器。';
+
+  @override
+  String get authenticatorHotpSaveError => '无法保存新的 HOTP 计数器。';
+
+  @override
+  String get authenticatorGenerateNextCode => '生成下一个验证码';
 }

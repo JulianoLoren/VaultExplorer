@@ -8488,4 +8488,51 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
       '画面がオフになった時のみロック — アプリがバックグラウンドになった時はロックされません';
+
+  @override
+  String get authenticatorScanQrSubtitle =>
+      '単一のコードまたはGoogle認証システムの移行用QRコードをスキャン';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      'Aegis、2FAS、Bitwarden、Ente、Proton、またはandOTPのバックアップからインポート';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return 'Google認証システムから$count件のアカウントをインポートしました';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => '追加のQRコードが検出されました';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'Google認証システムはこのエクスポートを複数のQRコードに分割しました。次のコードを今すぐスキャンしますか？';
+
+  @override
+  String get authenticatorScanNextQr => '次をスキャン';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return 'Google認証システムQRコードのインポートに失敗しました: $error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper =>
+      'このバックアップがパスワードで保護されている場合のみ必要です';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return '最初のアカウント（$title）を入力しました。すべてのアカウントをインポートするには認証システム画面でスキャンしてください。';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError =>
+      'この保管庫は読み取り専用のため、HOTPカウンターを進めることはできません。';
+
+  @override
+  String get authenticatorHotpSaveError => '新しいHOTPカウンターを保存できませんでした。';
+
+  @override
+  String get authenticatorGenerateNextCode => '次のコードを生成';
 }

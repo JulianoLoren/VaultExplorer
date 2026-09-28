@@ -9048,4 +9048,52 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
       'Блокується лише при вимкненні екрана — не коли застосунок переходить у фоновий режим';
+
+  @override
+  String get authenticatorScanQrSubtitle =>
+      'Сканувати окремий код або QR-код перенесення Google Authenticator';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      'Імпорт із резервних копій Aegis, 2FAS, Bitwarden, Ente, Proton або andOTP';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return 'Імпортовано $count обліковий(их) запис(ів) із Google Authenticator';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => 'Виявлено додаткові QR-коди';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'Google Authenticator розділив цей експорт на кілька QR-кодів. Сканувати наступний зараз?';
+
+  @override
+  String get authenticatorScanNextQr => 'Сканувати наступний';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return 'Не вдалося імпортувати QR-код Google Authenticator: $error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper =>
+      'Потрібно, лише якщо ця резервна копія захищена паролем';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return 'Заповнено першим обліковим записом ($title). Щоб імпортувати всі облікові записи, відскануйте на екрані автентифікатора.';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError =>
+      'Це сховище доступне лише для читання, тому лічильник HOTP не можна збільшити.';
+
+  @override
+  String get authenticatorHotpSaveError =>
+      'Не вдалося зберегти новий лічильник HOTP.';
+
+  @override
+  String get authenticatorGenerateNextCode => 'Згенерувати наступний код';
 }

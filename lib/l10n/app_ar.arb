@@ -2455,5 +2455,17 @@
   "actionFormat": "تنسيق الكود",
   "actionReadOnly": "للقراءة فقط",
   "screenLockOnlyAutoLockOption": "قفل الشاشة فقط",
-  "screenLockOnlyAutoLockOptionSubtitle": "يُقفل فقط عند إيقاف تشغيل الشاشة — وليس عند نقل التطبيق إلى الخلفية"
+  "screenLockOnlyAutoLockOptionSubtitle": "يُقفل فقط عند إيقاف تشغيل الشاشة — وليس عند نقل التطبيق إلى الخلفية",
+  "authenticatorScanQrSubtitle": "مسح رمز فردي أو رمز QR لنقل Google Authenticator",
+  "authenticatorImportBackupsSubtitle": "الاستيراد من نسخ Aegis أو 2FAS أو Bitwarden أو Ente أو Proton أو andOTP الاحتياطية",
+  "authenticatorGoogleAuthImportSuccess": "تم استيراد {count} حساب(حسابات) من Google Authenticator",
+  "authenticatorMultiQrTitle": "تم اكتشاف رموز QR إضافية",
+  "authenticatorMultiQrMessage": "قسّم Google Authenticator هذا التصدير على عدة رموز QR. هل تريد مسح الرمز التالي الآن؟",
+  "authenticatorScanNextQr": "مسح التالي",
+  "authenticatorGoogleAuthImportError": "فشل استيراد رمز QR لـ Google Authenticator: {error}",
+  "passwordInterchangeOptionalPasswordHelper": "مطلوب فقط إذا كانت هذه النسخة الاحتياطية محمية بكلمة مرور",
+  "authenticatorSingleAccountImportedHint": "تم ملء الحساب الأول ({title}). لاستيراد جميع الحسابات، قم بالمسح في شاشة المصادقة.",
+  "authenticatorHotpReadOnlyError": "هذه الخزنة للقراءة فقط، لذا لا يمكن تقديم عداد HOTP.",
+  "authenticatorHotpSaveError": "تعذر حفظ عداد HOTP الجديد.",
+  "authenticatorGenerateNextCode": "إنشاء الرمز التالي"
 }

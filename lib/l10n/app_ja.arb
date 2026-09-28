@@ -2455,5 +2455,17 @@
   "actionFormat": "コードの整形",
   "actionReadOnly": "読み取り専用",
   "screenLockOnlyAutoLockOption": "画面ロック時のみ",
-  "screenLockOnlyAutoLockOptionSubtitle": "画面がオフになった時のみロック — アプリがバックグラウンドになった時はロックされません"
+  "screenLockOnlyAutoLockOptionSubtitle": "画面がオフになった時のみロック — アプリがバックグラウンドになった時はロックされません",
+  "authenticatorScanQrSubtitle": "単一のコードまたはGoogle認証システムの移行用QRコードをスキャン",
+  "authenticatorImportBackupsSubtitle": "Aegis、2FAS、Bitwarden、Ente、Proton、またはandOTPのバックアップからインポート",
+  "authenticatorGoogleAuthImportSuccess": "Google認証システムから{count}件のアカウントをインポートしました",
+  "authenticatorMultiQrTitle": "追加のQRコードが検出されました",
+  "authenticatorMultiQrMessage": "Google認証システムはこのエクスポートを複数のQRコードに分割しました。次のコードを今すぐスキャンしますか？",
+  "authenticatorScanNextQr": "次をスキャン",
+  "authenticatorGoogleAuthImportError": "Google認証システムQRコードのインポートに失敗しました: {error}",
+  "passwordInterchangeOptionalPasswordHelper": "このバックアップがパスワードで保護されている場合のみ必要です",
+  "authenticatorSingleAccountImportedHint": "最初のアカウント（{title}）を入力しました。すべてのアカウントをインポートするには認証システム画面でスキャンしてください。",
+  "authenticatorHotpReadOnlyError": "この保管庫は読み取り専用のため、HOTPカウンターを進めることはできません。",
+  "authenticatorHotpSaveError": "新しいHOTPカウンターを保存できませんでした。",
+  "authenticatorGenerateNextCode": "次のコードを生成"
 }

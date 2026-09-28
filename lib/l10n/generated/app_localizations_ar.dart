@@ -9032,4 +9032,51 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
       'يُقفل فقط عند إيقاف تشغيل الشاشة — وليس عند نقل التطبيق إلى الخلفية';
+
+  @override
+  String get authenticatorScanQrSubtitle =>
+      'مسح رمز فردي أو رمز QR لنقل Google Authenticator';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      'الاستيراد من نسخ Aegis أو 2FAS أو Bitwarden أو Ente أو Proton أو andOTP الاحتياطية';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return 'تم استيراد $count حساب(حسابات) من Google Authenticator';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => 'تم اكتشاف رموز QR إضافية';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'قسّم Google Authenticator هذا التصدير على عدة رموز QR. هل تريد مسح الرمز التالي الآن؟';
+
+  @override
+  String get authenticatorScanNextQr => 'مسح التالي';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return 'فشل استيراد رمز QR لـ Google Authenticator: $error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper =>
+      'مطلوب فقط إذا كانت هذه النسخة الاحتياطية محمية بكلمة مرور';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return 'تم ملء الحساب الأول ($title). لاستيراد جميع الحسابات، قم بالمسح في شاشة المصادقة.';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError =>
+      'هذه الخزنة للقراءة فقط، لذا لا يمكن تقديم عداد HOTP.';
+
+  @override
+  String get authenticatorHotpSaveError => 'تعذر حفظ عداد HOTP الجديد.';
+
+  @override
+  String get authenticatorGenerateNextCode => 'إنشاء الرمز التالي';
 }

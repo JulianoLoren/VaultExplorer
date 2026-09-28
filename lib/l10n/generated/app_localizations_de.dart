@@ -8974,4 +8974,52 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
       'Sperrt nur beim Ausschalten des Bildschirms — nicht beim Wechsel der App in den Hintergrund';
+
+  @override
+  String get authenticatorScanQrSubtitle =>
+      'Einen einzelnen Code oder einen Google Authenticator-Übertragungs-QR-Code scannen';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      'Aus Aegis-, 2FAS-, Bitwarden-, Ente-, Proton- oder andOTP-Backups importieren';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return '$count Konto/Konten aus Google Authenticator importiert';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => 'Weitere QR-Codes erkannt';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'Google Authenticator hat diesen Export auf mehrere QR-Codes aufgeteilt. Den nächsten jetzt scannen?';
+
+  @override
+  String get authenticatorScanNextQr => 'Nächsten scannen';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return 'Fehler beim Importieren des Google Authenticator-QR-Codes: $error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper =>
+      'Nur erforderlich, wenn dieses Backup passwortgeschützt ist';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return 'Mit erstem Konto ($title) ausgefüllt. Um alle Konten zu importieren, im Authenticator-Bildschirm scannen.';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError =>
+      'Dieser Tresor ist schreibgeschützt, daher kann der HOTP-Zähler nicht weitergeschaltet werden.';
+
+  @override
+  String get authenticatorHotpSaveError =>
+      'Der neue HOTP-Zähler konnte nicht gespeichert werden.';
+
+  @override
+  String get authenticatorGenerateNextCode => 'Nächsten Code generieren';
 }

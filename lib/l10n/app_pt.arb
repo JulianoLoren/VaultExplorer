@@ -2455,5 +2455,17 @@
   "actionFormat": "Formatar código",
   "actionReadOnly": "Somente leitura",
   "screenLockOnlyAutoLockOption": "Apenas bloqueio de tela",
-  "screenLockOnlyAutoLockOptionSubtitle": "Bloqueia apenas quando a tela se apaga — não quando o app fica em segundo plano"
+  "screenLockOnlyAutoLockOptionSubtitle": "Bloqueia apenas quando a tela se apaga — não quando o app fica em segundo plano",
+  "authenticatorScanQrSubtitle": "Escanear um código único ou código QR de transferência do Google Authenticator",
+  "authenticatorImportBackupsSubtitle": "Importar de backups do Aegis, 2FAS, Bitwarden, Ente, Proton ou andOTP",
+  "authenticatorGoogleAuthImportSuccess": "{count} conta(s) importada(s) do Google Authenticator",
+  "authenticatorMultiQrTitle": "Códigos QR adicionais detectados",
+  "authenticatorMultiQrMessage": "O Google Authenticator dividiu esta exportação em vários códigos QR. Digitalizar o próximo agora?",
+  "authenticatorScanNextQr": "Digitalizar próximo",
+  "authenticatorGoogleAuthImportError": "Falha ao importar o QR do Google Authenticator: {error}",
+  "passwordInterchangeOptionalPasswordHelper": "Necessário apenas se este backup estiver protegido por senha",
+  "authenticatorSingleAccountImportedHint": "Preenchido com a primeira conta ({title}). Para importar todas as contas, digitalize na tela do Autenticador.",
+  "authenticatorHotpReadOnlyError": "Este cofre é somente leitura, portanto o contador HOTP não pode ser avançado.",
+  "authenticatorHotpSaveError": "Não foi possível salvar o novo contador HOTP.",
+  "authenticatorGenerateNextCode": "Gerar próximo código"
 }

@@ -2455,5 +2455,17 @@
   "actionFormat": "Formater le code",
   "actionReadOnly": "Lecture seule",
   "screenLockOnlyAutoLockOption": "Verrouillage de l'écran uniquement",
-  "screenLockOnlyAutoLockOptionSubtitle": "Se verrouille uniquement lorsque l'écran s'éteint — pas lorsque l'application passe en arrière-plan"
+  "screenLockOnlyAutoLockOptionSubtitle": "Se verrouille uniquement lorsque l'écran s'éteint — pas lorsque l'application passe en arrière-plan",
+  "authenticatorScanQrSubtitle": "Scanner un code unique ou un code QR de transfert Google Authenticator",
+  "authenticatorImportBackupsSubtitle": "Importer depuis des sauvegardes Aegis, 2FAS, Bitwarden, Ente, Proton ou andOTP",
+  "authenticatorGoogleAuthImportSuccess": "{count} compte(s) importé(s) depuis Google Authenticator",
+  "authenticatorMultiQrTitle": "Codes QR supplémentaires détectés",
+  "authenticatorMultiQrMessage": "Google Authenticator a divisé cette exportation en plusieurs codes QR. Scanner le suivant maintenant ?",
+  "authenticatorScanNextQr": "Scanner le suivant",
+  "authenticatorGoogleAuthImportError": "Échec de l'importation du QR Google Authenticator : {error}",
+  "passwordInterchangeOptionalPasswordHelper": "Nécessaire uniquement si cette sauvegarde est protégée par mot de passe",
+  "authenticatorSingleAccountImportedHint": "Rempli avec le premier compte ({title}). Pour importer tous les comptes, scannez dans l'écran de l'authentificateur.",
+  "authenticatorHotpReadOnlyError": "Ce coffre est en lecture seule, le compteur HOTP ne peut donc pas être incrémenté.",
+  "authenticatorHotpSaveError": "Impossible d'enregistrer le nouveau compteur HOTP.",
+  "authenticatorGenerateNextCode": "Générer le code suivant"
 }

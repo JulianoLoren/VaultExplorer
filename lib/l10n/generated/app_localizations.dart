@@ -14886,6 +14886,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Locks only when the screen turns off — not when the app is backgrounded'**
   String get screenLockOnlyAutoLockOptionSubtitle;
+
+  /// Subtitle in authenticator add sheet for scan option
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a single code or a Google Authenticator transfer QR code'**
+  String get authenticatorScanQrSubtitle;
+
+  /// Subtitle in authenticator add sheet for backup file import option
+  ///
+  /// In en, this message translates to:
+  /// **'Import from Aegis, 2FAS, Bitwarden, Ente, Proton, or andOTP backups'**
+  String get authenticatorImportBackupsSubtitle;
+
+  /// Success snackbar message after importing Google Authenticator codes
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} account(s) from Google Authenticator'**
+  String authenticatorGoogleAuthImportSuccess(int count);
+
+  /// Dialog title when Google Authenticator export is split across multiple QR codes
+  ///
+  /// In en, this message translates to:
+  /// **'Additional QR Codes Detected'**
+  String get authenticatorMultiQrTitle;
+
+  /// Dialog prompt asking to scan the next QR code in a multi-part export
+  ///
+  /// In en, this message translates to:
+  /// **'Google Authenticator split this export across multiple QR codes. Scan the next one now?'**
+  String get authenticatorMultiQrMessage;
+
+  /// Confirmation button label to scan the next QR code in a multi-part export
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Next'**
+  String get authenticatorScanNextQr;
+
+  /// Error message when importing Google Authenticator QR code fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import Google Authenticator QR: {error}'**
+  String authenticatorGoogleAuthImportError(String error);
+
+  /// Helper text for the password field when importing an optionally encrypted backup
+  ///
+  /// In en, this message translates to:
+  /// **'Only needed if this backup is password-protected'**
+  String get passwordInterchangeOptionalPasswordHelper;
+
+  /// Hint when a multi-account QR code was scanned in the single item edit screen
+  ///
+  /// In en, this message translates to:
+  /// **'Populated with first account ({title}). To import all accounts, scan in the Authenticator screen.'**
+  String authenticatorSingleAccountImportedHint(String title);
+
+  /// Error message when attempting to advance HOTP in a read-only vault
+  ///
+  /// In en, this message translates to:
+  /// **'This vault is read-only, so the HOTP counter cannot be advanced.'**
+  String get authenticatorHotpReadOnlyError;
+
+  /// Error message when saving updated HOTP counter fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the new HOTP counter.'**
+  String get authenticatorHotpSaveError;
+
+  /// Tooltip on the HOTP tile advance button
+  ///
+  /// In en, this message translates to:
+  /// **'Generate next code'**
+  String get authenticatorGenerateNextCode;
 }
 
 class _AppLocalizationsDelegate

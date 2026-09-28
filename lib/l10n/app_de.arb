@@ -2455,5 +2455,17 @@
   "actionFormat": "Code formatieren",
   "actionReadOnly": "Schreibgeschützt",
   "screenLockOnlyAutoLockOption": "Nur Bildschirmsperre",
-  "screenLockOnlyAutoLockOptionSubtitle": "Sperrt nur beim Ausschalten des Bildschirms — nicht beim Wechsel der App in den Hintergrund"
+  "screenLockOnlyAutoLockOptionSubtitle": "Sperrt nur beim Ausschalten des Bildschirms — nicht beim Wechsel der App in den Hintergrund",
+  "authenticatorScanQrSubtitle": "Einen einzelnen Code oder einen Google Authenticator-Übertragungs-QR-Code scannen",
+  "authenticatorImportBackupsSubtitle": "Aus Aegis-, 2FAS-, Bitwarden-, Ente-, Proton- oder andOTP-Backups importieren",
+  "authenticatorGoogleAuthImportSuccess": "{count} Konto/Konten aus Google Authenticator importiert",
+  "authenticatorMultiQrTitle": "Weitere QR-Codes erkannt",
+  "authenticatorMultiQrMessage": "Google Authenticator hat diesen Export auf mehrere QR-Codes aufgeteilt. Den nächsten jetzt scannen?",
+  "authenticatorScanNextQr": "Nächsten scannen",
+  "authenticatorGoogleAuthImportError": "Fehler beim Importieren des Google Authenticator-QR-Codes: {error}",
+  "passwordInterchangeOptionalPasswordHelper": "Nur erforderlich, wenn dieses Backup passwortgeschützt ist",
+  "authenticatorSingleAccountImportedHint": "Mit erstem Konto ({title}) ausgefüllt. Um alle Konten zu importieren, im Authenticator-Bildschirm scannen.",
+  "authenticatorHotpReadOnlyError": "Dieser Tresor ist schreibgeschützt, daher kann der HOTP-Zähler nicht weitergeschaltet werden.",
+  "authenticatorHotpSaveError": "Der neue HOTP-Zähler konnte nicht gespeichert werden.",
+  "authenticatorGenerateNextCode": "Nächsten Code generieren"
 }

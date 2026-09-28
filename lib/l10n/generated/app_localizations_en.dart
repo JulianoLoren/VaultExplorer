@@ -8837,4 +8837,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
       'Locks only when the screen turns off — not when the app is backgrounded';
+
+  @override
+  String get authenticatorScanQrSubtitle =>
+      'Scan a single code or a Google Authenticator transfer QR code';
+
+  @override
+  String get authenticatorImportBackupsSubtitle =>
+      'Import from Aegis, 2FAS, Bitwarden, Ente, Proton, or andOTP backups';
+
+  @override
+  String authenticatorGoogleAuthImportSuccess(int count) {
+    return 'Imported $count account(s) from Google Authenticator';
+  }
+
+  @override
+  String get authenticatorMultiQrTitle => 'Additional QR Codes Detected';
+
+  @override
+  String get authenticatorMultiQrMessage =>
+      'Google Authenticator split this export across multiple QR codes. Scan the next one now?';
+
+  @override
+  String get authenticatorScanNextQr => 'Scan Next';
+
+  @override
+  String authenticatorGoogleAuthImportError(String error) {
+    return 'Failed to import Google Authenticator QR: $error';
+  }
+
+  @override
+  String get passwordInterchangeOptionalPasswordHelper =>
+      'Only needed if this backup is password-protected';
+
+  @override
+  String authenticatorSingleAccountImportedHint(String title) {
+    return 'Populated with first account ($title). To import all accounts, scan in the Authenticator screen.';
+  }
+
+  @override
+  String get authenticatorHotpReadOnlyError =>
+      'This vault is read-only, so the HOTP counter cannot be advanced.';
+
+  @override
+  String get authenticatorHotpSaveError =>
+      'Could not save the new HOTP counter.';
+
+  @override
+  String get authenticatorGenerateNextCode => 'Generate next code';
 }
