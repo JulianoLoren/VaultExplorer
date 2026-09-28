@@ -49,13 +49,36 @@ enum VaultItemType {
 
 // ── Field definition ───────────────────────────────────────────────────────────
 
-enum FieldType { text, secret, multiline, date, phone, email, url, number }
+enum FieldType { text, secret, multiline, date, phone, email, url, number, select }
+
+class VaultFieldOption {
+  final String value;
+  final String label;
+
+  const VaultFieldOption({
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VaultFieldOption &&
+          runtimeType == other.runtimeType &&
+          value == other.value &&
+          label == other.label;
+
+  @override
+  int get hashCode => Object.hash(value, label);
+}
 
 class VaultField {
   final String key;
   final String label;
   final FieldType type;
   final bool required;
+  final List<VaultFieldOption>? options;
+  final String? defaultValue;
   String value;
 
   VaultField({
@@ -63,34 +86,86 @@ class VaultField {
     required this.label,
     required this.type,
     this.required = false,
+    this.options,
+    this.defaultValue,
     this.value = '',
   });
 
-  VaultField copyWith({String? value}) =>
+  VaultField copyWith({
+    String? value,
+    List<VaultFieldOption>? options,
+    String? defaultValue,
+  }) =>
       VaultField(
         key: key,
         label: label,
         type: type,
         required: required,
+        options: options ?? this.options,
+        defaultValue: defaultValue ?? this.defaultValue,
         value: value ?? this.value,
       );
 
   Map<String, dynamic> toJson() => {'key': key, 'value': value};
 
+  String get displayValue {
+    if (options != null && options!.isNotEmpty) {
+      final current = value.trim();
+      final opt = options!.cast<VaultFieldOption?>().firstWhere(
+            (o) =>
+                o != null &&
+                (o.value.toLowerCase() == current.toLowerCase() ||
+                    o.value.toLowerCase() ==
+                        current.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '')),
+            orElse: () => null,
+          );
+      if (opt != null) return opt.label;
+    }
+    return value;
+  }
+
   static VaultField fromTemplate(
     Map<String, dynamic> template,
     Map<String, dynamic> values,
-  ) =>
-      VaultField(
-        key: template['key'] as String,
-        label: template['label'] as String,
-        type: FieldType.values.firstWhere(
-          (t) => t.name == (template['type'] as String? ?? 'text'),
-          orElse: () => FieldType.text,
-        ),
-        required: template['required'] as bool? ?? false,
-        value: values[template['key']] as String? ?? '',
-      );
+  ) {
+    final rawOptions = template['options'];
+    List<VaultFieldOption>? options;
+    if (rawOptions is List) {
+      options = rawOptions.map((opt) {
+        if (opt is VaultFieldOption) return opt;
+        if (opt is Map<String, dynamic>) {
+          return VaultFieldOption(
+            value: opt['value'] as String,
+            label: opt['label'] as String,
+          );
+        }
+        final s = opt.toString();
+        return VaultFieldOption(value: s, label: s);
+      }).toList();
+    }
+
+    final defaultValue = template['defaultValue'] as String?;
+    final key = template['key'] as String;
+    final String val;
+    if (values.containsKey(key)) {
+      val = values[key] as String? ?? '';
+    } else {
+      val = defaultValue ?? '';
+    }
+
+    return VaultField(
+      key: key,
+      label: template['label'] as String,
+      type: FieldType.values.firstWhere(
+        (t) => t.name == (template['type'] as String? ?? 'text'),
+        orElse: () => FieldType.text,
+      ),
+      required: template['required'] as bool? ?? false,
+      options: options,
+      defaultValue: defaultValue,
+      value: val,
+    );
+  }
 }
 
 // ── Item templates ─────────────────────────────────────────────────────────────
@@ -163,15 +238,50 @@ class VaultItemTemplate {
             {'key': 'issuer', 'label': l10n.fieldIssuer, 'type': 'text'},
             {'key': 'account', 'label': l10n.fieldAuthenticatorAccount, 'type': 'text'},
             {'key': 'totp_secret', 'label': l10n.fieldSecretKey, 'type': 'secret', 'required': true},
-            {'key': 'totp_algorithm', 'label': l10n.fieldTotpAlgorithm, 'type': 'text'},
-            {'key': 'totp_digits', 'label': l10n.fieldTotpDigits, 'type': 'number'},
-            {'key': 'totp_period', 'label': l10n.fieldTotpPeriod, 'type': 'number'},
-            // Left blank both default to a plain time-based (TOTP) code. Set
-            // by imports from apps that also hold counter-based (HOTP) or
-            // Steam Guard entries -- see OtpKind in totp_engine.dart. Plain
-            // English labels, not l10n keys, so adding them doesn't need a
-            // gen-l10n pass.
-            {'key': 'totp_type', 'label': 'Type (totp, hotp or steam)', 'type': 'text'},
+            {
+              'key': 'totp_type',
+              'label': 'Type',
+              'type': 'select',
+              'defaultValue': 'totp',
+              'options': const [
+                VaultFieldOption(value: 'totp', label: 'TOTP (Time-based)'),
+                VaultFieldOption(value: 'hotp', label: 'HOTP (Counter-based)'),
+                VaultFieldOption(value: 'steam', label: 'Steam Guard'),
+              ],
+            },
+            {
+              'key': 'totp_algorithm',
+              'label': l10n.fieldTotpAlgorithm,
+              'type': 'select',
+              'defaultValue': 'SHA1',
+              'options': const [
+                VaultFieldOption(value: 'SHA1', label: 'SHA1'),
+                VaultFieldOption(value: 'SHA256', label: 'SHA256'),
+                VaultFieldOption(value: 'SHA512', label: 'SHA512'),
+              ],
+            },
+            {
+              'key': 'totp_digits',
+              'label': l10n.fieldTotpDigits,
+              'type': 'select',
+              'defaultValue': '6',
+              'options': const [
+                VaultFieldOption(value: '6', label: '6 digits'),
+                VaultFieldOption(value: '7', label: '7 digits'),
+                VaultFieldOption(value: '8', label: '8 digits'),
+              ],
+            },
+            {
+              'key': 'totp_period',
+              'label': l10n.fieldTotpPeriod,
+              'type': 'select',
+              'defaultValue': '30',
+              'options': const [
+                VaultFieldOption(value: '30', label: '30 seconds'),
+                VaultFieldOption(value: '60', label: '60 seconds'),
+                VaultFieldOption(value: '15', label: '15 seconds'),
+              ],
+            },
             {'key': 'hotp_counter', 'label': 'HOTP counter', 'type': 'number'},
             {'key': 'notes', 'label': l10n.fieldNotes, 'type': 'multiline'},
           ],

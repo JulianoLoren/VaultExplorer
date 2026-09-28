@@ -100,9 +100,24 @@ class VaultItemDetailScreen extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final currentItem = state.item;
+    final currentType = (currentItem.fields['totp_type'] ?? 'totp').trim().toLowerCase();
     final fields = currentItem
         .vaultFields(context.l10n)
-        .where((f) => f.value.isNotEmpty)
+        .where((f) {
+          if (f.value.isEmpty) return false;
+          if (currentItem.type == VaultItemType.authenticator) {
+            if (f.key == 'hotp_counter' && currentType != 'hotp') return false;
+            if (f.key == 'totp_period' && currentType == 'hotp') return false;
+            if (currentType == 'steam' &&
+                (f.key == 'totp_algorithm' ||
+                    f.key == 'totp_digits' ||
+                    f.key == 'totp_period' ||
+                    f.key == 'hotp_counter')) {
+              return false;
+            }
+          }
+          return true;
+        })
         .toList();
     return PopScope(
       canPop: true,
@@ -302,7 +317,7 @@ class _FieldRow extends StatelessWidget {
     final isSecret = field.type == FieldType.secret;
     final displayValue = isSecret && !revealed
         ? '•' * (field.value.length.clamp(6, 16))
-        : field.value;
+        : field.displayValue;
     return InkWell(
       onLongPress: onCopy,
       child: Padding(

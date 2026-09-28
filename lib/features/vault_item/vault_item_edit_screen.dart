@@ -10,6 +10,7 @@ import 'package:vaultexplorer/core/filesystem/illegal_char_input_formatter.dart'
 import 'package:vaultexplorer/core/filesystem/mounted_container_filesystem.dart';
 import 'package:vaultexplorer/core/filesystem/name_validation.dart';
 import 'package:vaultexplorer/core/utils/sensitive_clipboard.dart';
+import 'package:vaultexplorer/core/utils/totp_engine.dart';
 import 'package:vaultexplorer/features/authenticator/widgets/qr_scanner_screen.dart';
 import 'package:vaultexplorer/features/vault_item/vault_item_edit_controller.dart';
 
@@ -84,14 +85,21 @@ class _VaultItemEditScreenState extends ConsumerState<VaultItemEditScreen> {
         if (_ctrls['account'] != null && _ctrls['account']!.text.isEmpty && account.isNotEmpty) {
           _ctrls['account']!.text = account;
         }
+        if (_ctrls['totp_type'] != null) {
+          final kind = OtpKind.fromFieldValue(uri.host);
+          _ctrls['totp_type']!.text = kind.wireName;
+        }
         if (_ctrls['totp_algorithm'] != null && qp.containsKey('algorithm')) {
-          _ctrls['totp_algorithm']!.text = qp['algorithm']!;
+          _ctrls['totp_algorithm']!.text = TotpAlgorithm.fromFieldValue(qp['algorithm']).wireName;
         }
         if (_ctrls['totp_digits'] != null && qp.containsKey('digits')) {
           _ctrls['totp_digits']!.text = qp['digits']!;
         }
         if (_ctrls['totp_period'] != null && qp.containsKey('period')) {
           _ctrls['totp_period']!.text = qp['period']!;
+        }
+        if (_ctrls['hotp_counter'] != null && qp.containsKey('counter')) {
+          _ctrls['hotp_counter']!.text = qp['counter']!;
         }
       });
       _onTextChanged();
@@ -250,6 +258,26 @@ class _VaultItemEditScreenState extends ConsumerState<VaultItemEditScreen> {
     );
   }
 
+  bool _isFieldVisible(VaultField f) {
+    if (widget.type != VaultItemType.authenticator) return true;
+    final currentType = (_ctrls['totp_type']?.text.trim().toLowerCase() ?? 'totp');
+    final isHotp = currentType == 'hotp';
+    final isSteam = currentType == 'steam';
+
+    if (f.key == 'hotp_counter') {
+      return isHotp || (_ctrls['hotp_counter']?.text.isNotEmpty ?? false);
+    }
+    if (f.key == 'totp_period') {
+      return !isHotp && !isSteam;
+    }
+    if (isSteam) {
+      if (f.key == 'totp_algorithm' || f.key == 'totp_digits') {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void _showSnack(String msg) {
     showAppSnackBar(context, message: msg, tone: AppBannerTone.error);
   }
@@ -334,7 +362,7 @@ class _VaultItemEditScreenState extends ConsumerState<VaultItemEditScreen> {
             SectionLabel(context.l10n.fieldsSectionLabel),
 
             // ── Fields ──────────────────────────────────────────────────────
-            ...(_fields.map(
+            ...(_fields.where(_isFieldVisible).map(
               (f) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _FieldInput(
@@ -346,6 +374,7 @@ class _VaultItemEditScreenState extends ConsumerState<VaultItemEditScreen> {
                   ),
                   onCopy: () => _copySecret(f, _ctrls[f.key]!.text),
                   onScanQr: f.key == 'totp_secret' ? _scanQrCode : null,
+                  onChanged: (_) => setState(() {}),
                 ),
               ),
             )),
@@ -377,6 +406,7 @@ class _FieldInput extends StatelessWidget {
   final VoidCallback onToggleReveal;
   final VoidCallback onCopy;
   final VoidCallback? onScanQr;
+  final ValueChanged<String>? onChanged;
 
   const _FieldInput({
     required this.field,
@@ -385,14 +415,63 @@ class _FieldInput extends StatelessWidget {
     required this.onToggleReveal,
     required this.onCopy,
     this.onScanQr,
+    this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final isSecret = field.type == FieldType.secret;
     final isMultiline = field.type == FieldType.multiline;
+    final isSelect = field.type == FieldType.select;
     final obscure = isSecret && !revealed;
+
+    if (isSelect && field.options != null && field.options!.isNotEmpty) {
+      final currentText = controller.text.trim();
+      final matchingOption = field.options!.cast<VaultFieldOption?>().firstWhere(
+        (opt) =>
+            opt != null &&
+            (opt.value.toLowerCase() == currentText.toLowerCase() ||
+                opt.value.toLowerCase() ==
+                    currentText.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '')),
+        orElse: () => null,
+      );
+
+      final selectedValue = matchingOption?.value ??
+          (currentText.isNotEmpty
+              ? currentText
+              : (field.defaultValue ?? field.options!.first.value));
+
+      final items = [
+        for (final opt in field.options!)
+          DropdownMenuItem<String>(
+            value: opt.value,
+            child: Text(opt.label),
+          ),
+        if (matchingOption == null &&
+            currentText.isNotEmpty &&
+            !field.options!.any((o) => o.value == currentText))
+          DropdownMenuItem<String>(
+            value: currentText,
+            child: Text(currentText),
+          ),
+      ];
+
+      return DropdownButtonFormField<String>(
+        key: ValueKey('${field.key}_$selectedValue'),
+        initialValue: selectedValue,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: field.label,
+        ),
+        items: items,
+        onChanged: (newVal) {
+          if (newVal != null) {
+            controller.text = newVal;
+            onChanged?.call(newVal);
+          }
+        },
+      );
+    }
 
     return TextField(
       controller: controller,
@@ -441,16 +520,5 @@ class _FieldInput extends StatelessWidget {
     FieldType.number => TextInputType.number,
     FieldType.multiline => TextInputType.multiline,
     _ => TextInputType.text,
-  };
-
-  IconData _prefixIcon(FieldType type) => switch (type) {
-    FieldType.secret => Icons.lock_outline_rounded,
-    FieldType.email => Icons.email_outlined,
-    FieldType.phone => Icons.phone_outlined,
-    FieldType.url => Icons.link_rounded,
-    FieldType.number => Icons.numbers_rounded,
-    FieldType.multiline => Icons.notes_rounded,
-    FieldType.date => Icons.calendar_today_outlined,
-    FieldType.text => Icons.text_fields_rounded,
   };
 }
