@@ -132,7 +132,7 @@ void main() {
     );
   }
 
-  group('CameraCaptureScreen Lifecycle', () {
+ group('CameraCaptureScreen Lifecycle', () {
     testWidgets(
       'inactive→resumed does NOT close or reload camera (status bar drag)',
       (tester) async {
@@ -149,7 +149,7 @@ void main() {
         expect(closeCount, closesBefore, reason: 'inactive must NOT close the camera');
 
         tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 100));
 
         expect(openCount, 1, reason: 'camera must NOT re-open after inactive→resumed');
         expect(closeCount, closesBefore, reason: 'no close calls at any point');
@@ -175,7 +175,7 @@ void main() {
         expect(closeCount, closesBefore, reason: 'inactive must NOT close the camera');
 
         tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 100));
 
         expect(openCount, 1, reason: 'camera must NOT re-open after inactive→resumed');
         expect(closeCount, closesBefore, reason: 'no close calls at any point');

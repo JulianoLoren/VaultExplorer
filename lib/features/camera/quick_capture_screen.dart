@@ -249,14 +249,14 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen>
     super.dispose();
   }
 
-  @override
+ @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _lastLifecycleState = state;
     if (_phase != _Phase.camera) return;
 
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       _backgroundingFuture = _handleGoingBackground();
-    } else if (state == AppLifecycleState.resumed) {
+    } else if (state == AppLifecycleState.resumed && _backgroundingFuture != null) {
       unawaited(_handleResumed());
     }
   }
@@ -272,9 +272,11 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen>
   }
 
   Future<void> _handleResumed() async {
+    final bgFuture = _backgroundingFuture;
+    _backgroundingFuture = null;
     unawaited(_refreshDisplayRotation());
-    if (_backgroundingFuture != null) {
-      await _backgroundingFuture;
+    if (bgFuture != null) {
+      await bgFuture;
     }
     if (!mounted || _phase != _Phase.camera) return;
     if (!_cameraController.isInitialized) {

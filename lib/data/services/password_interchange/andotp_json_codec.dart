@@ -89,12 +89,17 @@ class AndOtpJsonCodec implements PasswordFormatCodec {
     return _parse(decoded);
   }
 
+  static const int _maxIterations = 1000000;
+
   Future<String> _decrypt(Uint8List bytes, String password) async {
     const headerLength = 4 + _saltLength + _ivLength;
     if (bytes.length < headerLength + _tagLength) {
       throw const PasswordFileFormatException('This andOTP backup is too short to be valid.');
     }
     final iterations = ByteData.sublistView(bytes, 0, 4).getUint32(0, Endian.big);
+    if (iterations <= 0 || iterations > _maxIterations) {
+      throw const PasswordFileFormatException('This andOTP backup has an invalid iteration count.');
+    }
     final salt = Uint8List.sublistView(bytes, 4, 4 + _saltLength);
     final iv = Uint8List.sublistView(bytes, 4 + _saltLength, headerLength);
     final ciphertextAndTag = Uint8List.sublistView(bytes, headerLength);

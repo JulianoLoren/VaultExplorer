@@ -280,7 +280,7 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
 
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       _backgroundingFuture = _handleGoingBackground();
-    } else if (state == AppLifecycleState.resumed) {
+    } else if (state == AppLifecycleState.resumed && _backgroundingFuture != null) {
       unawaited(_handleResumed());
     }
   }
@@ -294,9 +294,11 @@ class _CameraCaptureScreenState extends ConsumerState<CameraCaptureScreen>
   }
 
   Future<void> _handleResumed() async {
+    final bgFuture = _backgroundingFuture;
+    _backgroundingFuture = null;
     unawaited(_refreshDisplayRotation());
-    if (_backgroundingFuture != null) {
-      await _backgroundingFuture;
+    if (bgFuture != null) {
+      await bgFuture;
     }
     if (!mounted) return;
     if (_backgroundRecordingActive) {

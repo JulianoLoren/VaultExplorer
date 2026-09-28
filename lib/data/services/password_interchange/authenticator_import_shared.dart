@@ -125,7 +125,7 @@ PasswordFileFormatException noImportableEntries(List<String> warnings) {
 String? tryDecodeUtf8(Uint8List? bytes) {
   if (bytes == null) return null;
   try {
-    var text = utf8.decode(bytes, allowMalformed: true);
+    var text = utf8.decode(bytes);
     if (text.startsWith('\uFEFF')) text = text.substring(1);
     return text;
   } catch (_) {
