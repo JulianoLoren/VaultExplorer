@@ -113,6 +113,7 @@ class EnteAuthJsonCodec implements PasswordFormatCodec {
           key: key,
           nonce: nonce,
           ciphertextAndTag: ciphertextWithMac,
+          aad: null,
         );
         debugPrint('EnteAuthJsonCodec: Successfully decrypted using XChaCha20-Poly1305');
       } catch (e) {
@@ -132,6 +133,7 @@ class EnteAuthJsonCodec implements PasswordFormatCodec {
                key: key,
                iv: nonce.length > 12 ? nonce.sublist(0, 12) : nonce,
                ciphertextAndTag: ciphertextWithMac,
+               aad: null,
              );
              debugPrint('EnteAuthJsonCodec: Successfully decrypted using AES-GCM');
            } catch (e2) {
@@ -201,7 +203,6 @@ class EnteAuthJsonCodec implements PasswordFormatCodec {
 }
 
 // Pure Dart implementation of libsodium's crypto_secretbox_easy (XSalsa20-Poly1305).
-// Ente uses XSalsa20, which is not available in BoringSSL/the native engine.
 class _XSalsa20Poly1305 {
   static Uint8List? open(Uint8List key, Uint8List nonce, Uint8List ciphertextWithMac) {
     if (ciphertextWithMac.length < 16) {
@@ -273,7 +274,7 @@ class _XSalsa20Poly1305 {
 
   static int _rotl32(int x, int n) => ((x << n) | (x >>> (32 - n))) & 0xFFFFFFFF;
 
-  static void _quarterRound(Uint32List x, int a, int b, int c, int d) {
+  static void _quarterRoundSalsa(Uint32List x, int a, int b, int c, int d) {
     x[b] ^= _rotl32((x[a] + x[d]) & 0xFFFFFFFF, 7);
     x[c] ^= _rotl32((x[b] + x[a]) & 0xFFFFFFFF, 9);
     x[d] ^= _rotl32((x[c] + x[b]) & 0xFFFFFFFF, 13);
@@ -283,14 +284,14 @@ class _XSalsa20Poly1305 {
   static void _salsa20Block(Uint32List out, Uint32List inp) {
     for (int i = 0; i < 16; i++) out[i] = inp[i];
     for (int i = 0; i < 10; i++) {
-      _quarterRound(out, 0, 4, 8, 12);
-      _quarterRound(out, 5, 9, 13, 1);
-      _quarterRound(out, 10, 14, 2, 6);
-      _quarterRound(out, 15, 3, 7, 11);
-      _quarterRound(out, 0, 1, 2, 3);
-      _quarterRound(out, 5, 6, 7, 4);
-      _quarterRound(out, 10, 11, 8, 9);
-      _quarterRound(out, 15, 12, 13, 14);
+      _quarterRoundSalsa(out, 0, 4, 8, 12);
+      _quarterRoundSalsa(out, 5, 9, 13, 1);
+      _quarterRoundSalsa(out, 10, 14, 2, 6);
+      _quarterRoundSalsa(out, 15, 3, 7, 11);
+      _quarterRoundSalsa(out, 0, 1, 2, 3);
+      _quarterRoundSalsa(out, 5, 6, 7, 4);
+      _quarterRoundSalsa(out, 10, 11, 8, 9);
+      _quarterRoundSalsa(out, 15, 12, 13, 14);
     }
     for (int i = 0; i < 16; i++) out[i] = (out[i] + inp[i]) & 0xFFFFFFFF;
   }
@@ -306,14 +307,14 @@ class _XSalsa20Poly1305 {
 
     final x = Uint32List.fromList(inp);
     for (int i = 0; i < 10; i++) {
-      _quarterRound(x, 0, 4, 8, 12);
-      _quarterRound(x, 5, 9, 13, 1);
-      _quarterRound(x, 10, 14, 2, 6);
-      _quarterRound(x, 15, 3, 7, 11);
-      _quarterRound(x, 0, 1, 2, 3);
-      _quarterRound(x, 5, 6, 7, 4);
-      _quarterRound(x, 10, 11, 8, 9);
-      _quarterRound(x, 15, 12, 13, 14);
+      _quarterRoundSalsa(x, 0, 4, 8, 12);
+      _quarterRoundSalsa(x, 5, 9, 13, 1);
+      _quarterRoundSalsa(x, 10, 14, 2, 6);
+      _quarterRoundSalsa(x, 15, 3, 7, 11);
+      _quarterRoundSalsa(x, 0, 1, 2, 3);
+      _quarterRoundSalsa(x, 5, 6, 7, 4);
+      _quarterRoundSalsa(x, 10, 11, 8, 9);
+      _quarterRoundSalsa(x, 15, 12, 13, 14);
     }
     final out = Uint32List(8);
     out[0] = x[0]; out[1] = x[5]; out[2] = x[10]; out[3] = x[15];
