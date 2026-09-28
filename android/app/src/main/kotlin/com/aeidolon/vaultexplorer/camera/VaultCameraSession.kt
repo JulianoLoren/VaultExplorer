@@ -1,7 +1,10 @@
 package com.aeidolon.vaultexplorer.camera
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
+import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
@@ -13,9 +16,12 @@ import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.MeteringRectangle
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
+import android.media.ExifInterface
 import android.media.Image
 import android.media.ImageReader
 import android.media.MediaCodec
+import android.media.MediaMetadataRetriever
+import android.media.ThumbnailUtils
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
@@ -23,6 +29,8 @@ import android.util.Range
 import android.util.Size
 import android.view.Surface
 import io.flutter.view.TextureRegistry
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.Executor
 import javax.crypto.SecretKey
@@ -92,14 +100,14 @@ class VaultCameraSession(
     private var exposureStepValue = 1.0 / 6.0
     private var currentExposureSteps = 0
     private var lastOrientationDegrees = 0
- private var photoSize: Size = Size(1920, 1080)
+    private var photoSize: Size = Size(1920, 1080)
     private var videoSize: Size = Size(1920, 1080)
     private var pendingQuality: VaultVideoQuality = VaultVideoQuality.FHD
     private var pendingPhotoResolution: VaultPhotoResolution = VaultPhotoResolution.MAX
     private var currentPreviewWidth: Int = 1920
     private var currentPreviewHeight: Int = 1080
 
-   private val availablePhotoResolutions = LinkedHashMap<String, String>()
+    private val availablePhotoResolutions = LinkedHashMap<String, String>()
     private val availableVideoQualities = LinkedHashMap<String, String>()
 
     val photoResolutions: Map<String, String> get() = availablePhotoResolutions
@@ -112,7 +120,7 @@ class VaultCameraSession(
 
     private var pendingOpenResult: ((Boolean, String?) -> Unit)? = null
     private var pendingCloseCallback: (() -> Unit)? = null
-  private var pendingPhotoCallback: ((Boolean, String?) -> Unit)? = null
+    private var pendingPhotoCallback: ((Boolean, String?) -> Unit)? = null
     private var pendingPhotoWriter: ChunkSink? = null
     private var pendingPhotoBytesCallback: ((Boolean, ByteArray?, ByteArray?, String?) -> Unit)? = null
     private var pendingRecordStart: ((Boolean, String?) -> Unit)? = null
@@ -145,7 +153,7 @@ class VaultCameraSession(
         }
     }
 
-   fun setScanMode(enable: Boolean) {
+    fun setScanMode(enable: Boolean) {
         runOnCameraThread {
             if (isScanMode == enable) return@runOnCameraThread
             isScanMode = enable
@@ -158,7 +166,7 @@ class VaultCameraSession(
         try {
             if (!isScanMode || isScanningFrame) return
             val now = System.currentTimeMillis()
-            if (now - lastScanTime < 140) return // Throttled to ~7 fps to minimize battery & CPU
+            if (now - lastScanTime < 140) return
             lastScanTime = now
             isScanningFrame = true
 
@@ -254,7 +262,6 @@ class VaultCameraSession(
             cameraDevice = null
         }
 
-        // Safeguard: Clean teardown on fatal hardware error so next open won't hang
         override fun onError(device: CameraDevice, error: Int) {
             VeLog.e(TAG) { "Camera device error $error on device ${device.id}" }
             try { captureSession?.close() } catch (_: Exception) {}
@@ -286,7 +293,6 @@ class VaultCameraSession(
         val map = chars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
             ?: throw IllegalStateException("no stream configuration map for $activeCameraId")
 
-        // Safeguard: Detect fixed-focus lenses (Wide/IR/Macro)
         val minFocusDist = chars.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)
         isFixedFocus = minFocusDist == null || minFocusDist == 0f
         maxAfRegions = chars.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF) ?: 0
@@ -319,7 +325,6 @@ class VaultCameraSession(
             TARGET_RECORDING_FPS,
         )
 
-      // Photo size strictly follows the chosen photo resolution
         val jpegSizes = map.getOutputSizes(ImageFormat.JPEG)?.toList().orEmpty().ifEmpty { listOf(Size(1920, 1080)) }
         val maxJpegSize = jpegSizes.maxByOrNull { it.width.toLong() * it.height.toLong() } ?: jpegSizes.first()
         photoSize = if (photoResolution == VaultPhotoResolution.MAX) {
@@ -328,7 +333,6 @@ class VaultCameraSession(
             chooseSize(jpegSizes, photoResolution.targetLongEdge, capAt1080p = false)
         }
 
-        // Video size selects closest height (480p, 720p, 1080p, 2160p)
         val videoSizes = map.getOutputSizes(MediaCodec::class.java)?.toList().orEmpty().ifEmpty { listOf(Size(1920, 1080)) }
         videoSize = chooseVideoSizeByHeight(videoSizes, videoQuality.targetVideoHeight)
 
@@ -360,7 +364,6 @@ class VaultCameraSession(
             availableVideoQualities[key] = "${maxOf(s.width, s.height)}x${minOf(s.width, s.height)}"
         }
 
-        // Safeguard: Cap preview size at 1920 to stay within CDD limits
         val previewSizes = map.getOutputSizes(SurfaceTexture::class.java)?.toList().orEmpty().ifEmpty { listOf(Size(1920, 1080)) }
         val photoAspect = photoSize.width.toFloat() / photoSize.height.toFloat()
         val previewSize = previewSizes
@@ -372,13 +375,12 @@ class VaultCameraSession(
         surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
         previewSurface = Surface(surfaceTexture)
 
-         jpegReader?.close()
+        jpegReader?.close()
         val reader = ImageReader.newInstance(photoSize.width, photoSize.height, ImageFormat.JPEG, 2)
         reader.setOnImageAvailableListener({ r -> onJpegAvailable(r) }, bgHandler)
         jpegReader = reader
 
         analysisReader?.close()
-        // Fast, power-efficient resolution for QR scanning (closest to 720p or 480p)
         val yuvSizes = map.getOutputSizes(ImageFormat.YUV_420_888)?.toList().orEmpty()
         val scanSize = chooseSize(yuvSizes, 720, capAt1080p = true)
         val aReader = ImageReader.newInstance(scanSize.width, scanSize.height, ImageFormat.YUV_420_888, 2)
@@ -414,25 +416,13 @@ class VaultCameraSession(
         }
     }
 
-    /**
-     * Builds the capture session for the current mode. Only two stream sets
-     * are ever used, both inside what every Camera2 hardware level (LEGACY
-     * included) guarantees:
-     *   idle      -> [preview, JPEG]
-     *   recording -> [preview, recorder surface]
-     * The recorder is created (and its orientation hint fixed) right before
-     * recording starts, so device rotation never forces a reconfiguration
-     * while previewing -- that reconfiguration is what used to leave the
-     * preview black after rotating on some devices.
-     */
     private fun createSessionLocked() {
         val device = cameraDevice ?: return
 
-        // Retire the previous session explicitly before configuring the next one.
         captureSession?.let { try { it.close() } catch (_: Exception) {} }
         captureSession = null
 
-         val outputs = if (isRecording) {
+        val outputs = if (isRecording) {
             listOfNotNull(previewSurface, videoRecorder?.inputSurface)
         } else {
             listOfNotNull(previewSurface, jpegReader?.surface, analysisReader?.surface)
@@ -441,7 +431,6 @@ class VaultCameraSession(
         val stateCallback = object : CameraCaptureSession.StateCallback() {
             override fun onConfigured(session: CameraCaptureSession) {
                 if (cameraDevice !== device) {
-                    // Device was closed/replaced while this session was configuring.
                     try { session.close() } catch (_: Exception) {}
                     return
                 }
@@ -477,7 +466,6 @@ class VaultCameraSession(
         }
     }
 
-    /** A session (idle or recording) is configured and repeating. */
     private fun onSessionReady() {
         pendingOpenResult?.let { cb ->
             pendingOpenResult = null
@@ -511,14 +499,12 @@ class VaultCameraSession(
 
         val startCb = pendingRecordStart
         if (startCb != null) {
-            // Recording session could not be configured -- give the preview back.
             pendingRecordStart = null
             abortRecordingAndRestorePreview()
             startCb(false, reason)
             return
         }
 
-        // A late failure with nobody waiting on it (e.g. after stopping a recording).
         onEvent(mapOf("event" to "error", "message" to reason))
     }
 
@@ -539,7 +525,7 @@ class VaultCameraSession(
         }
     }
 
-  private fun newRequestBuilder(): CaptureRequest.Builder {
+    private fun newRequestBuilder(): CaptureRequest.Builder {
         val device = cameraDevice ?: throw IllegalStateException("no camera device")
         val template = if (isRecording) CameraDevice.TEMPLATE_RECORD else CameraDevice.TEMPLATE_PREVIEW
         val builder = device.createCaptureRequest(template)
@@ -555,7 +541,6 @@ class VaultCameraSession(
     private fun applyControls(builder: CaptureRequest.Builder) {
         builder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
 
-        // Safeguard: Fixed-focus lenses MUST be set to AF_MODE_OFF
         if (isFixedFocus) {
             builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF)
         } else if (isTapToFocusActive && activeAfRegions != null && maxAfRegions > 0) {
@@ -565,7 +550,6 @@ class VaultCameraSession(
             builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
         }
 
-        // Apply AE metering region only if hardware supports it
         if (isTapToFocusActive && activeAeRegions != null && maxAeRegions > 0) {
             builder.set(CaptureRequest.CONTROL_AE_REGIONS, activeAeRegions)
         }
@@ -581,7 +565,6 @@ class VaultCameraSession(
         applyColorEffect(builder)
     }
 
-    // Safeguard: EV offset bounds check
     fun setExposureOffsetEv(ev: Double) {
         runOnCameraThread {
             if (minExposureSteps >= maxExposureSteps || exposureStepValue <= 0.0) {
@@ -594,7 +577,6 @@ class VaultCameraSession(
         }
     }
 
-    // Safeguard: Coordinate mapping accounting for 90°/270° sensor mounting and zoom
     fun setFocusAndExposurePoint(nx: Float, ny: Float) {
         runOnCameraThread {
             val session = captureSession ?: return@runOnCameraThread
@@ -604,14 +586,12 @@ class VaultCameraSession(
             val sensorOrientation = chars.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 90
             val isFront = chars.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
 
-            // Rotate normalized portrait touch into sensor landscape space
             val (sensorNormX, sensorNormY) = when (sensorOrientation) {
                 90 -> if (isFront) Pair(ny, nx) else Pair(ny, 1f - nx)
                 270 -> if (isFront) Pair(1f - ny, 1f - nx) else Pair(1f - ny, nx)
                 else -> Pair(nx, ny)
             }
 
-            // Scale to active crop area
             val cropRect = if (zoomRatioSupported) {
                 activeArray
             } else {
@@ -719,7 +699,6 @@ class VaultCameraSession(
         builder.set(CaptureRequest.SCALER_CROP_REGION, Rect(left, top, left + cropW, top + cropH))
     }
 
-    // Safeguard: Check if physical flash unit actually exists
     private fun applyFlash(builder: CaptureRequest.Builder) {
         if (!isFlashSupported) {
             builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
@@ -754,11 +733,6 @@ class VaultCameraSession(
         }
     }
 
-    /**
-     * Only remembers the device rotation. It is consumed when a photo is
-     * captured (JPEG_ORIENTATION) and when a recording is prepared (the
-     * MediaRecorder orientation hint), never by reconfiguring the session.
-     */
     fun setOrientationDegrees(deviceRotationDegrees: Int) {
         runOnCameraThread {
             lastOrientationDegrees = ((deviceRotationDegrees % 360) + 360) % 360
@@ -855,20 +829,51 @@ class VaultCameraSession(
             val bytes = ByteArray(buffer.remaining())
             buffer.get(bytes)
 
-          val bytesCb = pendingPhotoBytesCallback
+            val bytesCb = pendingPhotoBytesCallback
             if (bytesCb != null) {
                 pendingPhotoBytesCallback = null
                 val thumbBytes = try {
-                    val opts = android.graphics.BitmapFactory.Options().apply {
+                    val opts = BitmapFactory.Options().apply {
                         inSampleSize = 8
                     }
-                    val bmp = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+                    val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
                     if (bmp != null) {
-                        val thumb = android.media.ThumbnailUtils.extractThumbnail(bmp, 160, 160)
-                        val stream = java.io.ByteArrayOutputStream()
-                        thumb.compress(android.graphics.Bitmap.CompressFormat.JPEG, 70, stream)
-                        if (thumb !== bmp) thumb.recycle()
-                        bmp.recycle()
+                        // Correctly extract EXIF orientation and apply it to the thumbnail bitmap
+                        val exif = ExifInterface(ByteArrayInputStream(bytes))
+                        val orientation = exif.getAttributeInt(
+                            ExifInterface.TAG_ORIENTATION,
+                            ExifInterface.ORIENTATION_NORMAL
+                        )
+                        val matrix = Matrix()
+                        when (orientation) {
+                            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+                            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+                            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+                            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                                matrix.postRotate(90f)
+                                matrix.postScale(-1f, 1f)
+                            }
+                            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                                matrix.postRotate(270f)
+                                matrix.postScale(-1f, 1f)
+                            }
+                        }
+
+                        val orientedBmp = if (!matrix.isIdentity) {
+                            val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+                            if (rotated !== bmp) bmp.recycle()
+                            rotated
+                        } else {
+                            bmp
+                        }
+
+                        val thumb = ThumbnailUtils.extractThumbnail(orientedBmp, 160, 160)
+                        val stream = ByteArrayOutputStream()
+                        thumb.compress(Bitmap.CompressFormat.JPEG, 70, stream)
+                        if (thumb !== orientedBmp) thumb.recycle()
+                        orientedBmp.recycle()
                         stream.toByteArray()
                     } else null
                 } catch (_: Exception) {
@@ -924,14 +929,12 @@ class VaultCameraSession(
             videoRecorder = recorder
             recordingChunkWriter = writer
             isRecording = true
-            // MediaRecorder.start() happens in onSessionReady() once the
-            // [preview, recorder] session is configured and repeating.
             pendingRecordStart = callback
             createSessionLocked()
         }
     }
 
-     fun stopRecordingForReview(callback: (Boolean, String?, Long, ByteArray?, String?) -> Unit) {
+    fun stopRecordingForReview(callback: (Boolean, String?, Long, ByteArray?, String?) -> Unit) {
         runOnCameraThread {
             val recorder = videoRecorder
             if (recorder == null || !isRecording) {
@@ -951,15 +954,26 @@ class VaultCameraSession(
 
             val thumbBytes = if (path != null) {
                 try {
-                    val retriever = android.media.MediaMetadataRetriever()
+                    val retriever = MediaMetadataRetriever()
                     retriever.setDataSource(path)
-                    val frame = retriever.getFrameAtTime(0, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    val rotationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+                    val rotation = rotationStr?.toIntOrNull() ?: 0
+                    var frame = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                         ?: retriever.frameAtTime
                     retriever.release()
                     if (frame != null) {
-                        val thumb = android.media.ThumbnailUtils.extractThumbnail(frame, 160, 160)
-                        val stream = java.io.ByteArrayOutputStream()
-                        thumb.compress(android.graphics.Bitmap.CompressFormat.JPEG, 70, stream)
+                        // Apply video rotation hint to the extracted video frame
+                        if (rotation != 0) {
+                            val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
+                            val rotated = Bitmap.createBitmap(frame, 0, 0, frame.width, frame.height, matrix, true)
+                            if (rotated !== frame) {
+                                frame.recycle()
+                                frame = rotated
+                            }
+                        }
+                        val thumb = ThumbnailUtils.extractThumbnail(frame, 160, 160)
+                        val stream = ByteArrayOutputStream()
+                        thumb.compress(Bitmap.CompressFormat.JPEG, 70, stream)
                         if (thumb !== frame) thumb.recycle()
                         frame.recycle()
                         stream.toByteArray()
@@ -994,7 +1008,6 @@ class VaultCameraSession(
             val ok = recorder.writeTo(writer)
             recorder.releaseEncoder()
             callback(ok, result.durationMs, if (ok) null else "vault write failed")
-            // Back to the [preview, JPEG] session.
             createSessionLocked()
         }
     }
