@@ -5,6 +5,7 @@ import 'package:vaultexplorer/data/services/password_interchange/aegis_json_code
 import 'package:vaultexplorer/data/services/password_interchange/andotp_json_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/bitwarden_json_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/csv_codec.dart';
+import 'package:vaultexplorer/data/services/password_interchange/ente_auth_json_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/google_auth_migration_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/kdbx_codec.dart';
 import 'package:vaultexplorer/data/services/password_interchange/lastpass_authenticator_json_codec.dart';
@@ -28,6 +29,7 @@ const List<PasswordFormatCodec> kPasswordFormatCodecs = [
   // KDBX stays first so it remains the default import/export format.
   AegisJsonCodec(),
   AndOtpJsonCodec(),
+  EnteAuthJsonCodec(),
   TwoFasJsonCodec(),
   GoogleAuthMigrationCodec(),
   LastPassAuthenticatorJsonCodec(),
@@ -60,13 +62,18 @@ PasswordFormatCodec guessPasswordFormat({required String fileName, Uint8List? by
       if (sample.contains('"slots"') || (sample.contains('"header"') && sample.contains('"db"'))) {
         return kPasswordFormatCodecs.firstWhere((c) => c.id == 'aegis');
       }
+       if (sample.contains('"kdfParams"') &&
+          (sample.contains('"encryptedData"') || sample.contains('"encryptionNonce"'))) {
+        return kPasswordFormatCodecs.firstWhere((c) => c.id == 'ente_auth');
+      }
       if (sample.contains('"servicesEncrypted"') || sample.contains('"schemaVersion"')) {
         return kPasswordFormatCodecs.firstWhere((c) => c.id == 'twofas');
       }
       if (sample.contains('"encrypted"') || sample.contains('"passwordProtected"')) {
         return kPasswordFormatCodecs.firstWhere((c) => c.id == 'bitwarden_json');
       }
-      if (sample.contains('"entries"') || sample.contains('"vaults"')) {
+       if (sample.contains('"entries"') || sample.contains('"vaults"') ||
+          (sample.contains('"salt"') && sample.contains('"content"'))) {
         return kPasswordFormatCodecs.firstWhere((c) => c.id == 'proton_json');
       }
       if (sample.contains('"accounts"')) {

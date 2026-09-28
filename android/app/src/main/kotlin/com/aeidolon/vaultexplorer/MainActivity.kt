@@ -141,6 +141,8 @@ private object ChannelMethods {
     const val AES_CBC_DECRYPT           = "aesCbcDecrypt"
     const val PBKDF2                    = "pbkdf2"
     const val SCRYPT                    = "scrypt"
+    const val ARGON2ID                  = "argon2id"
+    const val XCHACHA20_POLY1305_OPEN   = "xchacha20Poly1305Open"
     const val READ_SECURE               = "readSecure"
     const val WRITE_SECURE              = "writeSecure"
     const val DELETE_SECURE             = "deleteSecure"
@@ -921,6 +923,8 @@ open class MainActivity : FlutterFragmentActivity() {
                 ChannelMethods.AES_CBC_DECRYPT -> derivedKeyHandlers.handleAesCbcDecrypt(call, result)
                 ChannelMethods.PBKDF2 -> derivedKeyHandlers.handlePbkdf2(call, result)                
                 ChannelMethods.SCRYPT -> derivedKeyHandlers.handleScrypt(call, result)
+                 ChannelMethods.ARGON2ID -> derivedKeyHandlers.handleArgon2id(call, result)
+                ChannelMethods.XCHACHA20_POLY1305_OPEN -> derivedKeyHandlers.handleXchacha20Poly1305Open(call, result)
                 ChannelMethods.READ_SECURE -> secureStorageHandlers.handleRead(call, result)
                 ChannelMethods.WRITE_SECURE -> secureStorageHandlers.handleWrite(call, result)
                 ChannelMethods.DELETE_SECURE -> secureStorageHandlers.handleDelete(call, result)

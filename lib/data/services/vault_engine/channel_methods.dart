@@ -127,6 +127,8 @@ abstract final class ChannelMethods {
   static const aesCbcDecrypt = 'aesCbcDecrypt';
   static const pbkdf2 = 'pbkdf2';
   static const scrypt = 'scrypt';
+  static const argon2id = 'argon2id';
+  static const xchacha20Poly1305Open = 'xchacha20Poly1305Open';
   static const readSecure = 'readSecure';
   static const writeSecure = 'writeSecure';
   static const deleteSecure = 'deleteSecure';

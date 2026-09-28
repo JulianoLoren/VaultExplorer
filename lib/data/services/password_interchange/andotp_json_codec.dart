@@ -118,7 +118,7 @@ class AndOtpJsonCodec implements PasswordFormatCodec {
     } on FormatException {
       throw const PasswordFileFormatException('This andOTP backup is malformed.');
     } finally {
-      key.fillRange(0, key.length, 0);
+      zeroizeBytes(key);
     }
   }
 

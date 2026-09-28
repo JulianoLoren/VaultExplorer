@@ -35,20 +35,30 @@ const int kMaxBackupScryptBytes = 256 * 1024 * 1024; // 128 * r * N
 /// three apps use once their tag is appended). A tag mismatch -- the
 /// signature of a wrong password, since the key came from it -- surfaces as
 /// [PasswordFileIncorrectPasswordException].
+/// Safely clears sensitive byte buffers, ignoring unmodifiable views.
+void zeroizeBytes(Uint8List? bytes) {
+  if (bytes == null) return;
+  try {
+    bytes.fillRange(0, bytes.length, 0);
+  } catch (_) {}
+}
+
 Future<Uint8List> openAesGcm(
   VaultCryptoApi crypto, {
   required Uint8List key,
   required Uint8List iv,
   required Uint8List ciphertextAndTag,
+  Uint8List? aad,
 }) async {
   try {
     final plain = await crypto.aesGcmDecrypt(
       key: key,
       iv: iv,
       ciphertextAndTag: ciphertextAndTag,
+      aad: aad,
     );
     if (plain == null) throw const PasswordFileIncorrectPasswordException();
-    return plain;
+    return Uint8List.fromList(plain);
   } on PlatformException catch (e) {
     if (e.code == 'CRYPTO_FAILED') {
       throw const PasswordFileIncorrectPasswordException();
@@ -73,14 +83,9 @@ Future<Uint8List> openAesCbc(
       ciphertext: ciphertext,
     );
     if (plain == null) throw const PasswordFileIncorrectPasswordException();
-    return plain;
-  } on PlatformException catch (e) {
-    if (e.code == 'CRYPTO_FAILED') {
-      throw const PasswordFileIncorrectPasswordException();
-    }
-    throw PasswordFileFormatException(
-      'This backup couldn\'t be decrypted (${e.message ?? e.code}).',
-    );
+    return Uint8List.fromList(plain);
+  } on PlatformException {
+    throw const PasswordFileIncorrectPasswordException();
   }
 }
 
@@ -101,7 +106,7 @@ Future<Uint8List> derivePbkdf2(
   if (salt.isEmpty) {
     throw const PasswordFileFormatException('This backup is missing its salt.');
   }
-  final pw = Uint8List.fromList(utf8.encode(password));
+ final pw = Uint8List.fromList(utf8.encode(password));
   try {
     final key = await crypto.pbkdf2(
       password: pw,
@@ -113,11 +118,11 @@ Future<Uint8List> derivePbkdf2(
     if (key == null) {
       throw const PasswordFileFormatException('Key derivation failed.');
     }
-    return key;
+    return Uint8List.fromList(key);
   } on PlatformException catch (e) {
     throw PasswordFileFormatException('Key derivation failed (${e.message ?? e.code}).');
   } finally {
-    pw.fillRange(0, pw.length, 0);
+    zeroizeBytes(pw);
   }
 }
 
@@ -150,11 +155,11 @@ Future<Uint8List> deriveScrypt(
     if (key == null) {
       throw const PasswordFileFormatException('Key derivation failed.');
     }
-    return key;
+    return Uint8List.fromList(key);
   } on PlatformException catch (e) {
     throw PasswordFileFormatException('Key derivation failed (${e.message ?? e.code}).');
   } finally {
-    pw.fillRange(0, pw.length, 0);
+    zeroizeBytes(pw);
   }
 }
 
@@ -177,4 +182,67 @@ Uint8List concatBytes(Uint8List a, Uint8List b) {
   out.setRange(0, a.length, a);
   out.setRange(a.length, out.length, b);
   return out;
+}
+
+Future<Uint8List> openXchacha20Poly1305(
+  VaultCryptoApi crypto, {
+  required Uint8List key,
+  required Uint8List nonce,
+  required Uint8List ciphertextAndTag,
+  Uint8List? aad,
+}) async {
+  try {
+    final plain = await crypto.xchacha20Poly1305Open(
+      key: key,
+      nonce: nonce,
+      ciphertextAndTag: ciphertextAndTag,
+      aad: aad,
+    );
+    if (plain == null) throw const PasswordFileIncorrectPasswordException();
+    return Uint8List.fromList(plain);
+  } on PlatformException catch (e) {
+    if (e.code == 'CRYPTO_FAILED') {
+      throw const PasswordFileIncorrectPasswordException();
+    }
+    throw PasswordFileFormatException(
+      'This backup couldn\'t be decrypted (${e.message ?? e.code}).',
+    );
+  }
+}
+
+/// Argon2id over the UTF-8 bytes of [password].
+Future<Uint8List> deriveArgon2id(
+  VaultCryptoApi crypto, {
+  required String password,
+  required Uint8List salt,
+  required int memoryKiB,
+  required int iterations,
+  required int parallelism,
+  required int outputLen,
+}) async {
+  // Allow up to 1 GiB (1024 * 1024 KiB), matching Ente Auth's sensitive KDF profile
+  if (memoryKiB < 8 || memoryKiB > 1024 * 1024 || iterations < 1 || iterations > 100) {
+    throw const PasswordFileFormatException(
+      'This backup asks for an unreasonable amount of key-derivation work, so it was not opened.',
+    );
+  }
+  final pw = Uint8List.fromList(utf8.encode(password));
+  try {
+    final key = await crypto.argon2id(
+      password: pw,
+      salt: salt,
+      memoryKiB: memoryKiB,
+      iterations: iterations,
+      parallelism: parallelism,
+      outputLen: outputLen,
+    );
+    if (key == null) {
+      throw const PasswordFileFormatException('Argon2id key derivation failed.');
+    }
+    return Uint8List.fromList(key);
+  } on PlatformException catch (e) {
+    throw PasswordFileFormatException('Argon2id key derivation failed (${e.message ?? e.code}).');
+  } finally {
+    zeroizeBytes(pw);
+  }
 }

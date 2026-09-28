@@ -603,6 +603,60 @@ class DerivedKeyHandlers(
      * fallback in [com.aeidolon.vaultexplorer.crypto.Scrypt]) -- used to open
      * Aegis's password-protected vault exports on import.
      */
+   fun handleXchacha20Poly1305Open(call: MethodCall, result: MethodChannel.Result) {
+        val key = call.argument<ByteArray>("key")
+        val nonce = call.argument<ByteArray>("nonce")
+        val aad = call.argument<ByteArray>("aad")
+        val ciphertextAndTag = call.argument<ByteArray>("ciphertextAndTag")
+
+        if (key == null || nonce == null || ciphertextAndTag == null) {
+            result.error("INVALID_ARGS", "key, nonce, and ciphertextAndTag required", null)
+            return
+        }
+
+        ioExecutor.execute {
+            try {
+                val decrypted = NativeEngine.xchacha20Poly1305OpenNative(key, nonce, aad, ciphertextAndTag)
+                activity.runOnUiThread {
+                    if (decrypted != null) result.success(decrypted)
+                    else result.error("CRYPTO_FAILED", "XChaCha20-Poly1305 decryption failed", null)
+                }
+            } catch (e: Exception) {
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            }
+        }
+    }
+
+    fun handleArgon2id(call: MethodCall, result: MethodChannel.Result) {
+        val password = call.argument<ByteArray>("password")
+        val salt = call.argument<ByteArray>("salt")
+        val memoryKiB = call.argument<Int>("memoryKiB")
+        val iterations = call.argument<Int>("iterations")
+        val parallelism = call.argument<Int>("parallelism")
+        val outputLen = call.argument<Int>("outputLen")
+
+        if (password == null || salt == null || memoryKiB == null || iterations == null ||
+            parallelism == null || outputLen == null) {
+            result.error("INVALID_ARGS", "Missing argon2id parameters", null)
+            return
+        }
+
+        ioExecutor.execute {
+            try {
+                val derived = NativeEngine.argon2idNative(
+                    password, salt, memoryKiB, iterations, parallelism, outputLen
+                )
+                password.fill(0)
+                activity.runOnUiThread {
+                    if (derived != null) result.success(derived)
+                    else result.error("KDF_FAILED", "Argon2id derivation failed", null)
+                }
+            } catch (e: Exception) {
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            }
+        }
+    }
+
     fun handleScrypt(call: MethodCall, result: MethodChannel.Result) {
         val password = call.argument<ByteArray>("password")
         val salt     = call.argument<ByteArray>("salt")

@@ -63,7 +63,7 @@ class ExchangeRecord {
   DateTime? createdAt;
   DateTime? updatedAt;
 
-  ExchangeRecord({
+ ExchangeRecord({
     required this.type,
     required this.title,
     Map<String, String>? fields,
@@ -71,8 +71,8 @@ class ExchangeRecord {
     this.favorite = false,
     this.createdAt,
     this.updatedAt,
-  })  : fields = fields ?? {},
-        folderPath = folderPath ?? const [];
+  })  : fields = fields != null ? Map<String, String>.from(fields) : {},
+        folderPath = folderPath != null ? List<String>.from(folderPath) : <String>[];
 
   /// A short, human-readable secondary line for import-preview lists --
   /// the first non-secret, non-empty field, same rule as

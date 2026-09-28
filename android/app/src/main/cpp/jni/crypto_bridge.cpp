@@ -454,6 +454,41 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_sivDecryptNative(
 }
 
 extern "C" JNIEXPORT jbyteArray JNICALL
+Java_com_aeidolon_vaultexplorer_NativeEngine_argon2idNative(
+        JNIEnv* env, jobject,
+        jbyteArray password, jbyteArray salt,
+        jint memoryKiB, jint iterations, jint parallelism, jint outputLen) {
+    JNI_TRY
+    if (password == nullptr || salt == nullptr || outputLen <= 0) return nullptr;
+    jsize pwLen = env->GetArrayLength(password);
+    jsize saltLen = env->GetArrayLength(salt);
+    jbyte* pwData = env->GetByteArrayElements(password, nullptr);
+    jbyte* saltData = env->GetByteArrayElements(salt, nullptr);
+    std::vector<uint8_t> out(static_cast<size_t>(outputLen));
+
+    bool ok = argon2idDeriveKey(
+        reinterpret_cast<const unsigned char*>(pwData), static_cast<size_t>(pwLen),
+        reinterpret_cast<const unsigned char*>(saltData), static_cast<size_t>(saltLen),
+        static_cast<uint32_t>(memoryKiB), static_cast<uint32_t>(iterations), static_cast<uint32_t>(parallelism),
+        out.data(), out.size(), nullptr
+    );
+
+    mbedtls_platform_zeroize(pwData, pwLen);
+    env->ReleaseByteArrayElements(password, pwData, JNI_ABORT);
+    env->ReleaseByteArrayElements(salt, saltData, JNI_ABORT);
+
+    if (!ok) {
+        mbedtls_platform_zeroize(out.data(), out.size());
+        return nullptr;
+    }
+    jbyteArray result = env->NewByteArray(outputLen);
+    env->SetByteArrayRegion(result, 0, outputLen, reinterpret_cast<const jbyte*>(out.data()));
+    mbedtls_platform_zeroize(out.data(), out.size());
+    return result;
+    JNI_CATCH_RETURN(nullptr)
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL
 Java_com_aeidolon_vaultexplorer_NativeEngine_scryptNative(
         JNIEnv* env, jobject,
         jbyteArray passphrase, jbyteArray salt, jint N, jint r, jint p, jint dkLen) {

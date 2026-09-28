@@ -29,7 +29,8 @@ class _Gcm {
   final Uint8List key;
   final Uint8List iv;
   final Uint8List ciphertextAndTag;
-  _Gcm(this.key, this.iv, this.ciphertextAndTag);
+  final Uint8List? aad;
+  _Gcm(this.key, this.iv, this.ciphertextAndTag, [this.aad]);
 }
 
 /// Records every call and answers from scripts: [derivedKey] for the KDFs
@@ -78,8 +79,9 @@ class _FakeCrypto extends VaultCryptoApi {
     required Uint8List key,
     required Uint8List iv,
     required Uint8List ciphertextAndTag,
+    Uint8List? aad,
   }) async {
-    gcms.add(_Gcm(Uint8List.fromList(key), iv, ciphertextAndTag));
+    gcms.add(_Gcm(Uint8List.fromList(key), iv, ciphertextAndTag, aad));
     // A copy: the codec zeroizes key material it's handed once it's done.
     final next = plaintexts.removeAt(0);
     return next == null ? null : Uint8List.fromList(next);
@@ -93,6 +95,29 @@ class _FakeCrypto extends VaultCryptoApi {
   }) async {
     final next = plaintexts.removeAt(0);
     return next == null ? null : Uint8List.fromList(next);
+  }
+
+  @override
+  Future<Uint8List?> xchacha20Poly1305Open({
+    required Uint8List key,
+    required Uint8List nonce,
+    required Uint8List ciphertextAndTag,
+    Uint8List? aad,
+  }) async {
+    final next = plaintexts.removeAt(0);
+    return next == null ? null : Uint8List.fromList(next);
+  }
+
+  @override
+  Future<Uint8List?> argon2id({
+    required Uint8List password,
+    required Uint8List salt,
+    required int memoryKiB,
+    required int iterations,
+    required int parallelism,
+    required int outputLen,
+  }) async {
+    return Uint8List.fromList(derivedKey);
   }
 }
 

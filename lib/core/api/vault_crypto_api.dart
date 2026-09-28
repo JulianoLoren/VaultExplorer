@@ -68,15 +68,21 @@ class VaultCryptoApi {
     return result;
   }
 
-   /// AES-GCM decryption via the C++ mbedTLS layer.
+  /// AES-GCM decryption via the C++ mbedTLS layer.
   Future<Uint8List?> aesGcmDecrypt({
     required Uint8List key,
     required Uint8List iv,
     required Uint8List ciphertextAndTag,
+    Uint8List? aad,
   }) async {
     final result = await _channel.invokeMethod<Uint8List>(
       ChannelMethods.aesGcmDecrypt,
-      {'key': key, 'iv': iv, 'ciphertextAndTag': ciphertextAndTag},
+      {
+        'key': key,
+        'iv': iv,
+        'ciphertextAndTag': ciphertextAndTag,
+        if (aad != null) 'aad': aad,
+      },
     );
     return result;
   }
@@ -137,6 +143,48 @@ class VaultCryptoApi {
     final result = await _channel.invokeMethod<Uint8List>(
       ChannelMethods.scrypt,
       {'password': password, 'salt': salt, 'n': n, 'r': r, 'p': p, 'dkLen': dkLen},
+    );
+    return result;
+  }
+
+  /// Argon2id via the native engine.
+  Future<Uint8List?> argon2id({
+    required Uint8List password,
+    required Uint8List salt,
+    required int memoryKiB,
+    required int iterations,
+    required int parallelism,
+    required int outputLen,
+  }) async {
+    final result = await _channel.invokeMethod<Uint8List>(
+      ChannelMethods.argon2id,
+      {
+        'password': password,
+        'salt': salt,
+        'memoryKiB': memoryKiB,
+        'iterations': iterations,
+        'parallelism': parallelism,
+        'outputLen': outputLen,
+      },
+    );
+    return result;
+  }
+
+  /// XChaCha20-Poly1305 AEAD decryption via the native engine.
+  Future<Uint8List?> xchacha20Poly1305Open({
+    required Uint8List key,
+    required Uint8List nonce,
+    required Uint8List ciphertextAndTag,
+    Uint8List? aad,
+  }) async {
+    final result = await _channel.invokeMethod<Uint8List>(
+      ChannelMethods.xchacha20Poly1305Open,
+      {
+        'key': key,
+        'nonce': nonce,
+        'ciphertextAndTag': ciphertextAndTag,
+        if (aad != null) 'aad': aad,
+      },
     );
     return result;
   }

@@ -201,6 +201,11 @@ internal object NativeEngine {
     ): ByteArray?
 
     @JvmStatic
+    external fun argon2idNative(
+        password: ByteArray, salt: ByteArray, memoryKiB: Int, iterations: Int, parallelism: Int, outputLen: Int
+    ): ByteArray?
+
+    @JvmStatic
     external fun gocryptfsEmeNative(
         key: ByteArray, tweak: ByteArray, data: ByteArray, encrypt: Boolean
     ): ByteArray?

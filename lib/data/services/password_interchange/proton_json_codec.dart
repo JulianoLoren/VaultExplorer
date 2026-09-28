@@ -3,12 +3,15 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:vaultexplorer/core/api/vault_crypto_api.dart';
 import 'package:vaultexplorer/data/models/password_exchange/exchange_record.dart';
 import 'package:vaultexplorer/data/models/vault_item.dart';
+import 'package:vaultexplorer/data/services/password_interchange/authenticator_backup_crypto.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_format_codec.dart';
 
 class ProtonJsonCodec implements PasswordFormatCodec {
-  const ProtonJsonCodec();
+  final VaultCryptoApi _crypto;
+  const ProtonJsonCodec({VaultCryptoApi crypto = kDefaultBackupCrypto}) : _crypto = crypto;
 
   @override
   String get id => 'proton_json';
@@ -18,7 +21,7 @@ class ProtonJsonCodec implements PasswordFormatCodec {
 
   @override
   String get description =>
-      'Unencrypted JSON export from Proton Authenticator or Proton Pass.';
+      'Proton Authenticator or Proton Pass export (.json) -- plain or password-protected.';
 
   @override
   bool get supportsImport => true;
@@ -30,15 +33,18 @@ class ProtonJsonCodec implements PasswordFormatCodec {
   bool get isEncrypted => false;
 
   @override
-  bool get isOptionallyEncrypted => false;
+  bool get isOptionallyEncrypted => true;
 
   @override
   bool looksLikeThisFormat({required String fileName, Uint8List? bytes}) {
-    if (!fileName.toLowerCase().endsWith('.json')) return false;
-    if (bytes == null) return false;
+    final lower = fileName.toLowerCase();
+    if (lower.contains('proton') && lower.endsWith('.json')) return true;
+    if (!lower.endsWith('.json')) return false;
+    if (bytes == null) return true;
     try {
       final text = utf8.decode(bytes.take(2048).toList(), allowMalformed: true);
-      return text.contains('"entries"') || text.contains('"vaults"');
+      return text.contains('"entries"') || text.contains('"vaults"') ||
+          (text.contains('"salt"') && text.contains('"content"'));
     } catch (_) {
       return false;
     }
@@ -57,12 +63,26 @@ class ProtonJsonCodec implements PasswordFormatCodec {
       throw PasswordFileFormatException('Could not parse this file as JSON: $e');
     }
 
+    Map<String, dynamic> targetRoot = root;
+
+    if (root['salt'] != null && root['content'] != null && root['entries'] == null) {
+      if (password == null || password.isEmpty) {
+        throw const PasswordFileIncorrectPasswordException();
+      }
+      final decryptedJsonStr = await _decryptPasswordProtected(root, password);
+      final decodedContent = jsonDecode(decryptedJsonStr);
+      if (decodedContent is! Map<String, dynamic>) {
+        throw const PasswordFileFormatException('Decrypted Proton data is not a JSON object.');
+      }
+      targetRoot = decodedContent;
+    }
+
     final records = <ExchangeRecord>[];
     final warnings = <String>[];
 
     // Format 1: Proton Authenticator {"version": 1, "entries": [...]}
-    if (root.containsKey('entries') && root['entries'] is List) {
-      final entries = root['entries'] as List;
+    if (targetRoot.containsKey('entries') && targetRoot['entries'] is List) {
+      final entries = targetRoot['entries'] as List;
       for (final raw in entries) {
         if (raw is! Map) continue;
         try {
@@ -74,8 +94,8 @@ class ProtonJsonCodec implements PasswordFormatCodec {
       }
     }
     // Format 2: Proton Pass {"vaults": {...} or [...]}
-    else if (root.containsKey('vaults')) {
-      _decodeProtonPassVaults(root['vaults'], records, warnings);
+    else if (targetRoot.containsKey('vaults')) {
+      _decodeProtonPassVaults(targetRoot['vaults'], records, warnings);
     } else {
       throw const PasswordFileFormatException(
         'This doesn\'t look like a Proton export (no "entries" or "vaults" found).',
@@ -87,6 +107,59 @@ class ProtonJsonCodec implements PasswordFormatCodec {
     }
 
     return DecodedExchange(records, warnings: warnings);
+  }
+
+  Future<String> _decryptPasswordProtected(
+    Map<String, dynamic> root,
+    String password,
+  ) async {
+    if (root['version'] != 1) {
+      throw const PasswordFileFormatException('Unsupported Proton export version');
+    }
+
+    final saltBase64 = root['salt'];
+    final contentBase64 = root['content'];
+    if (saltBase64 is! String || contentBase64 is! String) {
+      throw const PasswordFileFormatException('Invalid Proton export data');
+    }
+
+    final salt = base64Decode(saltBase64);
+    if (salt.length != 16) {
+      throw const PasswordFileFormatException('Invalid Proton export salt');
+    }
+
+    final encryptedBytes = base64Decode(contentBase64);
+    if (encryptedBytes.length <= 12) {
+      throw const PasswordFileFormatException('Invalid Proton export content');
+    }
+
+    final key = await deriveArgon2id(
+      _crypto,
+      password: password,
+      salt: Uint8List.fromList(salt),
+      memoryKiB: 19 * 1024,
+      iterations: 2,
+      parallelism: 1,
+      outputLen: 32,
+    );
+
+    try {
+      final nonce = encryptedBytes.sublist(0, 12);
+      final cipherText = encryptedBytes.sublist(12);
+      final aad = Uint8List.fromList(utf8.encode('proton.authenticator.export.v1'));
+
+      final plain = await openAesGcm(
+        _crypto,
+        key: key,
+        iv: nonce,
+        ciphertextAndTag: cipherText,
+        aad: aad,
+      );
+
+      return utf8.decode(plain);
+    } finally {
+      zeroizeBytes(key);
+    }
   }
 
   ExchangeRecord? _authenticatorEntryToRecord(Map<String, dynamic> raw) {
@@ -186,7 +259,7 @@ class ProtonJsonCodec implements PasswordFormatCodec {
 
     final title = (metadata['name'] as String? ?? '').trim();
     final note = (metadata['note'] as String? ?? '').trim();
-    final folderPath = vaultName.isNotEmpty ? [vaultName] : const <String>[];
+    final folderPath = vaultName.isNotEmpty ? [vaultName] : <String>[];
 
     final fields = <String, String>{};
     if (note.isNotEmpty) fields['notes'] = note;

@@ -134,7 +134,7 @@ class TwoFasJsonCodec implements PasswordFormatCodec {
         }
         return decoded;
       } finally {
-        key.fillRange(0, key.length, 0);
+        zeroizeBytes(key);
       }
     } on FormatException {
       throw const PasswordFileFormatException('This 2FAS backup is malformed.');

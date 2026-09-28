@@ -17,8 +17,6 @@ import 'package:vaultexplorer/data/models/vault_item.dart';
 import 'package:vaultexplorer/data/services/password_interchange/authenticator_backup_crypto.dart';
 import 'package:vaultexplorer/data/services/password_interchange/password_format_codec.dart';
 
-// Bitwarden's own item type numbers -- fixed by their export schema, not
-// something this codec invents.
 const int _bwTypeLogin = 1;
 const int _bwTypeSecureNote = 2;
 const int _bwTypeCard = 3;
@@ -131,7 +129,7 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
     }
     final rawSalt = root['salt'];
     final kdfType = root['kdfType'] as int? ?? 0;
-    final kdfIterations = root['kdfIterations'] as int? ?? 100000;
+    final kdfIterations = (root['kdfIterations'] as num?)?.toInt() ?? 100000;
     final encKeyValidation = root['encKeyValidation_DO_NOT_EDIT'] as String?;
     final data = root['data'] as String?;
 
@@ -144,40 +142,26 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
       );
     }
 
-    final saltBytes = Uint8List.fromList(utf8.encode(rawSalt));
-    final Uint8List masterKey;
-    try {
-      masterKey = await derivePbkdf2(
-        _crypto,
-        password: password,
-        salt: saltBytes,
-        iterations: kdfIterations,
-        keyLength: 32,
-        hash: Pbkdf2Hash.sha256,
+    // Helper: parses Bitwarden's "2.<iv_b64>|<ct_b64>|<mac_b64>" string format.
+    ({Uint8List iv, Uint8List ct, Uint8List? mac}) parseCipherString(String cs) {
+      final dot = cs.indexOf('.');
+      final raw = dot >= 0 ? cs.substring(dot + 1) : cs;
+      final parts = raw.split('|');
+      if (parts.length < 2) {
+        throw const PasswordFileFormatException('Invalid cipher format in Bitwarden export.');
+      }
+      return (
+        iv: Uint8List.fromList(base64.decode(base64.normalize(parts[0].trim()))),
+        ct: Uint8List.fromList(base64.decode(base64.normalize(parts[1].trim()))),
+        mac: parts.length >= 3 ? Uint8List.fromList(base64.decode(base64.normalize(parts[2].trim()))) : null,
       );
-    } catch (_) {
-      throw const PasswordFileIncorrectPasswordException();
     }
 
+    // HKDF-Expand with SHA-256 for subkey stretching (info = "enc" or "mac")
     Uint8List hkdfExpand(Uint8List prk, String info) {
       final hmac = crypto.Hmac(crypto.sha256, prk);
       final bytes = hmac.convert([...utf8.encode(info), 1]).bytes;
       return Uint8List.fromList(bytes.sublist(0, 32));
-    }
-
-    final encKey = hkdfExpand(masterKey, 'enc');
-    final macKey = hkdfExpand(masterKey, 'mac');
-
-    ({Uint8List iv, Uint8List ct, Uint8List mac}) parseCipherString(String cs) {
-      final dot = cs.indexOf('.');
-      if (dot < 0) throw const PasswordFileFormatException('Invalid cipher format.');
-      final parts = cs.substring(dot + 1).split('|');
-      if (parts.length < 3) throw const PasswordFileFormatException('Invalid cipher parts.');
-      return (
-        iv: base64.decode(base64.normalize(parts[0])),
-        ct: base64.decode(base64.normalize(parts[1])),
-        mac: base64.decode(base64.normalize(parts[2])),
-      );
     }
 
     bool verifyMac(Uint8List macKey, Uint8List iv, Uint8List ct, Uint8List expectedMac) {
@@ -191,36 +175,112 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
       return diff == 0;
     }
 
+    // Candidate salt byte representations (Bitwarden uses UTF-8 string bytes,
+    // but some third-party export tools store base64-decoded bytes).
+    final candidateSalts = <Uint8List>[
+      Uint8List.fromList(utf8.encode(rawSalt)),
+      tryBase64Decode(rawSalt),
+    ].where((s) => s.isNotEmpty).toList();
+
+    Uint8List? masterKey;
+    Uint8List? stretchedEncKey;
+    Uint8List? stretchedMacKey;
+    Uint8List? dataEncKey;
+    Uint8List? dataMacKey;
+
     try {
-      if (encKeyValidation != null && encKeyValidation.isNotEmpty) {
-        final val = parseCipherString(encKeyValidation);
-        if (!verifyMac(macKey, val.iv, val.ct, val.mac)) {
+      final validationParts = encKeyValidation != null ? parseCipherString(encKeyValidation) : null;
+      final dataParts = parseCipherString(data);
+
+      bool foundValidKey = false;
+      for (final saltBytes in candidateSalts) {
+        try {
+          masterKey = await derivePbkdf2(
+            _crypto,
+            password: password,
+            salt: saltBytes,
+            iterations: kdfIterations,
+            keyLength: 32,
+            hash: Pbkdf2Hash.sha256,
+          );
+        } catch (_) {
+          continue;
+        }
+
+        stretchedEncKey = hkdfExpand(masterKey, 'enc');
+        stretchedMacKey = hkdfExpand(masterKey, 'mac');
+
+        if (validationParts != null && validationParts.mac != null) {
+          if (verifyMac(stretchedMacKey, validationParts.iv, validationParts.ct, validationParts.mac!)) {
+            foundValidKey = true;
+            break;
+          }
+        } else if (dataParts.mac != null) {
+          if (verifyMac(stretchedMacKey, dataParts.iv, dataParts.ct, dataParts.mac!)) {
+            foundValidKey = true;
+            break;
+          }
+        }
+      }
+
+      if (!foundValidKey || stretchedEncKey == null || stretchedMacKey == null) {
+        throw const PasswordFileIncorrectPasswordException();
+      }
+
+      // Step 2: Unwrap the 64-byte symmetric key from encKeyValidation_DO_NOT_EDIT
+      if (validationParts != null) {
+        final symKey = await openAesCbc(
+          _crypto,
+          key: stretchedEncKey,
+          iv: validationParts.iv,
+          ciphertext: validationParts.ct,
+        );
+        if (symKey.length >= 64) {
+          dataEncKey = Uint8List.fromList(symKey.sublist(0, 32));
+          dataMacKey = Uint8List.fromList(symKey.sublist(32, 64));
+        } else {
+          dataEncKey = stretchedEncKey;
+          dataMacKey = stretchedMacKey;
+        }
+      } else {
+        dataEncKey = stretchedEncKey;
+        dataMacKey = stretchedMacKey;
+      }
+
+      // Step 3: Verify and decrypt the vault payload data
+      if (dataParts.mac != null) {
+        if (!verifyMac(dataMacKey, dataParts.iv, dataParts.ct, dataParts.mac!)) {
           throw const PasswordFileIncorrectPasswordException();
         }
       }
 
-      final d = parseCipherString(data);
-      if (!verifyMac(macKey, d.iv, d.ct, d.mac)) {
-        throw const PasswordFileIncorrectPasswordException();
-      }
-
       final plain = await openAesCbc(
         _crypto,
-        key: encKey,
-        iv: d.iv,
-        ciphertext: d.ct,
+        key: dataEncKey,
+        iv: dataParts.iv,
+        ciphertext: dataParts.ct,
       );
 
       final jsonStr = utf8.decode(plain);
       final decoded = jsonDecode(jsonStr);
-      if (decoded is! Map<String, dynamic>) {
+      if (decoded is! Map) {
         throw const PasswordFileFormatException('Decrypted Bitwarden data is not valid JSON.');
       }
-      return decoded;
+      return Map<String, dynamic>.from(decoded);
     } finally {
-      masterKey.fillRange(0, masterKey.length, 0);
-      encKey.fillRange(0, encKey.length, 0);
-      macKey.fillRange(0, macKey.length, 0);
+      zeroizeBytes(masterKey);
+      zeroizeBytes(stretchedEncKey);
+      zeroizeBytes(stretchedMacKey);
+      zeroizeBytes(dataEncKey);
+      zeroizeBytes(dataMacKey);
+    }
+  }
+
+  static Uint8List tryBase64Decode(String str) {
+    try {
+      return Uint8List.fromList(base64.decode(base64.normalize(str.trim())));
+    } catch (_) {
+      return Uint8List(0);
     }
   }
 
@@ -232,7 +292,7 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
     final folderId = item['folderId'] as String?;
     final folderPath = (folderId != null && folderNames.containsKey(folderId))
         ? folderNames[folderId]!.split('/').where((s) => s.isNotEmpty).toList()
-        : const <String>[];
+        : <String>[];
 
     final fields = <String, String>{};
 

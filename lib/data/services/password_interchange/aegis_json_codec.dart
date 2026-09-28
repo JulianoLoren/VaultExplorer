@@ -109,7 +109,7 @@ class AegisJsonCodec implements PasswordFormatCodec {
       }
       if (masterKey == null) throw const PasswordFileIncorrectPasswordException();
 
-      final Uint8List plain;
+       final Uint8List plain;
       try {
         plain = await openAesGcm(
           _crypto,
@@ -121,7 +121,7 @@ class AegisJsonCodec implements PasswordFormatCodec {
           ),
         );
       } finally {
-        masterKey.fillRange(0, masterKey.length, 0);
+        zeroizeBytes(masterKey);
       }
       final decoded = jsonDecode(utf8.decode(plain));
       if (decoded is! Map) {
@@ -162,10 +162,10 @@ class AegisJsonCodec implements PasswordFormatCodec {
           hexDecode(jsonStr(keyParams['tag'])),
         ),
       );
-    } on PasswordFileIncorrectPasswordException {
+   } on PasswordFileIncorrectPasswordException {
       return null;
     } finally {
-      wrappingKey.fillRange(0, wrappingKey.length, 0);
+      zeroizeBytes(wrappingKey);
     }
   }
 
