@@ -2452,5 +2452,7 @@
   "actionIndent": "Einzug vergrößern",
   "actionOutdent": "Einzug verkleinern",
   "actionFormat": "Code formatieren",
-  "actionReadOnly": "Schreibgeschützt"
+  "actionReadOnly": "Schreibgeschützt",
+  "screenLockOnlyAutoLockOption": "Nur Bildschirmsperre",
+  "screenLockOnlyAutoLockOptionSubtitle": "Sperrt nur beim Ausschalten des Bildschirms — nicht beim Wechsel der App in den Hintergrund"
 }

@@ -9039,4 +9039,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get actionReadOnly => 'Lecture seule';
+
+  @override
+  String get screenLockOnlyAutoLockOption =>
+      'Verrouillage de l\'écran uniquement';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      'Se verrouille uniquement lorsque l\'écran s\'éteint — pas lorsque l\'application passe en arrière-plan';
 }

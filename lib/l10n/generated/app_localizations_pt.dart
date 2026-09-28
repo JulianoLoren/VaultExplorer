@@ -8965,4 +8965,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get actionReadOnly => 'Somente leitura';
+
+  @override
+  String get screenLockOnlyAutoLockOption => 'Apenas bloqueio de tela';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      'Bloqueia apenas quando a tela se apaga — não quando o app fica em segundo plano';
 }

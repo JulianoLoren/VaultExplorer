@@ -9021,4 +9021,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get actionReadOnly => 'للقراءة فقط';
+
+  @override
+  String get screenLockOnlyAutoLockOption => 'قفل الشاشة فقط';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      'يُقفل فقط عند إيقاف تشغيل الشاشة — وليس عند نقل التطبيق إلى الخلفية';
 }

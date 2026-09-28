@@ -8963,4 +8963,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get actionReadOnly => 'Schreibgeschützt';
+
+  @override
+  String get screenLockOnlyAutoLockOption => 'Nur Bildschirmsperre';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      'Sperrt nur beim Ausschalten des Bildschirms — nicht beim Wechsel der App in den Hintergrund';
 }

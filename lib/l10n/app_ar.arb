@@ -2452,5 +2452,7 @@
   "actionIndent": "زيادة المسافة البادئة",
   "actionOutdent": "إنقاص المسافة البادئة",
   "actionFormat": "تنسيق الكود",
-  "actionReadOnly": "للقراءة فقط"
+  "actionReadOnly": "للقراءة فقط",
+  "screenLockOnlyAutoLockOption": "قفل الشاشة فقط",
+  "screenLockOnlyAutoLockOptionSubtitle": "يُقفل فقط عند إيقاف تشغيل الشاشة — وليس عند نقل التطبيق إلى الخلفية"
 }

@@ -14868,6 +14868,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Toggle Read-Only'**
   String get actionReadOnly;
+
+  /// Option meaning auto-lock reacts only to the screen turning off, not to plain app backgrounding; also reused as the dashboard auto-lock badge label for this mode
+  ///
+  /// In en, this message translates to:
+  /// **'Screen Lock Only'**
+  String get screenLockOnlyAutoLockOption;
+
+  /// Subtitle explaining the "Screen Lock Only" option, shown under it in the auto-lock picker dialog and reused as the dashboard auto-lock badge tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Locks only when the screen turns off — not when the app is backgrounded'**
+  String get screenLockOnlyAutoLockOptionSubtitle;
 }
 
 class _AppLocalizationsDelegate

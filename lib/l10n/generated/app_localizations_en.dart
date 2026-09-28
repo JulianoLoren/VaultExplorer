@@ -8826,4 +8826,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionReadOnly => 'Toggle Read-Only';
+
+  @override
+  String get screenLockOnlyAutoLockOption => 'Screen Lock Only';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      'Locks only when the screen turns off — not when the app is backgrounded';
 }

@@ -8476,4 +8476,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get actionReadOnly => '읽기 전용';
+
+  @override
+  String get screenLockOnlyAutoLockOption => '화면 잠금만';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      '화면이 꺼질 때만 잠김 — 앱이 백그라운드로 이동할 때는 잠기지 않음';
 }

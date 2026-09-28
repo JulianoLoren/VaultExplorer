@@ -2452,5 +2452,7 @@
   "actionIndent": "Aumentar sangría",
   "actionOutdent": "Reducir sangría",
   "actionFormat": "Formatear código",
-  "actionReadOnly": "Solo lectura"
+  "actionReadOnly": "Solo lectura",
+  "screenLockOnlyAutoLockOption": "Solo bloqueo de pantalla",
+  "screenLockOnlyAutoLockOptionSubtitle": "Se bloquea solo cuando la pantalla se apaga — no cuando la app pasa a segundo plano"
 }

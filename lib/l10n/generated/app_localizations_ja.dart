@@ -8477,4 +8477,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get actionReadOnly => '読み取り専用';
+
+  @override
+  String get screenLockOnlyAutoLockOption => '画面ロック時のみ';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      '画面がオフになった時のみロック — アプリがバックグラウンドになった時はロックされません';
 }

@@ -8363,4 +8363,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get actionReadOnly => '只读';
+
+  @override
+  String get screenLockOnlyAutoLockOption => '仅屏幕锁定';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle => '仅在屏幕关闭时锁定 — 应用进入后台时不锁定';
 }

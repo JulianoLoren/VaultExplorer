@@ -9037,4 +9037,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get actionReadOnly => 'Тільки для читання';
+
+  @override
+  String get screenLockOnlyAutoLockOption => 'Лише блокування екрана';
+
+  @override
+  String get screenLockOnlyAutoLockOptionSubtitle =>
+      'Блокується лише при вимкненні екрана — не коли застосунок переходить у фоновий режим';
 }

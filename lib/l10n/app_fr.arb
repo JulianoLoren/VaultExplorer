@@ -2452,5 +2452,7 @@
   "actionIndent": "Indenter",
   "actionOutdent": "Désindenter",
   "actionFormat": "Formater le code",
-  "actionReadOnly": "Lecture seule"
+  "actionReadOnly": "Lecture seule",
+  "screenLockOnlyAutoLockOption": "Verrouillage de l'écran uniquement",
+  "screenLockOnlyAutoLockOptionSubtitle": "Se verrouille uniquement lorsque l'écran s'éteint — pas lorsque l'application passe en arrière-plan"
 }

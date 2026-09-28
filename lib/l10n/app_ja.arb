@@ -2452,5 +2452,7 @@
   "actionIndent": "インデント",
   "actionOutdent": "インデント解除",
   "actionFormat": "コードの整形",
-  "actionReadOnly": "読み取り専用"
+  "actionReadOnly": "読み取り専用",
+  "screenLockOnlyAutoLockOption": "画面ロック時のみ",
+  "screenLockOnlyAutoLockOptionSubtitle": "画面がオフになった時のみロック — アプリがバックグラウンドになった時はロックされません"
 }

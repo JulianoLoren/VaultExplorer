@@ -11219,5 +11219,13 @@
   "actionIndent": "Indent",
   "actionOutdent": "Outdent",
   "actionFormat": "Format Code",
-  "actionReadOnly": "Toggle Read-Only"
+  "actionReadOnly": "Toggle Read-Only",
+  "screenLockOnlyAutoLockOption": "Screen Lock Only",
+  "@screenLockOnlyAutoLockOption": {
+    "description": "Option meaning auto-lock reacts only to the screen turning off, not to plain app backgrounding; also reused as the dashboard auto-lock badge label for this mode"
+  },
+  "screenLockOnlyAutoLockOptionSubtitle": "Locks only when the screen turns off — not when the app is backgrounded",
+  "@screenLockOnlyAutoLockOptionSubtitle": {
+    "description": "Subtitle explaining the \"Screen Lock Only\" option, shown under it in the auto-lock picker dialog and reused as the dashboard auto-lock badge tooltip"
+  }
 }
