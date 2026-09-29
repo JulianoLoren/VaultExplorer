@@ -36,7 +36,7 @@ On Android 14+ (API 34+), the OS enforces strict "while-in-use" restrictions on 
 
 - **Option A (Recommended — Direct Activity)**: Set Target Type to **Activity** (or `am start`) targeting:
   - **Component**: `com.aeidolon.vaultexplorer.automation.VaultAutomationCaptureActivity`
-  - Runs invisibly without UI or animations, bypassing background restrictions completely.
+  - Runs invisibly without UI or animations. It is recommended because it doesn't go through Option B's broadcast trampoline (and so doesn't need the "Display over other apps" permission); your automation app must still be allowed to start activities on your device -- see the OEM setup guide if it is blocked.
 - **Option B (Broadcast Trampoline)**: Set Target Type to **Broadcast** targeting `VaultAutomationReceiver`. The receiver trampolines to the invisible activity. On Android 14+, grant VaultExplorer the **"Display over other apps"** permission in device settings so the OS permits background activity launching.
 
 > ⚠️ **Important**: In **MacroDroid**, set **Intent Target** to **Broadcast** for general actions (or **Activity** if using Option A for camera). In **Tasker**, set **Target** to **Broadcast Receiver** (or **Activity** for Option A).
@@ -229,7 +229,7 @@ VaultExplorer broadcasts a response intent for every processed action:
     - `ERROR`: General failure or I/O exception.
     - `PARTIAL` *(batch operations only)*: The folder or glob batch finished, but at least one file failed. Check `result_message` and the count extras below.
     - `PERMISSION_DENIED` *(`TAKE_PHOTO` / `START_RECORDING` only)*: Camera/microphone permission isn't granted on-device. Automation can't trigger the system permission prompt itself -- open VaultExplorer's own camera screen once to grant it, then retry.
-    - `CAMERA_UNAVAILABLE` *(`TAKE_PHOTO` / `START_RECORDING` only)*: The camera couldn't be opened -- commonly because something else (e.g. VaultExplorer's own in-app camera screen) already has it open, or a hardware/driver error. Also returned when an OEM device policy or MDM profile has disabled the camera hardware (`CAMERA_DISABLED`).
+    - `CAMERA_UNAVAILABLE` *(`TAKE_PHOTO` / `START_RECORDING` only)*: The camera couldn't be opened -- commonly because something else (e.g. VaultExplorer's own in-app camera screen) already has it open, or a hardware/driver error. Any other failure to open the camera -- including a device policy or MDM profile that has disabled it -- is also reported as `CAMERA_UNAVAILABLE`, with the underlying camera error code in the message; there is no separate `CAMERA_DISABLED` result code.
     - `BUSY` *(`START_RECORDING` only)*: An automation recording is already in progress.
     - `NOT_RECORDING` *(`STOP_RECORDING` only)*: Nothing is currently recording, or the in-progress recording belongs to a different vault than the one named in `vault_uri`.
   - `result_message` *(String)*: Human-readable message or error details.

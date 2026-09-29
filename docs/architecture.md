@@ -192,7 +192,7 @@ Four independent locking/executor layers exist, at different granularities,
 for different reasons. None of them is redundant with another, but none of
 them stands in for the *Kotlin-side* session map either (§2 rule 8).
 
-### 3.1 Executors (Kotlin, `MainActivity`)
+### 3.1 Executors (Kotlin, `MainActivity` and `VideoThumbnailCoordinator`)
 
 Four fixed-size thread pools, sized per-device by `DeviceCapabilityProfiler`
 rather than hardcoded. `DeviceCapabilityProfiler.classify()` computes a
@@ -202,7 +202,11 @@ LOW/MEDIUM/HIGH tier once per process
 `ThreadPoolExecutor.setCorePoolSize`/`setMaximumPoolSize`. The same tier
 feeds Dart-side cache budgets (`FullResImageCache.resize`,
 `ThumbnailCacheService`), so memory and thread budgets scale together off
-one signal.
+one signal. `ioExecutor` and `fullResExecutor` are owned by `MainActivity`;
+the two thumbnail pools are `VideoThumbnailCoordinator.imageExecutor` and
+`.videoExecutor` (`container/VideoThumbnailCoordinator.kt`), which
+`MainActivity` only references and resizes. `MainActivity` also holds a
+separate fixed 2-thread `pdfExecutor` that is *not* resized by the tier.
 
 | Executor | Purpose | LOW / MEDIUM / HIGH tier size |
 |---|---|---|
@@ -413,18 +417,21 @@ unless a matching foreground service is running. It is independent of
 
 The stable cross-language contract for interactive use is a single
 `MethodChannel` (`com.aeidolon.vaultexplorer/engine`); every method name is
-a constant in **`ChannelMethods`** (Dart) mirrored 1:1 by a Kotlin
+a constant in **`ChannelMethods`** (Dart) mirrored by a Kotlin
 `ChannelMethods` object inside `MainActivity` — that pairing is the API
-contract and both sides must be updated together. Automation (§5.4) is a
+contract and both sides must be updated together. The two lists are
+near-identical rather than exact mirrors: `exportLogFile` exists only on the
+Kotlin side (Dart calls it by string literal in `logcat_service.dart`), and
+`onTrimMemory` exists only on the Dart side. Automation (§5.4) is a
 separate, headless entry point that does not go through this channel, and
 Mask Mode (§6.3) has its own dedicated channel.
 
 ### 5.1 Dart → native (method calls)
 
 This is organized by group below rather than listed exhaustively —
-`ChannelMethods` (Kotlin) currently defines around 180 constants; the
-groups below cover every constant, but not every constant is spelled out
-by name.
+`ChannelMethods` (Kotlin) currently defines 224 constants (Dart also
+defines 224); the groups below are a guide to them, and not every constant
+is spelled out by name.
 
 | Group | Methods |
 |---|---|
@@ -454,10 +461,18 @@ by name.
 Via the same channel's method-call handler in reverse — see
 `VaultExplorerApi.initMethodCallHandler`:
 
-`onAppSelected`, `onUsbContainerDetached`, `onScreenOff`, `onUnlockStarted`,
+The handler currently dispatches 25 event names: `onAppSelected`,
+`onUsbContainerDetached`, `onScreenOff`, `onUnlockStarted`,
 `onUnlockProgress`, `onImportProgress`, `onCameraPermissionResult`,
-`onTrimMemory`. Each has a corresponding typed `ListenerRegistry` (or, for
-`onTrimMemory`, a direct call into `CacheCoordinator.trimAll`) — see §3.4.
+`onTrimMemory`, `onBackgroundRecordingStopRequested`, `onCopyProgress`,
+`onExportItemFinished`, `onExportProgress`, `onHashProgress`,
+`onHiddenVolumeProtectionTriggered`, `onImportItemFinished`,
+`onIncomingShareRequest`, `onNotificationPermissionResult`,
+`onPanicCredentialsPurged`, `onPanicSessionPurged`, `onQuickCaptureRequested`,
+`onRepairLog`, `onSplitJoinProgress`, `onStoragePermissionResult`,
+`onVaultAutomationUnlocked`, and `onVaultForceLocked`. The first eight each
+have a corresponding typed `ListenerRegistry` (or, for `onTrimMemory`, a
+direct call into `CacheCoordinator.trimAll`) — see §3.4.
 `VaultAutomationUnlockedBridge` (§5.4) delivers a similar unlocked-vault
 notification to the dashboard when a Flutter engine happens to be attached,
 but it is not part of this method-call handler and does not require one.
@@ -515,11 +530,12 @@ vault state is touched, and a bad/missing token gets no reply broadcast at
 all, so a probing app can't even learn the feature is configured. Every
 successful or failed action replies on `ACTION_AUTOMATION_RESULT` with a
 result code — `OK`/`PARTIAL`/`AUTH_FAIL`/`NOT_MOUNTED`/`FORBIDDEN`/
-`INVALID_ARGS`/`ERROR`/`BUSY`/`CAMERA_UNAVAILABLE`/`NOT_RECORDING` — and
-message, as an ordinary broadcast an automation profile can branch a task
+`INVALID_ARGS`/`ERROR`/`BUSY`/`PERMISSION_DENIED`/`CAMERA_UNAVAILABLE`/
+`NOT_RECORDING` — and message, as an ordinary broadcast an automation profile can branch a task
 chain on. `PARTIAL` is specific to the folder actions (some files
-succeeded, some failed); `BUSY`/`CAMERA_UNAVAILABLE`/`NOT_RECORDING` are
-specific to the camera actions.
+succeeded, some failed); `BUSY`/`PERMISSION_DENIED`/`CAMERA_UNAVAILABLE`/`NOT_RECORDING` are
+specific to the camera actions (`PERMISSION_DENIED` means the camera or
+microphone permission hasn't been granted to the app).
 
 ---
 
@@ -547,7 +563,7 @@ used) and an even older design where the decoy surface was just a zip
 archive browser scoped to the device's public Downloads folder — the decoy
 identity is now a genuinely usable local file manager for the device's real
 storage, not a narrower archive-only view. A ZIP/archive browser is still
-one of the things it can do (`decoy_archive_browse_screen.dart`, reusing the
+one of the things it can do (`decoy_archive_explorer_screen.dart`, reusing the
 same native libarchive engine as §1), but it is one file-type view among
 several now, not the whole of the decoy surface. Either way this is plain
 filesystem access to real device storage with zero container/vault
@@ -639,8 +655,16 @@ than take this summary on faith:
 - **The native crypto/filesystem engine's automated regression tests are
   plain host-side C++ binaries** — `g++`-buildable, `assert`-based, zero
   Android toolchain required, registered with CTest and gated behind
-  `if(NOT ANDROID)` (`CMakeLists.txt`, `crypto/test/kdf_table_test.cpp`,
-  `io/test/sector_batching_test.cpp`, `test/fs_scan_test.cpp`).
+  `if(NOT ANDROID)` (`CMakeLists.txt`). Eleven tests are registered today —
+  `composite_block_device_test`, `sector_batching_test`, `fs_scan_test`,
+  `kdf_table_test`, `decrypted_block_cache_test`, `cryfs_block_cipher_test`,
+  `utf16le_password_test`, `container_header_test`,
+  `container_utils_crc32_test`, `chunked_block_device_test`, and
+  `archive_engine_test` (only when its target exists). A few further test
+  sources (`io/test/mbr_builder_test.cpp`,
+  `containers/test/usb_create_diagnostics_test.cpp`) are self-contained,
+  build with plain `g++ -std=c++17`, and pass, but are not registered with
+  CTest.
 - **`file_browser_screen.dart`'s selection-mode and sort-mode state live in
   reusable `SelectionMixin<T>`/`SortMixin<T>` mixins**, not inline in the
   screen's `State` class (`lib/features/browser/mixins/`).

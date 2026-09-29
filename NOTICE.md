@@ -36,13 +36,14 @@ All entries below were checked directly against upstream sources/licenses
 | e2fsprogs -- `lib/ext2fs`, `lib/e2p` | tytso/e2fsprogs | LGPL-2.0 | 7ee1d505 (v1.47.4) | OK |
 | dislocker (BitLocker) | Aorimn/dislocker | GPL-2.0-or-later | 38dab031 | OK |
 | cJSON | DaveGamble/cJSON | MIT | acc76239 (v1.7.18) | OK |
+| ZXing-C++ (offline QR/barcode decoding, `jni/qr_bridge.cpp`) | zxing-cpp/zxing-cpp | Apache-2.0 | 287c85df (v3.1.1); readers only, writers/examples disabled in `CMakeLists.txt` | OK, added -- was previously missing from this table |
 | libarchive (archive/ZIP/7-Zip/RAR/TAR browser engine, `archive/`) | libarchive/libarchive | BSD-2-Clause | 27cbc782 (v3.8.9) | OK |
 | bzip2 (libarchive filter) | libarchive/bzip2 | bzip2 license (BSD-style permissive) | tag `bzip2-1.0.8` | OK |
 | xz / liblzma (libarchive filter) | tukaani-project/xz | 0BSD | 4b73f2ec (v5.8.3) | OK |
 | zstd (libarchive filter) | facebook/zstd | BSD-3-Clause OR GPL-2.0-or-later (dual, at your option) | f8745da6 (v1.5.7) | OK |
 | BoringSSL (AES-256 ZIP / RAR5 passphrase support for libarchive) | google/boringssl | ISC (new code) + OpenSSL License/SSLeay License (ported OpenSSL code) -- all permissive | ef0c0723 | OK |
 | VeraCrypt crypto primitives -- `Twofish.c`, `Serpent.c`, `Camellia.c`, `kuznyechik.c`, `Whirlpool.c`, `blake2s.c`, `cpu.c`, Argon2 | veracrypt/VeraCrypt | Per-file permissive: Twofish (Gladman permissive), Serpent/Whirlpool/kuznyechik/cpu.c (public domain), Camellia (BSD-2-clause/NTT), blake2/Argon2 (CC0 or Apache-2.0, at your option) | d26216c2 (1.26.29) | OK, individually |
-| `Common/Tcdefs.h` and `Common/Endian.c`/`Common/Endian.h` | project contributors (clean-room; no longer sourced from veracrypt/VeraCrypt) | GPL-3.0-or-later, matching this project's own LICENSE | n/a -- written in-repo, host-tested via `cpp/Common/test/test_endian.c` | OK |
+| `Common/Tcdefs.h` and `Common/Endian.c`/`Common/Endian.h` | project contributors (clean-room; no longer sourced from veracrypt/VeraCrypt) | GPL-3.0-or-later, matching this project's own LICENSE | n/a -- written in-repo. A host test exists at `cpp/Common/test/test_endian.c`, but in this snapshot it does not compile as shipped (a `LE*/BE*` inside a block comment ends the comment early, and the build line in its header needs `-I../..` rather than `-I..`) and it is not registered in CMake or CI | OK |
 
 Archive-engine note: `archive/archive_engine.cpp` (this project's own libarchive
 wrapper, GPLv3-or-later like the rest of the project) replaces the pure-Dart
@@ -91,6 +92,9 @@ engine straight into these views.
 | `re_editor` | MIT | In-app text/code editor widget (`reqable.com`) backing `TextEditorScreen` -- line numbers, active-line indication, and syntax highlighting. Checked against upstream `reqable/re-editor`, not just pub.dev's badge. |
 | `re_highlight` | MIT | `re_editor`'s syntax-highlighting engine (Dart port of `highlight.js`, itself BSD-3-Clause upstream -- the Dart translation is independently MIT-licensed by `reqable.com`). Supplies the bundled language grammars and color themes used by the editor. |
 | `isolate_manager` | MIT | Transitive dependency of `re_editor`; runs syntax highlighting off the UI isolate for large files. |
+| `kpasslib` | MIT | KeePass KDBX 3/4 reading and writing for Item Vault import/export (`kdbx_codec.dart`). License checked on its pub.dev page; its own transitive dependencies were not audited in this pass. |
+| `csv` | MIT | CSV parsing/encoding for password import/export (`csv_codec.dart`). No dependencies. |
+| `crypto` | BSD-3-Clause | Official Dart-team SHA/HMAC package, used for TOTP codes (`totp_engine.dart`) and for reading password-protected Bitwarden exports (`bitwarden_json_codec.dart`). |
 
 `archive` (MIT) is present only as a transitive/test-time package now -- it
 is not a direct `pubspec.yaml` dependency and ships in no release code

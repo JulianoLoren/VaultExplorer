@@ -15,15 +15,17 @@ happen locally, using the same file pickers as the rest of the app.
 1. Pick a vault folder to export from (its Item Vault entries, optionally
    including subfolders).
 2. Pick a format.
-3. For KDBX, set a master password for the new file.
+3. For KDBX, set a master password for the new file. Every other export
+   format is written as plaintext.
 4. VaultExplorer builds the file in memory, then you pick where to save it
    on device storage (or share it from there, same as any other file).
 
 ## Importing
 
-1. Pick a file (KDBX, Bitwarden JSON, or CSV -- VaultExplorer guesses the
-   format from the file's content/name, but you can override it).
-2. For KDBX, enter its master password.
+1. Pick a file (KDBX, Bitwarden or Proton JSON, an authenticator backup, a
+   CSV, or an `otpauth://` list -- VaultExplorer guesses the format from the
+   file's content/name, but you can override it).
+2. For a KDBX or any password-protected backup, enter its password.
 3. Review the decoded items -- everything is pre-selected; uncheck anything
    you don't want. Rows/entries the codec couldn't confidently read are
    listed as warnings rather than silently dropped or silently guessed.
@@ -36,14 +38,17 @@ file is always a preview first.
 
 ## Format support
 
-| Format | Import | Export | Encrypted | Fidelity |
-|---|:-:|:-:|:-:|---|
-| **KeePass (.kdbx)** | ✓ | ✓ | Yes (its own master password) | Full -- every item type round-trips losslessly, and the file is directly usable in real KeePass/KeePassXC/Strongbox, not just in VaultExplorer |
-| **Bitwarden (.json)** | ✓ | ✓ | Yes (plain or password-protected) | Full -- Bitwarden's `fields[]` array carries anything without a native Bitwarden equivalent |
-| **Proton (.json)** | ✓ | ✓ | Yes (plain or password-protected) | Proton Pass & Proton Authenticator exports. Full import for logins, cards, notes, and 2FA codes |
-| **Ente Auth (.json)** | ✓ | ✗ | Yes (Argon2id + Secretstream) | Authenticator codes losslessly imported from Ente Auth encrypted exports or local backups |
+| Format | Import | Export | Encrypted file | Fidelity |
+|---|:-:|:-:|---|---|
+| **KeePass (.kdbx)** | ✓ | ✓ | Always (its own master password) | Full -- every item type round-trips losslessly, and the file is directly usable in real KeePass/KeePassXC/Strongbox, not just in VaultExplorer |
+| **Bitwarden (.json)** | ✓ | ✓ | Import: plain or password-protected (PBKDF2 only; Argon2id exports are refused -- re-export with PBKDF2). Export: always plaintext | Full -- Bitwarden's `fields[]` array carries anything without a native Bitwarden equivalent |
+| **Proton (.json)** | ✓ | ✓ | Import: plain or password-protected. Export: always plaintext | Proton Pass & Proton Authenticator exports. Full import for logins, cards, notes, and 2FA codes |
+| **Ente Auth (.json)** | ✓ | ✗ | Import: encrypted (Argon2id + Secretstream) exports or local backups | Authenticator codes losslessly imported |
 | **Google Authenticator** | ✓ | ✗ | No | Authenticator accounts scanned directly from "Export accounts" transfer QR codes |
-| **Aegis / 2FAS / andOTP** | ✓ | ✗ | Yes (plain or password-protected) | Authenticator codes imported directly from their respective backup files |
+| **Aegis / 2FAS / andOTP** | ✓ | ✗ | Import: plain or password-protected. andOTP: current-format encrypted backups only (older SHA-256/AES-CBC backups aren't handled -- re-export from a current andOTP) | Authenticator codes imported directly from their respective backup files |
+| **Raivo OTP (.json)** | ✓ | ✗ | No | Authenticator codes. Raivo exports a .zip -- unzip it and pick the .json inside |
+| **LastPass Authenticator (.json)** | ✓ | ✗ | No | Time-based codes (the only kind LastPass Authenticator holds) |
+| **`otpauth://` list (.txt)** | ✓ | ✓ | No | One URI per line -- the lowest common denominator most authenticator apps can read or write, so it doubles as the way out of this app |
 | **CSV** | ✓ | ✓ | No | Best-effort on import (see below); the export schema round-trips through VaultExplorer losslessly but a plain CSV can't hold as much as the other two formats |
 
 CSV import auto-detects columns from VaultExplorer's own export, **Bitwarden**,
@@ -53,8 +58,9 @@ against each format's known column names. It's a heuristic, not a strict
 per-vendor parser -- that's why the import screen always shows a preview
 before writing anything.
 
-Because a CSV or an unencrypted Bitwarden JSON export is plaintext on disk,
-delete it from device storage once you're done importing or sharing it.
+Because every export except KDBX -- including Bitwarden and Proton JSON, CSV,
+and `otpauth://` lists -- is plaintext on disk, delete it from device storage
+once you're done importing or sharing it.
 
 ---
 
