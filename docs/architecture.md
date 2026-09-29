@@ -363,11 +363,31 @@ progressing through its own lifecycle.
     `NativeOpSupport.dispatchNativeError`, not merely hidden in the UI.
 - **Locked (again)** — reachable from Unlocked via any of: explicit
   `lockContainer`, USB device physical detach
-  (`onUsbContainerDetached` → auto-lock), screen-off auto-lock policy
-  (`SessionLockController`, if `lockContainersOnScreenLock` or a master
-  password is set and `autoLockMins == 0`), or resume-after-away-too-long
-  (`autoLockMins` elapsed while backgrounded). All paths funnel through the
-  same native `lock`/session-removal code (§3.3), so there is one teardown
+  (`onUsbContainerDetached` → auto-lock), or one of the automatic policies
+  in `SessionLockController`. The automatic policies only apply while
+  `lockContainersOnScreenLock` is on (they do **not** depend on a master
+  password — that only gates the separate *app lock*, below):
+  - **screen off** — locks immediately if `autoLockMins <= 0` or
+    `autoLockScreenLockOnly` is set; otherwise arms an `autoLockMins`
+    countdown;
+  - **resume after backgrounding** — locks if `autoLockMins == 0` or the
+    time away reached `autoLockMins`; ignored entirely when
+    `autoLockScreenLockOnly` is set (only a real screen-off counts);
+  - **foreground inactivity timer** — armed for `autoLockMins` when that is
+    positive and `autoLockScreenLockOnly` is off. All of these timers are
+    skipped while media is playing, and `isLockSuppressed` (a depth counter)
+    suppresses screen-off locking.
+  Independent of that app-wide toggle, individual containers can override
+  the policy: "Immediately" containers lock on any screen-off or
+  background-resume, and "Screen Lock Only" containers
+  (`ContainerRecord.autoCloseScreenLockOnly`) lock on a genuine screen-off
+  only. There is also a per-container inactivity timer
+  (`VaultDashboardController.scheduleAutoClose`).
+  The *app lock* (the master-password gate, `performAppLock`) is a separate
+  mechanism with its own settings (`lockAppOnScreenLock`,
+  `appLockAfterMins`, `appLockScreenLockOnly`) and requires a master
+  password. All container-lock paths funnel through the same native
+  `lock`/session-removal code (§3.3), so there is one teardown
   implementation regardless of trigger.
 
 ### 4.2 Terminal error outcomes (Unlocking → Locked, no session created)

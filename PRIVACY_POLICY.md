@@ -70,9 +70,10 @@ Android's backup is turned off for the app (`allowBackup` is `false`), so
 none of this is copied to Google's backup service.
 
 **Settings export.** If you use Settings → Export settings, the app writes a
-plain JSON file to a location you pick. It contains app preferences and your
-file manager layout only. It does not contain passwords, keys, your master
-lock credential, or your container list.
+plain JSON file to a location you pick. It contains app preferences (including your
+emergency-lock and share-target switches) and your file manager layout only,
+with per-container folder paths removed. It does not contain passwords, keys,
+your master lock credential, or your container list.
 
 **Debug logging.** Off by default. If you turn it on, diagnostic messages go
 to Android's on-device system log, which the in-app Logcat viewer can display
@@ -94,8 +95,10 @@ exporting or extracting files, working with archives, the file
 encrypt/decrypt tool, and generating thumbnails for very large files. For
 those, the app briefly keeps a plaintext scratch copy in its own private
 cache folder, overwrites it with zeros, and deletes it when the operation
-finishes; anything a crash leaves behind is wiped the next time the app
-starts. This is best effort: on flash storage, overwriting a file cannot
+finishes; anything a crash leaves behind is removed the next time the app
+starts. Leftover camera recordings, quick-capture scratch files, thumbnails
+and exports are overwritten with zeros first; some other kinds of temporary
+file are deleted without being overwritten. This is best effort: on flash storage, overwriting a file cannot
 guarantee that no trace of it remains. The scratch files live in the app's
 private storage, which other apps cannot read on a non-rooted device.
 
