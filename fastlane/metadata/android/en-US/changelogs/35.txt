@@ -1,0 +1,9 @@
+Text Editor:
+• Physical keyboard shortcuts (save, find, tabs, line nav)
+• Code folding (blocks & JSON) and pinch-to-zoom font resizing
+• Move line up/down (Alt+Up/Down) and tab bar auto-scrolling
+• Native floating text selection toolbar
+• Options to toggle status bar, caret scroll, and controls
+
+Vault Explorer:
+• Improved SAF cloud storage reliability with deferred writes
