@@ -41,6 +41,7 @@ class EditorAccessoryKeyBar extends StatelessWidget {
   final List<String> actions;
   final bool showSymbols;
   final bool showActions;
+  final bool showScrubber;
   final bool isWordWrap;
   final bool isReadOnly;
   final VoidCallback? onSearch;
@@ -59,6 +60,7 @@ class EditorAccessoryKeyBar extends StatelessWidget {
     this.actions = TextEditorAppearancePrefs.defaultActions,
     this.showSymbols = true,
     this.showActions = true,
+    this.showScrubber = false,
     this.isWordWrap = true,
     this.isReadOnly = false,
     this.onSearch,
@@ -142,6 +144,18 @@ class EditorAccessoryKeyBar extends StatelessWidget {
     );
   });
 
+  void _selectAll() => _act(() {
+    if (controller.codeLines.isEmpty) return;
+    final lastLineIndex = controller.codeLines.length - 1;
+    final lastLineLength = controller.codeLines[lastLineIndex].text.length;
+    controller.selection = CodeLineSelection(
+      baseIndex: 0,
+      baseOffset: 0,
+      extentIndex: lastLineIndex,
+      extentOffset: lastLineLength,
+    );
+  });
+
   Widget? _buildActionButton(BuildContext context, String actionKey, ColorScheme cs) {
     switch (actionKey) {
       case 'undo':
@@ -175,6 +189,12 @@ class EditorAccessoryKeyBar extends StatelessWidget {
           icon: Icons.highlight_alt_rounded,
           tooltip: context.l10n.actionSelectWord,
           onTap: _selectWord,
+        );
+      case 'selectAll':
+        return _IconKeyButton(
+          icon: Icons.select_all_rounded,
+          tooltip: context.l10n.actionSelectAll,
+          onTap: _selectAll,
         );
       case 'copy':
         return _IconKeyButton(
@@ -331,7 +351,8 @@ class EditorAccessoryKeyBar extends StatelessWidget {
                           },
                         ),
                       ),
-                    _CaretScrubber(controller: controller, editorFocusNode: editorFocusNode),
+                    if (showScrubber)
+                      _CaretScrubber(controller: controller, editorFocusNode: editorFocusNode),
                   ],
                 ),
               ),

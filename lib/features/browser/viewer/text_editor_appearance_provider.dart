@@ -43,6 +43,11 @@ class TextEditorAppearanceNotifier extends Notifier<TextEditorAppearancePrefs> {
     _service.save(state);
   }
 
+  void setShowStatusBar(bool enabled) {
+    state = state.copyWith(showStatusBar: enabled);
+    _service.save(state);
+  }
+
   void setShowAccessoryBar(bool enabled) {
     state = state.copyWith(showAccessoryBar: enabled);
     _service.save(state);
@@ -55,6 +60,11 @@ class TextEditorAppearanceNotifier extends Notifier<TextEditorAppearancePrefs> {
 
   void setShowAccessoryActions(bool enabled) {
     state = state.copyWith(showAccessoryActions: enabled);
+    _service.save(state);
+  }
+
+  void setShowAccessoryScrubber(bool enabled) {
+    state = state.copyWith(showAccessoryScrubber: enabled);
     _service.save(state);
   }
 

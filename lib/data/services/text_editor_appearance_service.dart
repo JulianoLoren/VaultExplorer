@@ -21,9 +21,11 @@ class TextEditorAppearancePrefs {
   final bool relativeLineNumbers;
   final bool autoSave;
   final bool showLineNumbers;
+  final bool showStatusBar;
   final bool showAccessoryBar;
   final bool showAccessorySymbols;
   final bool showAccessoryActions;
+  final bool showAccessoryScrubber;
   final double fontSize;
   final List<String> accessorySymbols;
   final List<String> accessoryActions;
@@ -34,12 +36,12 @@ class TextEditorAppearancePrefs {
   ];
 
   static const List<String> defaultActions = [
-    'undo', 'redo', 'cursorLeft', 'cursorRight', 'selectWord',
+    'undo', 'redo', 'cursorLeft', 'cursorRight', 'selectWord', 'selectAll',
     'copy', 'cut', 'paste', 'find', 'wordWrap', 'goToLine',
   ];
 
   static const List<String> allAvailableActions = [
-    'undo', 'redo', 'cursorLeft', 'cursorRight', 'selectWord',
+    'undo', 'redo', 'cursorLeft', 'cursorRight', 'selectWord', 'selectAll',
     'copy', 'cut', 'paste', 'find', 'wordWrap', 'goToLine',
     'goToStart', 'goToEnd', 'indent', 'outdent', 'format', 'readOnly',
   ];
@@ -50,9 +52,11 @@ class TextEditorAppearancePrefs {
     this.relativeLineNumbers = false,
     this.autoSave = false,
     this.showLineNumbers = true,
+    this.showStatusBar = true,
     this.showAccessoryBar = true,
     this.showAccessorySymbols = true,
     this.showAccessoryActions = true,
+    this.showAccessoryScrubber = false,
     this.fontSize = 14.0,
     this.accessorySymbols = defaultSymbols,
     this.accessoryActions = defaultActions,
@@ -64,9 +68,11 @@ class TextEditorAppearancePrefs {
     bool? relativeLineNumbers,
     bool? autoSave,
     bool? showLineNumbers,
+    bool? showStatusBar,
     bool? showAccessoryBar,
     bool? showAccessorySymbols,
     bool? showAccessoryActions,
+    bool? showAccessoryScrubber,
     double? fontSize,
     List<String>? accessorySymbols,
     List<String>? accessoryActions,
@@ -76,9 +82,11 @@ class TextEditorAppearancePrefs {
     relativeLineNumbers: relativeLineNumbers ?? this.relativeLineNumbers,
     autoSave: autoSave ?? this.autoSave,
     showLineNumbers: showLineNumbers ?? this.showLineNumbers,
+    showStatusBar: showStatusBar ?? this.showStatusBar,
     showAccessoryBar: showAccessoryBar ?? this.showAccessoryBar,
     showAccessorySymbols: showAccessorySymbols ?? this.showAccessorySymbols,
     showAccessoryActions: showAccessoryActions ?? this.showAccessoryActions,
+    showAccessoryScrubber: showAccessoryScrubber ?? this.showAccessoryScrubber,
     fontSize: fontSize ?? this.fontSize,
     accessorySymbols: accessorySymbols ?? this.accessorySymbols,
     accessoryActions: accessoryActions ?? this.accessoryActions,
@@ -90,9 +98,11 @@ class TextEditorAppearancePrefs {
     'relativeLineNumbers': relativeLineNumbers,
     'autoSave': autoSave,
     'showLineNumbers': showLineNumbers,
+    'showStatusBar': showStatusBar,
     'showAccessoryBar': showAccessoryBar,
     'showAccessorySymbols': showAccessorySymbols,
     'showAccessoryActions': showAccessoryActions,
+    'showAccessoryScrubber': showAccessoryScrubber,
     'fontSize': fontSize,
     'accessorySymbols': accessorySymbols,
     'accessoryActions': accessoryActions,
@@ -111,9 +121,11 @@ class TextEditorAppearancePrefs {
       relativeLineNumbers: json['relativeLineNumbers'] == true,
       autoSave: json['autoSave'] == true,
       showLineNumbers: json['showLineNumbers'] ?? true,
+      showStatusBar: json['showStatusBar'] ?? true,
       showAccessoryBar: json['showAccessoryBar'] ?? true,
       showAccessorySymbols: json['showAccessorySymbols'] ?? true,
       showAccessoryActions: json['showAccessoryActions'] ?? true,
+      showAccessoryScrubber: json['showAccessoryScrubber'] ?? false,
       fontSize: (json['fontSize'] as num?)?.toDouble() ?? 14.0,
       accessorySymbols: (json['accessorySymbols'] as List<dynamic>?)
               ?.map((e) => e.toString())

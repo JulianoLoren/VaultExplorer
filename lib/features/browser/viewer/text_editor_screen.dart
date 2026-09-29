@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/rendering.dart' show AxisDirection;
 import 'package:flutter/scheduler.dart' show SchedulerBinding, SchedulerPhase;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:re_editor/re_editor.dart';
@@ -43,6 +45,8 @@ class EditorTab {
   bool isAutosaving = false;
   int lineCount = 0;
   int charCount = 0;
+  int cursorLine = 1;
+  int cursorCol = 1;
   DateTime? lastSavedAt;
   bool lastSaveWasAutosave = false;
   bool appliedInitialText = false;
@@ -194,14 +198,43 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   }
 
   void _onTabTextChanged(EditorTab tab) {
-    final codeLines = tab.codeController.value.codeLines;
-    if (identical(codeLines, tab.lastCodeLines)) return;
+    final selection = tab.codeController.selection;
+    final lineCount = tab.codeController.lineCount;
+    final newLine = (selection.extentIndex + 1).clamp(1, lineCount > 0 ? lineCount : 1);
+    final newCol = selection.extentOffset + 1;
 
+    final cursorChanged = tab.cursorLine != newLine || tab.cursorCol != newCol;
+    if (cursorChanged) {
+      tab.cursorLine = newLine;
+      tab.cursorCol = newCol;
+    }
+
+    final codeLines = tab.codeController.value.codeLines;
+    final isSameCodeLines = identical(codeLines, tab.lastCodeLines);
     final currentText = tab.codeController.text;
-    if (currentText == tab.lastKnownText) {
+    final isSameText = currentText == tab.lastKnownText;
+
+    final isBusyBuilding =
+        SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks ||
+        (WidgetsBinding.instance.buildOwner?.debugBuilding ?? false);
+
+    if (isSameCodeLines || isSameText) {
       tab.lastCodeLines = codeLines;
+      if (!cursorChanged) return;
+
+      void updateCursor() {
+        if (!mounted) return;
+        setState(() {});
+      }
+
+      if (isBusyBuilding) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => updateCursor());
+      } else {
+        updateCursor();
+      }
       return;
     }
+
     tab.lastCodeLines = codeLines;
     tab.lastKnownText = currentText;
 
@@ -214,7 +247,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       });
     }
 
-    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+    if (isBusyBuilding) {
       WidgetsBinding.instance.addPostFrameCallback((_) => updateState());
     } else {
       updateState();
@@ -402,6 +435,87 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     });
   }
 
+  Future<void> _createNewFileTab() async {
+    final parentDir = _projectDirPath;
+    final controller = TextEditingController(text: 'untitled.txt');
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.textEditorNewFileTooltip),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: ctx.l10n.textEditorSaveAsFileNameLabel,
+            ),
+            validator: (val) {
+              final text = val?.trim() ?? '';
+              if (text.isEmpty) return ctx.l10n.validationEmptyName;
+              if (text.contains('/') || text.contains('\\')) {
+                return ctx.l10n.validationIllegalChar('/', 0, 'vault');
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.of(ctx).pop(controller.text.trim());
+              }
+            },
+            child: Text(ctx.l10n.done),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || !mounted) return;
+    final newFilePath = parentDir.isEmpty ? result : '$parentDir/$result';
+
+    final rawList = await ref.read(vaultFileIoApiProvider).listDirectory(
+          widget.container,
+          parentDir,
+        );
+    final existingNames = RawEntry.parseAll(rawList ?? const [])
+        .map((e) => e.name.toLowerCase())
+        .toSet();
+
+    if (existingNames.contains(result.toLowerCase()) && mounted) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.textEditorFileAlreadyExistsError,
+        tone: AppBannerTone.error,
+      );
+      return;
+    }
+
+    final ok = await ref.read(vaultFileIoApiProvider).writeWholeFile(
+          widget.container,
+          newFilePath,
+          Uint8List(0),
+        );
+
+    if (ok && mounted) {
+      _openFileInTab(newFilePath);
+    } else if (mounted) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.saveFailedWithError(''),
+        tone: AppBannerTone.error,
+      );
+    }
+  }
+
   Future<void> _showSaveAsDialog() async {
     final currentTab = _activeTab;
     final lastSlash = currentTab.filePath.lastIndexOf('/');
@@ -526,6 +640,74 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   void _toggleWordWrap() => setState(() => _wordWrap = !_wordWrap);
 
+  void _handleSaveShortcut() {
+    if (_tabs.isEmpty) return;
+    final tab = _activeTab;
+    if (tab.isDirty && !tab.isSaving && !tab.isAutosaving) {
+      _saveFile(tab);
+    }
+  }
+
+  void _handleFindShortcut() {
+    if (_tabs.isEmpty) return;
+    final tab = _activeTab;
+    if (tab.showMarkdownPreview) {
+      _toggleMarkdownPreview();
+    }
+    tab.findController.findMode();
+  }
+
+  void _handleCloseTabShortcut() {
+    if (_tabs.isEmpty) return;
+    _closeTab(_activeTabIndex);
+  }
+
+  void _handleNextTabShortcut() {
+    if (_tabs.length <= 1) return;
+    setState(() {
+      _activeTabIndex = (_activeTabIndex + 1) % _tabs.length;
+    });
+    _focusNode.requestFocus();
+  }
+
+  void _handlePreviousTabShortcut() {
+    if (_tabs.length <= 1) return;
+    setState(() {
+      _activeTabIndex = (_activeTabIndex - 1 + _tabs.length) % _tabs.length;
+    });
+    _focusNode.requestFocus();
+  }
+
+  void _handleGoToLineShortcut() {
+    if (_tabs.isEmpty) return;
+    _showGoToLineDialog();
+  }
+
+  void _handleSelectAllShortcut() {
+    if (_tabs.isEmpty) return;
+    final tab = _activeTab;
+
+    if (tab.findController.findInputFocusNode.hasFocus) {
+      tab.findController.findInputController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: tab.findController.findInputController.text.length,
+      );
+      return;
+    }
+    if (tab.findController.replaceInputFocusNode.hasFocus) {
+      tab.findController.replaceInputController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: tab.findController.replaceInputController.text.length,
+      );
+      return;
+    }
+
+    if (_focusNode.canRequestFocus && !_focusNode.hasFocus) {
+      _focusNode.requestFocus();
+    }
+    _selectAll();
+  }
+
   void _toggleMarkdownPreview() {
     final tab = _activeTab;
     if (!tab.showMarkdownPreview) {
@@ -627,24 +809,52 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     _focusNode.requestFocus();
   }
 
-  void _goToLineIndex(int lineIndex) {
+  void _selectAll() {
+    final tab = _activeTab;
+    if (tab.codeController.codeLines.isEmpty) return;
+    final lastLineIndex = tab.codeController.codeLines.length - 1;
+    final lastLineLength = tab.codeController.codeLines[lastLineIndex].text.length;
+    tab.codeController.selection = CodeLineSelection(
+      baseIndex: 0,
+      baseOffset: 0,
+      extentIndex: lastLineIndex,
+      extentOffset: lastLineLength,
+    );
+  }
+
+  void _goToLineIndex(int lineIndex, [int columnIndex = 0]) {
     final target = lineIndex.clamp(0, _activeTab.codeController.lineCount - 1);
-    _activeTab.codeController.selection = CodeLineSelection.collapsed(index: target, offset: 0);
+    final lineLength = _activeTab.codeController.codeLines[target].text.length;
+    final targetCol = columnIndex.clamp(0, lineLength);
+    _activeTab.codeController.selection = CodeLineSelection.collapsed(index: target, offset: targetCol);
     _activeTab.codeController.makeCursorCenterIfInvisible();
   }
 
-  void _goToStart() => _goToLineIndex(0);
+  void _goToStart() {
+    _goToLineIndex(0);
+    _focusNode.requestFocus();
+  }
 
-  void _goToEnd() => _goToLineIndex(_activeTab.codeController.lineCount - 1);
+  void _goToEnd() {
+    _goToLineIndex(_activeTab.codeController.lineCount - 1);
+    _focusNode.requestFocus();
+  }
 
   Future<void> _showGoToLineDialog() async {
-    final result = await showDialog<int>(
+    final result = await showDialog<(int, int?)>(
       context: context,
       builder: (dialogContext) => _GoToLineDialog(maxLine: _activeTab.codeController.lineCount),
     );
 
     if (result != null) {
-      _goToLineIndex(result - 1);
+      final (line, col) = result;
+      _goToLineIndex(line - 1, col != null ? col - 1 : 0);
+      _focusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _activeTab.codeController.makeCursorCenterIfInvisible();
+        }
+      });
     }
   }
 
@@ -695,6 +905,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
     final cs = Theme.of(context).colorScheme;
     final activeTab = _activeTab;
+    final appearance = ref.watch(textEditorAppearanceProvider);
 
     ref.listen<TextEditorAppearancePrefs>(textEditorAppearanceProvider, (previous, next) {
       if (!next.autoSave) {
@@ -716,9 +927,29 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
           Navigator.of(context).pop();
         }
       },
-      child: Scaffold(
-        key: _scaffoldKey,
-        drawer: _buildProjectDrawer(cs),
+      child: CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.keyA, control: true): _handleSelectAllShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyA, meta: true): _handleSelectAllShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyT, control: true): _createNewFileTab,
+          const SingleActivator(LogicalKeyboardKey.keyT, meta: true): _createNewFileTab,
+          const SingleActivator(LogicalKeyboardKey.keyS, control: true): _handleSaveShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _handleSaveShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyF, control: true): _handleFindShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyF, meta: true): _handleFindShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyW, control: true): _handleCloseTabShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyW, meta: true): _handleCloseTabShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyG, control: true): _handleGoToLineShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyG, meta: true): _handleGoToLineShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyZ, alt: true): _toggleWordWrap,
+          const SingleActivator(LogicalKeyboardKey.tab, control: true): _handleNextTabShortcut,
+          const SingleActivator(LogicalKeyboardKey.tab, control: true, shift: true): _handlePreviousTabShortcut,
+          const SingleActivator(LogicalKeyboardKey.tab, meta: true): _handleNextTabShortcut,
+          const SingleActivator(LogicalKeyboardKey.tab, meta: true, shift: true): _handlePreviousTabShortcut,
+        },
+        child: Scaffold(
+          key: _scaffoldKey,
+          drawer: _buildProjectDrawer(cs),
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.menu_rounded),
@@ -769,6 +1000,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                       break;
                     case 'wordWrap':
                       _toggleWordWrap();
+                      break;
+                    case 'selectAll':
+                      _selectAll();
                       break;
                     case 'goToLine':
                       _showGoToLineDialog();
@@ -850,10 +1084,20 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                   ),
                   const PopupMenuDivider(),
                   PopupMenuItem(
+                    value: 'selectAll',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.select_all_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Text(context.l10n.textEditorSelectAllMenuItem),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
                     value: 'goToLine',
                     child: Row(
                       children: [
-                        const Icon(Icons.redo_rounded, size: 20),
+                        const Icon(Icons.format_list_numbered_rounded, size: 20),
                         const SizedBox(width: 12),
                         Text(context.l10n.textEditorGoToLineMenuItem),
                       ],
@@ -924,8 +1168,10 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
           ),
         ),
         body: _buildBody(cs, Theme.of(context).textTheme),
-        bottomNavigationBar:
-            activeTab.isLoading || activeTab.hasError ? null : _buildBottomBar(cs),
+        bottomNavigationBar: activeTab.isLoading || activeTab.hasError || !appearance.showStatusBar
+            ? null
+            : _buildBottomBar(cs),
+        ),
       ),
     );
   }
@@ -937,67 +1183,80 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         color: cs.surfaceContainer,
         border: Border(bottom: BorderSide(color: cs.outlineVariant, width: 0.5)),
       ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        itemCount: _tabs.length,
-        itemBuilder: (context, index) {
-          final tab = _tabs[index];
-          final isActive = index == _activeTabIndex;
+      child: Row(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              itemCount: _tabs.length,
+              itemBuilder: (context, index) {
+                final tab = _tabs[index];
+                final isActive = index == _activeTabIndex;
 
-          return Material(
-            color: isActive ? cs.surfaceContainerHighest : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () => setState(() => _activeTabIndex = index),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
+                return Material(
+                  color: isActive ? cs.surfaceContainerHighest : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isActive ? cs.primary.withValues(alpha: 0.5) : Colors.transparent,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (tab.isDirty)
-                      Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
-                      ),
-                    Text(
-                      tab.fileName,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                        color: isActive ? cs.onSurface : cs.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _closeTab(index),
-                      child: Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 14,
-                          color: isActive ? cs.onSurfaceVariant : cs.outline,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => setState(() => _activeTabIndex = index),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isActive ? cs.primary.withValues(alpha: 0.5) : Colors.transparent,
+                          width: 1,
                         ),
                       ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (tab.isDirty)
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(right: 6),
+                              decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+                            ),
+                          Text(
+                            tab.fileName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                              color: isActive ? cs.onSurface : cs.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => _closeTab(index),
+                            child: Padding(
+                              padding: const EdgeInsets.all(2.0),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 14,
+                                color: isActive ? cs.onSurfaceVariant : cs.outline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_rounded, size: 20),
+            visualDensity: VisualDensity.compact,
+            tooltip: context.l10n.textEditorNewFileTooltip,
+            onPressed: _createNewFileTab,
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
     );
   }
@@ -1357,7 +1616,142 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     return Column(
       children: [
         Expanded(
-          child: SizedBox(
+          child: Focus(
+            canRequestFocus: false,
+            onKeyEvent: (node, event) {
+              if (!_focusNode.hasFocus) return KeyEventResult.ignored;
+
+              if (event is KeyDownEvent || event is KeyRepeatEvent) {
+                final key = event.logicalKey;
+                if (key == LogicalKeyboardKey.arrowLeft ||
+                    key == LogicalKeyboardKey.arrowRight ||
+                    key == LogicalKeyboardKey.arrowUp ||
+                    key == LogicalKeyboardKey.arrowDown) {
+
+                  final isShift = HardwareKeyboard.instance.isShiftPressed;
+                  final isControl = HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed;
+                  final controller = activeTab.codeController;
+                  final selection = controller.selection;
+                  final lines = controller.codeLines;
+                  if (lines.isEmpty) return KeyEventResult.handled;
+
+                  int baseLine = selection.baseIndex;
+                  int baseOffset = selection.baseOffset;
+                  int extLine = selection.extentIndex;
+                  int extOffset = selection.extentOffset;
+
+                  if (!isShift && !selection.isCollapsed) {
+                    if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowUp) {
+                      final start = selection.start;
+                      extLine = baseLine = start.index;
+                      extOffset = baseOffset = start.offset;
+                    } else {
+                      final end = selection.end;
+                      extLine = baseLine = end.index;
+                      extOffset = baseOffset = end.offset;
+                    }
+                    if (!isControl && (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.arrowRight)) {
+                      controller.selection = CodeLineSelection(baseIndex: baseLine, baseOffset: baseOffset, extentIndex: extLine, extentOffset: extOffset);
+                      controller.makeCursorCenterIfInvisible();
+                      return KeyEventResult.handled;
+                    }
+                  }
+
+                  void moveLeft() {
+                    if (extOffset > 0) {
+                      extOffset--;
+                    } else if (extLine > 0) {
+                      extLine--;
+                      extOffset = lines[extLine].text.length;
+                    }
+                  }
+
+                  void moveRight() {
+                    if (extOffset < lines[extLine].text.length) {
+                      extOffset++;
+                    } else if (extLine < lines.length - 1) {
+                      extLine++;
+                      extOffset = 0;
+                    }
+                  }
+
+                  if (key == LogicalKeyboardKey.arrowLeft) {
+                    if (isControl) {
+                      moveLeft();
+                      while (extLine >= 0) {
+                        final text = lines[extLine].text;
+                        while (extOffset > 0 && RegExp(r'\s').hasMatch(text[extOffset - 1])) extOffset--;
+                        if (extOffset > 0) {
+                          bool isWord = RegExp(r'\w').hasMatch(text[extOffset - 1]);
+                          while (extOffset > 0 && (RegExp(r'\w').hasMatch(text[extOffset - 1]) == isWord) && !RegExp(r'\s').hasMatch(text[extOffset - 1])) {
+                            extOffset--;
+                          }
+                          break;
+                        } else if (extLine > 0) {
+                          extLine--;
+                          extOffset = lines[extLine].text.length;
+                        } else {
+                          break;
+                        }
+                      }
+                    } else {
+                      moveLeft();
+                    }
+                  } else if (key == LogicalKeyboardKey.arrowRight) {
+                    if (isControl) {
+                      moveRight();
+                      while (extLine < lines.length) {
+                        final text = lines[extLine].text;
+                        while (extOffset < text.length && RegExp(r'\s').hasMatch(text[extOffset])) extOffset++;
+                        if (extOffset < text.length) {
+                          bool isWord = RegExp(r'\w').hasMatch(text[extOffset]);
+                          while (extOffset < text.length && (RegExp(r'\w').hasMatch(text[extOffset]) == isWord) && !RegExp(r'\s').hasMatch(text[extOffset])) {
+                            extOffset++;
+                          }
+                          break;
+                        } else if (extLine < lines.length - 1) {
+                          extLine++;
+                          extOffset = 0;
+                        } else {
+                          break;
+                        }
+                      }
+                    } else {
+                      moveRight();
+                    }
+                  } else if (key == LogicalKeyboardKey.arrowUp) {
+                    if (extLine > 0) {
+                      extLine--;
+                      extOffset = math.min(extOffset, lines[extLine].text.length);
+                    } else {
+                      extOffset = 0;
+                    }
+                  } else if (key == LogicalKeyboardKey.arrowDown) {
+                    if (extLine < lines.length - 1) {
+                      extLine++;
+                      extOffset = math.min(extOffset, lines[extLine].text.length);
+                    } else {
+                      extOffset = lines[extLine].text.length;
+                    }
+                  }
+
+                  if (!isShift) {
+                    baseLine = extLine;
+                    baseOffset = extOffset;
+                  }
+
+                  controller.selection = CodeLineSelection(
+                    baseIndex: baseLine,
+                    baseOffset: baseOffset,
+                    extentIndex: extLine,
+                    extentOffset: extOffset,
+                  );
+                  controller.makeCursorCenterIfInvisible();
+                  return KeyEventResult.handled;
+                }
+              }
+              return KeyEventResult.ignored;
+            },
             child: CodeEditor(
               key: ValueKey(activeTab.filePath),
               controller: activeTab.codeController,
@@ -1422,7 +1816,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         if (!_readOnly &&
             softKeyboardVisible &&
             appearance.showAccessoryBar &&
-            (appearance.showAccessorySymbols || appearance.showAccessoryActions))
+            (appearance.showAccessorySymbols ||
+                appearance.showAccessoryActions ||
+                appearance.showAccessoryScrubber))
           EditorAccessoryKeyBar(
             controller: activeTab.codeController,
             editorFocusNode: _focusNode,
@@ -1430,6 +1826,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
             actions: appearance.accessoryActions,
             showSymbols: appearance.showAccessorySymbols,
             showActions: appearance.showAccessoryActions,
+            showScrubber: appearance.showAccessoryScrubber,
             isWordWrap: _wordWrap,
             isReadOnly: _readOnly,
             onSearch: () {
@@ -1456,6 +1853,10 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         ? '${activeTab.lastSavedAt!.hour.toString().padLeft(2, '0')}:${activeTab.lastSavedAt!.minute.toString().padLeft(2, '0')}'
         : null;
 
+    final posStr = !activeTab.showMarkdownPreview
+        ? '${context.l10n.textEditorCursorPosition(activeTab.cursorLine, activeTab.cursorCol)}  •  '
+        : '';
+
     return Container(
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
@@ -1464,12 +1865,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Text(
-            '${context.l10n.linesCount(activeTab.lineCount)}  |  ${context.l10n.charsCount(activeTab.charCount)}',
-            style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+          Expanded(
+            child: Text(
+              '$posStr${context.l10n.linesCount(activeTab.lineCount)}  |  ${context.l10n.charsCount(activeTab.charCount)}',
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          const Spacer(),
           if (_readOnly && !activeTab.showMarkdownPreview) ...[
+            const SizedBox(width: 8),
             Icon(Icons.lock_outline_rounded, size: 14, color: cs.onSurfaceVariant),
             const SizedBox(width: 4),
             Text(
@@ -1481,6 +1886,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
               ),
             ),
           ] else if (activeTab.isAutosaving) ...[
+            const SizedBox(width: 8),
             SizedBox(
               width: 12,
               height: 12,
@@ -1499,36 +1905,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
               ),
             ),
           ] else if (activeTab.isSaving) ...[
+            const SizedBox(width: 8),
             Text(
               context.l10n.savingLabel,
               style: TextStyle(
                 color: cs.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ] else if (activeTab.isDirty) ...[
-            Text(
-              context.l10n.unsavedChangesLabel,
-              style: TextStyle(
-                color: context.semanticColors.warning,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ] else ...[
-            Icon(
-              Icons.check_circle_outline_rounded,
-              size: 14,
-              color: context.semanticColors.success,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              (activeTab.lastSaveWasAutosave && appearance.autoSave && timeStr != null)
-                  ? context.l10n.autosavedAtLabel(timeStr)
-                  : context.l10n.savedToVault,
-              style: TextStyle(
-                color: context.semanticColors.success,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -1559,9 +1940,35 @@ class _GoToLineDialogState extends State<_GoToLineDialog> {
     super.dispose();
   }
 
+  (int, int?)? _parseLineAndColumn(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+
+    final direct = RegExp(r'^(\d+)(?::(\d+))?$').firstMatch(text);
+    if (direct != null) {
+      final line = int.tryParse(direct.group(1)!);
+      if (line == null || line < 1 || line > widget.maxLine) return null;
+      final col = int.tryParse(direct.group(2) ?? '');
+      return (line, (col != null && col > 0) ? col : null);
+    }
+
+    final extracted = RegExp(r'(?::|\b)(\d+):(\d+)\b').firstMatch(text);
+    if (extracted != null) {
+      final line = int.tryParse(extracted.group(1)!);
+      if (line == null || line < 1 || line > widget.maxLine) return null;
+      final col = int.tryParse(extracted.group(2)!);
+      return (line, (col != null && col > 0) ? col : null);
+    }
+
+    return null;
+  }
+
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      Navigator.of(context).pop(int.parse(_controller.text.trim()));
+      final parsed = _parseLineAndColumn(_controller.text);
+      if (parsed != null) {
+        Navigator.of(context).pop(parsed);
+      }
     }
   }
 
@@ -1574,14 +1981,17 @@ class _GoToLineDialogState extends State<_GoToLineDialog> {
         child: TextFormField(
           controller: _controller,
           autofocus: true,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
+          autocorrect: false,
+          enableSuggestions: false,
           decoration: InputDecoration(
             labelText: context.l10n.textEditorGoToLineFieldLabel,
+            hintText: '42 or 42:15',
             helperText: context.l10n.textEditorGoToLineHelperText(widget.maxLine),
           ),
           validator: (value) {
-            final line = int.tryParse(value?.trim() ?? '');
-            if (line == null || line < 1 || line > widget.maxLine) {
+            final parsed = _parseLineAndColumn(value ?? '');
+            if (parsed == null) {
               return context.l10n.textEditorGoToLineInvalidNumber(widget.maxLine);
             }
             return null;

@@ -162,9 +162,11 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
               notifier.setFontSize(14.0);
               notifier.setShowLineNumbers(true);
               notifier.setRelativeLineNumbers(false);
+              notifier.setShowStatusBar(true);
               notifier.setShowAccessoryBar(true);
               notifier.setShowAccessorySymbols(true);
               notifier.setShowAccessoryActions(true);
+              notifier.setShowAccessoryScrubber(false);
               notifier.setAccessorySymbols(TextEditorAppearancePrefs.defaultSymbols);
               notifier.setAccessoryActions(TextEditorAppearancePrefs.defaultActions);
               notifier.setAutoSave(false);
@@ -351,6 +353,25 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
                         ),
                       ),
 
+                    // Show Status Bar Switch
+                    SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      value: prefs.showStatusBar,
+                      onChanged: notifier.setShowStatusBar,
+                      title: Text(
+                        context.l10n.textEditorShowStatusBarLabel,
+                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        context.l10n.textEditorShowStatusBarDescription,
+                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      secondary: Icon(
+                        Icons.dock_rounded,
+                        color: cs.primary,
+                      ),
+                    ),
+
                     // Accessory Bar Master Switch
                     SwitchListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -442,6 +463,25 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
                           trailing: const Icon(Icons.chevron_right_rounded),
                           onTap: () => _showCustomizeActionsDialog(context),
                         ),
+
+                      // Show Scrubber Switch
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        value: prefs.showAccessoryScrubber,
+                        onChanged: notifier.setShowAccessoryScrubber,
+                        title: Text(
+                          context.l10n.textEditorShowCaretScrubberLabel,
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          context.l10n.textEditorShowCaretScrubberDescription,
+                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        secondary: Icon(
+                          Icons.linear_scale_rounded,
+                          color: cs.primary,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -582,6 +622,7 @@ class _CustomizeActionsDialogState extends State<_CustomizeActionsDialog> {
       'cursorLeft' => (Icons.keyboard_arrow_left_rounded, context.l10n.actionCursorLeft),
       'cursorRight' => (Icons.keyboard_arrow_right_rounded, context.l10n.actionCursorRight),
       'selectWord' => (Icons.highlight_alt_rounded, context.l10n.actionSelectWord),
+      'selectAll' => (Icons.select_all_rounded, context.l10n.actionSelectAll),
       'copy' => (Icons.content_copy_rounded, context.l10n.actionCopy),
       'cut' => (Icons.content_cut_rounded, context.l10n.actionCut),
       'paste' => (Icons.content_paste_rounded, context.l10n.actionPaste),
