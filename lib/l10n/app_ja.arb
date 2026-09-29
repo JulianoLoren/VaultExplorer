@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "最初のアカウント（{title}）を入力しました。すべてのアカウントをインポートするには認証システム画面でスキャンしてください。",
   "authenticatorHotpReadOnlyError": "この保管庫は読み取り専用のため、HOTPカウンターを進めることはできません。",
   "authenticatorHotpSaveError": "新しいHOTPカウンターを保存できませんでした。",
-  "authenticatorGenerateNextCode": "次のコードを生成"
+  "authenticatorGenerateNextCode": "次のコードを生成",
+  "actionSelectAll": "すべて選択",
+  "textEditorSelectAllMenuItem": "すべて選択",
+  "textEditorShowCaretScrubberLabel": "カーソルスクラバーを表示",
+  "textEditorShowCaretScrubberDescription": "カーソルを正確に移動するためのドラッグストリップ",
+  "textEditorShowStatusBarLabel": "ステータスバーを表示",
+  "textEditorShowStatusBarDescription": "下部に行数と文字数を表示",
+  "textEditorCursorPosition": "行 {line}、列 {column}",
+  "textEditorNewFileTooltip": "新規ファイル"
 }

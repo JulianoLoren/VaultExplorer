@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "已填入第一个账号（{title}）。若要导入所有账号，请在身份验证器界面中扫描。",
   "authenticatorHotpReadOnlyError": "此保管库为只读状态，因此无法推进 HOTP 计数器。",
   "authenticatorHotpSaveError": "无法保存新的 HOTP 计数器。",
-  "authenticatorGenerateNextCode": "生成下一个验证码"
+  "authenticatorGenerateNextCode": "生成下一个验证码",
+  "actionSelectAll": "全选",
+  "textEditorSelectAllMenuItem": "全选",
+  "textEditorShowCaretScrubberLabel": "显示光标滑块",
+  "textEditorShowCaretScrubberDescription": "用于精确定位光标的滑动条",
+  "textEditorShowStatusBarLabel": "显示状态栏",
+  "textEditorShowStatusBarDescription": "在底部显示行数和字符数",
+  "textEditorCursorPosition": "第 {line} 行，第 {column} 列",
+  "textEditorNewFileTooltip": "新建文件"
 }

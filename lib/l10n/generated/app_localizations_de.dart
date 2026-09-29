@@ -9022,4 +9022,33 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => 'Nächsten Code generieren';
+
+  @override
+  String get actionSelectAll => 'Alles auswählen';
+
+  @override
+  String get textEditorSelectAllMenuItem => 'Alles auswählen';
+
+  @override
+  String get textEditorShowCaretScrubberLabel =>
+      'Cursor-Schiebeleiste anzeigen';
+
+  @override
+  String get textEditorShowCaretScrubberDescription =>
+      'Schiebeleiste zur präzisen Cursorbewegung';
+
+  @override
+  String get textEditorShowStatusBarLabel => 'Statusleiste anzeigen';
+
+  @override
+  String get textEditorShowStatusBarDescription =>
+      'Zeilen- und Zeichenanzahl unten anzeigen';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return 'Zl $line, Sp $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => 'Neue Datei';
 }

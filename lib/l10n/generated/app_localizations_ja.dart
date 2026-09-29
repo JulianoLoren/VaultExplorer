@@ -8535,4 +8535,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => '次のコードを生成';
+
+  @override
+  String get actionSelectAll => 'すべて選択';
+
+  @override
+  String get textEditorSelectAllMenuItem => 'すべて選択';
+
+  @override
+  String get textEditorShowCaretScrubberLabel => 'カーソルスクラバーを表示';
+
+  @override
+  String get textEditorShowCaretScrubberDescription =>
+      'カーソルを正確に移動するためのドラッグストリップ';
+
+  @override
+  String get textEditorShowStatusBarLabel => 'ステータスバーを表示';
+
+  @override
+  String get textEditorShowStatusBarDescription => '下部に行数と文字数を表示';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return '行 $line、列 $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => '新規ファイル';
 }

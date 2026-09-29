@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "Compilato con il primo account ({title}). Per importare tutti gli account, scansiona nella schermata Authenticator.",
   "authenticatorHotpReadOnlyError": "Questa cassaforte è di sola lettura, quindi il contatore HOTP non può essere avanzato.",
   "authenticatorHotpSaveError": "Impossibile salvare il nuovo contatore HOTP.",
-  "authenticatorGenerateNextCode": "Genera codice successivo"
+  "authenticatorGenerateNextCode": "Genera codice successivo",
+  "actionSelectAll": "Seleziona tutto",
+  "textEditorSelectAllMenuItem": "Seleziona tutto",
+  "textEditorShowCaretScrubberLabel": "Mostra barra di scorrimento del cursore",
+  "textEditorShowCaretScrubberDescription": "Barra di scorrimento per spostare con precisione il cursore",
+  "textEditorShowStatusBarLabel": "Mostra barra di stato",
+  "textEditorShowStatusBarDescription": "Visualizza il conteggio di righe e caratteri in basso",
+  "textEditorCursorPosition": "Riga {line}, Col {column}",
+  "textEditorNewFileTooltip": "Nuovo file"
 }

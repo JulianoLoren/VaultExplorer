@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "تم ملء الحساب الأول ({title}). لاستيراد جميع الحسابات، قم بالمسح في شاشة المصادقة.",
   "authenticatorHotpReadOnlyError": "هذه الخزنة للقراءة فقط، لذا لا يمكن تقديم عداد HOTP.",
   "authenticatorHotpSaveError": "تعذر حفظ عداد HOTP الجديد.",
-  "authenticatorGenerateNextCode": "إنشاء الرمز التالي"
+  "authenticatorGenerateNextCode": "إنشاء الرمز التالي",
+  "actionSelectAll": "تحديد الكل",
+  "textEditorSelectAllMenuItem": "تحديد الكل",
+  "textEditorShowCaretScrubberLabel": "إظهار شريط تحريك المؤشر",
+  "textEditorShowCaretScrubberDescription": "شريط سحب لتحريك المؤشر بدقة",
+  "textEditorShowStatusBarLabel": "إظهار شريط الحالة",
+  "textEditorShowStatusBarDescription": "عرض عدد الأسطر والأحرف في الأسفل",
+  "textEditorCursorPosition": "السطر {line}، العمود {column}",
+  "textEditorNewFileTooltip": "ملف جديد"
 }

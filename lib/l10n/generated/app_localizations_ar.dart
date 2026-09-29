@@ -9079,4 +9079,32 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => 'إنشاء الرمز التالي';
+
+  @override
+  String get actionSelectAll => 'تحديد الكل';
+
+  @override
+  String get textEditorSelectAllMenuItem => 'تحديد الكل';
+
+  @override
+  String get textEditorShowCaretScrubberLabel => 'إظهار شريط تحريك المؤشر';
+
+  @override
+  String get textEditorShowCaretScrubberDescription =>
+      'شريط سحب لتحريك المؤشر بدقة';
+
+  @override
+  String get textEditorShowStatusBarLabel => 'إظهار شريط الحالة';
+
+  @override
+  String get textEditorShowStatusBarDescription =>
+      'عرض عدد الأسطر والأحرف في الأسفل';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return 'السطر $line، العمود $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => 'ملف جديد';
 }

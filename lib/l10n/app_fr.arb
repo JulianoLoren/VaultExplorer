@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "Rempli avec le premier compte ({title}). Pour importer tous les comptes, scannez dans l'écran de l'authentificateur.",
   "authenticatorHotpReadOnlyError": "Ce coffre est en lecture seule, le compteur HOTP ne peut donc pas être incrémenté.",
   "authenticatorHotpSaveError": "Impossible d'enregistrer le nouveau compteur HOTP.",
-  "authenticatorGenerateNextCode": "Générer le code suivant"
+  "authenticatorGenerateNextCode": "Générer le code suivant",
+  "actionSelectAll": "Tout sélectionner",
+  "textEditorSelectAllMenuItem": "Tout sélectionner",
+  "textEditorShowCaretScrubberLabel": "Afficher le curseur de défilement",
+  "textEditorShowCaretScrubberDescription": "Bande tactile pour déplacer précisément le curseur",
+  "textEditorShowStatusBarLabel": "Afficher la barre d'état",
+  "textEditorShowStatusBarDescription": "Afficher le nombre de lignes et de caractères en bas",
+  "textEditorCursorPosition": "L {line}, Col {column}",
+  "textEditorNewFileTooltip": "Nouveau fichier"
 }

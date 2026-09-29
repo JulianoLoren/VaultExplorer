@@ -8417,4 +8417,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => '生成下一个验证码';
+
+  @override
+  String get actionSelectAll => '全选';
+
+  @override
+  String get textEditorSelectAllMenuItem => '全选';
+
+  @override
+  String get textEditorShowCaretScrubberLabel => '显示光标滑块';
+
+  @override
+  String get textEditorShowCaretScrubberDescription => '用于精确定位光标的滑动条';
+
+  @override
+  String get textEditorShowStatusBarLabel => '显示状态栏';
+
+  @override
+  String get textEditorShowStatusBarDescription => '在底部显示行数和字符数';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return '第 $line 行，第 $column 列';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => '新建文件';
 }

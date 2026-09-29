@@ -14958,6 +14958,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Generate next code'**
   String get authenticatorGenerateNextCode;
+
+  /// Tooltip and label for the select-all action button in the editor accessory bar
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get actionSelectAll;
+
+  /// Menu item label for select all in the text editor app bar menu
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get textEditorSelectAllMenuItem;
+
+  /// Label for the switch enabling/disabling the caret scrubber in the editor
+  ///
+  /// In en, this message translates to:
+  /// **'Show caret scrubber'**
+  String get textEditorShowCaretScrubberLabel;
+
+  /// Description for the caret scrubber switch in editor appearance settings
+  ///
+  /// In en, this message translates to:
+  /// **'Drag strip for precise cursor movement'**
+  String get textEditorShowCaretScrubberDescription;
+
+  /// Label for the switch toggling the bottom status bar in the text editor
+  ///
+  /// In en, this message translates to:
+  /// **'Show status bar'**
+  String get textEditorShowStatusBarLabel;
+
+  /// Description for the status bar toggle switch in editor appearance settings
+  ///
+  /// In en, this message translates to:
+  /// **'Display line and character counts at the bottom'**
+  String get textEditorShowStatusBarDescription;
+
+  /// Cursor line and column position in text editor status bar
+  ///
+  /// In en, this message translates to:
+  /// **'Ln {line}, Col {column}'**
+  String textEditorCursorPosition(int line, int column);
+
+  /// Tooltip for the new file button in the text editor tab bar
+  ///
+  /// In en, this message translates to:
+  /// **'New file'**
+  String get textEditorNewFileTooltip;
 }
 
 class _AppLocalizationsDelegate

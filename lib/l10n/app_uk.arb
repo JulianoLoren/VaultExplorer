@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "Заповнено першим обліковим записом ({title}). Щоб імпортувати всі облікові записи, відскануйте на екрані автентифікатора.",
   "authenticatorHotpReadOnlyError": "Це сховище доступне лише для читання, тому лічильник HOTP не можна збільшити.",
   "authenticatorHotpSaveError": "Не вдалося зберегти новий лічильник HOTP.",
-  "authenticatorGenerateNextCode": "Згенерувати наступний код"
+  "authenticatorGenerateNextCode": "Згенерувати наступний код",
+  "actionSelectAll": "Вибрати все",
+  "textEditorSelectAllMenuItem": "Вибрати все",
+  "textEditorShowCaretScrubberLabel": "Показувати повзунок курсора",
+  "textEditorShowCaretScrubberDescription": "Смуга перетягування для точного переміщення курсора",
+  "textEditorShowStatusBarLabel": "Показувати рядок стану",
+  "textEditorShowStatusBarDescription": "Показувати кількість рядків і символів унизу",
+  "textEditorCursorPosition": "Ряд {line}, Кол {column}",
+  "textEditorNewFileTooltip": "Новий файл"
 }

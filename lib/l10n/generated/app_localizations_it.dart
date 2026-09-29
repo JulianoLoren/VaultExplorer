@@ -9020,4 +9020,33 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => 'Genera codice successivo';
+
+  @override
+  String get actionSelectAll => 'Seleziona tutto';
+
+  @override
+  String get textEditorSelectAllMenuItem => 'Seleziona tutto';
+
+  @override
+  String get textEditorShowCaretScrubberLabel =>
+      'Mostra barra di scorrimento del cursore';
+
+  @override
+  String get textEditorShowCaretScrubberDescription =>
+      'Barra di scorrimento per spostare con precisione il cursore';
+
+  @override
+  String get textEditorShowStatusBarLabel => 'Mostra barra di stato';
+
+  @override
+  String get textEditorShowStatusBarDescription =>
+      'Visualizza il conteggio di righe e caratteri in basso';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return 'Riga $line, Col $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => 'Nuovo file';
 }

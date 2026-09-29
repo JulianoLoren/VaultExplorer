@@ -9096,4 +9096,32 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => 'Згенерувати наступний код';
+
+  @override
+  String get actionSelectAll => 'Вибрати все';
+
+  @override
+  String get textEditorSelectAllMenuItem => 'Вибрати все';
+
+  @override
+  String get textEditorShowCaretScrubberLabel => 'Показувати повзунок курсора';
+
+  @override
+  String get textEditorShowCaretScrubberDescription =>
+      'Смуга перетягування для точного переміщення курсора';
+
+  @override
+  String get textEditorShowStatusBarLabel => 'Показувати рядок стану';
+
+  @override
+  String get textEditorShowStatusBarDescription =>
+      'Показувати кількість рядків і символів унизу';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return 'Ряд $line, Кол $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => 'Новий файл';
 }

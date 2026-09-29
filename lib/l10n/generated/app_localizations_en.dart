@@ -8885,4 +8885,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => 'Generate next code';
+
+  @override
+  String get actionSelectAll => 'Select all';
+
+  @override
+  String get textEditorSelectAllMenuItem => 'Select all';
+
+  @override
+  String get textEditorShowCaretScrubberLabel => 'Show caret scrubber';
+
+  @override
+  String get textEditorShowCaretScrubberDescription =>
+      'Drag strip for precise cursor movement';
+
+  @override
+  String get textEditorShowStatusBarLabel => 'Show status bar';
+
+  @override
+  String get textEditorShowStatusBarDescription =>
+      'Display line and character counts at the bottom';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return 'Ln $line, Col $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => 'New file';
 }

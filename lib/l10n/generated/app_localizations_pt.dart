@@ -9024,4 +9024,33 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => 'Gerar próximo código';
+
+  @override
+  String get actionSelectAll => 'Selecionar tudo';
+
+  @override
+  String get textEditorSelectAllMenuItem => 'Selecionar tudo';
+
+  @override
+  String get textEditorShowCaretScrubberLabel =>
+      'Mostrar barra de navegação do cursor';
+
+  @override
+  String get textEditorShowCaretScrubberDescription =>
+      'Faixa de arrasto para movimento preciso do cursor';
+
+  @override
+  String get textEditorShowStatusBarLabel => 'Mostrar barra de status';
+
+  @override
+  String get textEditorShowStatusBarDescription =>
+      'Exibir contagem de linhas e caracteres na parte inferior';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return 'Lin $line, Col $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => 'Novo arquivo';
 }

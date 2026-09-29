@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "Completado con la primera cuenta ({title}). Para importar todas las cuentas, escanee en la pantalla del Autenticador.",
   "authenticatorHotpReadOnlyError": "Esta bóveda es de solo lectura, por lo que el contador HOTP no se puede avanzar.",
   "authenticatorHotpSaveError": "No se pudo guardar el nuevo contador HOTP.",
-  "authenticatorGenerateNextCode": "Generar siguiente código"
+  "authenticatorGenerateNextCode": "Generar siguiente código",
+  "actionSelectAll": "Seleccionar todo",
+  "textEditorSelectAllMenuItem": "Seleccionar todo",
+  "textEditorShowCaretScrubberLabel": "Mostrar barra de desplazamiento del cursor",
+  "textEditorShowCaretScrubberDescription": "Franja de arrastre para mover el cursor con precisión",
+  "textEditorShowStatusBarLabel": "Mostrar barra de estado",
+  "textEditorShowStatusBarDescription": "Mostrar recuento de líneas y caracteres en la parte inferior",
+  "textEditorCursorPosition": "Lín {line}, Col {column}",
+  "textEditorNewFileTooltip": "Nuevo archivo"
 }

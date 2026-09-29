@@ -8533,4 +8533,30 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get authenticatorGenerateNextCode => '다음 코드 생성';
+
+  @override
+  String get actionSelectAll => '모두 선택';
+
+  @override
+  String get textEditorSelectAllMenuItem => '모두 선택';
+
+  @override
+  String get textEditorShowCaretScrubberLabel => '커서 스크러버 표시';
+
+  @override
+  String get textEditorShowCaretScrubberDescription => '정밀한 커서 이동을 위한 드래그 바';
+
+  @override
+  String get textEditorShowStatusBarLabel => '상태 표시줄 표시';
+
+  @override
+  String get textEditorShowStatusBarDescription => '하단에 줄 및 문자 수 표시';
+
+  @override
+  String textEditorCursorPosition(int line, int column) {
+    return '줄 $line, 열 $column';
+  }
+
+  @override
+  String get textEditorNewFileTooltip => '새 파일';
 }

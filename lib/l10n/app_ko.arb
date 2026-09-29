@@ -2467,5 +2467,13 @@
   "authenticatorSingleAccountImportedHint": "첫 번째 계정({title})으로 입력되었습니다. 모든 계정을 가져오려면 OTP 화면에서 스캔하세요.",
   "authenticatorHotpReadOnlyError": "이 보관함은 읽기 전용이므로 HOTP 카운터를 증가시킬 수 없습니다.",
   "authenticatorHotpSaveError": "새 HOTP 카운터를 저장할 수 없습니다.",
-  "authenticatorGenerateNextCode": "다음 코드 생성"
+  "authenticatorGenerateNextCode": "다음 코드 생성",
+  "actionSelectAll": "모두 선택",
+  "textEditorSelectAllMenuItem": "모두 선택",
+  "textEditorShowCaretScrubberLabel": "커서 스크러버 표시",
+  "textEditorShowCaretScrubberDescription": "정밀한 커서 이동을 위한 드래그 바",
+  "textEditorShowStatusBarLabel": "상태 표시줄 표시",
+  "textEditorShowStatusBarDescription": "하단에 줄 및 문자 수 표시",
+  "textEditorCursorPosition": "줄 {line}, 열 {column}",
+  "textEditorNewFileTooltip": "새 파일"
 }

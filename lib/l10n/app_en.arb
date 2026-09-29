@@ -11294,5 +11294,45 @@
   "authenticatorGenerateNextCode": "Generate next code",
   "@authenticatorGenerateNextCode": {
     "description": "Tooltip on the HOTP tile advance button"
+  },
+  "actionSelectAll": "Select all",
+  "@actionSelectAll": {
+    "description": "Tooltip and label for the select-all action button in the editor accessory bar"
+  },
+  "textEditorSelectAllMenuItem": "Select all",
+  "@textEditorSelectAllMenuItem": {
+    "description": "Menu item label for select all in the text editor app bar menu"
+  },
+  "textEditorShowCaretScrubberLabel": "Show caret scrubber",
+  "@textEditorShowCaretScrubberLabel": {
+    "description": "Label for the switch enabling/disabling the caret scrubber in the editor"
+  },
+  "textEditorShowCaretScrubberDescription": "Drag strip for precise cursor movement",
+  "@textEditorShowCaretScrubberDescription": {
+    "description": "Description for the caret scrubber switch in editor appearance settings"
+  },
+  "textEditorShowStatusBarLabel": "Show status bar",
+  "@textEditorShowStatusBarLabel": {
+    "description": "Label for the switch toggling the bottom status bar in the text editor"
+  },
+  "textEditorShowStatusBarDescription": "Display line and character counts at the bottom",
+  "@textEditorShowStatusBarDescription": {
+    "description": "Description for the status bar toggle switch in editor appearance settings"
+  },
+  "textEditorCursorPosition": "Ln {line}, Col {column}",
+  "@textEditorCursorPosition": {
+    "description": "Cursor line and column position in text editor status bar",
+    "placeholders": {
+      "line": {
+        "type": "int"
+      },
+      "column": {
+        "type": "int"
+      }
+    }
+  },
+  "textEditorNewFileTooltip": "New file",
+  "@textEditorNewFileTooltip": {
+    "description": "Tooltip for the new file button in the text editor tab bar"
   }
 }
