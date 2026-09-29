@@ -380,6 +380,7 @@ open class MainActivity : FlutterFragmentActivity() {
             com.aeidolon.vaultexplorer.camera.VaultVideoRecorder.sweepOrphanedTempFiles(cacheDir)
             com.aeidolon.vaultexplorer.camera.QuickCaptureScratchpadPlugin.sweepOrphanedScratchpads(applicationContext)
             SecureFileWipe.sweepOrphanedFiles(cacheDir, listOf("thumb_", "export_"))
+            com.aeidolon.vaultexplorer.saf.MirrorSyncCoordinator.sweepOrphanedMirrors(applicationContext)
             QuickCaptureShortcuts.refreshDynamicShortcut(applicationContext)
         }
 

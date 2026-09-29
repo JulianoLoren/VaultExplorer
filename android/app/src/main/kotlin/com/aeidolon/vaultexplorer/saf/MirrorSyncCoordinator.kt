@@ -12,10 +12,60 @@ class MirrorPushException(message: String, cause: Throwable? = null) : Exception
 
 class MirrorSyncCoordinator(
     private val context: Context,
-    sessionTag: String,
+    private val sessionTag: String,
     val realOps: SafDocumentOps,
 ) {
     companion object {
+        /** Name of the folder under `filesDir` that holds every session's
+         *  mirror (`vault_mirrors/<sessionTag>/`). */
+        private const val MIRRORS_DIR_NAME = "vault_mirrors"
+
+        /** Session tags of coordinators that are alive in THIS process --
+         *  registered in `init`, removed at the end of [teardown]. Lets
+         *  [sweepOrphanedMirrors] tell a live session's mirror folder from
+         *  one left behind by a process that died before [teardown] ran. */
+        private val activeTags: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+        /**
+         * Deletes every `vault_mirrors/<tag>/` folder that no live
+         * coordinator in this process owns, and returns how many were
+         * removed.
+         *
+         * A mirror is only ever deleted by [teardown], which a killed or
+         * crashed process never reaches. The registry that maps mirror
+         * files to real SAF URIs lives purely in memory and every unlock
+         * uses a fresh random tag, so such a folder can never be reused or
+         * cleaned by a later session -- it is dead weight (encrypted
+         * copies of vault files) until something removes it.
+         *
+         * Safe to call at any time, including while sessions are open:
+         * a tag is registered in `init`, before its folder is created, so
+         * any folder belonging to a live session is skipped. Any pending
+         * write that was still unpushed in an orphaned mirror is lost
+         * along with it, but it was already unreachable -- nothing can
+         * push it once the process that tracked it is gone.
+         */
+        fun sweepOrphanedMirrors(context: Context): Int {
+            val children = File(context.filesDir, MIRRORS_DIR_NAME).listFiles() ?: return 0
+            var removed = 0
+            for (child in children) {
+                if (child.name in activeTags) continue
+                try {
+                    if (child.deleteRecursively()) {
+                        removed++
+                    } else {
+                        VeLog.w("MirrorSyncCoordinator") { "sweepOrphanedMirrors: could not fully delete ${child.absolutePath}" }
+                    }
+                } catch (e: Exception) {
+                    VeLog.w("MirrorSyncCoordinator", e) { "sweepOrphanedMirrors: failed to delete ${child.absolutePath}" }
+                }
+            }
+            if (removed > 0) {
+                VeLog.d("MirrorTrace") { "sweepOrphanedMirrors: removed $removed orphaned mirror folder(s)" }
+            }
+            return removed
+        }
+
         /** Buffer size for the tmp-file-then-rename pull/push copies below.
          *  Kotlin's `copyTo` default (8KB) means far more read()/write()
          *  round trips than necessary for a large file streamed over a
@@ -41,7 +91,12 @@ class MirrorSyncCoordinator(
         const val LARGE_FILE_STREAM_THRESHOLD_BYTES = 8L * 1024 * 1024
     }
 
-    val mirrorRoot: File = File(File(context.filesDir, "vault_mirrors"), sessionTag)
+    val mirrorRoot: File = File(File(context.filesDir, MIRRORS_DIR_NAME), sessionTag)
+
+    init {
+        // Before anything creates mirrorRoot on disk -- see sweepOrphanedMirrors.
+        activeTags.add(sessionTag)
+    }
 
     // All URI<->mirror-file bookkeeping (link/unlink, listed-folder flags,
     // and content-pulled/pending-write state) lives in MirrorRegistry --
@@ -190,6 +245,9 @@ class MirrorSyncCoordinator(
         } catch (e: Exception) {
             VeLog.e("MirrorSyncCoordinator", e) { "teardown failed to delete mirror at ${mirrorRoot.absolutePath}" }
         }
+        // Even if the delete above failed: the folder is then an orphan the
+        // next sweepOrphanedMirrors() call should be free to retry.
+        activeTags.remove(sessionTag)
     }
 
     private fun sanitizedMirrorName(name: String?): String {
