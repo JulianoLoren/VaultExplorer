@@ -180,6 +180,10 @@ class CryptomatorSession(
             val physicalFile = pendingBatchWrites.remove(normalized)
             if (physicalFile == null) {
                 VeLog.w("MirrorTrace") { "invalidateCacheAfterWrite: path=$normalized -- no captured write instance, nothing pushed!" }
+            } else if (normalized.endsWith(".tmp")) {
+                // Write-tmp-then-rename scratch file: hold the push so the
+                // rename can happen before any upload starts.
+                vaultDocOps.deferContentWrite(physicalFile)
             } else {
                 pushContentFor(normalized, physicalFile)
             }

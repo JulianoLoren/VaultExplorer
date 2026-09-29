@@ -23,6 +23,12 @@ class MirrorSyncCoordinator(
          *  pulls/pushes. */
         private const val COPY_BUFFER_SIZE = 256 * 1024
 
+        /** How long a ".tmp" content push is held back waiting for its
+         *  rename (see deferPush). The Dart-side save does write, finish,
+         *  delete, rename back to back, so this is only a safety net for a
+         *  ".tmp" that is never renamed. */
+        private const val DEFERRED_PUSH_DELAY_MS = 5_000L
+
         /** Below this size, a cold read of a not-yet-mirrored file just
          *  pays the synchronous full pull like before -- the latency is
          *  negligible and it's not worth the bookkeeping of a background
@@ -83,6 +89,57 @@ class MirrorSyncCoordinator(
     // fixed number of workers instead of spawning one thread per file.
     private val pullExecutor = java.util.concurrent.Executors.newFixedThreadPool(2)
 
+    // Content pushes held back for scratch ".tmp" writes -- see
+    // VaultDocumentOps.deferContentWrite. Keyed by mirror absolute path.
+    // A rename normally cancels the entry (cancelDeferredPush) and pushes the
+    // content itself to the renamed real document; otherwise the timer below
+    // pushes it. Both maps are only touched under deferLock.
+    private val deferLock = Any()
+    private val deferredTasks = HashMap<String, () -> Unit>()
+    private val deferredFutures = HashMap<String, java.util.concurrent.ScheduledFuture<*>>()
+    private val deferExecutor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r ->
+        Thread(r, "mirror-deferred-push").apply { isDaemon = true }
+    }
+
+    /** Holds [task] (a content push for [mirrored]) for [DEFERRED_PUSH_DELAY_MS]
+     *  unless [cancelDeferredPush] claims it first. A newer call for the same
+     *  file replaces the older one. */
+    fun deferPush(mirrored: File, task: () -> Unit) {
+        val path = mirrored.absolutePath
+        synchronized(deferLock) {
+            deferredFutures.remove(path)?.cancel(false)
+            deferredTasks[path] = task
+            deferredFutures[path] = deferExecutor.schedule(
+                { runDeferred(path) }, DEFERRED_PUSH_DELAY_MS, java.util.concurrent.TimeUnit.MILLISECONDS,
+            )
+        }
+    }
+
+    /** Claims (and cancels) a deferred push for [mirrored]. True means the
+     *  caller now owns pushing that content. False means there was none, or
+     *  the timer already started running it. */
+    fun cancelDeferredPush(mirrored: File): Boolean = synchronized(deferLock) {
+        deferredFutures.remove(mirrored.absolutePath)?.cancel(false)
+        deferredTasks.remove(mirrored.absolutePath) != null
+    }
+
+    private fun runDeferred(path: String) {
+        val task = synchronized(deferLock) {
+            deferredFutures.remove(path)
+            deferredTasks.remove(path)
+        } ?: return
+        try {
+            task()
+        } catch (e: Exception) {
+            VeLog.e("MirrorTrace", e) { "deferred push FAILED for $path -- real SAF file was NOT updated" }
+        }
+    }
+
+    private fun flushDeferredPushes() {
+        val paths = synchronized(deferLock) { deferredTasks.keys.toList() }
+        for (p in paths) runDeferred(p)
+    }
+
     fun markPendingLocalWrite(mirrored: File) {
         // Translated from mirror path to the real-URI key that
         // MirrorRegistry's content state is keyed by (see that class's doc
@@ -120,6 +177,9 @@ class MirrorSyncCoordinator(
     }
 
     fun teardown() {
+        // Don't lose content whose push was still being held back.
+        flushDeferredPushes()
+        deferExecutor.shutdownNow()
         registry.clear()
         pullLocks.clear()
         folderLocks.clear()

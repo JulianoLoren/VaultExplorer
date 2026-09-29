@@ -144,6 +144,11 @@ class MirroredSafDocumentOps(
         )
     }
 
+    override fun deferContentWrite(file: DocumentFile) {
+        val path = file.uri.path ?: throw SafIOException("Invalid file URI path: ${file.uri}")
+        sync.deferPush(java.io.File(path)) { pushContentWrite(file) }
+    }
+
     override fun markWritePending(file: DocumentFile) {
         val path = file.uri.path ?: return
         sync.markPendingLocalWrite(java.io.File(path))
@@ -152,10 +157,38 @@ class MirroredSafDocumentOps(
     override fun renameDocumentAndGet(doc: DocumentFile, newName: String, parent: DocumentFile?): DocumentFile {
         val realDoc = realDocFor(doc)
         val realParent = parent?.let { realDocFor(it) }
-        val realRenamed = sync.pushRename(realDoc, newName, realParent)
-        val mirrorRenamed = mirrorOps.renameDocumentAndGet(doc, newName, parent)
+        // A scratch file whose content push was deferred (deferContentWrite):
+        // its real document is still the empty placeholder, so renaming it
+        // now is safe -- nothing is uploading into it. The content is pushed
+        // AFTER the rename, into the renamed document. Renaming a real
+        // document that already has an upload in flight (Filen) leaves the
+        // upload landing under the old name: a 0-byte final file plus a
+        // stray ".tmp" holding the real content.
+        val oldMirror = doc.uri.path?.let { java.io.File(it) }
+        val deferredPush = oldMirror != null && sync.cancelDeferredPush(oldMirror)
+        val realRenamed: DocumentFile
+        val mirrorRenamed: DocumentFile
+        try {
+            realRenamed = sync.pushRename(realDoc, newName, realParent)
+            mirrorRenamed = mirrorOps.renameDocumentAndGet(doc, newName, parent)
+        } catch (e: Exception) {
+            // Rename failed: hand the content back to the deferred timer.
+            if (deferredPush) runCatching { deferContentWrite(doc) }
+            throw e
+        }
         val path = mirrorRenamed.uri.path ?: throw SafIOException("Invalid renamed URI path: ${mirrorRenamed.uri}")
-        sync.registerExisting(realRenamed, java.io.File(path))
+        val newMirror = java.io.File(path)
+        sync.registerExisting(realRenamed, newMirror)
+        if (deferredPush) {
+            sync.markPendingLocalWrite(newMirror)
+            sync.pushFileWrite(
+                newMirror,
+                realParent = null,
+                existingRealDoc = realRenamed,
+                displayName = newName,
+                mimeType = "application/octet-stream",
+            )
+        }
         return mirrorRenamed
     }
 
@@ -187,6 +220,7 @@ class MirroredSafDocumentOps(
 
     override fun deleteRecursively(folder: DocumentFile) {
         val realFolder = try { realDocFor(folder) } catch (_: Exception) { null }
+        folder.uri.path?.let { sync.cancelDeferredPush(java.io.File(it)) }
         // 1. Delete the local mirror file immediately so local listings update instantly
         mirrorOps.deleteRecursively(folder)
         

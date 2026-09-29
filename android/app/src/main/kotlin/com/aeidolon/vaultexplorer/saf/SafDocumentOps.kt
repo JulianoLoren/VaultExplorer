@@ -99,6 +99,19 @@ interface VaultDocumentOps {
      * No-op for the plain (non-mirrored) implementation.
      */
     fun markWritePending(file: DocumentFile) {}
+
+    /**
+     * Mirror-only: like [pushContentWrite], but for a write to a scratch
+     * file that is expected to be renamed onto its final name moments
+     * later (the Dart-side write-tmp-then-rename pattern). The push is
+     * held back briefly so that the rename can happen on the still-empty
+     * real placeholder BEFORE any content is uploaded -- some providers
+     * (Filen) upload asynchronously after the write returns, and renaming
+     * a real document with an upload in flight leaves the content behind
+     * under the old name. If no rename arrives, the content is pushed
+     * anyway after a short delay. Default (non-mirrored): push right away.
+     */
+    fun deferContentWrite(file: DocumentFile) { pushContentWrite(file) }
 }
 
 class SafDocumentOps(private val context: Context) : VaultDocumentOps {

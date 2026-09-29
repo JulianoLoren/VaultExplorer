@@ -109,7 +109,13 @@ class GocryptfsSession(
 
     private fun pushContentForPath(virtualPath: String) {
         val physicalFile = (tree.resolve(virtualPath) as? GocryptfsNode.VFile)?.physicalFile ?: return
-        safOps.pushContentWrite(physicalFile)
+        // Write-tmp-then-rename scratch file: hold the push so the rename
+        // can happen before any upload starts (see deferContentWrite).
+        if (virtualPath.endsWith(".tmp") && !engineDelegate.batchWriteActive) {
+            safOps.deferContentWrite(physicalFile)
+        } else {
+            safOps.pushContentWrite(physicalFile)
+        }
     }
 
     private val engine = ChunkedFileEngine(engineDelegate)

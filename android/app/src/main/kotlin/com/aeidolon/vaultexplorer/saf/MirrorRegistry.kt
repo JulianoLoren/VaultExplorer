@@ -45,6 +45,11 @@ import java.util.concurrent.ConcurrentHashMap
  * "both" state left to get out of sync.
  */
 class MirrorRegistry {
+    companion object {
+        /** How long after a push a differing real length/mtime is NOT
+         *  treated as a remote change -- see [pushedAtMs]. */
+        const val PUSH_GRACE_MS = 60_000L
+    }
 
     enum class ContentState {
         /** Mirror content matches the last-known real-file content. */
@@ -114,6 +119,12 @@ class MirrorRegistry {
     // Single map replacing the old pulledContent/pendingLocalWrites pair --
     // see the class doc comment. Absent key == "not yet pulled".
     private val contentState = ConcurrentHashMap<String, ContentState>()
+
+    // Wall-clock time (ms) of the last markPushed() per key. Some providers
+    // (Filen) accept a write instantly but only make the new size visible
+    // in listings once a background upload finishes, so a re-listing right
+    // after a push sees the OLD length. See PUSH_GRACE_MS.
+    private val pushedAtMs = ConcurrentHashMap<String, Long>()
 
     fun link(key: String, mirrored: File) {
         val previous = uriToMirror.put(key, mirrored)
@@ -229,10 +240,17 @@ class MirrorRegistry {
      *  match what was just pushed. */
     fun markPushed(key: String) {
         contentState[key] = ContentState.SYNCED
+        pushedAtMs[key] = System.currentTimeMillis()
+    }
+
+    private fun withinPushGrace(key: String): Boolean {
+        val at = pushedAtMs[key] ?: return false
+        return System.currentTimeMillis() - at < PUSH_GRACE_MS
     }
 
     fun forgetContent(key: String) {
         contentState.remove(key)
+        pushedAtMs.remove(key)
     }
 
     /** Moves whatever [ContentState] is registered under [fromKey] (if any)
@@ -251,6 +269,7 @@ class MirrorRegistry {
      *  state. Returns the mirror [File] that was registered, if any. */
     fun forget(key: String): File? {
         contentState.remove(key)
+        pushedAtMs.remove(key)
         return unlink(key)
     }
 
@@ -275,6 +294,11 @@ class MirrorRegistry {
         val changed = mirrorLength != realLength ||
             (realLastModified > 0 && mirrorLastModified != realLastModified)
         if (!changed) return false
+        // Just pushed by us: a differing real length/mtime is most likely the
+        // provider's listing lagging behind its own async upload, not a
+        // remote change. Keep the (correct) local content for a short grace
+        // window instead of discarding it and re-pulling the stale bytes.
+        if (mirrorLength > 0L && withinPushGrace(childKey)) return false
         contentState.remove(childKey)
         return true
     }
@@ -304,6 +328,7 @@ class MirrorRegistry {
         childKeysByParent.clear()
         listedFolders.clear()
         contentState.clear()
+        pushedAtMs.clear()
         neverListed.clear()
     }
 }
