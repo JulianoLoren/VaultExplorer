@@ -1,10 +1,12 @@
 // Built-in TOTP authenticator's code-generation core: RFC 4648 base32
 // decoding plus RFC 6238 (TOTP), built on RFC 4226 (HOTP)'s dynamic
-// truncation. Deliberately dependency-free beyond `package:crypto` --
-// already vendored transitively (see pubspec.yaml) -- rather than pulling
-// in a third-party `otp`/`base32` package, consistent with this app's
-// general preference for owning its own crypto-adjacent code (see the
-// native engine's bundled cipher implementations).
+// truncation. Owns the RFC logic (base32, counters, truncation, Steam's
+// alphabet) but not the hash: the HMAC itself is computed by the native
+// layer through [VaultCryptoApi.hmac], so no third-party Dart hashing or
+// `otp`/`base32` package is involved. Because that is a platform-channel
+// call, code generation is asynchronous -- see [TotpEngine.stepFor] for how
+// a caller that refreshes on a timer avoids asking for a new code more often
+// than one can actually change.
 //
 // Storage model: a TOTP secret lives as a plain field (`totp_secret`) on a
 // [VaultItem] -- either a dedicated [VaultItemType.authenticator] item, or
@@ -16,7 +18,7 @@ library;
 
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart' as crypto;
+import 'package:vaultexplorer/core/api/vault_crypto_api.dart';
 
 /// Thrown by [base32Decode] when the input isn't valid RFC 4648 base32.
 class Base32Exception implements Exception {
@@ -110,10 +112,10 @@ enum TotpAlgorithm {
     };
   }
 
-  crypto.Hash get _hash => switch (this) {
-    TotpAlgorithm.sha1 => crypto.sha1,
-    TotpAlgorithm.sha256 => crypto.sha256,
-    TotpAlgorithm.sha512 => crypto.sha512,
+  HmacHash get _hmacHash => switch (this) {
+    TotpAlgorithm.sha1 => HmacHash.sha1,
+    TotpAlgorithm.sha256 => HmacHash.sha256,
+    TotpAlgorithm.sha512 => HmacHash.sha512,
   };
 
   /// Canonical uppercase name, as written back into an item's
@@ -290,10 +292,17 @@ class TotpEngine {
 
   /// Generates the current code for [config] at [at] (defaults to now --
   /// ignored for HOTP, whose code depends only on [TotpConfig.counter]).
-  /// Throws [TotpCodeException] if [config.secret] isn't valid base32 --
-  /// callers should catch this and show an error state rather than a wrong
-  /// code.
-  static String generateCode(TotpConfig config, {DateTime? at}) {
+  /// The HMAC is computed by [crypto] (the native layer).
+  ///
+  /// Throws [TotpCodeException] if [config.secret] isn't valid base32 or the
+  /// platform returned no MAC -- callers should catch this and show an error
+  /// state rather than a wrong code. A `PlatformException` from the channel
+  /// itself propagates as-is.
+  static Future<String> generateCode(
+    TotpConfig config, {
+    required VaultCryptoApi crypto,
+    DateTime? at,
+  }) async {
     final Uint8List keyBytes;
     try {
       keyBytes = base32Decode(config.secret);
@@ -306,13 +315,17 @@ class TotpEngine {
 
     switch (config.kind) {
       case OtpKind.hotp:
-        final value = _truncate(_hmac(config.algorithm, keyBytes, config.counter));
+        final value = _truncate(await _hmac(crypto, config.algorithm, keyBytes, config.counter));
         return _decimal(value, config.digits);
       case OtpKind.steam:
-        final value = _truncate(_hmac(TotpAlgorithm.sha1, keyBytes, _counterFor(config, at)));
+        final value = _truncate(
+          await _hmac(crypto, TotpAlgorithm.sha1, keyBytes, _counterFor(config, at)),
+        );
         return _steam(value);
       case OtpKind.totp:
-        final value = _truncate(_hmac(config.algorithm, keyBytes, _counterFor(config, at)));
+        final value = _truncate(
+          await _hmac(crypto, config.algorithm, keyBytes, _counterFor(config, at)),
+        );
         return _decimal(value, config.digits);
     }
   }
@@ -322,14 +335,26 @@ class TotpEngine {
   /// code for the *next counter value* (the tile doesn't preview this --
   /// see AuthenticatorRegistry.advanceHotpCounter for how a counter
   /// actually moves).
-  static String generateNextCode(TotpConfig config, {DateTime? at}) {
+  static Future<String> generateNextCode(
+    TotpConfig config, {
+    required VaultCryptoApi crypto,
+    DateTime? at,
+  }) {
     if (config.kind == OtpKind.hotp) {
-      return generateCode(config.withCounter(config.counter + 1));
+      return generateCode(config.withCounter(config.counter + 1), crypto: crypto);
     }
     final period = config.period > 0 ? config.period : 30;
     final nextTime = (at ?? DateTime.now()).add(Duration(seconds: period));
-    return generateCode(config, at: nextTime);
+    return generateCode(config, crypto: crypto, at: nextTime);
   }
+
+  /// The value [generateCode] derives its code from at [at]: the HOTP counter
+  /// for counter-based entries, otherwise the current time step. A caller that
+  /// re-checks on a timer can compare this against the step it last generated
+  /// for and only ask for a new code when it changes -- the code itself is a
+  /// (platform-channel) round trip, the step is plain arithmetic.
+  static int stepFor(TotpConfig config, {DateTime? at}) =>
+      config.kind == OtpKind.hotp ? config.counter : _counterFor(config, at);
 
   /// Seconds remaining in the current period at [at] (defaults to now) --
   /// drives a per-second countdown label. Meaningless for HOTP.
@@ -357,9 +382,22 @@ class TotpEngine {
     return secs ~/ period;
   }
 
-  static List<int> _hmac(TotpAlgorithm algorithm, Uint8List key, int counter) {
+  static Future<Uint8List> _hmac(
+    VaultCryptoApi crypto,
+    TotpAlgorithm algorithm,
+    Uint8List key,
+    int counter,
+  ) async {
     final counterBytes = ByteData(8)..setUint64(0, counter, Endian.big);
-    return crypto.Hmac(algorithm._hash, key).convert(counterBytes.buffer.asUint8List()).bytes;
+    final mac = await crypto.hmac(
+      key: key,
+      data: counterBytes.buffer.asUint8List(),
+      hash: algorithm._hmacHash,
+    );
+    if (mac == null || mac.isEmpty) {
+      throw const TotpCodeException('Could not compute a code.');
+    }
+    return mac;
   }
 
   /// RFC 4226 §5.3 dynamic truncation -> a 31-bit integer.

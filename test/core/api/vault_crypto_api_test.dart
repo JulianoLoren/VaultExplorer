@@ -114,6 +114,35 @@ void main() {
     });
   });
 
+  group('hmac', () {
+    test('sends key, data and the hash name', () async {
+      final key = Uint8List.fromList(List.generate(20, (i) => i));
+      final data = Uint8List.fromList(utf8.encode('counter'));
+      nextResult = Uint8List.fromList(List.filled(20, 5));
+
+      final result = await api.hmac(key: key, data: data, hash: HmacHash.sha512);
+
+      expect(calls.single.method, 'hmac');
+      expect(calls.single.arguments['key'], key);
+      expect(calls.single.arguments['data'], data);
+      expect(calls.single.arguments['hash'], 'sha512');
+      expect(result, nextResult);
+    });
+
+    test('names every hash the way the native side parses it', () async {
+      for (final hash in HmacHash.values) {
+        calls.clear();
+        nextResult = Uint8List(1);
+        await api.hmac(key: Uint8List(1), data: Uint8List(1), hash: hash);
+        expect(calls.single.arguments['hash'], switch (hash) {
+          HmacHash.sha1 => 'sha1',
+          HmacHash.sha256 => 'sha256',
+          HmacHash.sha512 => 'sha512',
+        });
+      }
+    });
+  });
+
   group('scrypt', () {
     test('sends password, salt and the cost parameters', () async {
       final password = Uint8List.fromList(utf8.encode('hunter2'));

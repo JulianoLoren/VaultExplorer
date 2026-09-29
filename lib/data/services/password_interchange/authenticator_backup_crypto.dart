@@ -89,6 +89,27 @@ Future<Uint8List> openAesCbc(
   }
 }
 
+/// One-shot HMAC via the native engine. Unlike [openAesCbc], a failure here is
+/// never "wrong password" -- the MAC is computed, not verified -- so both a
+/// null result and a platform error surface as a format exception; callers
+/// decide what a *mismatching* MAC means.
+Future<Uint8List> computeHmac(
+  VaultCryptoApi crypto, {
+  required Uint8List key,
+  required Uint8List data,
+  required HmacHash hash,
+}) async {
+  try {
+    final mac = await crypto.hmac(key: key, data: data, hash: hash);
+    if (mac == null || mac.isEmpty) {
+      throw const PasswordFileFormatException('Integrity check failed.');
+    }
+    return Uint8List.fromList(mac);
+  } on PlatformException catch (e) {
+    throw PasswordFileFormatException('Integrity check failed (${e.message ?? e.code}).');
+  }
+}
+
 /// PBKDF2-HMAC over the UTF-8 bytes of [password].
 Future<Uint8List> derivePbkdf2(
   VaultCryptoApi crypto, {

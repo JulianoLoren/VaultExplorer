@@ -2,17 +2,21 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show FontFeature;
 
+import 'package:flutter/services.dart' show PlatformException;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
+import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
 import 'package:vaultexplorer/core/utils/totp_engine.dart';
+import 'package:vaultexplorer/core/utils/ve_log.dart';
 import 'package:vaultexplorer/features/authenticator/authenticator_registry_controller.dart';
 
 /// A single row in the Authenticator screen styled after Proton Authenticator:
 /// top row contains issuer monogram/icon, title, and account with the circular
 /// countdown timer at the top right; a subtle divider separates the large
 /// current code on the left from the "Next" preview on the right.
-class TotpCodeTile extends StatefulWidget {
+class TotpCodeTile extends ConsumerStatefulWidget {
   final TotpVaultEntry entry;
   final VoidCallback onCopy;
   final VoidCallback? onCopyNext;
@@ -34,10 +38,12 @@ class TotpCodeTile extends StatefulWidget {
   });
 
   @override
-  State<TotpCodeTile> createState() => _TotpCodeTileState();
+  ConsumerState<TotpCodeTile> createState() => _TotpCodeTileState();
 }
 
-class _TotpCodeTileState extends State<TotpCodeTile> {
+class _TotpCodeTileState extends ConsumerState<TotpCodeTile> {
+  static const _kLogTag = 'TotpCodeTile';
+
   late TotpConfig _config;
   Timer? _timer;
   String? _code;
@@ -45,6 +51,20 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
   String? _error;
   double _fraction = 0;
   int _secondsLeft = 0;
+
+  // The countdown ring is redrawn every tick, but a code only changes when its
+  // time step (or an HOTP counter) does -- and each code is a native call. So
+  // codes are generated once per step, not once per tick.
+  /// The step [_code]/[_nextCode]/[_error] were generated for.
+  int? _codeStep;
+
+  /// The step a generation is currently in flight for, so a slow round trip
+  /// isn't re-requested by every tick that lands while it's pending.
+  int? _pendingStep;
+
+  /// Bumped whenever [_config] changes so an in-flight result for the old
+  /// config is dropped instead of shown.
+  int _epoch = 0;
 
   @override
   void initState() {
@@ -69,34 +89,58 @@ class _TotpCodeTileState extends State<TotpCodeTile> {
     final newFields = widget.entry.item.fields;
     if (configKeys.any((k) => oldFields[k] != newFields[k])) {
       _config = TotpConfig.fromFields(widget.entry.item.fields);
+      _epoch++;
+      _codeStep = null;
+      _pendingStep = null;
       _tick();
     }
   }
 
   void _tick() {
     final now = DateTime.now();
-    String? code;
-    String? nextCode;
-    String? error;
-    try {
-      code = TotpEngine.generateCode(_config, at: now);
-      // A counter-based code has no "next period" to preview -- the next
-      // one only exists once the counter is advanced (see onAdvance).
-      if (_config.isTimeBased) {
-        nextCode = TotpEngine.generateNextCode(_config, at: now);
-      }
-    } on TotpCodeException catch (e) {
-      error = e.message;
+    final step = TotpEngine.stepFor(_config, at: now);
+    if (step != _codeStep && step != _pendingStep) {
+      unawaited(_generate(step, now));
     }
     final fraction = TotpEngine.fractionElapsed(_config, at: now);
     final secondsLeft = TotpEngine.secondsRemaining(_config, at: now);
     if (!mounted) return;
     setState(() {
+      _fraction = fraction;
+      _secondsLeft = secondsLeft;
+    });
+  }
+
+  Future<void> _generate(int step, DateTime at) async {
+    final epoch = _epoch;
+    final config = _config;
+    final crypto = ref.read(vaultCryptoApiProvider);
+    _pendingStep = step;
+    String? code;
+    String? nextCode;
+    String? error;
+    try {
+      code = await TotpEngine.generateCode(config, crypto: crypto, at: at);
+      // A counter-based code has no "next period" to preview -- the next
+      // one only exists once the counter is advanced (see onAdvance).
+      if (config.isTimeBased) {
+        nextCode = await TotpEngine.generateNextCode(config, crypto: crypto, at: at);
+      }
+    } on TotpCodeException catch (e) {
+      error = e.message;
+    } on PlatformException catch (e) {
+      // The platform HMAC failing is not a bad secret, but the tile's error
+      // state is the same either way: show it rather than a stale code.
+      VeLog.e(_kLogTag, 'HMAC failed while generating a code', e);
+      error = e.message ?? e.code;
+    }
+    if (!mounted || epoch != _epoch) return;
+    _pendingStep = null;
+    setState(() {
       _code = code;
       _nextCode = nextCode;
       _error = error;
-      _fraction = fraction;
-      _secondsLeft = secondsLeft;
+      _codeStep = step;
     });
   }
 

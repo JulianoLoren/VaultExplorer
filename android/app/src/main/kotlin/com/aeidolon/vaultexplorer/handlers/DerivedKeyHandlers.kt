@@ -16,6 +16,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import com.aeidolon.vaultexplorer.container.ContainerEngine
+import com.aeidolon.vaultexplorer.crypto.HmacUtil
 import com.aeidolon.vaultexplorer.MainActivity
 import com.aeidolon.vaultexplorer.NativeEngine
 import com.aeidolon.vaultexplorer.NativeOpSupport
@@ -566,6 +567,47 @@ class DerivedKeyHandlers(
     }
 
     /**
+     * One-shot HMAC (SHA-1, SHA-256 or SHA-512) of an in-memory buffer -- used
+     * by the built-in authenticator's TOTP/HOTP code generation and by the
+     * Bitwarden import's HKDF / MAC check, in place of the third-party Dart
+     * `crypto` package.
+     *
+     * Small inputs (a TOTP counter is 8 bytes) are computed inline on the
+     * platform thread: it takes microseconds, and queueing it on the shared
+     * [ioExecutor] behind file I/O would only delay a code refresh. Anything
+     * larger (a whole Bitwarden vault payload) goes to [ioExecutor] like its
+     * sibling handlers.
+     */
+    fun handleHmac(call: MethodCall, result: MethodChannel.Result) {
+        val key  = call.argument<ByteArray>("key")
+        val data = call.argument<ByteArray>("data")
+        val algorithm = HmacUtil.jcaAlgorithm(call.argument<String>("hash"))
+
+        if (key == null || key.isEmpty() || data == null || algorithm == null) {
+            result.error("INVALID_ARGS", "key (non-empty), data and hash (sha1|sha256|sha512) required", null)
+            return
+        }
+
+        if (data.size <= HMAC_INLINE_MAX_BYTES) {
+            try {
+                result.success(HmacUtil.compute(algorithm, key, data))
+            } catch (e: Exception) {
+                nativeOps.dispatchNativeError(e, result)
+            }
+            return
+        }
+
+        ioExecutor.execute {
+            try {
+                val mac = HmacUtil.compute(algorithm, key, data)
+                activity.runOnUiThread { result.success(mac) }
+            } catch (e: Exception) {
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            }
+        }
+    }
+
+    /**
      * PBKDF2-HMAC (SHA-1 or SHA-256) over raw password bytes -- used to open
      * other authenticator apps' encrypted backups (andOTP, 2FAS) on import.
      */
@@ -690,5 +732,8 @@ class DerivedKeyHandlers(
 
     private companion object {
         const val DERIVED_KEYS_PREFS = "vc2_derived_keys"
+
+        /** Largest HMAC input computed inline on the platform thread; see [handleHmac]. */
+        const val HMAC_INLINE_MAX_BYTES = 64 * 1024
     }
 }

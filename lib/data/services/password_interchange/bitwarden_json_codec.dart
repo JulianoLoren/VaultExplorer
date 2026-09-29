@@ -10,7 +10,6 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart' as crypto;
 import 'package:vaultexplorer/core/api/vault_crypto_api.dart';
 import 'package:vaultexplorer/data/models/password_exchange/exchange_record.dart';
 import 'package:vaultexplorer/data/models/vault_item.dart';
@@ -157,16 +156,25 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
       );
     }
 
-    // HKDF-Expand with SHA-256 for subkey stretching (info = "enc" or "mac")
-    Uint8List hkdfExpand(Uint8List prk, String info) {
-      final hmac = crypto.Hmac(crypto.sha256, prk);
-      final bytes = hmac.convert([...utf8.encode(info), 1]).bytes;
+    // HKDF-Expand with SHA-256 for subkey stretching (info = "enc" or "mac").
+    // One block is all a 32-byte subkey needs: T(1) = HMAC(PRK, info | 0x01).
+    Future<Uint8List> hkdfExpand(Uint8List prk, String info) async {
+      final bytes = await computeHmac(
+        _crypto,
+        key: prk,
+        data: Uint8List.fromList([...utf8.encode(info), 1]),
+        hash: HmacHash.sha256,
+      );
       return Uint8List.fromList(bytes.sublist(0, 32));
     }
 
-    bool verifyMac(Uint8List macKey, Uint8List iv, Uint8List ct, Uint8List expectedMac) {
-      final hmac = crypto.Hmac(crypto.sha256, macKey);
-      final computed = hmac.convert([...iv, ...ct]).bytes;
+    Future<bool> verifyMac(Uint8List macKey, Uint8List iv, Uint8List ct, Uint8List expectedMac) async {
+      final computed = await computeHmac(
+        _crypto,
+        key: macKey,
+        data: Uint8List.fromList([...iv, ...ct]),
+        hash: HmacHash.sha256,
+      );
       if (computed.length != expectedMac.length) return false;
       var diff = 0;
       for (var i = 0; i < computed.length; i++) {
@@ -207,16 +215,16 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
           continue;
         }
 
-        stretchedEncKey = hkdfExpand(masterKey, 'enc');
-        stretchedMacKey = hkdfExpand(masterKey, 'mac');
+        stretchedEncKey = await hkdfExpand(masterKey, 'enc');
+        stretchedMacKey = await hkdfExpand(masterKey, 'mac');
 
         if (validationParts != null && validationParts.mac != null) {
-          if (verifyMac(stretchedMacKey, validationParts.iv, validationParts.ct, validationParts.mac!)) {
+          if (await verifyMac(stretchedMacKey, validationParts.iv, validationParts.ct, validationParts.mac!)) {
             foundValidKey = true;
             break;
           }
         } else if (dataParts.mac != null) {
-          if (verifyMac(stretchedMacKey, dataParts.iv, dataParts.ct, dataParts.mac!)) {
+          if (await verifyMac(stretchedMacKey, dataParts.iv, dataParts.ct, dataParts.mac!)) {
             foundValidKey = true;
             break;
           }
@@ -249,7 +257,7 @@ class BitwardenJsonCodec implements PasswordFormatCodec {
 
       // Step 3: Verify and decrypt the vault payload data
       if (dataParts.mac != null) {
-        if (!verifyMac(dataMacKey, dataParts.iv, dataParts.ct, dataParts.mac!)) {
+        if (!await verifyMac(dataMacKey, dataParts.iv, dataParts.ct, dataParts.mac!)) {
           throw const PasswordFileIncorrectPasswordException();
         }
       }

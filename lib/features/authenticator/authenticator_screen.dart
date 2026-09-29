@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
+import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
 import 'package:vaultexplorer/core/utils/sensitive_clipboard.dart';
 import 'package:vaultexplorer/core/utils/totp_engine.dart';
+import 'package:vaultexplorer/core/utils/ve_log.dart';
 import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/data/models/vault_item.dart';
@@ -32,6 +35,8 @@ class AuthenticatorScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
+  static const _kLogTag = 'AuthenticatorScreen';
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -69,8 +74,9 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
 
   Future<void> _copy(BuildContext context, TotpVaultEntry entry) async {
     final label = context.l10n.authenticatorCodeLabel;
-    final code = _generateOrNull(entry.item.fields);
+    final code = await _generateOrNull(entry.item.fields);
     if (code == null) return;
+    if (!context.mounted) return;
     await ref.read(sensitiveClipboardProvider).copy(code);
     if (!context.mounted) return;
     showAppSnackBar(context, message: context.l10n.labelCopiedToClipboard(label), tone: AppBannerTone.success);
@@ -78,8 +84,9 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
 
   Future<void> _copyNext(BuildContext context, TotpVaultEntry entry) async {
     final label = context.l10n.authenticatorNextCodeLabel;
-    final code = _generateNextOrNull(entry.item.fields);
+    final code = await _generateNextOrNull(entry.item.fields);
     if (code == null) return;
+    if (!context.mounted) return;
     await ref.read(sensitiveClipboardProvider).copy(code);
     if (!context.mounted) return;
     showAppSnackBar(context, message: context.l10n.labelCopiedToClipboard(label), tone: AppBannerTone.success);
@@ -97,18 +104,30 @@ class _AuthenticatorScreenState extends ConsumerState<AuthenticatorScreen> {
     );
   }
 
-  String? _generateOrNull(Map<String, String> fields) {
+  Future<String?> _generateOrNull(Map<String, String> fields) async {
     try {
-      return TotpEngine.generateCode(TotpConfig.fromFields(fields));
+      return await TotpEngine.generateCode(
+        TotpConfig.fromFields(fields),
+        crypto: ref.read(vaultCryptoApiProvider),
+      );
     } on TotpCodeException {
+      return null;
+    } on PlatformException catch (e) {
+      VeLog.e(_kLogTag, 'HMAC failed while copying a code', e);
       return null;
     }
   }
 
-  String? _generateNextOrNull(Map<String, String> fields) {
+  Future<String?> _generateNextOrNull(Map<String, String> fields) async {
     try {
-      return TotpEngine.generateNextCode(TotpConfig.fromFields(fields));
+      return await TotpEngine.generateNextCode(
+        TotpConfig.fromFields(fields),
+        crypto: ref.read(vaultCryptoApiProvider),
+      );
     } on TotpCodeException {
+      return null;
+    } on PlatformException catch (e) {
+      VeLog.e(_kLogTag, 'HMAC failed while copying the next code', e);
       return null;
     }
   }

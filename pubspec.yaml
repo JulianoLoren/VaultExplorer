@@ -23,13 +23,12 @@ dependencies:
   csv: ^8.0.0
   re_editor: ^0.10.0
   re_highlight: ^0.0.3
-  # Already resolved transitively (kpasslib depends on it) -- promoted to a
-  # direct dependency for the built-in TOTP authenticator's HMAC-SHA1/256/512
-  # (RFC 6238), so no new package enters the dependency tree.
-  crypto: ^3.0.7
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Tests only: reference HMAC for test/helpers/reference_hmac_crypto.dart. The
+  # app computes HMAC natively (VaultCryptoApi.hmac), not through this package.
+  crypto: ^3.0.7
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
   test: ^1.31.0

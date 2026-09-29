@@ -10,6 +10,9 @@ import 'package:vaultexplorer/data/services/vault_engine/channel_methods.dart';
 /// Hash functions [VaultCryptoApi.pbkdf2] can run.
 enum Pbkdf2Hash { sha1, sha256 }
 
+/// Hash functions [VaultCryptoApi.hmac] can run.
+enum HmacHash { sha1, sha256, sha512 }
+
 /// Password hashing and derived-key storage: PBKDF2 hashing used by the
 /// unlock/create flows, plus the Keystore-backed derived-key cache, plus
 /// AES-GCM and AVIF decode primitives that also live in the native crypto
@@ -125,6 +128,24 @@ class VaultCryptoApi {
         'outputLen': outputLen,
         'hash': hash.name,
       },
+    );
+    return result;
+  }
+
+  /// One-shot HMAC of [data] under [key], via the platform's `javax.crypto.Mac`
+  /// (see `HmacUtil.kt`). Used for the built-in authenticator's TOTP/HOTP codes
+  /// and the Bitwarden import's HKDF / MAC check.
+  ///
+  /// [key] must be non-empty (the native side rejects an empty one). Returns
+  /// the raw MAC, or null if the platform produced nothing.
+  Future<Uint8List?> hmac({
+    required Uint8List key,
+    required Uint8List data,
+    required HmacHash hash,
+  }) async {
+    final result = await _channel.invokeMethod<Uint8List>(
+      ChannelMethods.hmac,
+      {'key': key, 'data': data, 'hash': hash.name},
     );
     return result;
   }
