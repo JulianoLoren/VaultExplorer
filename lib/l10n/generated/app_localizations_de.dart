@@ -9051,4 +9051,63 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => 'Neue Datei';
+
+  @override
+  String get textEditorCloseTab => 'Schließen';
+
+  @override
+  String get textEditorCloseOtherTabs => 'Andere schließen';
+
+  @override
+  String get textEditorCloseAllTabs => 'Alle schließen';
+
+  @override
+  String get textEditorRevertToSaved => 'Auf gespeicherte Version zurücksetzen';
+
+  @override
+  String get textEditorRevertDialogTitle => 'Änderungen verwerfen?';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      'Alle ungespeicherten Änderungen verwerfen und die Datei aus dem Tresor neu laden?';
+
+  @override
+  String get revertButton => 'Zurücksetzen';
+
+  @override
+  String get textEditorNewFolderTooltip => 'Neuer Ordner';
+
+  @override
+  String get textEditorNewFolderDialogTitle => 'Neuer Ordner';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'Ordnername';
+
+  @override
+  String get textEditorRenameMenuItem => 'Umbenennen';
+
+  @override
+  String get textEditorRenameDialogTitle => 'Umbenennen';
+
+  @override
+  String get textEditorMoveToMenuItem => 'Verschieben nach...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'In Ordner verschieben';
+
+  @override
+  String get textEditorMoveHereButton => 'Hierher verschieben';
+
+  @override
+  String get textEditorDeleteMenuItem => 'Löschen';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return '$name löschen?';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return 'Sind Sie sicher, dass Sie \"$name\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
+  }
 }

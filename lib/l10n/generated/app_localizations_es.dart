@@ -9067,4 +9067,63 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => 'Nuevo archivo';
+
+  @override
+  String get textEditorCloseTab => 'Cerrar';
+
+  @override
+  String get textEditorCloseOtherTabs => 'Cerrar otros';
+
+  @override
+  String get textEditorCloseAllTabs => 'Cerrar todo';
+
+  @override
+  String get textEditorRevertToSaved => 'Revertir a lo guardado';
+
+  @override
+  String get textEditorRevertDialogTitle => '¿Descartar cambios?';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      '¿Descartar todas las ediciones no guardadas y recargar el archivo de la bóveda?';
+
+  @override
+  String get revertButton => 'Revertir';
+
+  @override
+  String get textEditorNewFolderTooltip => 'Nueva carpeta';
+
+  @override
+  String get textEditorNewFolderDialogTitle => 'Nueva carpeta';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'Nombre de la carpeta';
+
+  @override
+  String get textEditorRenameMenuItem => 'Renombrar';
+
+  @override
+  String get textEditorRenameDialogTitle => 'Renombrar';
+
+  @override
+  String get textEditorMoveToMenuItem => 'Mover a...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'Mover a carpeta';
+
+  @override
+  String get textEditorMoveHereButton => 'Mover aquí';
+
+  @override
+  String get textEditorDeleteMenuItem => 'Eliminar';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return '¿Eliminar $name?';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return '¿Está seguro de que desea eliminar \"$name\"? Esta acción no se puede deshacer.';
+  }
 }

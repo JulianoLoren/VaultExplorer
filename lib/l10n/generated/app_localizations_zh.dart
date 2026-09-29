@@ -8443,4 +8443,62 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => '新建文件';
+
+  @override
+  String get textEditorCloseTab => '关闭';
+
+  @override
+  String get textEditorCloseOtherTabs => '关闭其他';
+
+  @override
+  String get textEditorCloseAllTabs => '关闭所有';
+
+  @override
+  String get textEditorRevertToSaved => '还原到已保存状态';
+
+  @override
+  String get textEditorRevertDialogTitle => '放弃更改？';
+
+  @override
+  String get textEditorRevertDialogMessage => '放弃所有未保存的编辑并从保管库中重新加载文件？';
+
+  @override
+  String get revertButton => '还原';
+
+  @override
+  String get textEditorNewFolderTooltip => '新建文件夹';
+
+  @override
+  String get textEditorNewFolderDialogTitle => '新建文件夹';
+
+  @override
+  String get textEditorNewFolderFieldLabel => '文件夹名称';
+
+  @override
+  String get textEditorRenameMenuItem => '重命名';
+
+  @override
+  String get textEditorRenameDialogTitle => '重命名';
+
+  @override
+  String get textEditorMoveToMenuItem => '移动到...';
+
+  @override
+  String get textEditorMoveToDialogTitle => '移动到文件夹';
+
+  @override
+  String get textEditorMoveHereButton => '移动到此处';
+
+  @override
+  String get textEditorDeleteMenuItem => '删除';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return '删除 $name？';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return '确定要删除“$name”吗？此操作无法撤消。';
+  }
 }

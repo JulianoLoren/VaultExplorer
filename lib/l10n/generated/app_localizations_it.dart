@@ -9049,4 +9049,63 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => 'Nuovo file';
+
+  @override
+  String get textEditorCloseTab => 'Chiudi';
+
+  @override
+  String get textEditorCloseOtherTabs => 'Chiudi le altre';
+
+  @override
+  String get textEditorCloseAllTabs => 'Chiudi tutto';
+
+  @override
+  String get textEditorRevertToSaved => 'Ripristina versione salvata';
+
+  @override
+  String get textEditorRevertDialogTitle => 'Annullare le modifiche?';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      'Annullare tutte le modifiche non salvate e ricaricare il file dalla cassaforte?';
+
+  @override
+  String get revertButton => 'Ripristina';
+
+  @override
+  String get textEditorNewFolderTooltip => 'Nuova cartella';
+
+  @override
+  String get textEditorNewFolderDialogTitle => 'Nuova cartella';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'Nome della cartella';
+
+  @override
+  String get textEditorRenameMenuItem => 'Rinomina';
+
+  @override
+  String get textEditorRenameDialogTitle => 'Rinomina';
+
+  @override
+  String get textEditorMoveToMenuItem => 'Sposta in...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'Sposta nella cartella';
+
+  @override
+  String get textEditorMoveHereButton => 'Sposta qui';
+
+  @override
+  String get textEditorDeleteMenuItem => 'Elimina';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return 'Eliminare $name?';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return 'Sei sicuro di voler eliminare \"$name\"? Questa azione non può essere annullata.';
+  }
 }

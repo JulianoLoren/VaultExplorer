@@ -8562,4 +8562,63 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => '新規ファイル';
+
+  @override
+  String get textEditorCloseTab => '閉じる';
+
+  @override
+  String get textEditorCloseOtherTabs => '他を閉じる';
+
+  @override
+  String get textEditorCloseAllTabs => 'すべて閉じる';
+
+  @override
+  String get textEditorRevertToSaved => '保存時の状態に戻す';
+
+  @override
+  String get textEditorRevertDialogTitle => '変更を破棄しますか？';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      '未保存の編集をすべて破棄し、保管庫からファイルを再読み込みしますか？';
+
+  @override
+  String get revertButton => '元に戻す';
+
+  @override
+  String get textEditorNewFolderTooltip => '新規フォルダー';
+
+  @override
+  String get textEditorNewFolderDialogTitle => '新規フォルダー';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'フォルダー名';
+
+  @override
+  String get textEditorRenameMenuItem => '名前を変更';
+
+  @override
+  String get textEditorRenameDialogTitle => '名前を変更';
+
+  @override
+  String get textEditorMoveToMenuItem => '移動...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'フォルダーへ移動';
+
+  @override
+  String get textEditorMoveHereButton => 'ここに移動';
+
+  @override
+  String get textEditorDeleteMenuItem => '削除';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return '$name を削除しますか？';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return '\"$name\" を削除してもよろしいですか？この操作は取り消せません。';
+  }
 }

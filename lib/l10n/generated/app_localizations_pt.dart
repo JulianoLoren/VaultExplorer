@@ -9053,4 +9053,63 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => 'Novo arquivo';
+
+  @override
+  String get textEditorCloseTab => 'Fechar';
+
+  @override
+  String get textEditorCloseOtherTabs => 'Fechar as outras';
+
+  @override
+  String get textEditorCloseAllTabs => 'Fechar tudo';
+
+  @override
+  String get textEditorRevertToSaved => 'Reverter para o salvo';
+
+  @override
+  String get textEditorRevertDialogTitle => 'Descartar alterações?';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      'Descartar todas as edições não salvas e recarregar o arquivo do cofre?';
+
+  @override
+  String get revertButton => 'Reverter';
+
+  @override
+  String get textEditorNewFolderTooltip => 'Nova pasta';
+
+  @override
+  String get textEditorNewFolderDialogTitle => 'Nova pasta';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'Nome da pasta';
+
+  @override
+  String get textEditorRenameMenuItem => 'Renomear';
+
+  @override
+  String get textEditorRenameDialogTitle => 'Renomear';
+
+  @override
+  String get textEditorMoveToMenuItem => 'Mover para...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'Mover para a pasta';
+
+  @override
+  String get textEditorMoveHereButton => 'Mover para cá';
+
+  @override
+  String get textEditorDeleteMenuItem => 'Excluir';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return 'Excluir $name?';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return 'Tem certeza de que deseja excluir \"$name\"? Esta ação não pode ser desfeita.';
+  }
 }

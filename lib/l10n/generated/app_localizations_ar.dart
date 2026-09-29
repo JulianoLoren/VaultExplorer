@@ -9107,4 +9107,63 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => 'ملف جديد';
+
+  @override
+  String get textEditorCloseTab => 'إغلاق';
+
+  @override
+  String get textEditorCloseOtherTabs => 'إغلاق الباقي';
+
+  @override
+  String get textEditorCloseAllTabs => 'إغلاق الكل';
+
+  @override
+  String get textEditorRevertToSaved => 'العودة إلى المحفوظ';
+
+  @override
+  String get textEditorRevertDialogTitle => 'تجاهل التغييرات؟';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      'تجاهل كافة التعديلات غير المحفوظة وإعادة تحميل الملف من الخزينة؟';
+
+  @override
+  String get revertButton => 'استعادة';
+
+  @override
+  String get textEditorNewFolderTooltip => 'مجلد جديد';
+
+  @override
+  String get textEditorNewFolderDialogTitle => 'مجلد جديد';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'اسم المجلد';
+
+  @override
+  String get textEditorRenameMenuItem => 'إعادة تسمية';
+
+  @override
+  String get textEditorRenameDialogTitle => 'إعادة تسمية';
+
+  @override
+  String get textEditorMoveToMenuItem => 'نقل إلى...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'نقل إلى مجلد';
+
+  @override
+  String get textEditorMoveHereButton => 'انقل هنا';
+
+  @override
+  String get textEditorDeleteMenuItem => 'حذف';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return 'حذف $name؟';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return 'هل أنت متأكد من رغبتك في حذف \"$name\"؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
 }

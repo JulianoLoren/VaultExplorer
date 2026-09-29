@@ -9124,4 +9124,63 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => 'Новий файл';
+
+  @override
+  String get textEditorCloseTab => 'Закрити';
+
+  @override
+  String get textEditorCloseOtherTabs => 'Закрити інші';
+
+  @override
+  String get textEditorCloseAllTabs => 'Закрити всі';
+
+  @override
+  String get textEditorRevertToSaved => 'Повернути до збереженого';
+
+  @override
+  String get textEditorRevertDialogTitle => 'Скасувати зміни?';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      'Скасувати всі незбережені зміни та перезавантажити файл зі сховища?';
+
+  @override
+  String get revertButton => 'Повернути';
+
+  @override
+  String get textEditorNewFolderTooltip => 'Нова папка';
+
+  @override
+  String get textEditorNewFolderDialogTitle => 'Нова папка';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'Назва папки';
+
+  @override
+  String get textEditorRenameMenuItem => 'Перейменувати';
+
+  @override
+  String get textEditorRenameDialogTitle => 'Перейменувати';
+
+  @override
+  String get textEditorMoveToMenuItem => 'Перемістити до...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'Перемістити до папки';
+
+  @override
+  String get textEditorMoveHereButton => 'Перемістити сюди';
+
+  @override
+  String get textEditorDeleteMenuItem => 'Видалити';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return 'Видалити $name?';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return 'Ви дійсно бажаєте видалити \"$name\"? Цю дію не можна скасувати.';
+  }
 }

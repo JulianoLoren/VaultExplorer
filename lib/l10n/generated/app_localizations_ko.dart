@@ -8559,4 +8559,63 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => '새 파일';
+
+  @override
+  String get textEditorCloseTab => '닫기';
+
+  @override
+  String get textEditorCloseOtherTabs => '나머지 닫기';
+
+  @override
+  String get textEditorCloseAllTabs => '모두 닫기';
+
+  @override
+  String get textEditorRevertToSaved => '저장된 상태로 되돌리기';
+
+  @override
+  String get textEditorRevertDialogTitle => '변경 사항을 취소하시겠습니까?';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      '저장되지 않은 모든 편집 내용을 취소하고 보관소에서 파일을 다시 로드하시겠습니까?';
+
+  @override
+  String get revertButton => '되돌리기';
+
+  @override
+  String get textEditorNewFolderTooltip => '새 폴더';
+
+  @override
+  String get textEditorNewFolderDialogTitle => '새 폴더';
+
+  @override
+  String get textEditorNewFolderFieldLabel => '폴더 이름';
+
+  @override
+  String get textEditorRenameMenuItem => '이름 바꾸기';
+
+  @override
+  String get textEditorRenameDialogTitle => '이름 바꾸기';
+
+  @override
+  String get textEditorMoveToMenuItem => '이동...';
+
+  @override
+  String get textEditorMoveToDialogTitle => '폴더로 이동';
+
+  @override
+  String get textEditorMoveHereButton => '여기로 이동';
+
+  @override
+  String get textEditorDeleteMenuItem => '삭제';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return '$name 삭제?';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return '\"$name\"을(를) 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.';
+  }
 }

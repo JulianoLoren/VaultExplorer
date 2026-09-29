@@ -15006,6 +15006,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New file'**
   String get textEditorNewFileTooltip;
+
+  /// Menu item to close the current tab
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get textEditorCloseTab;
+
+  /// Menu item to close all tabs except the selected one
+  ///
+  /// In en, this message translates to:
+  /// **'Close others'**
+  String get textEditorCloseOtherTabs;
+
+  /// Menu item to close all open tabs
+  ///
+  /// In en, this message translates to:
+  /// **'Close all'**
+  String get textEditorCloseAllTabs;
+
+  /// Menu item in text editor to discard changes and reload from vault
+  ///
+  /// In en, this message translates to:
+  /// **'Revert to saved'**
+  String get textEditorRevertToSaved;
+
+  /// Title of confirmation dialog when reverting file to saved state
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get textEditorRevertDialogTitle;
+
+  /// Body message of confirmation dialog when reverting file
+  ///
+  /// In en, this message translates to:
+  /// **'Discard all unsaved edits and reload the file from the vault?'**
+  String get textEditorRevertDialogMessage;
+
+  /// Action button to confirm reverting file changes
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get revertButton;
+
+  /// Tooltip for new folder button in text editor drawer
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get textEditorNewFolderTooltip;
+
+  /// Dialog title when creating a new folder in the editor drawer
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get textEditorNewFolderDialogTitle;
+
+  /// Field label for folder name
+  ///
+  /// In en, this message translates to:
+  /// **'Folder name'**
+  String get textEditorNewFolderFieldLabel;
+
+  /// Context menu item to rename a file or folder
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get textEditorRenameMenuItem;
+
+  /// Dialog title for renaming a file or folder
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get textEditorRenameDialogTitle;
+
+  /// Context menu item to move a file or folder
+  ///
+  /// In en, this message translates to:
+  /// **'Move to...'**
+  String get textEditorMoveToMenuItem;
+
+  /// Dialog title for choosing destination directory to move item
+  ///
+  /// In en, this message translates to:
+  /// **'Move to folder'**
+  String get textEditorMoveToDialogTitle;
+
+  /// Button in folder picker dialog to confirm destination directory
+  ///
+  /// In en, this message translates to:
+  /// **'Move here'**
+  String get textEditorMoveHereButton;
+
+  /// Context menu item to delete a file or folder
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get textEditorDeleteMenuItem;
+
+  /// Confirmation dialog title before deleting file or folder
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String textEditorDeleteConfirmTitle(String name);
+
+  /// Confirmation dialog message before deleting file or folder
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? This action cannot be undone.'**
+  String textEditorDeleteConfirmMessage(String name);
 }
 
 class _AppLocalizationsDelegate

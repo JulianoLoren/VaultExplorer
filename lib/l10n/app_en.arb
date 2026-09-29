@@ -11334,5 +11334,87 @@
   "textEditorNewFileTooltip": "New file",
   "@textEditorNewFileTooltip": {
     "description": "Tooltip for the new file button in the text editor tab bar"
+  },
+  "textEditorCloseTab": "Close",
+  "@textEditorCloseTab": {
+    "description": "Menu item to close the current tab"
+  },
+  "textEditorCloseOtherTabs": "Close others",
+  "@textEditorCloseOtherTabs": {
+    "description": "Menu item to close all tabs except the selected one"
+  },
+  "textEditorCloseAllTabs": "Close all",
+  "@textEditorCloseAllTabs": {
+    "description": "Menu item to close all open tabs"
+  },
+  "textEditorRevertToSaved": "Revert to saved",
+  "@textEditorRevertToSaved": {
+    "description": "Menu item in text editor to discard changes and reload from vault"
+  },
+  "textEditorRevertDialogTitle": "Discard changes?",
+  "@textEditorRevertDialogTitle": {
+    "description": "Title of confirmation dialog when reverting file to saved state"
+  },
+  "textEditorRevertDialogMessage": "Discard all unsaved edits and reload the file from the vault?",
+  "@textEditorRevertDialogMessage": {
+    "description": "Body message of confirmation dialog when reverting file"
+  },
+  "revertButton": "Revert",
+  "@revertButton": {
+    "description": "Action button to confirm reverting file changes"
+  },
+  "textEditorNewFolderTooltip": "New folder",
+  "@textEditorNewFolderTooltip": {
+    "description": "Tooltip for new folder button in text editor drawer"
+  },
+  "textEditorNewFolderDialogTitle": "New folder",
+  "@textEditorNewFolderDialogTitle": {
+    "description": "Dialog title when creating a new folder in the editor drawer"
+  },
+  "textEditorNewFolderFieldLabel": "Folder name",
+  "@textEditorNewFolderFieldLabel": {
+    "description": "Field label for folder name"
+  },
+  "textEditorRenameMenuItem": "Rename",
+  "@textEditorRenameMenuItem": {
+    "description": "Context menu item to rename a file or folder"
+  },
+  "textEditorRenameDialogTitle": "Rename",
+  "@textEditorRenameDialogTitle": {
+    "description": "Dialog title for renaming a file or folder"
+  },
+  "textEditorMoveToMenuItem": "Move to...",
+  "@textEditorMoveToMenuItem": {
+    "description": "Context menu item to move a file or folder"
+  },
+  "textEditorMoveToDialogTitle": "Move to folder",
+  "@textEditorMoveToDialogTitle": {
+    "description": "Dialog title for choosing destination directory to move item"
+  },
+  "textEditorMoveHereButton": "Move here",
+  "@textEditorMoveHereButton": {
+    "description": "Button in folder picker dialog to confirm destination directory"
+  },
+  "textEditorDeleteMenuItem": "Delete",
+  "@textEditorDeleteMenuItem": {
+    "description": "Context menu item to delete a file or folder"
+  },
+  "textEditorDeleteConfirmTitle": "Delete {name}?",
+  "@textEditorDeleteConfirmTitle": {
+    "description": "Confirmation dialog title before deleting file or folder",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "textEditorDeleteConfirmMessage": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+  "@textEditorDeleteConfirmMessage": {
+    "description": "Confirmation dialog message before deleting file or folder",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

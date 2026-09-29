@@ -8913,4 +8913,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get textEditorNewFileTooltip => 'New file';
+
+  @override
+  String get textEditorCloseTab => 'Close';
+
+  @override
+  String get textEditorCloseOtherTabs => 'Close others';
+
+  @override
+  String get textEditorCloseAllTabs => 'Close all';
+
+  @override
+  String get textEditorRevertToSaved => 'Revert to saved';
+
+  @override
+  String get textEditorRevertDialogTitle => 'Discard changes?';
+
+  @override
+  String get textEditorRevertDialogMessage =>
+      'Discard all unsaved edits and reload the file from the vault?';
+
+  @override
+  String get revertButton => 'Revert';
+
+  @override
+  String get textEditorNewFolderTooltip => 'New folder';
+
+  @override
+  String get textEditorNewFolderDialogTitle => 'New folder';
+
+  @override
+  String get textEditorNewFolderFieldLabel => 'Folder name';
+
+  @override
+  String get textEditorRenameMenuItem => 'Rename';
+
+  @override
+  String get textEditorRenameDialogTitle => 'Rename';
+
+  @override
+  String get textEditorMoveToMenuItem => 'Move to...';
+
+  @override
+  String get textEditorMoveToDialogTitle => 'Move to folder';
+
+  @override
+  String get textEditorMoveHereButton => 'Move here';
+
+  @override
+  String get textEditorDeleteMenuItem => 'Delete';
+
+  @override
+  String textEditorDeleteConfirmTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String textEditorDeleteConfirmMessage(String name) {
+    return 'Are you sure you want to delete \"$name\"? This action cannot be undone.';
+  }
 }
