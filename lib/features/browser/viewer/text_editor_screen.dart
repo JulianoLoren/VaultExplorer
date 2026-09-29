@@ -99,14 +99,23 @@ class TextEditorScreen extends ConsumerStatefulWidget {
   ConsumerState<TextEditorScreen> createState() => _TextEditorScreenState();
 }
 
-class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
+class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final List<EditorTab> _tabs = [];
   int _activeTabIndex = 0;
 
+  final ScrollController _tabScrollController = ScrollController();
+  final List<GlobalKey> _tabKeys = [];
+
+  // Pinch-to-zoom state
+  final Map<int, Offset> _pinchPointers = {};
+  double? _initialPinchDistance;
+  double _pinchStartFontSize = 14.0;
+
   bool _readOnly = false;
   bool _wordWrap = true;
   final EditorFocusNode _focusNode = EditorFocusNode();
+  late final SelectionToolbarController _toolbarController;
 
   late String _projectDirPath;
 
@@ -115,6 +124,61 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _toolbarController = MobileSelectionToolbarController(
+      builder: ({
+        required BuildContext context,
+        required TextSelectionToolbarAnchors anchors,
+        required CodeLineEditingController controller,
+        required VoidCallback onDismiss,
+        required VoidCallback onRefresh,
+      }) {
+        final items = <ContextMenuButtonItem>[
+          if (!_readOnly && !controller.selection.isCollapsed)
+            ContextMenuButtonItem(
+              onPressed: () {
+                controller.cut();
+                onDismiss();
+              },
+              type: ContextMenuButtonType.cut,
+            ),
+          if (!controller.selection.isCollapsed)
+            ContextMenuButtonItem(
+              onPressed: () {
+                controller.copy();
+                onDismiss();
+              },
+              type: ContextMenuButtonType.copy,
+            ),
+          if (!_readOnly)
+            ContextMenuButtonItem(
+              onPressed: () {
+                controller.paste();
+                onDismiss();
+              },
+              type: ContextMenuButtonType.paste,
+            ),
+          if (!controller.isAllSelected)
+            ContextMenuButtonItem(
+              onPressed: () {
+                controller.selectAll();
+                onRefresh();
+              },
+              type: ContextMenuButtonType.selectAll,
+            ),
+        ];
+
+        if (items.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return AdaptiveTextSelectionToolbar.buttonItems(
+          anchors: anchors,
+          buttonItems: items,
+        );
+      },
+    );
+
     final slash = widget.filePath.lastIndexOf('/');
     _projectDirPath = slash >= 0 ? widget.filePath.substring(0, slash) : '';
 
@@ -188,7 +252,21 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      final appearance = ref.read(textEditorAppearanceProvider);
+      if (appearance.autoSave) {
+        for (final tab in _tabs.where((t) => t.isDirty && !t.isSaving && !t.isAutosaving)) {
+          _saveFile(tab, isAutosave: true);
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _tabScrollController.dispose();
     for (final tab in _tabs) {
       _unbindTabController(tab);
       tab.dispose();
@@ -390,11 +468,83 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       _tabs.add(newTab);
       _activeTabIndex = _tabs.length - 1;
     });
+    _scrollToActiveTab();
 
     _loadFileForTab(newTab);
   }
 
+  void _scrollToActiveTab() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_activeTabIndex >= 0 && _activeTabIndex < _tabKeys.length) {
+        final keyContext = _tabKeys[_activeTabIndex].currentContext;
+        if (keyContext != null) {
+          Scrollable.ensureVisible(
+            keyContext,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: 0.5,
+          );
+        }
+      }
+    });
+  }
+
+  Future<void> _closeOtherTabs(int keepIndex) async {
+    final keepTab = _tabs[keepIndex];
+    for (int i = _tabs.length - 1; i >= 0; i--) {
+      if (!mounted) break;
+      if (i != _tabs.indexOf(keepTab)) {
+        await _closeTab(i);
+      }
+    }
+  }
+
+  Future<void> _closeAllTabs() async {
+    for (int i = _tabs.length - 1; i >= 0; i--) {
+      if (!mounted) break;
+      await _closeTab(i);
+    }
+  }
+
+  void _showTabContextMenu(int index) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.close_rounded),
+              title: Text(ctx.l10n.textEditorCloseTab),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _closeTab(index);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.tab_unselected_rounded),
+              title: Text(ctx.l10n.textEditorCloseOtherTabs),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _closeOtherTabs(index);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.clear_all_rounded),
+              title: Text(ctx.l10n.textEditorCloseAllTabs),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _closeAllTabs();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _closeTab(int index) async {
+    if (index < 0 || index >= _tabs.length) return;
     final tab = _tabs[index];
     if (tab.isDirty) {
       final shouldClose = await showDialog<bool>(
@@ -433,6 +583,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       _tabs.removeAt(index);
       _activeTabIndex = _activeTabIndex.clamp(0, _tabs.length - 1);
     });
+    _scrollToActiveTab();
   }
 
   Future<void> _createNewFileTab() async {
@@ -499,14 +650,14 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
       return;
     }
 
-    final ok = await ref.read(vaultFileIoApiProvider).writeWholeFile(
+    final ok = await ref.read(vaultFileIoApiProvider).createEmptyFile(
           widget.container,
           newFilePath,
-          Uint8List(0),
         );
 
     if (ok && mounted) {
       _openFileInTab(newFilePath);
+      _scrollToActiveTab();
     } else if (mounted) {
       showAppSnackBar(
         context,
@@ -514,6 +665,288 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         tone: AppBannerTone.error,
       );
     }
+  }
+
+  Future<void> _createDrawerFolder() async {
+    final parentDir = _projectDirPath;
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.textEditorNewFolderDialogTitle),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: ctx.l10n.textEditorNewFolderFieldLabel,
+            ),
+            validator: (val) {
+              final text = val?.trim() ?? '';
+              if (text.isEmpty) return ctx.l10n.validationEmptyName;
+              if (text.contains('/') || text.contains('\\')) {
+                return ctx.l10n.validationIllegalChar('/', 0, 'vault');
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.of(ctx).pop(controller.text.trim());
+              }
+            },
+            child: Text(ctx.l10n.done),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || !mounted) return;
+    final newDirPath = parentDir.isEmpty ? result : '$parentDir/$result';
+
+    final ok = await ref.read(vaultFileIoApiProvider).createDirectory(
+          widget.container,
+          newDirPath,
+        );
+
+    if (ok && mounted) {
+      setState(() {});
+    } else if (mounted) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.saveFailedWithError(''),
+        tone: AppBannerTone.error,
+      );
+    }
+  }
+
+  void _syncRenamedPath(String oldPath, String newPath, bool isDir) {
+    for (final tab in _tabs) {
+      if (isDir) {
+        if (tab.filePath == oldPath) {
+          tab.filePath = newPath;
+        } else if (tab.filePath.startsWith('$oldPath/')) {
+          tab.filePath = '$newPath${tab.filePath.substring(oldPath.length)}';
+        }
+      } else {
+        if (tab.filePath == oldPath) {
+          tab.filePath = newPath;
+        }
+      }
+    }
+  }
+
+  void _closeTabsForDeletedPath(String deletedPath, bool isDir) {
+    final toClose = <int>[];
+    for (int i = _tabs.length - 1; i >= 0; i--) {
+      final t = _tabs[i];
+      if (t.filePath == deletedPath || (isDir && t.filePath.startsWith('$deletedPath/'))) {
+        toClose.add(i);
+      }
+    }
+    for (final idx in toClose) {
+      _unbindTabController(_tabs[idx]);
+      _tabs[idx].dispose();
+      _tabs.removeAt(idx);
+    }
+    if (_tabs.isEmpty) {
+      final newTab = EditorTab(filePath: 'untitled.txt');
+      _bindTabController(newTab);
+      _tabs.add(newTab);
+    }
+    _activeTabIndex = _activeTabIndex.clamp(0, _tabs.length - 1);
+  }
+
+  Future<void> _renameDrawerItem(RawEntry entry, String fullPath) async {
+    final parentDir = _projectDirPath;
+    final controller = TextEditingController(text: entry.name);
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.textEditorRenameDialogTitle),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: entry.isDir
+                  ? ctx.l10n.textEditorNewFolderFieldLabel
+                  : ctx.l10n.textEditorSaveAsFileNameLabel,
+            ),
+            validator: (val) {
+              final text = val?.trim() ?? '';
+              if (text.isEmpty) return ctx.l10n.validationEmptyName;
+              if (text.contains('/') || text.contains('\\')) {
+                return ctx.l10n.validationIllegalChar('/', 0, 'vault');
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.of(ctx).pop(controller.text.trim());
+              }
+            },
+            child: Text(ctx.l10n.done),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || result == entry.name || !mounted) return;
+    final newFullPath = parentDir.isEmpty ? result : '$parentDir/$result';
+
+    final ok = await ref.read(vaultFileIoApiProvider).renameFile(
+          widget.container,
+          fullPath,
+          newFullPath,
+        );
+
+    if (ok && mounted) {
+      _syncRenamedPath(fullPath, newFullPath, entry.isDir);
+      setState(() {});
+    } else if (mounted) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.saveFailedWithError(''),
+        tone: AppBannerTone.error,
+      );
+    }
+  }
+
+  Future<void> _moveDrawerItem(RawEntry entry, String fullPath) async {
+    final targetDir = await showDialog<String>(
+      context: context,
+      builder: (ctx) => _MoveToFolderDialog(
+        container: widget.container,
+        currentEntryPath: fullPath,
+        isDir: entry.isDir,
+      ),
+    );
+
+    if (targetDir == null || !mounted) return;
+    final newFullPath = targetDir.isEmpty ? entry.name : '$targetDir/${entry.name}';
+    if (newFullPath == fullPath) return;
+
+    final ok = await ref.read(vaultFileIoApiProvider).renameFile(
+          widget.container,
+          fullPath,
+          newFullPath,
+        );
+
+    if (ok && mounted) {
+      _syncRenamedPath(fullPath, newFullPath, entry.isDir);
+      setState(() {});
+    } else if (mounted) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.saveFailedWithError(''),
+        tone: AppBannerTone.error,
+      );
+    }
+  }
+
+  Future<void> _deleteDrawerItem(RawEntry entry, String fullPath) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.textEditorDeleteConfirmTitle(entry.name)),
+        content: Text(ctx.l10n.textEditorDeleteConfirmMessage(entry.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(ctx.l10n.textEditorDeleteMenuItem),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final ok = await ref.read(vaultFileIoApiProvider).deleteFile(
+          widget.container,
+          fullPath,
+        );
+
+    if (ok && mounted) {
+      _closeTabsForDeletedPath(fullPath, entry.isDir);
+      setState(() {});
+    } else if (mounted) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.saveFailedWithError(''),
+        tone: AppBannerTone.error,
+      );
+    }
+  }
+
+  void _showDrawerItemContextMenu(RawEntry entry, String fullPath) {
+    final cs = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(ctx.l10n.textEditorRenameMenuItem),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _renameDrawerItem(entry, fullPath);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.drive_file_move_outlined),
+              title: Text(ctx.l10n.textEditorMoveToMenuItem),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _moveDrawerItem(entry, fullPath);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline_rounded, color: cs.error),
+              title: Text(
+                ctx.l10n.textEditorDeleteMenuItem,
+                style: TextStyle(color: cs.error),
+              ),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _deleteDrawerItem(entry, fullPath);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _showSaveAsDialog() async {
@@ -640,6 +1073,45 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
   void _toggleWordWrap() => setState(() => _wordWrap = !_wordWrap);
 
+  CodeCommentFormatter _getCommentFormatter(String filePath) {
+    final dot = filePath.lastIndexOf('.');
+    if (dot < 0) return DefaultCodeCommentFormatter(singleLinePrefix: '//');
+    final ext = filePath.substring(dot + 1).toLowerCase();
+    switch (ext) {
+      case 'py':
+      case 'sh':
+      case 'bash':
+      case 'zsh':
+      case 'yaml':
+      case 'yml':
+      case 'ini':
+      case 'cfg':
+      case 'conf':
+      case 'properties':
+      case 'dockerfile':
+        return DefaultCodeCommentFormatter(singleLinePrefix: '#');
+      case 'sql':
+        return DefaultCodeCommentFormatter(singleLinePrefix: '--', multiLinePrefix: '/*', multiLineSuffix: '*/');
+      case 'html':
+      case 'htm':
+      case 'xml':
+      case 'svg':
+        return DefaultCodeCommentFormatter(multiLinePrefix: '<!--', multiLineSuffix: '-->');
+      default:
+        return DefaultCodeCommentFormatter(singleLinePrefix: '//', multiLinePrefix: '/*', multiLineSuffix: '*/');
+    }
+  }
+
+  void _handleCommentShortcut() {
+    if (_tabs.isEmpty || _readOnly) return;
+    final tab = _activeTab;
+    final formatter = _getCommentFormatter(tab.filePath);
+    final value = formatter.format(tab.codeController.value, tab.codeController.options.indent, true);
+    tab.codeController.runRevocableOp(() {
+      tab.codeController.value = value;
+    });
+  }
+
   void _handleSaveShortcut() {
     if (_tabs.isEmpty) return;
     final tab = _activeTab;
@@ -667,6 +1139,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     setState(() {
       _activeTabIndex = (_activeTabIndex + 1) % _tabs.length;
     });
+    _scrollToActiveTab();
     _focusNode.requestFocus();
   }
 
@@ -675,12 +1148,43 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     setState(() {
       _activeTabIndex = (_activeTabIndex - 1 + _tabs.length) % _tabs.length;
     });
+    _scrollToActiveTab();
     _focusNode.requestFocus();
   }
 
   void _handleGoToLineShortcut() {
     if (_tabs.isEmpty) return;
     _showGoToLineDialog();
+  }
+
+  void _handleUndoShortcut() {
+    if (_tabs.isEmpty || _readOnly) return;
+    _activeTab.codeController.undo();
+  }
+
+  void _handleRedoShortcut() {
+    if (_tabs.isEmpty || _readOnly) return;
+    _activeTab.codeController.redo();
+  }
+
+  void _handleIndentShortcut() {
+    if (_tabs.isEmpty || _readOnly) return;
+    _activeTab.codeController.applyIndent();
+  }
+
+  void _handleOutdentShortcut() {
+    if (_tabs.isEmpty || _readOnly) return;
+    _activeTab.codeController.applyOutdent();
+  }
+
+  void _handleMoveLineUp() {
+    if (_tabs.isEmpty || _readOnly) return;
+    _activeTab.codeController.moveSelectionLinesUp();
+  }
+
+  void _handleMoveLineDown() {
+    if (_tabs.isEmpty || _readOnly) return;
+    _activeTab.codeController.moveSelectionLinesDown();
   }
 
   void _handleSelectAllShortcut() {
@@ -858,6 +1362,37 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     }
   }
 
+  Future<void> _revertActiveTab() async {
+    final tab = _activeTab;
+    if (!tab.isDirty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.textEditorRevertDialogTitle),
+        content: Text(ctx.l10n.textEditorRevertDialogMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(ctx.l10n.revertButton),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await _loadFileForTab(tab);
+    }
+  }
+
   static const _jsonExtensions = {
     'json',
     'password',
@@ -942,6 +1477,18 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
           const SingleActivator(LogicalKeyboardKey.keyG, control: true): _handleGoToLineShortcut,
           const SingleActivator(LogicalKeyboardKey.keyG, meta: true): _handleGoToLineShortcut,
           const SingleActivator(LogicalKeyboardKey.keyZ, alt: true): _toggleWordWrap,
+          const SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): _handleMoveLineUp,
+          const SingleActivator(LogicalKeyboardKey.arrowDown, alt: true): _handleMoveLineDown,
+          const SingleActivator(LogicalKeyboardKey.slash, control: true): _handleCommentShortcut,
+          const SingleActivator(LogicalKeyboardKey.slash, meta: true): _handleCommentShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyZ, control: true): _handleUndoShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyZ, meta: true): _handleUndoShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyY, control: true): _handleRedoShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyY, meta: true): _handleRedoShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true): _handleRedoShortcut,
+          const SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true): _handleRedoShortcut,
+          const SingleActivator(LogicalKeyboardKey.tab): _handleIndentShortcut,
+          const SingleActivator(LogicalKeyboardKey.tab, shift: true): _handleOutdentShortcut,
           const SingleActivator(LogicalKeyboardKey.tab, control: true): _handleNextTabShortcut,
           const SingleActivator(LogicalKeyboardKey.tab, control: true, shift: true): _handlePreviousTabShortcut,
           const SingleActivator(LogicalKeyboardKey.tab, meta: true): _handleNextTabShortcut,
@@ -994,6 +1541,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                       break;
                     case 'saveAs':
                       _showSaveAsDialog();
+                      break;
+                    case 'revert':
+                      _revertActiveTab();
                       break;
                     case 'readOnly':
                       _toggleReadOnly();
@@ -1050,6 +1600,30 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                         const Icon(Icons.save_as_rounded, size: 20),
                         const SizedBox(width: 12),
                         Text(context.l10n.textEditorSaveAsMenuItem),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'revert',
+                    enabled: activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.restore_rounded,
+                          size: 20,
+                          color: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
+                              ? cs.error
+                              : cs.onSurface.withValues(alpha: 0.38),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          context.l10n.textEditorRevertToSaved,
+                          style: TextStyle(
+                            color: (activeTab.isDirty && !activeTab.isSaving && !activeTab.isAutosaving)
+                                ? cs.error
+                                : null,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1177,6 +1751,13 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
   }
 
   Widget _buildTabBar(ColorScheme cs) {
+    while (_tabKeys.length < _tabs.length) {
+      _tabKeys.add(GlobalKey());
+    }
+    if (_tabKeys.length > _tabs.length) {
+      _tabKeys.removeRange(_tabs.length, _tabKeys.length);
+    }
+
     return Container(
       height: 40,
       decoration: BoxDecoration(
@@ -1187,6 +1768,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _tabScrollController,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               itemCount: _tabs.length,
@@ -1195,11 +1777,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 final isActive = index == _activeTabIndex;
 
                 return Material(
+                  key: _tabKeys[index],
                   color: isActive ? cs.surfaceContainerHighest : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap: () => setState(() => _activeTabIndex = index),
+                    onTap: () {
+                      setState(() => _activeTabIndex = index);
+                      _scrollToActiveTab();
+                    },
+                    onLongPress: () => _showTabContextMenu(index),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       alignment: Alignment.center,
@@ -1400,6 +1987,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                     ),
                   ),
                   IconButton(
+                    icon: const Icon(Icons.note_add_outlined, size: 20),
+                    tooltip: context.l10n.textEditorNewFileTooltip,
+                    onPressed: _createNewFileTab,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.create_new_folder_outlined, size: 20),
+                    tooltip: context.l10n.textEditorNewFolderTooltip,
+                    onPressed: _createDrawerFolder,
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.close_rounded, size: 20),
                     tooltip: context.l10n.close,
                     onPressed: () => Navigator.of(context).pop(),
@@ -1481,6 +2078,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                             visualDensity: VisualDensity.compact,
                             dense: true,
+                            onLongPress: () => _showDrawerItemContextMenu(entry, fullPath),
                             leading: Icon(
                               iconData,
                               color: isCurrentActive
@@ -1616,8 +2214,45 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
     return Column(
       children: [
         Expanded(
-          child: Focus(
-            canRequestFocus: false,
+          child: Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (event) {
+              _pinchPointers[event.pointer] = event.position;
+              if (_pinchPointers.length == 2) {
+                final pts = _pinchPointers.values.toList();
+                _initialPinchDistance = (pts[0] - pts[1]).distance;
+                _pinchStartFontSize = appearance.fontSize;
+              }
+            },
+            onPointerMove: (event) {
+              if (_pinchPointers.containsKey(event.pointer)) {
+                _pinchPointers[event.pointer] = event.position;
+              }
+              if (_pinchPointers.length == 2 && _initialPinchDistance != null && _initialPinchDistance! > 10) {
+                final pts = _pinchPointers.values.toList();
+                final currentDist = (pts[0] - pts[1]).distance;
+                final scale = currentDist / _initialPinchDistance!;
+                final newSize = (_pinchStartFontSize * scale).clamp(10.0, 24.0);
+                final rounded = (newSize * 2).round() / 2.0;
+                if ((rounded - appearance.fontSize).abs() >= 0.5) {
+                  ref.read(textEditorAppearanceProvider.notifier).setFontSize(rounded);
+                }
+              }
+            },
+            onPointerUp: (event) {
+              _pinchPointers.remove(event.pointer);
+              if (_pinchPointers.length < 2) {
+                _initialPinchDistance = null;
+              }
+            },
+            onPointerCancel: (event) {
+              _pinchPointers.remove(event.pointer);
+              if (_pinchPointers.length < 2) {
+                _initialPinchDistance = null;
+              }
+            },
+            child: Focus(
+              canRequestFocus: false,
             onKeyEvent: (node, event) {
               if (!_focusNode.hasFocus) return KeyEventResult.ignored;
 
@@ -1630,6 +2265,17 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
 
                   final isShift = HardwareKeyboard.instance.isShiftPressed;
                   final isControl = HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed;
+                  final isAlt = HardwareKeyboard.instance.isAltPressed;
+
+                  if (isAlt && (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.arrowDown)) {
+                    if (key == LogicalKeyboardKey.arrowUp) {
+                      _handleMoveLineUp();
+                    } else {
+                      _handleMoveLineDown();
+                    }
+                    return KeyEventResult.handled;
+                  }
+
                   final controller = activeTab.codeController;
                   final selection = controller.selection;
                   final lines = controller.codeLines;
@@ -1756,6 +2402,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
               key: ValueKey(activeTab.filePath),
               controller: activeTab.codeController,
               scrollController: activeTab.scrollController,
+              toolbarController: _toolbarController,
               focusNode: _focusNode,
               readOnly: _readOnly,
               showCursorWhenReadOnly: true,
@@ -1766,7 +2413,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 controller: controller,
                 readOnly: readOnly,
               ),
-              chunkAnalyzer: const NonCodeChunkAnalyzer(),
+              chunkAnalyzer: const DefaultCodeChunkAnalyzer(),
               style: CodeEditorStyle(
                 fontFamily: 'JetBrains Mono',
                 fontFamilyFallback: const ['monospace'],
@@ -1776,40 +2423,56 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> {
                 textColor: syntaxStyle.textColor,
                 cursorColor: cs.primary,
                 cursorLineColor: cs.primary.withValues(alpha: 0.35),
+                chunkIndicatorColor: cs.primary,
                 selectionColor: cs.primary.withValues(alpha: 0.28),
                 codeTheme: syntaxStyle.codeTheme,
               ),
+              commentFormatter: _getCommentFormatter(activeTab.filePath),
               indicatorBuilder: appearance.showLineNumbers
                   ? (context, editingController, chunkController, notifier) {
-                      return DefaultCodeLineNumber(
-                        controller: editingController,
-                        notifier: notifier,
-                        textStyle: TextStyle(
-                          color: syntaxStyle.textColor.withValues(alpha: 0.45),
-                          fontFamily: 'JetBrains Mono',
-                          fontFamilyFallback: const ['monospace'],
-                          fontSize: appearance.fontSize,
-                          height: 1.5,
-                        ),
-                        focusedTextStyle: TextStyle(
-                          color: cs.primary,
-                          fontFamily: 'JetBrains Mono',
-                          fontFamilyFallback: const ['monospace'],
-                          fontSize: appearance.fontSize,
-                          fontWeight: FontWeight.w700,
-                          height: 1.5,
-                        ),
-                        customLineIndex2Text: appearance.relativeLineNumbers
-                            ? (lineIndex) {
-                                final current = editingController.selection.extentIndex;
-                                return lineIndex == current
-                                    ? '${lineIndex + 1}'
-                                    : '${(lineIndex - current).abs()}';
-                              }
-                            : null,
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          DefaultCodeLineNumber(
+                            controller: editingController,
+                            notifier: notifier,
+                            textStyle: TextStyle(
+                              color: syntaxStyle.textColor.withValues(alpha: 0.45),
+                              fontFamily: 'JetBrains Mono',
+                              fontFamilyFallback: const ['monospace'],
+                              fontSize: appearance.fontSize,
+                              height: 1.5,
+                            ),
+                            focusedTextStyle: TextStyle(
+                              color: cs.primary,
+                              fontFamily: 'JetBrains Mono',
+                              fontFamilyFallback: const ['monospace'],
+                              fontSize: appearance.fontSize,
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
+                            customLineIndex2Text: appearance.relativeLineNumbers
+                                ? (lineIndex) {
+                                    final current = editingController.selection.extentIndex;
+                                    return lineIndex == current
+                                        ? '${lineIndex + 1}'
+                                        : '${(lineIndex - current).abs()}';
+                                  }
+                                : null,
+                          ),
+                          DefaultCodeChunkIndicator(
+                            width: 14,
+                            controller: chunkController,
+                            notifier: notifier,
+                            painter: DefaultCodeChunkIndicatorPainter(
+                              color: syntaxStyle.textColor.withValues(alpha: 0.45),
+                            ),
+                          ),
+                        ],
                       );
                     }
                   : null,
+              ),
             ),
           ),
         ),
@@ -2007,6 +2670,145 @@ class _GoToLineDialogState extends State<_GoToLineDialog> {
         FilledButton(
           onPressed: _submit,
           child: Text(context.l10n.goToLineButton),
+        ),
+      ],
+    );
+  }
+}
+
+class _MoveToFolderDialog extends ConsumerStatefulWidget {
+  final MountedContainer container;
+  final String currentEntryPath;
+  final bool isDir;
+
+  const _MoveToFolderDialog({
+    required this.container,
+    required this.currentEntryPath,
+    required this.isDir,
+  });
+
+  @override
+  ConsumerState<_MoveToFolderDialog> createState() => _MoveToFolderDialogState();
+}
+
+class _MoveToFolderDialogState extends ConsumerState<_MoveToFolderDialog> {
+  String _currentDir = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return AlertDialog(
+      title: Text(context.l10n.textEditorMoveToDialogTitle),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 350,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  if (_currentDir.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        final lastSlash = _currentDir.lastIndexOf('/');
+                        setState(() {
+                          _currentDir = lastSlash >= 0 ? _currentDir.substring(0, lastSlash) : '';
+                        });
+                      },
+                    ),
+                  Expanded(
+                    child: Text(
+                      _currentDir.isEmpty ? context.l10n.rootFolderLabel : _currentDir,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: FutureBuilder<List<String>?>(
+                future: ref.read(vaultFileIoApiProvider).listDirectory(
+                      widget.container,
+                      _currentDir,
+                    ),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final folders = RawEntry.parseAll(snapshot.data ?? const [])
+                      .where((e) => e.isDir)
+                      .toList()
+                    ..sort((a, b) => a.name.compareTo(b.name));
+
+                  if (folders.isEmpty) {
+                    return Center(
+                      child: Text(
+                        context.l10n.filesEmptyMessage,
+                        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: folders.length,
+                    itemBuilder: (context, index) {
+                      final folder = folders[index];
+                      final folderFullPath = _currentDir.isEmpty
+                          ? folder.name
+                          : '$_currentDir/${folder.name}';
+
+                      // Disallow moving a directory into itself or a subfolder of itself
+                      final isInvalidTarget = widget.isDir &&
+                          (folderFullPath == widget.currentEntryPath ||
+                              folderFullPath.startsWith('${widget.currentEntryPath}/'));
+
+                      return ListTile(
+                        leading: Icon(
+                          Icons.folder_rounded,
+                          color: isInvalidTarget ? cs.outline : cs.primary,
+                          size: 20,
+                        ),
+                        title: Text(
+                          folder.name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isInvalidTarget ? cs.onSurface.withValues(alpha: 0.38) : null,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+                        enabled: !isInvalidTarget,
+                        onTap: () {
+                          setState(() => _currentDir = folderFullPath);
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton.icon(
+          icon: const Icon(Icons.check_rounded, size: 18),
+          label: Text(context.l10n.textEditorMoveHereButton),
+          onPressed: () => Navigator.of(context).pop(_currentDir),
         ),
       ],
     );
