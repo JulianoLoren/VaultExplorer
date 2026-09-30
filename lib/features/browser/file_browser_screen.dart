@@ -1000,6 +1000,12 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
               await _extractSelectedArchive();
             }
           : null,
+      onArchive: _archiveContext == null && !_isReadOnly
+          ? () async {
+              setSelectedItems({entry});
+              await _compressSelected();
+            }
+          : null,
       onOpenWith: !entry.isDir
           ? () async {
               final parts = entry.name.split('.');
@@ -1640,12 +1646,24 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
               ext == 'pdf' ||
               MediaViewerConstants.isVideo(entry.name) ||
               MediaViewerConstants.isAudio(entry.name);
-          if (opensInNativeViewer) {
+          final opensInTextEditor = const {
+            'txt',
+            'md',
+            'markdown',
+            'csv',
+            'json',
+            'xml',
+          }.contains(ext);
+          if (opensInNativeViewer || opensInTextEditor) {
             final previewPath = await _archiveContext!.stageEntryForBrowse(
               subPath,
             );
             if (previewPath != null) {
-              await _openArchivePreview(entry.name, previewPath);
+              if (opensInTextEditor) {
+                await _openArchiveTextPreview(entry.name, previewPath);
+              } else {
+                await _openArchivePreview(entry.name, previewPath);
+              }
             } else if (mounted) {
               _navNotifier.setLoading(false);
               _setStatus(context.l10n.failedToReadFileFromArchive, error: true);
@@ -1801,6 +1819,35 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
           ),
         );
       }
+    } finally {
+      await preview.discard(secureDelete: archiveApi.discardBrowseFile);
+    }
+  }
+
+  Future<void> _openArchiveTextPreview(
+    String fileName,
+    String previewPath,
+  ) async {
+    final archiveApi = ref.read(vaultArchiveApiProvider);
+    final preview = ArchivePreviewFile.fromNativePath(previewPath);
+    try {
+      if (!mounted) return;
+
+      final previewContainer = buildLocalStorageContainer(
+        rootPath: p.dirname(preview.path),
+        displayName: fileName,
+        readOnly: true,
+      );
+      _navNotifier.setLoading(false);
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TextEditorScreen(
+            container: previewContainer,
+            filePath: p.basename(preview.path),
+          ),
+        ),
+      );
     } finally {
       await preview.discard(secureDelete: archiveApi.discardBrowseFile);
     }

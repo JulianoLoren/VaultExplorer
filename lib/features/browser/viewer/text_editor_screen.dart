@@ -124,6 +124,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
   @override
   void initState() {
     super.initState();
+    _readOnly = widget.container.readOnly;
     WidgetsBinding.instance.addObserver(this);
     _toolbarController = MobileSelectionToolbarController(
       builder: ({
@@ -1065,6 +1066,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
   }
 
   void _toggleReadOnly() {
+    if (widget.container.readOnly) return;
     setState(() => _readOnly = !_readOnly);
     if (_readOnly) {
       _focusNode.unfocus();

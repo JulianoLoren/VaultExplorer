@@ -39,6 +39,7 @@ class FileItemActionsSheet extends ConsumerWidget {
   final VoidCallback onTogglePin;
   final VoidCallback onToggleBookmark;
   final VoidCallback onInfo;
+  final VoidCallback? onArchive;
   final VoidCallback? onExtract;
   final VoidCallback? onOpenWith;
   final VoidCallback? onShare;
@@ -68,6 +69,7 @@ class FileItemActionsSheet extends ConsumerWidget {
     required this.onTogglePin,
     required this.onToggleBookmark,
     required this.onInfo,
+    this.onArchive,
     this.onExtract,
     this.onOpenWith,
     this.onShare,
@@ -98,6 +100,7 @@ class FileItemActionsSheet extends ConsumerWidget {
     required VoidCallback onTogglePin,
     required VoidCallback onToggleBookmark,
     required VoidCallback onInfo,
+    VoidCallback? onArchive,
     VoidCallback? onExtract,
     VoidCallback? onOpenWith,
     VoidCallback? onShare,
@@ -133,6 +136,7 @@ class FileItemActionsSheet extends ConsumerWidget {
         onTogglePin: onTogglePin,
         onToggleBookmark: onToggleBookmark,
         onInfo: onInfo,
+        onArchive: onArchive,
         onExtract: onExtract,
         onOpenWith: onOpenWith,
         onShare: onShare,
@@ -320,6 +324,19 @@ class FileItemActionsSheet extends ConsumerWidget {
                         },
                       ),
                     if (onExtract != null) const SizedBox(height: 8),
+
+                    if (!isInsideArchive && onArchive != null)
+                      _ActionTile(
+                        icon: Icons.archive_outlined,
+                        label: context.l10n.archiveSelectionAction,
+                        enabled: !isReadOnly,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onArchive!();
+                        },
+                      ),
+                    if (!isInsideArchive && onArchive != null)
+                      const SizedBox(height: 8),
 
                     // Group 1: Consumption & Sharing
                     if (!isInsideArchive && onOpenWith != null)
