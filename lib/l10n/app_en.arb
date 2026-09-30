@@ -11416,5 +11416,217 @@
         "type": "String"
       }
     }
+  },
+  "videoEditorEditAction": "Edit video",
+  "@videoEditorEditAction": {
+    "description": "Menu item that opens the video editor for a video file"
+  },
+  "videoEditorExportAction": "Export",
+  "@videoEditorExportAction": {
+    "description": "App bar button in the video editor that exports the edited video"
+  },
+  "videoEditorTimelineLabel": "Video timeline",
+  "@videoEditorTimelineLabel": {
+    "description": "Accessibility label for the video editor timeline"
+  },
+  "videoEditorSetStart": "Set start",
+  "@videoEditorSetStart": {
+    "description": "Video editor button: set the selected segment start to the playhead"
+  },
+  "videoEditorSetEnd": "Set end",
+  "@videoEditorSetEnd": {
+    "description": "Video editor button: set the selected segment end to the playhead"
+  },
+  "videoEditorAddSegment": "Add",
+  "@videoEditorAddSegment": {
+    "description": "Video editor button: add a new segment at the playhead"
+  },
+  "videoEditorSplit": "Split",
+  "@videoEditorSplit": {
+    "description": "Video editor button: split the segment under the playhead in two"
+  },
+  "videoEditorDeleteSegment": "Delete",
+  "@videoEditorDeleteSegment": {
+    "description": "Video editor button: delete the selected segment"
+  },
+  "videoEditorModeKeep": "Keep",
+  "@videoEditorModeKeep": {
+    "description": "Video editor mode: the marked segments are the parts to keep"
+  },
+  "videoEditorModeCutOut": "Cut out",
+  "@videoEditorModeCutOut": {
+    "description": "Video editor mode: the marked segments are the parts to remove"
+  },
+  "videoEditorNoSegments": "No segments yet. Move the playhead and tap Add.",
+  "@videoEditorNoSegments": {
+    "description": "Hint shown in the video editor when there are no segments"
+  },
+  "videoEditorOutputSummary": "{count, plural, =1{Output: 1 clip · {duration}} other{Output: {count} clips · {duration}}}",
+  "@videoEditorOutputSummary": {
+    "description": "Video editor summary of what will be exported: number of clips and total length",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "videoEditorSnapNote": "Lossless cut starts on a keyframe: {start} – {end}",
+  "@videoEditorSnapNote": {
+    "description": "Video editor note showing the real start and end of the selected clip after snapping to keyframes",
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "videoEditorBoundaryInvalid": "That would leave the segment too short.",
+  "@videoEditorBoundaryInvalid": {
+    "description": "Snackbar when setting a segment start or end would make the segment too short"
+  },
+  "videoEditorNoRoom": "There is no room for a segment here.",
+  "@videoEditorNoRoom": {
+    "description": "Snackbar when a segment cannot be added or split at the playhead"
+  },
+  "videoEditorNothingToExport": "Nothing to export.",
+  "@videoEditorNothingToExport": {
+    "description": "Snackbar when Export is tapped with no segments to export"
+  },
+  "videoEditorReadOnly": "This vault is read-only, so the edited video can't be saved.",
+  "@videoEditorReadOnly": {
+    "description": "Snackbar when exporting from the video editor in a read-only vault"
+  },
+  "videoEditorLoadFailed": "Couldn't open this video: {message}",
+  "@videoEditorLoadFailed": {
+    "description": "Error shown when the video editor cannot read the video",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "videoEditorZoomIn": "Zoom in",
+  "@videoEditorZoomIn": {
+    "description": "Tooltip for the video editor timeline zoom-in button"
+  },
+  "videoEditorZoomOut": "Zoom out",
+  "@videoEditorZoomOut": {
+    "description": "Tooltip for the video editor timeline zoom-out button"
+  },
+  "videoEditorZoomFit": "Fit to screen",
+  "@videoEditorZoomFit": {
+    "description": "Tooltip for the video editor button that shows the whole timeline"
+  },
+  "videoEditorPrevKeyframe": "Previous keyframe",
+  "@videoEditorPrevKeyframe": {
+    "description": "Tooltip for the video editor button that jumps to the previous keyframe"
+  },
+  "videoEditorNextKeyframe": "Next keyframe",
+  "@videoEditorNextKeyframe": {
+    "description": "Tooltip for the video editor button that jumps to the next keyframe"
+  },
+  "videoEditorExporting": "Exporting video",
+  "@videoEditorExporting": {
+    "description": "Title of the progress dialog while the video editor exports"
+  },
+  "videoEditorCutting": "Cutting clip {current} of {total}",
+  "@videoEditorCutting": {
+    "description": "Progress label while exporting several clips",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "videoEditorCuttingOne": "Cutting…",
+  "@videoEditorCuttingOne": {
+    "description": "Progress label while exporting a single clip"
+  },
+  "videoEditorSaving": "Saving…",
+  "@videoEditorSaving": {
+    "description": "Progress label while the exported video is being saved into the vault"
+  },
+  "videoEditorSaved": "{count, plural, =1{Saved 1 video} other{Saved {count} videos}}",
+  "@videoEditorSaved": {
+    "description": "Snackbar after the video editor finished exporting",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoEditorAudioDropped": "Some audio tracks couldn't be copied.",
+  "@videoEditorAudioDropped": {
+    "description": "Warning appended to the export success message when an audio track was left out"
+  },
+  "videoEditorExportFailed": "Export failed: {message}",
+  "@videoEditorExportFailed": {
+    "description": "Snackbar when the video editor export fails",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "videoEditorExportCancelled": "Export cancelled",
+  "@videoEditorExportCancelled": {
+    "description": "Snackbar after the user cancels a video export"
+  },
+  "videoEditorExportTitle": "Export",
+  "@videoEditorExportTitle": {
+    "description": "Title of the video editor export sheet"
+  },
+  "videoEditorExportSummary": "{count, plural, =1{1 clip · {duration}} other{{count} clips · {duration}}}",
+  "@videoEditorExportSummary": {
+    "description": "Export sheet summary: number of clips and total length",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "videoEditorExportSingle": "Save as new video",
+  "@videoEditorExportSingle": {
+    "description": "Export sheet option when there is a single clip"
+  },
+  "videoEditorExportSingleHint": "The original stays untouched.",
+  "@videoEditorExportSingleHint": {
+    "description": "Subtitle of the single-clip export option"
+  },
+  "videoEditorExportMerge": "Merge into one video",
+  "@videoEditorExportMerge": {
+    "description": "Export sheet option that joins all clips into a single video"
+  },
+  "videoEditorExportMergeHint": "Clips are joined in timeline order.",
+  "@videoEditorExportMergeHint": {
+    "description": "Subtitle of the merge export option"
+  },
+  "videoEditorExportSeparate": "Save as separate videos",
+  "@videoEditorExportSeparate": {
+    "description": "Export sheet option that writes one file per clip"
+  },
+  "videoEditorExportSeparateHint": "{count, plural, =1{One new file} other{{count} new files}}",
+  "@videoEditorExportSeparateHint": {
+    "description": "Subtitle of the separate-files export option",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoEditorLosslessNote": "Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.",
+  "@videoEditorLosslessNote": {
+    "description": "Explanation in the export sheet of why cut points snap to keyframes"
   }
 }

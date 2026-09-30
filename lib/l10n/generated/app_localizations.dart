@@ -15114,6 +15114,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete \"{name}\"? This action cannot be undone.'**
   String textEditorDeleteConfirmMessage(String name);
+
+  /// Menu item that opens the video editor for a video file
+  ///
+  /// In en, this message translates to:
+  /// **'Edit video'**
+  String get videoEditorEditAction;
+
+  /// App bar button in the video editor that exports the edited video
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get videoEditorExportAction;
+
+  /// Accessibility label for the video editor timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Video timeline'**
+  String get videoEditorTimelineLabel;
+
+  /// Video editor button: set the selected segment start to the playhead
+  ///
+  /// In en, this message translates to:
+  /// **'Set start'**
+  String get videoEditorSetStart;
+
+  /// Video editor button: set the selected segment end to the playhead
+  ///
+  /// In en, this message translates to:
+  /// **'Set end'**
+  String get videoEditorSetEnd;
+
+  /// Video editor button: add a new segment at the playhead
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get videoEditorAddSegment;
+
+  /// Video editor button: split the segment under the playhead in two
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get videoEditorSplit;
+
+  /// Video editor button: delete the selected segment
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get videoEditorDeleteSegment;
+
+  /// Video editor mode: the marked segments are the parts to keep
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get videoEditorModeKeep;
+
+  /// Video editor mode: the marked segments are the parts to remove
+  ///
+  /// In en, this message translates to:
+  /// **'Cut out'**
+  String get videoEditorModeCutOut;
+
+  /// Hint shown in the video editor when there are no segments
+  ///
+  /// In en, this message translates to:
+  /// **'No segments yet. Move the playhead and tap Add.'**
+  String get videoEditorNoSegments;
+
+  /// Video editor summary of what will be exported: number of clips and total length
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Output: 1 clip · {duration}} other{Output: {count} clips · {duration}}}'**
+  String videoEditorOutputSummary(int count, String duration);
+
+  /// Video editor note showing the real start and end of the selected clip after snapping to keyframes
+  ///
+  /// In en, this message translates to:
+  /// **'Lossless cut starts on a keyframe: {start} – {end}'**
+  String videoEditorSnapNote(String start, String end);
+
+  /// Snackbar when setting a segment start or end would make the segment too short
+  ///
+  /// In en, this message translates to:
+  /// **'That would leave the segment too short.'**
+  String get videoEditorBoundaryInvalid;
+
+  /// Snackbar when a segment cannot be added or split at the playhead
+  ///
+  /// In en, this message translates to:
+  /// **'There is no room for a segment here.'**
+  String get videoEditorNoRoom;
+
+  /// Snackbar when Export is tapped with no segments to export
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to export.'**
+  String get videoEditorNothingToExport;
+
+  /// Snackbar when exporting from the video editor in a read-only vault
+  ///
+  /// In en, this message translates to:
+  /// **'This vault is read-only, so the edited video can\'t be saved.'**
+  String get videoEditorReadOnly;
+
+  /// Error shown when the video editor cannot read the video
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open this video: {message}'**
+  String videoEditorLoadFailed(String message);
+
+  /// Tooltip for the video editor timeline zoom-in button
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get videoEditorZoomIn;
+
+  /// Tooltip for the video editor timeline zoom-out button
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get videoEditorZoomOut;
+
+  /// Tooltip for the video editor button that shows the whole timeline
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to screen'**
+  String get videoEditorZoomFit;
+
+  /// Tooltip for the video editor button that jumps to the previous keyframe
+  ///
+  /// In en, this message translates to:
+  /// **'Previous keyframe'**
+  String get videoEditorPrevKeyframe;
+
+  /// Tooltip for the video editor button that jumps to the next keyframe
+  ///
+  /// In en, this message translates to:
+  /// **'Next keyframe'**
+  String get videoEditorNextKeyframe;
+
+  /// Title of the progress dialog while the video editor exports
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting video'**
+  String get videoEditorExporting;
+
+  /// Progress label while exporting several clips
+  ///
+  /// In en, this message translates to:
+  /// **'Cutting clip {current} of {total}'**
+  String videoEditorCutting(int current, int total);
+
+  /// Progress label while exporting a single clip
+  ///
+  /// In en, this message translates to:
+  /// **'Cutting…'**
+  String get videoEditorCuttingOne;
+
+  /// Progress label while the exported video is being saved into the vault
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get videoEditorSaving;
+
+  /// Snackbar after the video editor finished exporting
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Saved 1 video} other{Saved {count} videos}}'**
+  String videoEditorSaved(int count);
+
+  /// Warning appended to the export success message when an audio track was left out
+  ///
+  /// In en, this message translates to:
+  /// **'Some audio tracks couldn\'t be copied.'**
+  String get videoEditorAudioDropped;
+
+  /// Snackbar when the video editor export fails
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {message}'**
+  String videoEditorExportFailed(String message);
+
+  /// Snackbar after the user cancels a video export
+  ///
+  /// In en, this message translates to:
+  /// **'Export cancelled'**
+  String get videoEditorExportCancelled;
+
+  /// Title of the video editor export sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get videoEditorExportTitle;
+
+  /// Export sheet summary: number of clips and total length
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 clip · {duration}} other{{count} clips · {duration}}}'**
+  String videoEditorExportSummary(int count, String duration);
+
+  /// Export sheet option when there is a single clip
+  ///
+  /// In en, this message translates to:
+  /// **'Save as new video'**
+  String get videoEditorExportSingle;
+
+  /// Subtitle of the single-clip export option
+  ///
+  /// In en, this message translates to:
+  /// **'The original stays untouched.'**
+  String get videoEditorExportSingleHint;
+
+  /// Export sheet option that joins all clips into a single video
+  ///
+  /// In en, this message translates to:
+  /// **'Merge into one video'**
+  String get videoEditorExportMerge;
+
+  /// Subtitle of the merge export option
+  ///
+  /// In en, this message translates to:
+  /// **'Clips are joined in timeline order.'**
+  String get videoEditorExportMergeHint;
+
+  /// Export sheet option that writes one file per clip
+  ///
+  /// In en, this message translates to:
+  /// **'Save as separate videos'**
+  String get videoEditorExportSeparate;
+
+  /// Subtitle of the separate-files export option
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One new file} other{{count} new files}}'**
+  String videoEditorExportSeparateHint(int count);
+
+  /// Explanation in the export sheet of why cut points snap to keyframes
+  ///
+  /// In en, this message translates to:
+  /// **'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.'**
+  String get videoEditorLosslessNote;
 }
 
 class _AppLocalizationsDelegate
