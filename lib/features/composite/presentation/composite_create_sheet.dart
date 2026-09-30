@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:vaultexplorer/core/api/vault_engine_types.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
@@ -440,7 +441,9 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
               ListTile(
                 leading: Icon(Icons.storage_rounded, color: cs.secondary),
                 title: Text(
-                  formatBytes(state.profile!.totalAllocatableBytes),
+                  formatBytes(compositeUsableCapacityBytes(
+                    state.profile!.totalAllocatableBytes,
+                  )),
                   style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
@@ -659,7 +662,9 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
         WizardSummaryRow(
           icon: Icons.storage_rounded,
           label: l10n.compositeTotalUsableCapacityHeader,
-          value: formatBytes(state.profile!.totalAllocatableBytes),
+          value: formatBytes(compositeUsableCapacityBytes(
+            state.profile!.totalAllocatableBytes,
+          )),
         ),
       );
     }

@@ -61,6 +61,18 @@ bool probeBlindTrailer(int fd, uint64_t fileSize, uint64_t& outPayloadOffset, ui
     }
     return false;
 }
+
+bool hasArchiveSignature(const unsigned char* h, ssize_t n) {
+    if (n >= 4 && h[0] == 'P' && h[1] == 'K' &&
+        ((h[2] == 3 && h[3] == 4) || (h[2] == 5 && h[3] == 6) ||
+         (h[2] == 7 && h[3] == 8))) return true;
+    if (n >= 6 && std::memcmp(h, "7z\xBC\xAF\x27\x1C", 6) == 0) return true;
+    if (n >= 6 && std::memcmp(h, "Rar!\x1A\x07", 6) == 0) return true;
+    if (n >= 3 && h[0] == 0x1F && h[1] == 0x8B && h[2] == 0x08) return true;
+    if (n >= 3 && std::memcmp(h, "BZh", 3) == 0) return true;
+    if (n >= 6 && std::memcmp(h, "\xFD" "7zXZ\x00", 6) == 0) return true;
+    return n >= 262 && std::memcmp(h + 257, "ustar", 5) == 0;
+}
 } // namespace
 
 CarrierBudget CarrierProfiler::inspectSingleCarrier(
@@ -113,8 +125,19 @@ CarrierBudget CarrierProfiler::inspectSingleCarrier(
 
     budget.alreadyAllocated = false;
 
-    unsigned char header[64] = {0};
+    unsigned char header[512] = {0};
     ssize_t n = ::pread64(fd, header, sizeof(header), 0);
+    // Appending a large payload after an archive's end records can make it
+    // unreadable, and archive readers may mistake the vault trailer for data.
+    // Until formats have a safe archive-aware insertion strategy, reject
+    // archive carriers instead of treating them as generic trailing data.
+    if (hasArchiveSignature(header, n)) {
+        budget.detectedFormat = "archive_unsupported";
+        budget.payloadOffset = budget.fileSize;
+        budget.allocatableBytes = 0;
+        budget.tier = CarrierTier::Low;
+        return budget;
+    }
     if (n < 16) {
         budget.payloadOffset = budget.fileSize;
         uint64_t raw = (budget.fileSize * growthPct) / 100;

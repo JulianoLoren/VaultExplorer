@@ -63,6 +63,15 @@ typedef CapacityProfile = ({
   List<CarrierBudget> carriers,
 });
 
+/// Converts the carrier payload budget into the VeraCrypt data area size.
+/// Composite creation rounds the full volume down to 4 KiB, then reserves a
+/// 128 KiB header region at each end.
+int compositeUsableCapacityBytes(int allocatableBytes) {
+  final volumeBytes = (allocatableBytes ~/ 4096) * 4096;
+  const headerRegionsBytes = 2 * 128 * 1024;
+  return volumeBytes > headerRegionsBytes ? volumeBytes - headerRegionsBytes : 0;
+}
+
 /// Export-side counterpart to [ImportProgress] -- see ExportProgressBridge.kt.
 typedef ExportProgress = ({
   int opId,

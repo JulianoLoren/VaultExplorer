@@ -135,6 +135,7 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_createCompositeContainerNative(
     jintArray carrierFds,
     jlongArray payloadOffsets,
     jlongArray extentLengths,
+    jint safetyMarginPct,
     jstring password,
     jint pim,
     jstring fileSystem,
@@ -143,7 +144,7 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_createCompositeContainerNative(
     jint hashId,
     jintArray keyfileFds,
     jboolean quickFormat,
-    jstring operationId // Exactly 14 parameters, matching NativeEngine.kt
+    jstring operationId // Exactly 15 parameters, matching NativeEngine.kt
 ) {
     JNI_TRY
     auto carriers = parseCarrierTargets(env, carrierPaths, carrierFds);
@@ -166,10 +167,22 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_createCompositeContainerNative(
     }
 
     // 3. Profile carriers and derive extents matching the requested capacity proportionally
-    auto profile = CarrierProfiler::profileForAllocation(carriers, 10);
+    unsigned growthPct = (safetyMarginPct > 0 && safetyMarginPct <= 50)
+        ? static_cast<unsigned>(safetyMarginPct) : 10;
+    auto profile = CarrierProfiler::profileForAllocation(carriers, growthPct);
     auto extents = CompositeMap::deriveExtents(profile.perFile, requestedTotalBytes);
     if (extents.empty()) {
         LOGI("createCompositeContainerNative: derived 0 extents for %zu carriers", carriers.size());
+        return JNI_FALSE;
+    }
+    uint64_t derivedTotalBytes = 0;
+    for (const auto& extent : extents) derivedTotalBytes += extent.lengthBytes;
+    // The profile shown to the user and the files opened for creation must
+    // still agree. A carrier changed between analysis and creation otherwise
+    // produces a smaller vault than the displayed capacity.
+    if (requestedTotalBytes > 0 && derivedTotalBytes != requestedTotalBytes) {
+        LOGI("createCompositeContainerNative: carrier capacity changed (requested=%llu derived=%llu)",
+             (unsigned long long)requestedTotalBytes, (unsigned long long)derivedTotalBytes);
         return JNI_FALSE;
     }
 

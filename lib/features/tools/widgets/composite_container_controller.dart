@@ -213,6 +213,7 @@ class CompositeContainer extends _$CompositeContainer {
       carrierUris: carrierUris,
       payloadOffsets: payloadOffsets,
       extentLengths: extentLengths,
+      safetyMarginPct: state.safetyMarginPct,
       password: password,
       pim: state.pim,
       fileSystem: state.fileSystem.toLowerCase(),

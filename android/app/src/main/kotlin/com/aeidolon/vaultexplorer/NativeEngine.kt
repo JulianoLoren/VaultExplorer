@@ -332,6 +332,7 @@ internal object NativeEngine {
         carrierFds: IntArray?,
         payloadOffsets: LongArray,
         extentLengths: LongArray,
+        safetyMarginPct: Int = 10,
         password: String,
         pim: Int,
         fileSystem: String,

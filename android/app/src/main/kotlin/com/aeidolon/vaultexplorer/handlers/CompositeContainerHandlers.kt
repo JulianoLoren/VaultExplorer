@@ -106,6 +106,7 @@ class CompositeContainerHandlers(
                 val keyfileFds = nativeOps.openKeyfileFds(keyfilePaths)
                 val ok = NativeEngine.createCompositeContainerNative(
                     targetVolId, opened.paths, opened.fds, payloadOffsets, extentLengths,
+                    call.argument<Number>("safetyMarginPct")?.toInt() ?: 10,
                     password, pim, fileSystem, containerFormat, cipherId, hashId,
                     keyfileFds, quickFormat, operationId
                 )
