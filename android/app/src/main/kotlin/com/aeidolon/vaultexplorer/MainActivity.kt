@@ -262,6 +262,8 @@ private object ChannelMethods {
     const val ARCHIVE_EXTRACT_VAULT_ALL = "archiveExtractVaultAll"
     const val ARCHIVE_SCAN_LOCAL = "archiveScanLocal"
     const val ARCHIVE_EXTRACT_LOCAL_ENTRY = "archiveExtractLocalEntry"
+    const val ARCHIVE_STAGE_BROWSE_ENTRY = "archiveStageBrowseEntry"
+    const val ARCHIVE_DISCARD_BROWSE_FILE = "archiveDiscardBrowseFile"
     const val ARCHIVE_CREATE = "archiveCreate"
     const val PROFILE_CARRIERS = "profileCarriers"
     const val CREATE_COMPOSITE_CONTAINER = "createCompositeContainer"
@@ -415,7 +417,7 @@ open class MainActivity : FlutterFragmentActivity() {
         ioExecutor.execute {
             com.aeidolon.vaultexplorer.camera.VaultVideoRecorder.sweepOrphanedTempFiles(cacheDir)
             com.aeidolon.vaultexplorer.camera.QuickCaptureScratchpadPlugin.sweepOrphanedScratchpads(applicationContext)
-            SecureFileWipe.sweepOrphanedFiles(cacheDir, listOf("thumb_", "export_"))
+            SecureFileWipe.sweepOrphanedFiles(cacheDir, listOf("thumb_", "export_", "archive_browse_"))
             com.aeidolon.vaultexplorer.saf.MirrorSyncCoordinator.sweepOrphanedMirrors(applicationContext)
             QuickCaptureShortcuts.refreshDynamicShortcut(applicationContext)
         }
@@ -1234,6 +1236,8 @@ open class MainActivity : FlutterFragmentActivity() {
                 ChannelMethods.ARCHIVE_EXTRACT_VAULT_ALL -> archiveHandlers.handleArchiveExtractVaultAll(call, result)
                 ChannelMethods.ARCHIVE_SCAN_LOCAL -> archiveHandlers.handleArchiveScanLocal(call, result)
                 ChannelMethods.ARCHIVE_EXTRACT_LOCAL_ENTRY -> archiveHandlers.handleArchiveExtractLocalEntry(call, result)
+                ChannelMethods.ARCHIVE_STAGE_BROWSE_ENTRY -> archiveHandlers.handleArchiveStageBrowseEntry(call, result)
+                ChannelMethods.ARCHIVE_DISCARD_BROWSE_FILE -> archiveHandlers.handleArchiveDiscardBrowseFile(call, result)
                 ChannelMethods.ARCHIVE_CREATE -> archiveHandlers.handleArchiveCreate(call, result)
                 ChannelMethods.EXPORT_CONTAINER_HEADER -> headerBackupHandlers.handleExportContainerHeader(call, result)
                 ChannelMethods.RESTORE_CONTAINER_HEADER_REGION ->

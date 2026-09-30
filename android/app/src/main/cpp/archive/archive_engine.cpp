@@ -274,6 +274,82 @@ ArchiveExtractResult archiveExtractEntry(const ArchiveStreamSource& source, int3
     return result;
 }
 
+ArchiveExtractResult archiveExtractEntryToSink(
+    const ArchiveStreamSource& source,
+    int32_t targetIndex,
+    const std::string& passphrase,
+    std::function<bool(const uint8_t* data, size_t length)> writeChunk
+) {
+    ArchiveExtractResult result;
+    if (targetIndex < 0) {
+        result.errorMessage = "targetIndex must be >= 0";
+        return result;
+    }
+    if (!writeChunk) {
+        result.errorMessage = "writeChunk callback is required";
+        return result;
+    }
+
+    CallbackState state(source);
+    struct archive* a = archive_read_new();
+    if (openArchiveWithCallbacks(a, state, passphrase) != ARCHIVE_OK) {
+        result.status = state.ioErrorSeen ? ArchiveOpenStatus::IoError
+                                          : classifyFailure(a, !passphrase.empty());
+        result.errorMessage = archive_error_string(a) ? archive_error_string(a) : "failed to open archive";
+        archive_read_free(a);
+        return result;
+    }
+
+    struct archive_entry* entry = nullptr;
+    int32_t index = 0;
+    bool found = false;
+    for (;;) {
+        const int r = archive_read_next_header(a, &entry);
+        if (r == ARCHIVE_EOF) break;
+        if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
+            result.status = state.ioErrorSeen ? ArchiveOpenStatus::IoError
+                                              : classifyFailure(a, !passphrase.empty());
+            result.errorMessage = archive_error_string(a) ? archive_error_string(a) : "failed to read header";
+            archive_read_free(a);
+            return result;
+        }
+        if (index == targetIndex) {
+            found = true;
+            break;
+        }
+        archive_read_data_skip(a);
+        ++index;
+    }
+
+    if (!found) {
+        result.errorMessage = "no entry at index " + std::to_string(targetIndex);
+        archive_read_free(a);
+        return result;
+    }
+
+    std::vector<uint8_t> chunk(kSequentialChunkSize);
+    for (;;) {
+        const la_ssize_t n = archive_read_data(a, chunk.data(), chunk.size());
+        if (n == 0) break;
+        if (n < 0) {
+            result.status = state.ioErrorSeen ? ArchiveOpenStatus::IoError
+                                              : classifyFailure(a, !passphrase.empty());
+            result.errorMessage = archive_error_string(a) ? archive_error_string(a) : "failed to read entry data";
+            archive_read_free(a);
+            return result;
+        }
+        if (!writeChunk(chunk.data(), static_cast<size_t>(n))) {
+            result.errorMessage = "failed to write extracted entry";
+            archive_read_free(a);
+            return result;
+        }
+    }
+
+    result.status = ArchiveOpenStatus::Ok;
+    archive_read_free(a);
+    return result;
+}
+
 ArchiveBulkExtractResult archiveExtractAll(
     const ArchiveStreamSource& source,
     const std::string& passphrase,

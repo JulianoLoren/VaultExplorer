@@ -282,6 +282,9 @@ internal object NativeEngine {
     ): Map<String, Any>?
     @JvmStatic external fun archiveScanFdNative(fd: Int, passphrase: String?): Map<String, Any>?
     @JvmStatic external fun archiveExtractFdEntryNative(fd: Int, targetIndex: Int, passphrase: String?): Map<String, Any>?
+    @JvmStatic external fun archiveExtractFdEntryToFdNative(
+        sourceFd: Int, targetIndex: Int, passphrase: String?, destFd: Int
+    ): Map<String, Any>?
     @JvmStatic external fun archiveExtractFdToVaultNative(
         fd: Int, destVolId: Int, destDirPath: String, subPath: String?, passphrase: String?, opId: Int
     ): Map<String, Any>?

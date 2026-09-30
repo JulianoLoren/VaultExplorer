@@ -45,6 +45,16 @@ ArchiveExtractResult archiveExtractEntry(const ArchiveStreamSource& source,
                                          int32_t targetIndex,
                                          const std::string& passphrase = "");
 
+/// Streams one archive entry to [writeChunk] without retaining its payload in
+/// memory. The callback receives sequential chunks and must return false to
+/// abort the extraction.
+ArchiveExtractResult archiveExtractEntryToSink(
+    const ArchiveStreamSource& source,
+    int32_t targetIndex,
+    const std::string& passphrase,
+    std::function<bool(const uint8_t* data, size_t length)> writeChunk
+);
+
 struct ArchiveBulkExtractResult {
     ArchiveOpenStatus status = ArchiveOpenStatus::IoError;
     int32_t extractedCount = 0;

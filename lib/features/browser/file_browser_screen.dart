@@ -42,6 +42,7 @@ import 'package:vaultexplorer/data/services/file_manager_toolbar_service.dart';
 import 'package:vaultexplorer/data/services/media_aspect_ratio_cache.dart';
 import 'package:vaultexplorer/data/services/vault_items_service.dart';
 import 'package:vaultexplorer/features/browser/archive_file_viewer.dart';
+import 'package:vaultexplorer/features/browser/archive_preview_file.dart';
 import 'package:vaultexplorer/features/browser/browser_dialogs.dart';
 import 'package:vaultexplorer/features/browser/controllers/file_browser_navigation_controller.dart';
 import 'package:vaultexplorer/features/browser/controllers/file_browser_operations_controller.dart';
@@ -141,7 +142,7 @@ class FileBrowserScreen extends ConsumerStatefulWidget {
   /// comments. Both default to the screen's normal, always-pushed-from-
   /// the-dashboard behavior; decoy mode is the only caller that overrides
   /// them, since it embeds this screen with no dashboard route beneath it.
- final bool showBackButton;
+  final bool showBackButton;
   final Widget Function(Widget title)? wrapAppBarTitle;
   final VoidCallback? onOpenStorageSwitcher;
   final Widget? drawer;
@@ -210,10 +211,10 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   bool get _isContainerLocked => _nav.isContainerLocked;
   double? get _backGestureProgress => _nav.backGestureProgress;
   List<RawEntry>? get _backGesturePreviewItems => _nav.backGesturePreviewItems;
-  BrowserLayoutMode? get _backGesturePreviewLayoutMode => _nav.backGesturePreviewLayoutMode;
+  BrowserLayoutMode? get _backGesturePreviewLayoutMode =>
+      _nav.backGesturePreviewLayoutMode;
   String? get _backGesturePreviewDirPath => _nav.backGesturePreviewDirPath;
   bool get _backGesturePreviewAtRoot => _nav.backGesturePreviewAtRoot;
-
 
   bool _initialized = false;
 
@@ -251,7 +252,9 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
 
   void _resetBrowserScrollController({double initialOffset = 0.0}) {
     final old = _browserScrollController;
-    _browserScrollController = ScrollController(initialScrollOffset: initialOffset);
+    _browserScrollController = ScrollController(
+      initialScrollOffset: initialOffset,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       old.dispose();
     });
@@ -259,8 +262,9 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
 
   void _resetBackGesturePreviewScrollController({double initialOffset = 0.0}) {
     final old = _backGesturePreviewScrollController;
-    _backGesturePreviewScrollController =
-        ScrollController(initialScrollOffset: initialOffset);
+    _backGesturePreviewScrollController = ScrollController(
+      initialScrollOffset: initialOffset,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       old.dispose();
     });
@@ -278,7 +282,7 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       }
       return false;
     }
-  if (_searchActive) {
+    if (_searchActive) {
       if (_appBarAnimController.value < 1.0) {
         _appBarAnimController.value = 1.0;
       }
@@ -294,8 +298,13 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       if (isSelectionMode) {
         // In selection mode: never collapse (delta > 0).
         // If app bar was hidden, allow scrolling up (delta < 0) or pulling at top to reveal it.
-        if ((delta < 0.0 || pixels <= 0.0) && _appBarAnimController.value < 1.0) {
-          final newFactor = (_appBarAnimController.value - (delta / kToolbarHeight)).clamp(0.0, 1.0);
+        if ((delta < 0.0 || pixels <= 0.0) &&
+            _appBarAnimController.value < 1.0) {
+          final newFactor =
+              (_appBarAnimController.value - (delta / kToolbarHeight)).clamp(
+                0.0,
+                1.0,
+              );
           if (newFactor != _appBarAnimController.value) {
             _appBarAnimController.value = newFactor;
           }
@@ -310,7 +319,11 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
           _appBarAnimController.value = 1.0;
         }
       } else if (delta != 0.0) {
-        final newFactor = (_appBarAnimController.value - (delta / kToolbarHeight)).clamp(0.0, 1.0);
+        final newFactor =
+            (_appBarAnimController.value - (delta / kToolbarHeight)).clamp(
+              0.0,
+              1.0,
+            );
         if (newFactor != _appBarAnimController.value) {
           _appBarAnimController.value = newFactor;
         }
@@ -319,13 +332,21 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       final overscroll = notification.overscroll;
       if (overscroll < 0.0) {
         // Pulling down reveals the app bar
-        final newFactor = (_appBarAnimController.value - (overscroll / kToolbarHeight)).clamp(0.0, 1.0);
+        final newFactor =
+            (_appBarAnimController.value - (overscroll / kToolbarHeight)).clamp(
+              0.0,
+              1.0,
+            );
         if (newFactor != _appBarAnimController.value) {
           _appBarAnimController.value = newFactor;
         }
       } else if (overscroll > 0.0 && !isSelectionMode) {
         // Pulling up past the bottom hides the app bar (only in normal mode)
-        final newFactor = (_appBarAnimController.value - (overscroll / kToolbarHeight)).clamp(0.0, 1.0);
+        final newFactor =
+            (_appBarAnimController.value - (overscroll / kToolbarHeight)).clamp(
+              0.0,
+              1.0,
+            );
         if (newFactor != _appBarAnimController.value) {
           _appBarAnimController.value = newFactor;
         }
@@ -335,11 +356,23 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       // Force snap-open on release if at the very top or if in selection mode and partially open
       if (canScroll && pixels <= 0.0) {
         if (_appBarAnimController.value != 1.0) {
-          _appBarAnimController.animateTo(1.0, duration: AppMotion.short2, curve: Curves.easeOutCubic);
+          _appBarAnimController.animateTo(
+            1.0,
+            duration: AppMotion.short2,
+            curve: Curves.easeOutCubic,
+          );
         }
-      } else if (isSelectionMode && _appBarAnimController.value > 0.0 && _appBarAnimController.value < 1.0) {
-        _appBarAnimController.animateTo(1.0, duration: AppMotion.short2, curve: Curves.easeOutCubic);
-      } else if (!isSelectionMode && _appBarAnimController.value > 0.0 && _appBarAnimController.value < 1.0) {
+      } else if (isSelectionMode &&
+          _appBarAnimController.value > 0.0 &&
+          _appBarAnimController.value < 1.0) {
+        _appBarAnimController.animateTo(
+          1.0,
+          duration: AppMotion.short2,
+          curve: Curves.easeOutCubic,
+        );
+      } else if (!isSelectionMode &&
+          _appBarAnimController.value > 0.0 &&
+          _appBarAnimController.value < 1.0) {
         final target = _appBarAnimController.value >= 0.5 ? 1.0 : 0.0;
         _appBarAnimController.animateTo(
           target,
@@ -353,33 +386,38 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   }
 
   Future<void> _saveExtensionPreference(String ext, String preference) async {
-  final cleanExt = ext.toLowerCase().replaceFirst(RegExp(r'^\.+'), '').trim();
-  if (cleanExt.isEmpty) return;
+    final cleanExt = ext.toLowerCase().replaceFirst(RegExp(r'^\.+'), '').trim();
+    if (cleanExt.isEmpty) return;
 
-  _appSettings.extensionPreferences[cleanExt] = preference;
+    _appSettings.extensionPreferences[cleanExt] = preference;
 
-  try {
-    final currentSettings = ref.read(appSettingsControllerProvider).settings;
-    final newPrefs = Map<String, String>.from(currentSettings.extensionPreferences);
-    newPrefs[cleanExt] = preference;
+    try {
+      final currentSettings = ref.read(appSettingsControllerProvider).settings;
+      final newPrefs = Map<String, String>.from(
+        currentSettings.extensionPreferences,
+      );
+      newPrefs[cleanExt] = preference;
 
-    await ref.read(appSettingsControllerProvider.notifier).updateSettings(
-          (s) => s.copyWith(extensionPreferences: newPrefs),
-        );
-  } catch (_) {
-    // Fallback directly to AppSettingsService if controller is not yet active
-    await ref.read(appSettingsServiceProvider).saveSettings(_appSettings);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .updateSettings((s) => s.copyWith(extensionPreferences: newPrefs));
+    } catch (_) {
+      // Fallback directly to AppSettingsService if controller is not yet active
+      await ref.read(appSettingsServiceProvider).saveSettings(_appSettings);
+    }
   }
-}
 
-  CrossContainerClipboard get _clip => ref.read(crossContainerClipboardProvider.notifier);
+  CrossContainerClipboard get _clip =>
+      ref.read(crossContainerClipboardProvider.notifier);
   late final FileOperationService _opSvc;
   late final dynamic _vaultEvents;
   FolderDocumentProviderService get _docProviderService =>
       ref.read(folderDocumentProviderServiceProvider);
-  FileManagerToolbarService get _toolbarSvc => ref.read(fileManagerToolbarServiceProvider);
+  FileManagerToolbarService get _toolbarSvc =>
+      ref.read(fileManagerToolbarServiceProvider);
 
-  FileBrowserSearchState get _search => ref.watch(fileBrowserSearchProvider(widget.container.volId));
+  FileBrowserSearchState get _search =>
+      ref.watch(fileBrowserSearchProvider(widget.container.volId));
   FileBrowserSearch get _searchNotifier =>
       ref.read(fileBrowserSearchProvider(widget.container.volId).notifier);
 
@@ -392,9 +430,9 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   /// Resolves the archive-root path the search controller needs (see
   /// file_browser_search_controller.dart's header) -- kept here since it's
   /// a _pathStack lookup, and _pathStack stays screen-owned.
-  String? get _archiveRootPathForSearch =>
-      _archiveContext == null ? null : _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
-
+  String? get _archiveRootPathForSearch => _archiveContext == null
+      ? null
+      : _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
 
   AppSettings _appSettings = AppSettings();
   ThumbnailCacheMode _resolvedThumbnailCacheMode = ThumbnailCacheMode.appCache;
@@ -402,8 +440,9 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   FileManagerToolbarConfig _toolbarConfig = FileManagerToolbarConfig.defaults();
   FileBrowserPinsBookmarksState get _pinsBookmarks =>
       ref.watch(fileBrowserPinsBookmarksProvider(widget.container.volId));
-  FileBrowserPinsBookmarks get _pinsBookmarksNotifier =>
-      ref.read(fileBrowserPinsBookmarksProvider(widget.container.volId).notifier);
+  FileBrowserPinsBookmarks get _pinsBookmarksNotifier => ref.read(
+    fileBrowserPinsBookmarksProvider(widget.container.volId).notifier,
+  );
   Set<String> get _pinnedPaths => _pinsBookmarks.pinnedPaths;
   List<String> get _bookmarkPaths => _pinsBookmarks.bookmarkPaths;
   // Set as the very first line of dispose(). `mounted` alone isn't a
@@ -428,8 +467,10 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   String _joinPath(String name) => joinPath(name, _currentDirPath);
   bool _isFolderMounted(RawEntry entry) =>
       isFolderMounted(entry, _currentDirPath, _mountedDocProviderFolders);
-  bool _isPinned(RawEntry entry) => isPinned(entry, _currentDirPath, _pinnedPaths);
-  bool _isBookmark(RawEntry entry) => isBookmark(entry, _currentDirPath, _bookmarkPaths);
+  bool _isPinned(RawEntry entry) =>
+      isPinned(entry, _currentDirPath, _pinnedPaths);
+  bool _isBookmark(RawEntry entry) =>
+      isBookmark(entry, _currentDirPath, _bookmarkPaths);
   bool _isFolderSynced(RawEntry entry) {
     if (!entry.isDir || widget.container.isLocalStorage) return false;
     final path = _fullPathOf(entry);
@@ -474,7 +515,11 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   /// here would wrongly drop a content-only match, whose name doesn't
   /// contain [query] at all. Hidden-files and the type filter still apply
   /// either way.
-  bool _isVisibleInCurrentListing(RawEntry item, String query, {bool skipQueryCheck = false}) {
+  bool _isVisibleInCurrentListing(
+    RawEntry item,
+    String query, {
+    bool skipQueryCheck = false,
+  }) {
     if (!_toolbarConfig.showHiddenFiles && isHiddenEntryName(item.name)) {
       return false;
     }
@@ -505,16 +550,26 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
   /// waits on it. In deep-search mode, `_deepSearchResults` already spans
   /// every matched folder, so it's used as-is instead -- `localItems`
   /// alone could never represent that.
-  List<RawEntry> _searchAwareVisibleItems(List<RawEntry> localItems, String query) {
+  List<RawEntry> _searchAwareVisibleItems(
+    List<RawEntry> localItems,
+    String query,
+  ) {
     if (!_searchActive || query.isEmpty) {
-      return localItems.where((item) => _isVisibleInCurrentListing(item, query)).toList();
+      return localItems
+          .where((item) => _isVisibleInCurrentListing(item, query))
+          .toList();
     }
     if (_isDeepSearch) {
       return _deepSearchResults
-          .where((item) => _isVisibleInCurrentListing(item, query, skipQueryCheck: true))
+          .where(
+            (item) =>
+                _isVisibleInCurrentListing(item, query, skipQueryCheck: true),
+          )
           .toList();
     }
-    final instant = localItems.where((item) => _isVisibleInCurrentListing(item, query)).toList();
+    final instant = localItems
+        .where((item) => _isVisibleInCurrentListing(item, query))
+        .toList();
     final instantLowerNames = instant.map((e) => e.lowercaseName).toSet();
     final contentOnlyMatches = _deepSearchResults.where(
       (item) =>
@@ -584,7 +639,8 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
 
     final now = DateTime.now();
     final last = _lastOpReloadTime;
-    if (last == null || now.difference(last) > const Duration(milliseconds: 350)) {
+    if (last == null ||
+        now.difference(last) > const Duration(milliseconds: 350)) {
       _lastOpReloadTime = now;
       FolderThumbnailPreview.clearSessionCache();
       _loadDirectoryContents(_currentDirPath, refresh: true);
@@ -612,8 +668,6 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     _vaultEvents.addUsbContainerDetachedListener(_onContainerDetached);
   }
 
-
-
   @override
   void dispose() {
     _disposed = true;
@@ -637,7 +691,8 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       ..sort(_compareOverall);
 
     final targetIndex = sortedItems.indexWhere((e) {
-      final itemFullPath = (_searchActive && _isDeepSearch && e.name.contains('/'))
+      final itemFullPath =
+          (_searchActive && _isDeepSearch && e.name.contains('/'))
           ? e.name
           : (_currentDirPath.isEmpty ? e.name : '$_currentDirPath/${e.name}');
       return itemFullPath == fullPath;
@@ -648,7 +703,8 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     final position = _browserScrollController.position;
     final maxScroll = position.maxScrollExtent;
     final viewportHeight = position.viewportDimension;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     double itemTop = 0.0;
     double itemHeight = 0.0;
@@ -679,10 +735,11 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       case BrowserLayoutMode.grid:
         final minCols = isLandscape ? 3 : 1;
         final maxCols = isLandscape ? 7 : 4;
-        final columns = (isLandscape
-                ? _toolbarConfig.gridColumnsLandscape
-                : _toolbarConfig.gridColumnsPortrait)
-            .clamp(minCols, maxCols);
+        final columns =
+            (isLandscape
+                    ? _toolbarConfig.gridColumnsLandscape
+                    : _toolbarConfig.gridColumnsPortrait)
+                .clamp(minCols, maxCols);
         final row = targetIndex ~/ columns;
         final screenWidth = MediaQuery.sizeOf(context).width;
         final availableWidth = screenWidth - 20.0;
@@ -700,10 +757,11 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
       case BrowserLayoutMode.masonry:
         final minCols = isLandscape ? 2 : 1;
         final maxCols = isLandscape ? 6 : 3;
-        final columns = (isLandscape
-                ? _toolbarConfig.masonryColumnsLandscape
-                : _toolbarConfig.masonryColumnsPortrait)
-            .clamp(minCols, maxCols);
+        final columns =
+            (isLandscape
+                    ? _toolbarConfig.masonryColumnsLandscape
+                    : _toolbarConfig.masonryColumnsPortrait)
+                .clamp(minCols, maxCols);
         final screenWidth = MediaQuery.sizeOf(context).width;
         final availableWidth = screenWidth - 20.0;
         final itemWidth = (availableWidth - (columns - 1) * 8.0) / columns;
@@ -721,11 +779,16 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
 
           final fullEntryPath = entry.name.contains('/')
               ? entry.name
-              : (_currentDirPath.isEmpty ? entry.name : '$_currentDirPath/${entry.name}');
+              : (_currentDirPath.isEmpty
+                    ? entry.name
+                    : '$_currentDirPath/${entry.name}');
 
           double ratio = 1.0;
           if (!entry.isDir) {
-            final cachedRatio = MediaAspectRatioCache.get(widget.container, fullEntryPath);
+            final cachedRatio = MediaAspectRatioCache.get(
+              widget.container,
+              fullEntryPath,
+            );
             if (cachedRatio != null && cachedRatio > 0) {
               ratio = cachedRatio.clamp(0.5, 2.2);
             } else if (MediaViewerConstants.isVideo(entry.name)) {
@@ -733,7 +796,8 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
             }
           }
 
-          final hasLabel = showNames ||
+          final hasLabel =
+              showNames ||
               entry.isDir ||
               !MediaViewerConstants.hasRealThumbnail(entry.name);
           final previewHeight = itemWidth / ratio;
@@ -755,7 +819,8 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     final bottomMargin = AppSpacing.floatingStackClearance + bottomInset + 16.0;
 
     if (itemTop >= currentOffset + topMargin &&
-        (itemTop + itemHeight) <= currentOffset + viewportHeight - bottomMargin) {
+        (itemTop + itemHeight) <=
+            currentOffset + viewportHeight - bottomMargin) {
       return;
     }
 
@@ -769,14 +834,17 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     final clampedOffset = targetOffset.clamp(0.0, maxScroll);
     _browserScrollController.jumpTo(clampedOffset);
   }
+
   BrowserLayoutMode _getLayoutModeForFolder(
     String dirPath, {
     AppSettings? appSettings,
   }) {
     final effectiveAppSettings = appSettings ?? _appSettings;
     if (_toolbarConfig.rememberPerFolderLayout) {
-      final key =
-          FileManagerToolbarConfig.folderKey(widget.container.uri, dirPath);
+      final key = FileManagerToolbarConfig.folderKey(
+        widget.container.uri,
+        dirPath,
+      );
       final savedModeStr = _toolbarConfig.folderLayoutModes[key];
       if (savedModeStr != null) {
         final savedMode = BrowserLayoutMode.fromJson(savedModeStr);
@@ -806,7 +874,7 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     );
   }
 
-void _showItemActionsSheet(RawEntry entry) {
+  void _showItemActionsSheet(RawEntry entry) {
     _signalActivity();
     HapticFeedback.selectionClick();
     final fullPath = _fullPathOf(entry);
@@ -830,7 +898,8 @@ void _showItemActionsSheet(RawEntry entry) {
           oldEntries: [entry],
           existingEntries: _currentItems,
           currentDirPath: _currentDirPath,
-          onSuccess: () => _loadDirectoryContents(_currentDirPath, refresh: true),
+          onSuccess: () =>
+              _loadDirectoryContents(_currentDirPath, refresh: true),
           readOnly: _isReadOnly,
         );
       },
@@ -853,7 +922,8 @@ void _showItemActionsSheet(RawEntry entry) {
                 op.removeListener(listener);
                 return;
               }
-              final done = op.status != FileOperationStatus.running &&
+              final done =
+                  op.status != FileOperationStatus.running &&
                   op.status != FileOperationStatus.pending;
               if (!done) return;
               op.removeListener(listener);
@@ -901,18 +971,14 @@ void _showItemActionsSheet(RawEntry entry) {
         _setStatus(context.l10n.clipboardVerbMoving);
       },
       onTogglePin: () async {
-        await _pinsBookmarksNotifier.togglePins(
-          widget.container,
-          [fullPath],
-          pin: !_isPinned(entry),
-        );
+        await _pinsBookmarksNotifier.togglePins(widget.container, [
+          fullPath,
+        ], pin: !_isPinned(entry));
       },
       onToggleBookmark: () async {
-        await _pinsBookmarksNotifier.toggleBookmarks(
-          widget.container,
-          [fullPath],
-          bookmark: !_isBookmark(entry),
-        );
+        await _pinsBookmarksNotifier.toggleBookmarks(widget.container, [
+          fullPath,
+        ], bookmark: !_isBookmark(entry));
       },
       onInfo: () {
         FileInfoSheet.show(
@@ -926,8 +992,9 @@ void _showItemActionsSheet(RawEntry entry) {
           ? () async {
               final parts = entry.name.split('.');
               final ext = parts.length > 1 ? parts.last.toLowerCase() : '';
-              final settings =
-                  await ref.read(appSettingsServiceProvider).loadSettings();
+              final settings = await ref
+                  .read(appSettingsServiceProvider)
+                  .loadSettings();
               if (mounted) {
                 await _showOpenWithDialog(entry.name, fullPath, ext, settings);
               }
@@ -936,9 +1003,9 @@ void _showItemActionsSheet(RawEntry entry) {
       onShare: !entry.isDir
           ? () async {
               final ok = widget.container.isLocalStorage
-                  ? await ref.read(vaultLocalShareApiProvider).shareLocalFiles(
-                      [p.join(widget.container.uri, fullPath)],
-                    )
+                  ? await ref.read(vaultLocalShareApiProvider).shareLocalFiles([
+                      p.join(widget.container.uri, fullPath),
+                    ])
                   : await ref.read(vaultFileIoApiProvider).shareFiles(
                       widget.container,
                       [fullPath],
@@ -966,7 +1033,9 @@ void _showItemActionsSheet(RawEntry entry) {
       // Auto-sync is configured per vault folder: not for device storage
       // browsers, and not inside an archive.
       onSyncSettings:
-          entry.isDir && !widget.container.isLocalStorage && _archiveContext == null
+          entry.isDir &&
+              !widget.container.isLocalStorage &&
+              _archiveContext == null
           ? () => _showSyncSettings(entry)
           : null,
     );
@@ -993,18 +1062,29 @@ void _showItemActionsSheet(RawEntry entry) {
       ),
     );
   }
+
   Future<void> _refreshMountedDocProviderFolders() =>
       _docProviderNotifier.refresh(widget.container);
 
   Future<void> _toggleFolderDocumentProvider(RawEntry entry) async {
     final path = _fullPathOf(entry);
-    final ok = await _docProviderNotifier.toggle(widget.container, path, entry.name);
+    final ok = await _docProviderNotifier.toggle(
+      widget.container,
+      path,
+      entry.name,
+    );
     if (!mounted) return;
     if (!ok) {
-      showAppSnackBar(context, message: context.l10n.couldNotExpose(entry.name));
+      showAppSnackBar(
+        context,
+        message: context.l10n.couldNotExpose(entry.name),
+      );
       return;
     }
-    showAppSnackBar(context, message: context.l10n.nowAvailableToOtherApps(entry.name));
+    showAppSnackBar(
+      context,
+      message: context.l10n.nowAvailableToOtherApps(entry.name),
+    );
   }
 
   Future<void> _unmountFolderDocumentProvider(RawEntry entry) async {
@@ -1012,7 +1092,10 @@ void _showItemActionsSheet(RawEntry entry) {
     final ok = await _docProviderNotifier.unmount(widget.container, path);
     if (!mounted) return;
     if (!ok) {
-      showAppSnackBar(context, message: context.l10n.couldNotUnmount(entry.name));
+      showAppSnackBar(
+        context,
+        message: context.l10n.couldNotUnmount(entry.name),
+      );
     }
   }
 
@@ -1025,7 +1108,9 @@ void _showItemActionsSheet(RawEntry entry) {
     final path = _fullPathOf(entry);
     final records = await ref.read(containerRepositoryProvider).loadAll();
     final record = records[widget.container.uri];
-    final matches = record?.documentProviderFolders.where((f) => f.path == path) ?? const [];
+    final matches =
+        record?.documentProviderFolders.where((f) => f.path == path) ??
+        const [];
     final existing = matches.isEmpty ? null : matches.first;
     if (!mounted) return;
     final action = await FolderDocumentProviderSheet.show(
@@ -1042,7 +1127,11 @@ void _showItemActionsSheet(RawEntry entry) {
   Future<void> _toggleBookmarkSelected({required bool bookmark}) async {
     _signalActivity();
     final pathsToToggle = selectedItems.map((e) => _fullPathOf(e)).toList();
-    await _pinsBookmarksNotifier.toggleBookmarks(widget.container, pathsToToggle, bookmark: bookmark);
+    await _pinsBookmarksNotifier.toggleBookmarks(
+      widget.container,
+      pathsToToggle,
+      bookmark: bookmark,
+    );
     final count = pathsToToggle.length;
     _setStatus(
       bookmark
@@ -1055,7 +1144,11 @@ void _showItemActionsSheet(RawEntry entry) {
   Future<void> _togglePinSelected({required bool pin}) async {
     _signalActivity();
     final pathsToToggle = selectedItems.map((e) => _fullPathOf(e)).toList();
-    await _pinsBookmarksNotifier.togglePins(widget.container, pathsToToggle, pin: pin);
+    await _pinsBookmarksNotifier.togglePins(
+      widget.container,
+      pathsToToggle,
+      pin: pin,
+    );
     final count = pathsToToggle.length;
     _setStatus(
       pin ? context.l10n.pinnedCount(count) : context.l10n.unpinnedCount(count),
@@ -1074,7 +1167,9 @@ void _showItemActionsSheet(RawEntry entry) {
     _navNotifier.setLoading(true);
     _pinsBookmarksNotifier.load(widget.container);
     try {
-      final appSettings = await ref.read(appSettingsServiceProvider).loadSettings();
+      final appSettings = await ref
+          .read(appSettingsServiceProvider)
+          .loadSettings();
       final records = await ref.read(containerRepositoryProvider).loadAll();
       final record = records[widget.container.uri];
       final toolbarConfig = await _toolbarSvc.load();
@@ -1159,7 +1254,9 @@ void _showItemActionsSheet(RawEntry entry) {
   void _setStatus(String msg, {bool error = false, Duration? autoClear}) {
     if (!mounted) return;
     _navNotifier.setStatus(msg, error: error);
-    final delay = autoClear ?? (error ? const Duration(seconds: 5) : const Duration(seconds: 3));
+    final delay =
+        autoClear ??
+        (error ? const Duration(seconds: 5) : const Duration(seconds: 3));
     Future.delayed(delay, () {
       if (mounted && _statusMessage == msg) {
         _navNotifier.clearStatus();
@@ -1171,7 +1268,10 @@ void _showItemActionsSheet(RawEntry entry) {
     if (mounted) _navNotifier.clearStatus();
   }
 
-  Future<void> _loadDirectoryContents(String path, {bool refresh = false}) async {
+  Future<void> _loadDirectoryContents(
+    String path, {
+    bool refresh = false,
+  }) async {
     try {
       await _navNotifier.loadDirectoryContents(
         widget.container,
@@ -1256,9 +1356,10 @@ void _showItemActionsSheet(RawEntry entry) {
     );
   }
 
-void _enterDirectory(RawEntry entry) {
-    final currentOffset =
-        _browserScrollController.hasClients ? _browserScrollController.offset : 0.0;
+  void _enterDirectory(RawEntry entry) {
+    final currentOffset = _browserScrollController.hasClients
+        ? _browserScrollController.offset
+        : 0.0;
     final newPath = _fullPathOf(entry);
     _navNotifier.enterDirectory(
       entry,
@@ -1292,7 +1393,9 @@ void _enterDirectory(RawEntry entry) {
       _clearSearch();
       await _loadDirectoryContents(newPath);
     } else {
-      final parentPath = segments.length > 1 ? segments.sublist(0, segments.length - 1).join('/') : '';
+      final parentPath = segments.length > 1
+          ? segments.sublist(0, segments.length - 1).join('/')
+          : '';
       final fileName = segments.last;
       _navNotifier.navigateToPath(
         widget.container,
@@ -1319,10 +1422,11 @@ void _enterDirectory(RawEntry entry) {
     }
   }
 
-void _navigateUp() {
+  void _navigateUp() {
     if (_atRoot) return;
-    final targetSegment =
-        _pathStack.length >= 2 ? _pathStack[_pathStack.length - 2] : null;
+    final targetSegment = _pathStack.length >= 2
+        ? _pathStack[_pathStack.length - 2]
+        : null;
     final savedOffset = targetSegment?.scrollOffset ?? 0.0;
     _resetBrowserScrollController(initialOffset: savedOffset);
 
@@ -1348,8 +1452,9 @@ void _navigateUp() {
 
     if (!_isOwnRouteCurrent) return false;
     if (backEvent.isButtonEvent || !_canPreviewFolderBackGesture) return false;
-    final targetSegment =
-        _pathStack.length >= 2 ? _pathStack[_pathStack.length - 2] : null;
+    final targetSegment = _pathStack.length >= 2
+        ? _pathStack[_pathStack.length - 2]
+        : null;
     final savedOffset = targetSegment?.scrollOffset ?? 0.0;
     _resetBackGesturePreviewScrollController(initialOffset: savedOffset);
 
@@ -1397,8 +1502,9 @@ void _navigateUp() {
 
   void _jumpTo(int index) {
     if (index == _pathStack.length - 1) return;
-    final targetSegment =
-        index >= 0 && index < _pathStack.length ? _pathStack[index] : null;
+    final targetSegment = index >= 0 && index < _pathStack.length
+        ? _pathStack[index]
+        : null;
     final savedOffset = targetSegment?.scrollOffset ?? 0.0;
     _resetBrowserScrollController(initialOffset: savedOffset);
     final newPath = _navNotifier.jumpTo(index);
@@ -1413,45 +1519,56 @@ void _navigateUp() {
   // ── Selection (FileBrowserSelection controller) ──────────────────────────
   Set<RawEntry> get selectedItems =>
       ref.read(fileBrowserSelectionProvider(widget.container.volId)).items;
-  bool get isSelectionMode =>
-      ref.read(fileBrowserSelectionProvider(widget.container.volId)).isSelectionMode;
-  int get selectedFolderCount =>
-      ref.read(fileBrowserSelectionProvider(widget.container.volId)).selectedFolderCount;
-  int get selectedTotalBytes =>
-      ref.read(fileBrowserSelectionProvider(widget.container.volId)).selectedTotalBytes;
-  bool get hasPendingFolderSizes =>
-      ref.read(fileBrowserSelectionProvider(widget.container.volId)).hasPendingFolderSizes;
+  bool get isSelectionMode => ref
+      .read(fileBrowserSelectionProvider(widget.container.volId))
+      .isSelectionMode;
+  int get selectedFolderCount => ref
+      .read(fileBrowserSelectionProvider(widget.container.volId))
+      .selectedFolderCount;
+  int get selectedTotalBytes => ref
+      .read(fileBrowserSelectionProvider(widget.container.volId))
+      .selectedTotalBytes;
+  bool get hasPendingFolderSizes => ref
+      .read(fileBrowserSelectionProvider(widget.container.volId))
+      .hasPendingFolderSizes;
 
   void toggleSelectItem(RawEntry item) {
-    ref.read(fileBrowserSelectionProvider(widget.container.volId).notifier).toggleSelectItem(item);
+    ref
+        .read(fileBrowserSelectionProvider(widget.container.volId).notifier)
+        .toggleSelectItem(item);
     if (selectedFolderCount > 0) {
       fetchFolderSizes(widget.container, _currentDirPath);
     }
   }
 
   void setSelectedItems(Set<RawEntry> newSelection) {
-    ref.read(fileBrowserSelectionProvider(widget.container.volId).notifier).setSelectedItems(newSelection);
+    ref
+        .read(fileBrowserSelectionProvider(widget.container.volId).notifier)
+        .setSelectedItems(newSelection);
   }
 
-  void exitSelectionMode() =>
-      ref.read(fileBrowserSelectionProvider(widget.container.volId).notifier).exitSelectionMode();
+  void exitSelectionMode() => ref
+      .read(fileBrowserSelectionProvider(widget.container.volId).notifier)
+      .exitSelectionMode();
 
   Future<void> fetchFolderSizes(
     MountedContainer container,
     String currentDirPath,
-  ) =>
-      ref
-          .read(fileBrowserSelectionProvider(widget.container.volId).notifier)
-          .fetchFolderSizes(container, currentDirPath);
+  ) => ref
+      .read(fileBrowserSelectionProvider(widget.container.volId).notifier)
+      .fetchFolderSizes(container, currentDirPath);
 
   // ── Sort (FileBrowserSort controller) ─────────────────────────────────────
-  SortBy get sortBy => ref.read(fileBrowserSortProvider(widget.container.volId)).sortBy;
-  bool get sortAscending => ref.read(fileBrowserSortProvider(widget.container.volId)).sortAscending;
+  SortBy get sortBy =>
+      ref.read(fileBrowserSortProvider(widget.container.volId)).sortBy;
+  bool get sortAscending =>
+      ref.read(fileBrowserSortProvider(widget.container.volId)).sortAscending;
   FileBrowserSort get _sortNotifier =>
       ref.read(fileBrowserSortProvider(widget.container.volId).notifier);
 
-  void setSort(SortBy by) =>
-      ref.read(fileBrowserSortProvider(widget.container.volId).notifier).setSort(by);
+  void setSort(SortBy by) => ref
+      .read(fileBrowserSortProvider(widget.container.volId).notifier)
+      .setSort(by);
 
   int compareItems(RawEntry ea, RawEntry eb) =>
       ref.read(fileBrowserSortProvider(widget.container.volId)).compare(ea, eb);
@@ -1470,7 +1587,7 @@ void _navigateUp() {
   /// long-press would), regardless of whether the row body would otherwise
   /// open the item. This mirrors [_handleItemLongPress]'s haptic feedback
   /// so both entry points into selection feel the same.
-    void _handleIconTap(RawEntry entry) {
+  void _handleIconTap(RawEntry entry) {
     _signalActivity();
     HapticFeedback.selectionClick();
     toggleSelectItem(entry);
@@ -1488,7 +1605,9 @@ void _navigateUp() {
     }
     final fullPath = _fullPathOf(entry);
     final parts = entry.name.split('.');
-    final ext = parts.length > 1 ? parts.last.toLowerCase().replaceFirst(RegExp(r'^\.+'), '').trim() : '';
+    final ext = parts.length > 1
+        ? parts.last.toLowerCase().replaceFirst(RegExp(r'^\.+'), '').trim()
+        : '';
     if (ArchiveService.isArchive(ext)) {
       await _openArchive(fullPath, entry.name);
       return;
@@ -1497,24 +1616,44 @@ void _navigateUp() {
       _signalActivity();
       _navNotifier.setLoading(true);
       try {
-        final archiveRootPath = _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
+        final archiveRootPath =
+            _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
         String subPath = '';
         if (fullPath.length > archiveRootPath.length) {
           subPath = fullPath.substring(archiveRootPath.length);
           if (subPath.startsWith('/')) subPath = subPath.substring(1);
         }
-        final entryBytes = await _archiveContext!.extractEntry(subPath);
         if (mounted) {
-          _navNotifier.setLoading(false);
-          if (entryBytes != null) {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ArchiveFileViewer(bytes: entryBytes, fileName: entry.name),
-              ),
+          final opensInNativeViewer =
+              ext == 'pdf' ||
+              MediaViewerConstants.isVideo(entry.name) ||
+              MediaViewerConstants.isAudio(entry.name);
+          if (opensInNativeViewer) {
+            final previewPath = await _archiveContext!.stageEntryForBrowse(
+              subPath,
             );
+            if (previewPath != null) {
+              await _openArchivePreview(entry.name, previewPath);
+            } else if (mounted) {
+              _navNotifier.setLoading(false);
+              _setStatus(context.l10n.failedToReadFileFromArchive, error: true);
+            }
           } else {
-            _setStatus(context.l10n.failedToReadFileFromArchive, error: true);
+            final entryBytes = await _archiveContext!.extractEntry(subPath);
+            _navNotifier.setLoading(false);
+            if (entryBytes != null) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ArchiveFileViewer(
+                    bytes: entryBytes,
+                    fileName: entry.name,
+                  ),
+                ),
+              );
+            } else {
+              _setStatus(context.l10n.failedToReadFileFromArchive, error: true);
+            }
           }
         }
       } catch (e) {
@@ -1529,10 +1668,9 @@ void _navigateUp() {
       return;
     }
     if (VaultItemType.values.any((t) => t.name.toLowerCase() == ext)) {
-      final item = await ref.read(vaultItemsServiceProvider).loadItem(
-            widget.container,
-            fullPath,
-          );
+      final item = await ref
+          .read(vaultItemsServiceProvider)
+          .loadItem(widget.container, fullPath);
       if (item != null) {
         final baseName = entry.name.substring(0, entry.name.lastIndexOf('.'));
         item.title = baseName;
@@ -1568,7 +1706,8 @@ void _navigateUp() {
     // exactly like vault content. PDF is exempt too: PdfViewerScreen has its
     // own isLocalStorage branch (VaultLocalShareApi.getLocalFileUri ->
     // PdfViewerRouter's localUri path), so it also renders in-app.
-    final needsSystemAppForLocal = widget.container.isLocalStorage &&
+    final needsSystemAppForLocal =
+        widget.container.isLocalStorage &&
         (MediaViewerConstants.isAudio(entry.name) ||
             ext == 'html' ||
             ext == 'htm');
@@ -1591,7 +1730,10 @@ void _navigateUp() {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => TextEditorScreen(container: widget.container, filePath: fullPath),
+            builder: (_) => TextEditorScreen(
+              container: widget.container,
+              filePath: fullPath,
+            ),
           ),
         );
         _loadDirectoryContents(_currentDirPath);
@@ -1599,7 +1741,7 @@ void _navigateUp() {
         await _openMediaViewer(entry.name, fullPath);
       case OpenInPdfViewer():
         await _openPdfViewer(fullPath);
-     case OpenInHtmlViewer():
+      case OpenInHtmlViewer():
         _openHtmlViewer(fullPath);
       case OpenWithSystemApp(packageName: final packageName):
         _openFileWithApp(entry.name, fullPath, packageName: packageName);
@@ -1611,21 +1753,64 @@ void _navigateUp() {
     }
   }
 
+  Future<void> _openArchivePreview(String fileName, String previewPath) async {
+    final archiveApi = ref.read(vaultArchiveApiProvider);
+    final preview = ArchivePreviewFile.fromNativePath(previewPath);
+    try {
+      if (!mounted) return;
+
+      final previewFile = preview;
+      final previewContainer = buildLocalStorageContainer(
+        rootPath: p.dirname(previewFile.path),
+        displayName: fileName,
+        readOnly: true,
+      );
+      final stagedFileName = p.basename(previewFile.path);
+      _navNotifier.setLoading(false);
+
+      if (fileName.toLowerCase().endsWith('.pdf')) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PdfViewerScreen(
+              container: previewContainer,
+              filePath: stagedFileName,
+            ),
+          ),
+        );
+      } else {
+        await Navigator.push(
+          context,
+          _buildMediaViewerRoute(
+            mediaFiles: [stagedFileName],
+            initialIndex: 0,
+            container: previewContainer,
+            isArchivePreview: true,
+          ),
+        );
+      }
+    } finally {
+      await preview.discard(secureDelete: archiveApi.discardBrowseFile);
+    }
+  }
+
   Future<void> _openPdfViewer(String fullPath) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerScreen(container: widget.container, filePath: fullPath),
+        builder: (_) =>
+            PdfViewerScreen(container: widget.container, filePath: fullPath),
       ),
     );
     _loadDirectoryContents(_currentDirPath);
   }
 
- void _openHtmlViewer(String fullPath) {
+  void _openHtmlViewer(String fullPath) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => HtmlViewerScreen(container: widget.container, filePath: fullPath),
+        builder: (_) =>
+            HtmlViewerScreen(container: widget.container, filePath: fullPath),
       ),
     );
   }
@@ -1633,25 +1818,31 @@ void _navigateUp() {
   Route<void> _buildMediaViewerRoute({
     required List<String> mediaFiles,
     required int initialIndex,
+    MountedContainer? container,
+    bool isArchivePreview = false,
   }) {
     return PageRouteBuilder<void>(
       opaque: false,
       barrierColor: Colors.transparent,
       transitionDuration: Duration.zero,
       reverseTransitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (context, animation, secondaryAnimation) => MediaViewerScreen(
-        container: widget.container,
-        mediaFiles: mediaFiles,
-        initialIndex: initialIndex,
-        startingFolder: _currentDirPath,
-        thumbnailQuality: _resolvedThumbnailQuality,
-        thumbnailCacheMode: _resolvedThumbnailCacheMode,
-        mediaFilter: _currentFilter,
-        sortBy: sortBy,
-        sortAscending: sortAscending,
-        pinnedPaths: _pinnedPaths,
-        onCurrentFileChanged: _scrollToItem,
-      ),
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          MediaViewerScreen(
+            container: container ?? widget.container,
+            mediaFiles: mediaFiles,
+            initialIndex: initialIndex,
+            startingFolder: isArchivePreview ? '' : _currentDirPath,
+            thumbnailQuality: _resolvedThumbnailQuality,
+            thumbnailCacheMode: isArchivePreview
+                ? ThumbnailCacheMode.disabled
+                : _resolvedThumbnailCacheMode,
+            mediaFilter: _currentFilter,
+            sortBy: sortBy,
+            sortAscending: sortAscending,
+            pinnedPaths: _pinnedPaths,
+            onCurrentFileChanged: isArchivePreview ? null : _scrollToItem,
+            isArchivePreview: isArchivePreview,
+          ),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(
           opacity: CurvedAnimation(
@@ -1684,10 +1875,8 @@ void _navigateUp() {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VideoEditorScreen(
-          container: widget.container,
-          filePath: fullPath,
-        ),
+        builder: (_) =>
+            VideoEditorScreen(container: widget.container, filePath: fullPath),
       ),
     );
     if (!mounted) return;
@@ -1717,7 +1906,8 @@ void _navigateUp() {
         // Local storage: images and video play in-app now (see
         // _handleFileTap/NativePlayerManager.kt's local branch); audio
         // still doesn't, so it stays out of the swipeable playlist.
-        if (widget.container.isLocalStorage && MediaViewerConstants.isAudio(name)) {
+        if (widget.container.isLocalStorage &&
+            MediaViewerConstants.isAudio(name)) {
           return false;
         }
         return true;
@@ -1750,23 +1940,24 @@ void _navigateUp() {
         barrierColor: Colors.transparent,
         transitionDuration: Duration.zero,
         reverseTransitionDuration: const Duration(milliseconds: 250),
-        pageBuilder: (context, animation, secondaryAnimation) => MediaViewerScreen(
-          container: widget.container,
-          mediaFiles: mediaFiles,
-          initialIndex: initialIndex,
-          startingFolder: _currentDirPath,
-          thumbnailQuality: _resolvedThumbnailQuality,
-          thumbnailCacheMode: _resolvedThumbnailCacheMode,
-          mediaFilter: _currentFilter,
-          sortBy: sortBy,
-          sortAscending: sortAscending,
-          pinnedPaths: _pinnedPaths,
-          onCurrentFileChanged: (newFile) {
-            lastViewedFile = newFile;
-            _scrollToItem(newFile);
-          },
-          onFileDeleted: (_) => filesDeletedInViewer = true,
-        ),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            MediaViewerScreen(
+              container: widget.container,
+              mediaFiles: mediaFiles,
+              initialIndex: initialIndex,
+              startingFolder: _currentDirPath,
+              thumbnailQuality: _resolvedThumbnailQuality,
+              thumbnailCacheMode: _resolvedThumbnailCacheMode,
+              mediaFilter: _currentFilter,
+              sortBy: sortBy,
+              sortAscending: sortAscending,
+              pinnedPaths: _pinnedPaths,
+              onCurrentFileChanged: (newFile) {
+                lastViewedFile = newFile;
+                _scrollToItem(newFile);
+              },
+              onFileDeleted: (_) => filesDeletedInViewer = true,
+            ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: CurvedAnimation(
@@ -1800,50 +1991,58 @@ void _navigateUp() {
   }
 
   Future<void> _showOpenWithDialog(
-  String fileName,
-  String fullPath,
-  String ext,
-  AppSettings settings,
-) async {
-  final choice = await OpenWithDialog.show(context, fileName: fileName, ext: ext);
-  final cleanExt = ext.toLowerCase().replaceFirst(RegExp(r'^\.+'), '').trim();
-
-  if (choice.action == 'editor') {
-    if (choice.remember && cleanExt.isNotEmpty) {
-      await _saveExtensionPreference(cleanExt, 'editor');
-    }
-    if (!mounted) return;
-    await Navigator.push(
+    String fileName,
+    String fullPath,
+    String ext,
+    AppSettings settings,
+  ) async {
+    final choice = await OpenWithDialog.show(
       context,
-      MaterialPageRoute(
-        builder: (_) => TextEditorScreen(container: widget.container, filePath: fullPath),
-      ),
+      fileName: fileName,
+      ext: ext,
     );
-    _loadDirectoryContents(_currentDirPath);
-  } else if (choice.action == 'media') {
-    if (choice.remember && cleanExt.isNotEmpty) {
-      await _saveExtensionPreference(cleanExt, 'media');
-    }
-    if (!mounted) return;
-    await _openMediaViewer(fileName, fullPath);
-  } else if (choice.action == 'external') {
-    if (choice.remember && cleanExt.isNotEmpty) {
-      await _saveExtensionPreference(cleanExt, 'external');
-      _vaultEvents.onAppSelectedCallback = (selectedExt, pkg) async {
-        final normalized = selectedExt.toLowerCase().replaceFirst(RegExp(r'^\.+'), '').trim();
-        if (normalized == cleanExt) {
-          await _saveExtensionPreference(cleanExt, 'package:$pkg');
-          _vaultEvents.onAppSelectedCallback = null;
-        }
-      };
-    }
-    _openFileWithApp(fileName, fullPath);
-  } else if (choice.action == 'open_as') {
-    if (choice.mimeType != null) {
-      _openFileWithApp(fileName, fullPath, mimeType: choice.mimeType!);
+    final cleanExt = ext.toLowerCase().replaceFirst(RegExp(r'^\.+'), '').trim();
+
+    if (choice.action == 'editor') {
+      if (choice.remember && cleanExt.isNotEmpty) {
+        await _saveExtensionPreference(cleanExt, 'editor');
+      }
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              TextEditorScreen(container: widget.container, filePath: fullPath),
+        ),
+      );
+      _loadDirectoryContents(_currentDirPath);
+    } else if (choice.action == 'media') {
+      if (choice.remember && cleanExt.isNotEmpty) {
+        await _saveExtensionPreference(cleanExt, 'media');
+      }
+      if (!mounted) return;
+      await _openMediaViewer(fileName, fullPath);
+    } else if (choice.action == 'external') {
+      if (choice.remember && cleanExt.isNotEmpty) {
+        await _saveExtensionPreference(cleanExt, 'external');
+        _vaultEvents.onAppSelectedCallback = (selectedExt, pkg) async {
+          final normalized = selectedExt
+              .toLowerCase()
+              .replaceFirst(RegExp(r'^\.+'), '')
+              .trim();
+          if (normalized == cleanExt) {
+            await _saveExtensionPreference(cleanExt, 'package:$pkg');
+            _vaultEvents.onAppSelectedCallback = null;
+          }
+        };
+      }
+      _openFileWithApp(fileName, fullPath);
+    } else if (choice.action == 'open_as') {
+      if (choice.mimeType != null) {
+        _openFileWithApp(fileName, fullPath, mimeType: choice.mimeType!);
+      }
     }
   }
-}
 
   // ── "Play media here" recursive scan state ────────────────────────────
   // The scan algorithm itself now lives in MediaScanService (see the note
@@ -1868,15 +2067,15 @@ void _navigateUp() {
       return !e.isDir && _matchesFilter(e.name);
     }).toList()..sort(_compareOverall);
 
-    final localMedia = sortedItems.map((e) => e.name).where(_isSupportedMedia).toList();
+    final localMedia = sortedItems
+        .map((e) => e.name)
+        .where(_isSupportedMedia)
+        .toList();
     if (localMedia.isNotEmpty) {
       final resolvedPaths = localMedia.map(_joinPath).toList();
       await Navigator.push(
         context,
-        _buildMediaViewerRoute(
-          mediaFiles: resolvedPaths,
-          initialIndex: 0,
-        ),
+        _buildMediaViewerRoute(mediaFiles: resolvedPaths, initialIndex: 0),
       );
       if (mounted) {
         _loadDirectoryContents(_currentDirPath);
@@ -1892,7 +2091,9 @@ void _navigateUp() {
     _navNotifier.setLoading(true);
     _navNotifier.setStatus(context.l10n.scanningSubfoldersForMedia);
     try {
-      final result = await ref.read(mediaScanServiceProvider).scan(
+      final result = await ref
+          .read(mediaScanServiceProvider)
+          .scan(
             container: widget.container,
             startPath: _currentDirPath,
             token: token,
@@ -1932,7 +2133,8 @@ void _navigateUp() {
         _setStatus(context.l10n.noMediaFilesFoundRecursive, error: true);
       }
     } catch (e) {
-      if (mounted) _setStatus(context.l10n.failedToScanSubfolders('$e'), error: true);
+      if (mounted)
+        _setStatus(context.l10n.failedToScanSubfolders('$e'), error: true);
     } finally {
       if (mounted) {
         _navNotifier.setLoading(false);
@@ -1942,7 +2144,7 @@ void _navigateUp() {
     }
   }
 
- void _handleItemLongPress(RawEntry entry) {
+  void _handleItemLongPress(RawEntry entry) {
     _signalActivity();
     if (!isSelectionMode) {
       HapticFeedback.selectionClick();
@@ -1956,7 +2158,8 @@ void _navigateUp() {
     }
   }
 
-  bool _isSupportedMedia(String fileName) => MediaViewerConstants.isSupported(fileName);
+  bool _isSupportedMedia(String fileName) =>
+      MediaViewerConstants.isSupported(fileName);
 
   /// Hands an APK to the system package installer (see
   /// [VaultFileIoApi.installApk]).
@@ -1969,10 +2172,9 @@ void _navigateUp() {
   Future<void> _installApk(String cleanName, String fullPath) async {
     _signalActivity();
     try {
-      final outcome = await ref.read(vaultFileIoApiProvider).installApk(
-            widget.container,
-            fullPath,
-          );
+      final outcome = await ref
+          .read(vaultFileIoApiProvider)
+          .installApk(widget.container, fullPath);
       if (outcome == null && mounted) {
         _setStatus(context.l10n.couldNotOpenFile(cleanName), error: true);
       }
@@ -1998,16 +2200,20 @@ void _navigateUp() {
       // real file), so that preference is simply not applied for local
       // storage rather than failing outright.
       final ok = widget.container.isLocalStorage
-          ? await ref.read(vaultLocalShareApiProvider).openLocalFileWithApp(
-                p.join(widget.container.uri, fullPath),
-                mimeType: mimeType,
-              )
-          : await ref.read(vaultFileIoApiProvider).openWithApp(
-                widget.container,
-                fullPath,
-                packageName: packageName,
-                mimeType: mimeType,
-              );
+          ? await ref
+                .read(vaultLocalShareApiProvider)
+                .openLocalFileWithApp(
+                  p.join(widget.container.uri, fullPath),
+                  mimeType: mimeType,
+                )
+          : await ref
+                .read(vaultFileIoApiProvider)
+                .openWithApp(
+                  widget.container,
+                  fullPath,
+                  packageName: packageName,
+                  mimeType: mimeType,
+                );
       if (!ok && mounted) {
         _setStatus(context.l10n.noAppFoundForFileType, error: true);
       }
@@ -2050,13 +2256,19 @@ void _navigateUp() {
       // via its own FileProvider instead (see vault_local_share_api.dart),
       // same split _openFileWithApp makes above.
       final ok = widget.container.isLocalStorage
-          ? await ref.read(vaultLocalShareApiProvider).shareLocalFiles(
-                shareable.map((e) => p.join(widget.container.uri, _fullPathOf(e))).toList(),
-              )
-          : await ref.read(vaultFileIoApiProvider).shareFiles(
-                widget.container,
-                shareable.map(_fullPathOf).toList(),
-              );
+          ? await ref
+                .read(vaultLocalShareApiProvider)
+                .shareLocalFiles(
+                  shareable
+                      .map((e) => p.join(widget.container.uri, _fullPathOf(e)))
+                      .toList(),
+                )
+          : await ref
+                .read(vaultFileIoApiProvider)
+                .shareFiles(
+                  widget.container,
+                  shareable.map(_fullPathOf).toList(),
+                );
       if (!ok && mounted) {
         _setStatus(context.l10n.couldNotShareFiles, error: true);
       }
@@ -2151,7 +2363,8 @@ void _navigateUp() {
           op.removeListener(listener);
           return;
         }
-        final done = op.status != FileOperationStatus.running &&
+        final done =
+            op.status != FileOperationStatus.running &&
             op.status != FileOperationStatus.pending;
         if (done) {
           op.removeListener(listener);
@@ -2184,6 +2397,7 @@ void _navigateUp() {
           }
         }
       }
+
       op.addListener(listener);
     }
 
@@ -2269,7 +2483,9 @@ void _navigateUp() {
     // the widget for listener binding", same as before.
     final items = List<ClipboardItem>.from(clip.items);
     final isCut = clip.isCutOperation;
-    final op = await ref.read(fileBrowserOperationsControllerProvider).pasteStandardTransfer(
+    final op = await ref
+        .read(fileBrowserOperationsControllerProvider)
+        .pasteStandardTransfer(
           destContainer: widget.container,
           srcContainer: srcContainer,
           destDirPath: _currentDirPath,
@@ -2286,7 +2502,8 @@ void _navigateUp() {
     _clip.clear();
     bindOpListener(op);
   }
- void _batchDelete() {
+
+  void _batchDelete() {
     if (_isReadOnly) {
       _setStatus(context.l10n.readOnlyCantDelete, error: true);
       return;
@@ -2314,7 +2531,8 @@ void _navigateUp() {
             return;
           }
           final done =
-              op.status != FileOperationStatus.running && op.status != FileOperationStatus.pending;
+              op.status != FileOperationStatus.running &&
+              op.status != FileOperationStatus.pending;
           if (!done) return;
           op.removeListener(listener);
           _finishBatchDelete(op);
@@ -2343,7 +2561,10 @@ void _navigateUp() {
       _searchNotifier.removeDeletedPaths(deletedPaths, _currentDirPath);
     }
 
-    await _pinsBookmarksNotifier.removeDeletedPaths(widget.container, deletedPaths);
+    await _pinsBookmarksNotifier.removeDeletedPaths(
+      widget.container,
+      deletedPaths,
+    );
     if (!mounted) return;
     await _loadDirectoryContents(_currentDirPath, refresh: true);
     if (!_opNeedsAttention(op)) _opSvc.dismiss(op.id);
@@ -2360,11 +2581,15 @@ void _navigateUp() {
     final op = _opSvc.enqueueExport(
       source: widget.container,
       items: items,
-      performExport: (opId) => ref.read(vaultFileIoApiProvider).exportSelectedToFolder(
-        widget.container,
-        items.map((i) => <String, dynamic>{'path': i.path, 'isDir': i.isDir}).toList(),
-        opId: opId,
-      ),
+      performExport: (opId) => ref
+          .read(vaultFileIoApiProvider)
+          .exportSelectedToFolder(
+            widget.container,
+            items
+                .map((i) => <String, dynamic>{'path': i.path, 'isDir': i.isDir})
+                .toList(),
+            opId: opId,
+          ),
       l10n: context.l10n,
     );
     void listener() {
@@ -2373,7 +2598,8 @@ void _navigateUp() {
         return;
       }
       final done =
-          op.status != FileOperationStatus.running && op.status != FileOperationStatus.pending;
+          op.status != FileOperationStatus.running &&
+          op.status != FileOperationStatus.pending;
       if (!done) return;
       op.removeListener(listener);
       // See _opNeedsAttention's doc comment (applied the same way for
@@ -2384,7 +2610,9 @@ void _navigateUp() {
       if (!_opNeedsAttention(op)) _opSvc.dismiss(op.id);
       final count = op.doneCount;
       _setStatus(
-        count > 0 ? context.l10n.exportedCount(count) : context.l10n.exportCancelledOrFailed,
+        count > 0
+            ? context.l10n.exportedCount(count)
+            : context.l10n.exportCancelledOrFailed,
         error: count == 0,
       );
     }
@@ -2450,20 +2678,25 @@ void _navigateUp() {
   // Found during the file-browser-screen decomposition (tech-debt audit,
   // Sept 2026) while mapping this cluster's call graph.
 
-Future<void> _extractSelectedArchive() async {
+  Future<void> _extractSelectedArchive() async {
     // ── Inside archive: stage selected items for extraction ─────────────
     if (_archiveContext != null) {
       final entries = selectedItems.toList();
       if (entries.isEmpty) return;
 
-      final archivePath = _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
+      final archivePath =
+          _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
 
       final subPathPrefix = _currentDirPath.length > archivePath.length
-          ? _currentDirPath.substring(archivePath.length).replaceFirst(RegExp(r'^/+'), '')
+          ? _currentDirPath
+                .substring(archivePath.length)
+                .replaceFirst(RegExp(r'^/+'), '')
           : '';
 
       final selectedPaths = entries.map((e) {
-        final clean = subPathPrefix.isEmpty ? e.name : '$subPathPrefix/${e.name}';
+        final clean = subPathPrefix.isEmpty
+            ? e.name
+            : '$subPathPrefix/${e.name}';
         return clean.startsWith('/') ? clean.substring(1) : clean;
       }).toList();
 
@@ -2501,7 +2734,9 @@ Future<void> _extractSelectedArchive() async {
     // ── Outside archive: stage full archive file for extraction ─────────
     if (selectedItems.length != 1) return;
     final entry = selectedItems.first;
-    final ext = entry.name.contains('.') ? entry.name.split('.').last.toLowerCase() : '';
+    final ext = entry.name.contains('.')
+        ? entry.name.split('.').last.toLowerCase()
+        : '';
     if (entry.isDir || !ArchiveService.isArchive(ext)) return;
     if (_isReadOnly) {
       _setStatus(context.l10n.readOnlyContainerWarning, error: true);
@@ -2531,7 +2766,8 @@ Future<void> _extractSelectedArchive() async {
         if (!mounted) return;
         final entered = await BrowserDialogs.showArchivePasswordPrompt(
           context,
-          wrongPassword: archiveContext.status == ArchiveOpenStatus.wrongPassphrase,
+          wrongPassword:
+              archiveContext.status == ArchiveOpenStatus.wrongPassphrase,
         );
         if (entered == null) return;
         passphrase = entered;
@@ -2561,9 +2797,12 @@ Future<void> _extractSelectedArchive() async {
       selectedEntryPaths: null, // Full archive
     );
     if (mounted) {
-      _setStatus('Archive "${entry.name}" staged. Navigate to destination and paste.');
+      _setStatus(
+        'Archive "${entry.name}" staged. Navigate to destination and paste.',
+      );
     }
   }
+
   Future<void> _encryptSelected() => _runQuickCrypto(CryptoDirection.encrypt);
 
   Future<void> _decryptSelected() => _runQuickCrypto(CryptoDirection.decrypt);
@@ -2660,10 +2899,9 @@ Future<void> _extractSelectedArchive() async {
       return;
     }
     _signalActivity();
-    final pick = await ref.read(vaultFileIoApiProvider).pickFilesForImport(
-          widget.container,
-          _currentDirPath,
-        );
+    final pick = await ref
+        .read(vaultFileIoApiProvider)
+        .pickFilesForImport(widget.container, _currentDirPath);
     if (pick == null || !mounted) return;
     final conflictPlan = await _resolveImportConflicts(
       pick,
@@ -2675,13 +2913,15 @@ Future<void> _extractSelectedArchive() async {
       destDirPath: _currentDirPath,
       items: pick.items,
       isFolder: false,
-      performImport: (opId) => ref.read(vaultFileIoApiProvider).importFiles(
-        widget.container,
-        _currentDirPath,
-        opId,
-        pick.pickToken,
-        conflictPlan: conflictPlan.map((k, v) => MapEntry(k, v.name)),
-      ),
+      performImport: (opId) => ref
+          .read(vaultFileIoApiProvider)
+          .importFiles(
+            widget.container,
+            _currentDirPath,
+            opId,
+            pick.pickToken,
+            conflictPlan: conflictPlan.map((k, v) => MapEntry(k, v.name)),
+          ),
       l10n: context.l10n,
     );
     _attachImportCompletionListener(op, isFolder: false);
@@ -2694,14 +2934,18 @@ Future<void> _extractSelectedArchive() async {
   /// identically between _importFilesFromDevice and
   /// _importFolderFromDevice except for the [isFolder] flag passed
   /// through to [_maybeDeleteImportSources].
-  void _attachImportCompletionListener(FileOperation op, {required bool isFolder}) {
+  void _attachImportCompletionListener(
+    FileOperation op, {
+    required bool isFolder,
+  }) {
     void listener() {
       if (!mounted) {
         op.removeListener(listener);
         return;
       }
       final done =
-          op.status != FileOperationStatus.running && op.status != FileOperationStatus.pending;
+          op.status != FileOperationStatus.running &&
+          op.status != FileOperationStatus.pending;
       if (done) {
         op.removeListener(listener);
         // See _opNeedsAttention's doc comment (applied the same way in
@@ -2709,7 +2953,8 @@ Future<void> _extractSelectedArchive() async {
         // import stays in the service's list instead of being dismissed out
         // from under the transfer button/sheet the moment it finishes.
         final keepVisible = _opNeedsAttention(op);
-        if (op.status == FileOperationStatus.completed && op.destDirPath == _currentDirPath) {
+        if (op.status == FileOperationStatus.completed &&
+            op.destDirPath == _currentDirPath) {
           _loadDirectoryContents(_currentDirPath).then((_) {
             _opSvc.dismiss(op.id);
           });
@@ -2745,11 +2990,16 @@ Future<void> _extractSelectedArchive() async {
         shouldDelete = true;
         break;
       case DeleteAfterImportMode.ask:
-        final choice = await DeleteOriginalsDialog.show(context, isFolder: isFolder);
+        final choice = await DeleteOriginalsDialog.show(
+          context,
+          isFolder: isFolder,
+        );
         if (choice == null || !mounted) return;
 
         if (choice.dontAskAgain) {
-          final newMode = choice.confirmed ? DeleteAfterImportMode.delete : DeleteAfterImportMode.keep;
+          final newMode = choice.confirmed
+              ? DeleteAfterImportMode.delete
+              : DeleteAfterImportMode.keep;
           final updated = settings.copyWith(deleteAfterImportMode: newMode);
           await ref.read(appSettingsServiceProvider).saveSettings(updated);
           if (mounted) {
@@ -2762,10 +3012,14 @@ Future<void> _extractSelectedArchive() async {
     }
 
     if (!shouldDelete || !mounted) return;
-    final deleted = await ref.read(vaultFileIoApiProvider).deleteImportSources(op.id);
+    final deleted = await ref
+        .read(vaultFileIoApiProvider)
+        .deleteImportSources(op.id);
     if (!mounted) return;
     _setStatus(
-      deleted > 0 ? context.l10n.deletedOriginalCount(deleted) : context.l10n.couldNotDeleteOriginals,
+      deleted > 0
+          ? context.l10n.deletedOriginalCount(deleted)
+          : context.l10n.couldNotDeleteOriginals,
       error: deleted == 0,
       autoClear: const Duration(seconds: 3),
     );
@@ -2777,10 +3031,9 @@ Future<void> _extractSelectedArchive() async {
       return;
     }
     _signalActivity();
-    final pick = await ref.read(vaultFileIoApiProvider).pickFolderForImport(
-          widget.container,
-          _currentDirPath,
-        );
+    final pick = await ref
+        .read(vaultFileIoApiProvider)
+        .pickFolderForImport(widget.container, _currentDirPath);
     if (pick == null || !mounted) return;
     final conflictPlan = await _resolveImportConflicts(
       pick,
@@ -2792,13 +3045,15 @@ Future<void> _extractSelectedArchive() async {
       destDirPath: _currentDirPath,
       items: pick.items,
       isFolder: true,
-      performImport: (opId) => ref.read(vaultFileIoApiProvider).importFolder(
-        widget.container,
-        _currentDirPath,
-        opId,
-        pick.pickToken,
-        conflictPlan: conflictPlan.map((k, v) => MapEntry(k, v.name)),
-      ),
+      performImport: (opId) => ref
+          .read(vaultFileIoApiProvider)
+          .importFolder(
+            widget.container,
+            _currentDirPath,
+            opId,
+            pick.pickToken,
+            conflictPlan: conflictPlan.map((k, v) => MapEntry(k, v.name)),
+          ),
       l10n: context.l10n,
     );
     _attachImportCompletionListener(op, isFolder: true);
@@ -2838,7 +3093,8 @@ Future<void> _extractSelectedArchive() async {
     }
   }
 
-  bool _matchesFilter(String fileName) => matchesFilter(fileName, _currentFilter);
+  bool _matchesFilter(String fileName) =>
+      matchesFilter(fileName, _currentFilter);
 
   Future<void> _extractArchive() async {
     if (_archiveContext == null) return;
@@ -2846,9 +3102,11 @@ Future<void> _extractSelectedArchive() async {
       _setStatus(context.l10n.readOnlyContainerWarning, error: true);
       return;
     }
-    final archivePath = _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
-    final parentDir =
-        archivePath.contains('/') ? archivePath.substring(0, archivePath.lastIndexOf('/')) : '';
+    final archivePath =
+        _pathStack[_archiveContext!.pathStackEntryIndex].fatPath;
+    final parentDir = archivePath.contains('/')
+        ? archivePath.substring(0, archivePath.lastIndexOf('/'))
+        : '';
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -2927,10 +3185,13 @@ Future<void> _extractSelectedArchive() async {
       await _toolbarSvc.save(_toolbarConfig);
 
       // Keep the toolbar settings provider in sync so external listeners also reflect this ratio.
-      final effectiveToolbarUri =
-          widget.container.isLocalStorage ? null : widget.container.uri;
+      final effectiveToolbarUri = widget.container.isLocalStorage
+          ? null
+          : widget.container.uri;
       ref
-          .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
+          .read(
+            fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier,
+          )
           .applyImportedConfig(_toolbarConfig);
     } catch (e) {
       if (mounted) {
@@ -2961,17 +3222,24 @@ Future<void> _extractSelectedArchive() async {
         );
         await _toolbarSvc.save(_toolbarConfig);
 
-        final effectiveToolbarUri =
-            widget.container.isLocalStorage ? null : widget.container.uri;
+        final effectiveToolbarUri = widget.container.isLocalStorage
+            ? null
+            : widget.container.uri;
         ref
-            .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
+            .read(
+              fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier,
+            )
             .applyImportedConfig(_toolbarConfig);
       } else {
         // Per-folder memory is off: this is a single app-wide layout mode,
         // same as before this feature existed.
-        final settings = await ref.read(appSettingsServiceProvider).loadSettings();
+        final settings = await ref
+            .read(appSettingsServiceProvider)
+            .loadSettings();
         final updatedSettings = settings.copyWith(defaultLayoutMode: mode);
-        await ref.read(appSettingsServiceProvider).saveSettings(updatedSettings);
+        await ref
+            .read(appSettingsServiceProvider)
+            .saveSettings(updatedSettings);
         _appSettings = updatedSettings;
       }
     } catch (e) {
@@ -3001,20 +3269,27 @@ Future<void> _extractSelectedArchive() async {
         );
         await _toolbarSvc.save(_toolbarConfig);
 
-        final effectiveToolbarUri =
-            widget.container.isLocalStorage ? null : widget.container.uri;
+        final effectiveToolbarUri = widget.container.isLocalStorage
+            ? null
+            : widget.container.uri;
         ref
-            .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
+            .read(
+              fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier,
+            )
             .applyImportedConfig(_toolbarConfig);
       } else {
         // Per-folder memory is off: a single app-wide sort order, same as
         // before per-folder sort existed.
-        final settings = await ref.read(appSettingsServiceProvider).loadSettings();
+        final settings = await ref
+            .read(appSettingsServiceProvider)
+            .loadSettings();
         final updatedSettings = settings.copyWith(
           defaultFileSortBy: sortBy,
           defaultFileSortAscending: sortAscending,
         );
-        await ref.read(appSettingsServiceProvider).saveSettings(updatedSettings);
+        await ref
+            .read(appSettingsServiceProvider)
+            .saveSettings(updatedSettings);
         _appSettings = updatedSettings;
       }
     } catch (e) {
@@ -3025,8 +3300,10 @@ Future<void> _extractSelectedArchive() async {
   }
 
   Map<FileManagerAction, WidgetBuilder> _buildActionBuilders() {
-    final hasLocalMedia =
-        _currentItems.where((e) => !e.isDir).map((e) => e.name).any(_isSupportedMedia);
+    final hasLocalMedia = _currentItems
+        .where((e) => !e.isDir)
+        .map((e) => e.name)
+        .any(_isSupportedMedia);
     final hasSubfolders = _currentItems.any((e) => e.isDir);
     final canPlayMedia = hasLocalMedia || hasSubfolders;
     return {
@@ -3048,7 +3325,8 @@ Future<void> _extractSelectedArchive() async {
         onSetStatus: _setStatus,
         onExtractArchive: _extractArchive,
         onSignalActivity: _signalActivity,
-        onLoadDirectoryContents: (path) => _loadDirectoryContents(path, refresh: true), 
+        onLoadDirectoryContents: (path) =>
+            _loadDirectoryContents(path, refresh: true),
         onCaptureFromCamera: _captureFromCamera,
         onImportFilesFromDevice: _importFilesFromDevice,
         onImportFolderFromDevice: _importFolderFromDevice,
@@ -3100,7 +3378,8 @@ Future<void> _extractSelectedArchive() async {
   int? _memoPendingDeletedLen;
   int? _memoPinnedPathsLen;
 
-  ({List<RawEntry> items, int dirCount, int fileCount}) _getFilteredAndSortedItems(
+  ({List<RawEntry> items, int dirCount, int fileCount})
+  _getFilteredAndSortedItems(
     String query,
     List<RawEntry> placeholders,
     Set<String> pendingDeletedNames,
@@ -3113,7 +3392,8 @@ Future<void> _extractSelectedArchive() async {
     final deepResults = _deepSearchResults;
     final pinnedLen = _pinnedPaths.length;
 
-    final isCacheValid = _cachedFilteredItems != null &&
+    final isCacheValid =
+        _cachedFilteredItems != null &&
         identical(_memoCurrentItems, _currentItems) &&
         _memoDirPath == _currentDirPath &&
         _memoQuery == query &&
@@ -3139,17 +3419,17 @@ Future<void> _extractSelectedArchive() async {
     final visibleCurrentItems = _currentItems.where(
       (e) => !pendingDeletedNames.contains(e.lowercaseName),
     );
-    final existingNamesLower =
-        visibleCurrentItems.map((e) => e.lowercaseName).toSet();
+    final existingNamesLower = visibleCurrentItems
+        .map((e) => e.lowercaseName)
+        .toSet();
     final uniquePlaceholders = placeholders.where(
       (p) => !existingNamesLower.contains(p.lowercaseName),
     );
-    final combinedItems = [
-      ...visibleCurrentItems,
-      ...uniquePlaceholders,
-    ];
-    final filteredItems = _searchAwareVisibleItems(combinedItems, query).toList()
-      ..sort(_compareOverall);
+    final combinedItems = [...visibleCurrentItems, ...uniquePlaceholders];
+    final filteredItems = _searchAwareVisibleItems(
+      combinedItems,
+      query,
+    ).toList()..sort(_compareOverall);
 
     int dirCount = 0;
     for (final item in filteredItems) {
@@ -3175,12 +3455,9 @@ Future<void> _extractSelectedArchive() async {
     _memoPendingDeletedLen = pendingDeletedNames.length;
     _memoPinnedPathsLen = pinnedLen;
 
-    return (
-      items: filteredItems,
-      dirCount: dirCount,
-      fileCount: fileCount,
-    );
+    return (items: filteredItems, dirCount: dirCount, fileCount: fileCount);
   }
+
   List<Widget> _buildFabToolbar({required double bottomOffset}) {
     final rightPadding = MediaQuery.paddingOf(context).right;
     final baseRight = 16.0 + rightPadding;
@@ -3194,8 +3471,10 @@ Future<void> _extractSelectedArchive() async {
     final widgets = <Widget>[];
 
     if (showMore) {
-      final hasLocalMedia =
-          _currentItems.where((e) => !e.isDir).map((e) => e.name).any(_isSupportedMedia);
+      final hasLocalMedia = _currentItems
+          .where((e) => !e.isDir)
+          .map((e) => e.name)
+          .any(_isSupportedMedia);
       final hasSubfolders = _currentItems.any((e) => e.isDir);
       final canPlayMedia = hasLocalMedia || hasSubfolders;
 
@@ -3206,7 +3485,9 @@ Future<void> _extractSelectedArchive() async {
       widgets.add(
         Positioned(
           right: moreRight,
-          bottom: bottomOffset + 4.0, // 4dp offset centers the 48dp button against the 56dp Add FAB
+          bottom:
+              bottomOffset +
+              4.0, // 4dp offset centers the 48dp button against the 56dp Add FAB
           child: FileManagerMoreMenuButton(
             actions: moreActions,
             searchActive: _searchActive,
@@ -3278,8 +3559,9 @@ Future<void> _extractSelectedArchive() async {
     ref.watch(fileBrowserNavigationProvider(widget.container.volId));
     ref.watch(vaultSyncedFolderPathsProvider(widget.container));
 
-    final effectiveToolbarUri =
-        widget.container.isLocalStorage ? null : widget.container.uri;
+    final effectiveToolbarUri = widget.container.isLocalStorage
+        ? null
+        : widget.container.uri;
     ref.listen<FileManagerToolbarSettingsState>(
       fileManagerToolbarSettingsProvider(effectiveToolbarUri),
       (previous, next) {
@@ -3290,16 +3572,13 @@ Future<void> _extractSelectedArchive() async {
         }
       },
     );
-     ref.listen<SyncStatus>(
-      syncStatusProvider,
-      (previous, next) {
-        if (previous?.running == true &&
-            !next.running &&
-            next.lastCompletedReport?.didWork == true) {
-          _loadDirectoryContents(_currentDirPath, refresh: true);
-        }
-      },
-    );
+    ref.listen<SyncStatus>(syncStatusProvider, (previous, next) {
+      if (previous?.running == true &&
+          !next.running &&
+          next.lastCompletedReport?.didWork == true) {
+        _loadDirectoryContents(_currentDirPath, refresh: true);
+      }
+    });
     if (widget.container.isExternalStorage) {
       ref.listen<List<ExternalStorageLocation>>(
         externalStorageLocationsProvider,
@@ -3313,7 +3592,7 @@ Future<void> _extractSelectedArchive() async {
         },
       );
     }
-   if (_isContainerLocked) {
+    if (_isContainerLocked) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
@@ -3333,22 +3612,28 @@ Future<void> _extractSelectedArchive() async {
       widget.container.volId,
       _currentDirPath,
     );
-    final itemResult =
-        _getFilteredAndSortedItems(query, placeholders, pendingDeletedNames);
+    final itemResult = _getFilteredAndSortedItems(
+      query,
+      placeholders,
+      pendingDeletedNames,
+    );
     final filteredItems = itemResult.items;
     final dirCount = itemResult.dirCount;
     final fileCount = itemResult.fileCount;
 
     final previewDirPath = _backGesturePreviewDirPath ?? _currentDirPath;
     final previewArchiveRootPath = _archiveRootPathForSearch;
-    final previewInsideArchive = previewArchiveRootPath != null &&
+    final previewInsideArchive =
+        previewArchiveRootPath != null &&
         (previewDirPath == previewArchiveRootPath ||
             previewDirPath.startsWith('$previewArchiveRootPath/'));
     final previewArchiveContext = previewInsideArchive ? _archiveContext : null;
-    final sortedPreviewItems = (_backGestureProgress != null && _backGesturePreviewItems != null)
+    final sortedPreviewItems =
+        (_backGestureProgress != null && _backGesturePreviewItems != null)
         ? (List<RawEntry>.of(
             _backGesturePreviewItems!.where((item) {
-              if (!_toolbarConfig.showHiddenFiles && isHiddenEntryName(item.name)) {
+              if (!_toolbarConfig.showHiddenFiles &&
+                  isHiddenEntryName(item.name)) {
                 return false;
               }
               return true;
@@ -3365,25 +3650,32 @@ Future<void> _extractSelectedArchive() async {
             return compareItems(ea, eb);
           }))
         : null;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     final useFab = _toolbarConfig.useFabForToolbar;
     final showActionBar = !_searchActive && !useFab;
     final actionBuilders = _buildActionBuilders();
     final isFiltered = query.isNotEmpty || _currentFilter != null;
-    final showBookmarkBar = _toolbarConfig.showBookmarkBar && _bookmarkPaths.isNotEmpty;
+    final showBookmarkBar =
+        _toolbarConfig.showBookmarkBar && _bookmarkPaths.isNotEmpty;
 
     final hasBottomNavBar = !isLandscape && (showActionBar || showBookmarkBar);
-    final bottomSystemInset = hasBottomNavBar ? 0.0 : MediaQuery.paddingOf(context).bottom;
-    final baseBottomOffset = 16.0 + (!isLandscape && showBookmarkBar ? 0.0 : bottomSystemInset);
+    final bottomSystemInset = hasBottomNavBar
+        ? 0.0
+        : MediaQuery.paddingOf(context).bottom;
+    final baseBottomOffset =
+        16.0 + (!isLandscape && showBookmarkBar ? 0.0 : bottomSystemInset);
 
-    final bool hasClipboardFab = !isSelectionMode &&
+    final bool hasClipboardFab =
+        !isSelectionMode &&
         !_searchActive &&
         ref.watch(crossContainerClipboardProvider).hasItems;
     final bool hasFabToolbar = useFab && !_searchActive;
 
     double fabClearance = 0.0;
     if (hasClipboardFab && hasFabToolbar) {
-      fabClearance = 132.0; // Two stacked FABs (56 + 12 + 56 = 124) + 8dp clearance
+      fabClearance =
+          132.0; // Two stacked FABs (56 + 12 + 56 = 124) + 8dp clearance
     } else if (hasClipboardFab || hasFabToolbar) {
       fabClearance = 64.0; // Single FAB (56) + 8dp clearance
     }
@@ -3391,8 +3683,10 @@ Future<void> _extractSelectedArchive() async {
     final double bannerBottomOffset = _searchActive
         ? 0.0
         : (baseBottomOffset +
-            ((isSelectionMode && _toolbarConfig.bottomSelectionBar) ? kToolbarHeight : 0.0) +
-            fabClearance);
+              ((isSelectionMode && _toolbarConfig.bottomSelectionBar)
+                  ? kToolbarHeight
+                  : 0.0) +
+              fabClearance);
 
     PreferredSizeWidget buildAppBar({required bool selectionMode}) {
       return buildBrowserAppBar(
@@ -3422,7 +3716,8 @@ Future<void> _extractSelectedArchive() async {
         isBookmark: _isBookmark,
         isInsideArchive: _archiveContext != null,
         onExitSelectionMode: exitSelectionMode,
-        onSelectAll: () => setSelectedItems({...selectedItems, ...filteredItems}),
+        onSelectAll: () =>
+            setSelectedItems({...selectedItems, ...filteredItems}),
         onCopy: () => _initClipboard(cut: false),
         onCut: () => _initClipboard(cut: true),
         onExport: _exportSelectedToStorage,
@@ -3435,7 +3730,8 @@ Future<void> _extractSelectedArchive() async {
         onTogglePin: _togglePinSelected,
         onToggleBookmark: _toggleBookmarkSelected,
         onDirectoryReload: _loadDirectoryContents,
-        onSetStatus: (msg, {required bool error}) => _setStatus(msg, error: error),
+        onSetStatus: (msg, {required bool error}) =>
+            _setStatus(msg, error: error),
         onShowOpenWithDialog: _showOpenWithDialog,
         onShowFolderDocumentProviderSheet: _showFolderDocumentProviderSheet,
         onToggleFolderDocumentProvider: _toggleFolderDocumentProvider,
@@ -3453,8 +3749,7 @@ Future<void> _extractSelectedArchive() async {
       );
     }
 
-    final bool canPop =
-        _atRoot && !isSelectionMode && !_searchActive;
+    final bool canPop = _atRoot && !isSelectionMode && !_searchActive;
 
     return Listener(
       onPointerDown: _handlePointerDown,
@@ -3477,508 +3772,716 @@ Future<void> _extractSelectedArchive() async {
           resizeToAvoidBottomInset: false,
           drawerEnableOpenDragGesture: false,
           drawer: widget.drawer,
-          bottomNavigationBar: (!isLandscape && (showActionBar || showBookmarkBar))
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (showBookmarkBar)
-                    BookmarkBar(
-                      bookmarkPaths: _bookmarkPaths,
-                      axis: Axis.horizontal,
-                      onTapItem: (path) {
-                        final isDir = !path.split('/').last.contains('.') || path.endsWith('/');
-                        _navigateToPath(path, isDir: isDir);
-                      },
-                      onRemoveBookmark: (path) => _pinsBookmarksNotifier.removeBookmark(widget.container, path),
-                    ),
-                  if (!isLandscape && showActionBar)
-                    FileManagerActionBar(
-                      axis: Axis.horizontal,
-                      actions: _toolbarConfig.visible,
-                      builders: actionBuilders,
-                    ),
-                ],
-              )
-            : null,
-         body: Stack(
-          children: [
-            SafeArea(
-              bottom: false,
-              child: NotificationListener<ScrollNotification>(
-                onNotification: _handleScrollNotification,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  dragStartBehavior: DragStartBehavior.start,
-                  onHorizontalDragStart: widget.drawer == null
-                      ? null
-                      : (details) {
-                          final edgeInset = math.max(
-                            72.0,
-                            MediaQuery.systemGestureInsetsOf(context).left,
-                          );
-                          if (_isMultiTouch ||
-                              _isTouchFromEdge ||
-                              details.globalPosition.dx <= edgeInset ||
-                              _backGestureProgress != null) {
-                            _isTouchFromEdge = true;
-                            _drawerDragDistance = 0.0;
-                            return;
-                          }
-                          _drawerDragDistance = 0.0;
-                        },
-                  onHorizontalDragUpdate: widget.drawer == null
-                      ? null
-                      : (details) {
-                          if (_isMultiTouch ||
-                              _isTouchFromEdge ||
-                              _backGestureProgress != null ||
-                              widget.drawer == null) {
-                            _drawerDragDistance = 0.0;
-                            return;
-                          }
-                          _drawerDragDistance += details.primaryDelta ?? 0.0;
-                          if (_drawerDragDistance > 60.0) {
-                            _scaffoldKey.currentState?.openDrawer();
-                            _drawerDragDistance = 0.0;
-                            _isTouchFromEdge = true;
-                          }
-                        },
-                  onHorizontalDragEnd: widget.drawer == null
-                      ? null
-                      : (_) {
-                          _drawerDragDistance = 0.0;
-                        },
-                  onHorizontalDragCancel: widget.drawer == null
-                      ? null
-                      : () {
-                          _drawerDragDistance = 0.0;
-                        },
-                  child: Stack(
-                    children: [
-                      Column(
-                        children: [
-                       ClipRect(
-                          key: const Key('browser_app_bar_clip_rect'),
-                          child: AnimatedBuilder(
-                            animation: _appBarAnimController,
-                            builder: (context, _) {
-                              // Follow current status: if it was hidden, stay hidden
-                              final factor = (!_toolbarConfig.autoHideAppBar || _searchActive)
-                                  ? 1.0
-                                  : _appBarAnimController.value;
-                              if (factor == 0.0) {
-                                return const SizedBox.shrink();
-                              }
-                              return Align(
-                                key: const Key('browser_app_bar_align'),
-                                alignment: Alignment.bottomCenter,
-                                heightFactor: factor,
-                                child: SizedBox(
-                                  height: kToolbarHeight,
-                                  child: MediaQuery.removePadding(
-                                    context: context,
-                                    removeTop: true,
-                                    child: buildAppBar(selectionMode: false),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: Stack(
-                            children: [
-                Row(
+          bottomNavigationBar:
+              (!isLandscape && (showActionBar || showBookmarkBar))
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isLandscape && showBookmarkBar)
+                    if (showBookmarkBar)
                       BookmarkBar(
                         bookmarkPaths: _bookmarkPaths,
-                        axis: Axis.vertical,
+                        axis: Axis.horizontal,
                         onTapItem: (path) {
-                          final isDir = !path.split('/').last.contains('.') || path.endsWith('/');
+                          final isDir =
+                              !path.split('/').last.contains('.') ||
+                              path.endsWith('/');
                           _navigateToPath(path, isDir: isDir);
                         },
-                        onRemoveBookmark: (path) => _pinsBookmarksNotifier.removeBookmark(widget.container, path),
+                        onRemoveBookmark: (path) => _pinsBookmarksNotifier
+                            .removeBookmark(widget.container, path),
                       ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                         if (_toolbarConfig.showBreadcrumbBar) ...[
-                        BreadcrumbBar(
-                          stack: _pathStack,
-                          onTap: _jumpTo,
-                          backgroundColor: isSelectionMode
-                              ? Theme.of(context).colorScheme.surfaceContainer
-                              : null,
-                        ),
-                      ],
-                          if (!widget.container.isLocalStorage && _archiveContext == null)
-                            const SyncStatusBanner(),
-                          if (_archiveContext?.isSolid == true)
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                              child: InlineBanner(
-                                context.l10n.archiveSolidWarning,
-                                tone: AppBannerTone.warning,
+                    if (!isLandscape && showActionBar)
+                      FileManagerActionBar(
+                        axis: Axis.horizontal,
+                        actions: _toolbarConfig.visible,
+                        builders: actionBuilders,
+                      ),
+                  ],
+                )
+              : null,
+          body: Stack(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _handleScrollNotification,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    dragStartBehavior: DragStartBehavior.start,
+                    onHorizontalDragStart: widget.drawer == null
+                        ? null
+                        : (details) {
+                            final edgeInset = math.max(
+                              72.0,
+                              MediaQuery.systemGestureInsetsOf(context).left,
+                            );
+                            if (_isMultiTouch ||
+                                _isTouchFromEdge ||
+                                details.globalPosition.dx <= edgeInset ||
+                                _backGestureProgress != null) {
+                              _isTouchFromEdge = true;
+                              _drawerDragDistance = 0.0;
+                              return;
+                            }
+                            _drawerDragDistance = 0.0;
+                          },
+                    onHorizontalDragUpdate: widget.drawer == null
+                        ? null
+                        : (details) {
+                            if (_isMultiTouch ||
+                                _isTouchFromEdge ||
+                                _backGestureProgress != null ||
+                                widget.drawer == null) {
+                              _drawerDragDistance = 0.0;
+                              return;
+                            }
+                            _drawerDragDistance += details.primaryDelta ?? 0.0;
+                            if (_drawerDragDistance > 60.0) {
+                              _scaffoldKey.currentState?.openDrawer();
+                              _drawerDragDistance = 0.0;
+                              _isTouchFromEdge = true;
+                            }
+                          },
+                    onHorizontalDragEnd: widget.drawer == null
+                        ? null
+                        : (_) {
+                            _drawerDragDistance = 0.0;
+                          },
+                    onHorizontalDragCancel: widget.drawer == null
+                        ? null
+                        : () {
+                            _drawerDragDistance = 0.0;
+                          },
+                    child: Stack(
+                      children: [
+                        Column(
+                          children: [
+                            ClipRect(
+                              key: const Key('browser_app_bar_clip_rect'),
+                              child: AnimatedBuilder(
+                                animation: _appBarAnimController,
+                                builder: (context, _) {
+                                  // Follow current status: if it was hidden, stay hidden
+                                  final factor =
+                                      (!_toolbarConfig.autoHideAppBar ||
+                                          _searchActive)
+                                      ? 1.0
+                                      : _appBarAnimController.value;
+                                  if (factor == 0.0) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Align(
+                                    key: const Key('browser_app_bar_align'),
+                                    alignment: Alignment.bottomCenter,
+                                    heightFactor: factor,
+                                    child: SizedBox(
+                                      height: kToolbarHeight,
+                                      child: MediaQuery.removePadding(
+                                        context: context,
+                                        removeTop: true,
+                                        child: buildAppBar(
+                                          selectionMode: false,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                          Expanded(
-                            child: Stack(
-                              children: [
-                                KeyedSubtree(
-                                  key: ValueKey(_currentDirPath),
-                                  child: buildBrowserBody(
-                                    context,
-                                    filteredItems,
-                                    isLoading: _isLoading,
-                                    currentItems: _currentItems,
-                                    atRoot: _atRoot,
-                                    onNavigateUp: _atRoot ? null : _navigateUp,
-                                    searchQuery: _searchQuery,
-                                    layoutMode: _layoutMode,
-                                    container: widget.container,
-                                    currentDirPath: _currentDirPath,
-                                    thumbnailCacheMode: _resolvedThumbnailCacheMode,
-                                    thumbnailQuality: _resolvedThumbnailQuality,
-                                    toolbarConfig: _toolbarConfig,
-                                    isSelectionMode: isSelectionMode,
-                                    selectedItems: selectedItems,
-                                    searchActive: _searchActive,
-                                    mountedDocProviderFolders: _mountedDocProviderFolders,
-                                    isFolderMounted: _isFolderMounted,
-                                    isPinned: _isPinned,
-                                    isBookmark: _isBookmark,
-                                    isFolderSynced: _isFolderSynced,
-                                    onDirTap: _handleDirTap,
-                                    onFileTap: _handleFileTap,
-                                    onItemLongPress: _handleItemLongPress,
-                                    onIconTap: _handleIconTap,
-                                    onItemMoreTap: _showItemActionsSheet,
-                                    onSelectionChanged: setSelectedItems,
-                                    onGridColumnCountChanged: (count) {
-                                      _toolbarConfig = isLandscape
-                                          ? _toolbarConfig.copyWith(gridColumnsLandscape: count)
-                                          : _toolbarConfig.copyWith(gridColumnsPortrait: count);
-                                      _toolbarSvc.save(_toolbarConfig);
-                                      final effectiveToolbarUri =
-                                          widget.container.isLocalStorage ? null : widget.container.uri;
-                                      ref
-                                          .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
-                                          .applyImportedConfig(_toolbarConfig);
-                                    },
-                                    onMasonryColumnCountChanged: (count) {
-                                      _toolbarConfig = isLandscape
-                                          ? _toolbarConfig.copyWith(masonryColumnsLandscape: count)
-                                          : _toolbarConfig.copyWith(masonryColumnsPortrait: count);
-                                      _toolbarSvc.save(_toolbarConfig);
-                                      final effectiveToolbarUri =
-                                          widget.container.isLocalStorage ? null : widget.container.uri;
-                                      ref
-                                          .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
-                                          .applyImportedConfig(_toolbarConfig);
-                                    },
-                                    onListZoomLevelChanged: (newZoom) {
-                                      setState(() {
-                                        _toolbarConfig = _toolbarConfig.copyWith(listZoomLevel: newZoom);
-                                      });
-                                      _toolbarSvc.save(_toolbarConfig);
-                                      final effectiveToolbarUri =
-                                          widget.container.isLocalStorage ? null : widget.container.uri;
-                                      ref
-                                          .read(fileManagerToolbarSettingsProvider(effectiveToolbarUri).notifier)
-                                          .applyImportedConfig(_toolbarConfig);
-                                    },
-                                    onRefresh: () {
-                                      FolderThumbnailPreview.clearSessionCache();
-                                      return _loadDirectoryContents(_currentDirPath, refresh: true);
-                                    },
-                                    isListingTruncated: _isListingTruncated,
-                                    scrollController: _browserScrollController,
-                                    archiveContext: _archiveContext,
-                                    archiveRootPath: _archiveRootPathForSearch,
-                                    sortBy: sortBy,
-                                  ),
-                                ),
-                                if (_backGestureProgress != null)
-                                  Positioned.fill(
-                                    child: IgnorePointer(
-                                      child: Stack(
-                                        fit: StackFit.expand,
-                                        children: [
-                                          if (_backGestureProgress! >= 0.18 &&
-                                              sortedPreviewItems != null) ...[
-                                            ColoredBox(
-                                              color: Theme.of(context).scaffoldBackgroundColor,
-                                            ),
-                                            buildBrowserBody(
-                                              context,
-                                              sortedPreviewItems,
-                                              isLoading: false,
-                                              currentItems: sortedPreviewItems,
-                                              atRoot: _backGesturePreviewAtRoot,
-                                              onNavigateUp: null,
-                                              searchQuery: '',
-                                              layoutMode: _backGesturePreviewLayoutMode ?? _layoutMode,
-                                              container: widget.container,
-                                              currentDirPath: previewDirPath,
-                                              thumbnailCacheMode: _resolvedThumbnailCacheMode,
-                                              thumbnailQuality: _resolvedThumbnailQuality,
-                                              toolbarConfig: _toolbarConfig,
-                                              isSelectionMode: false,
-                                              selectedItems: const {},
-                                              searchActive: false,
-                                              mountedDocProviderFolders: _mountedDocProviderFolders,
-                                              isFolderMounted: (e) => isFolderMounted(
-                                                e,
-                                                previewDirPath,
-                                                _mountedDocProviderFolders,
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  Row(
+                                    children: [
+                                      if (isLandscape && showBookmarkBar)
+                                        BookmarkBar(
+                                          bookmarkPaths: _bookmarkPaths,
+                                          axis: Axis.vertical,
+                                          onTapItem: (path) {
+                                            final isDir =
+                                                !path
+                                                    .split('/')
+                                                    .last
+                                                    .contains('.') ||
+                                                path.endsWith('/');
+                                            _navigateToPath(path, isDir: isDir);
+                                          },
+                                          onRemoveBookmark: (path) =>
+                                              _pinsBookmarksNotifier
+                                                  .removeBookmark(
+                                                    widget.container,
+                                                    path,
+                                                  ),
+                                        ),
+                                      Expanded(
+                                        child: Column(
+                                          children: [
+                                            if (_toolbarConfig
+                                                .showBreadcrumbBar) ...[
+                                              BreadcrumbBar(
+                                                stack: _pathStack,
+                                                onTap: _jumpTo,
+                                                backgroundColor: isSelectionMode
+                                                    ? Theme.of(context)
+                                                          .colorScheme
+                                                          .surfaceContainer
+                                                    : null,
                                               ),
-                                              isPinned: (e) => isPinned(
-                                                e,
-                                                previewDirPath,
-                                                _pinnedPaths,
+                                            ],
+                                            if (!widget
+                                                    .container
+                                                    .isLocalStorage &&
+                                                _archiveContext == null)
+                                              const SyncStatusBanner(),
+                                            if (_archiveContext?.isSolid ==
+                                                true)
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                      12,
+                                                      8,
+                                                      12,
+                                                      0,
+                                                    ),
+                                                child: InlineBanner(
+                                                  context
+                                                      .l10n
+                                                      .archiveSolidWarning,
+                                                  tone: AppBannerTone.warning,
+                                                ),
                                               ),
-                                              isBookmark: (e) => isBookmark(
-                                                e,
-                                                previewDirPath,
-                                                _bookmarkPaths,
+                                            Expanded(
+                                              child: Stack(
+                                                children: [
+                                                  KeyedSubtree(
+                                                    key: ValueKey(
+                                                      _currentDirPath,
+                                                    ),
+                                                    child: buildBrowserBody(
+                                                      context,
+                                                      filteredItems,
+                                                      isLoading: _isLoading,
+                                                      currentItems:
+                                                          _currentItems,
+                                                      atRoot: _atRoot,
+                                                      onNavigateUp: _atRoot
+                                                          ? null
+                                                          : _navigateUp,
+                                                      searchQuery: _searchQuery,
+                                                      layoutMode: _layoutMode,
+                                                      container:
+                                                          widget.container,
+                                                      currentDirPath:
+                                                          _currentDirPath,
+                                                      thumbnailCacheMode:
+                                                          _resolvedThumbnailCacheMode,
+                                                      thumbnailQuality:
+                                                          _resolvedThumbnailQuality,
+                                                      toolbarConfig:
+                                                          _toolbarConfig,
+                                                      isSelectionMode:
+                                                          isSelectionMode,
+                                                      selectedItems:
+                                                          selectedItems,
+                                                      searchActive:
+                                                          _searchActive,
+                                                      mountedDocProviderFolders:
+                                                          _mountedDocProviderFolders,
+                                                      isFolderMounted:
+                                                          _isFolderMounted,
+                                                      isPinned: _isPinned,
+                                                      isBookmark: _isBookmark,
+                                                      isFolderSynced:
+                                                          _isFolderSynced,
+                                                      onDirTap: _handleDirTap,
+                                                      onFileTap: _handleFileTap,
+                                                      onItemLongPress:
+                                                          _handleItemLongPress,
+                                                      onIconTap: _handleIconTap,
+                                                      onItemMoreTap:
+                                                          _showItemActionsSheet,
+                                                      onSelectionChanged:
+                                                          setSelectedItems,
+                                                      onGridColumnCountChanged: (count) {
+                                                        _toolbarConfig =
+                                                            isLandscape
+                                                            ? _toolbarConfig
+                                                                  .copyWith(
+                                                                    gridColumnsLandscape:
+                                                                        count,
+                                                                  )
+                                                            : _toolbarConfig
+                                                                  .copyWith(
+                                                                    gridColumnsPortrait:
+                                                                        count,
+                                                                  );
+                                                        _toolbarSvc.save(
+                                                          _toolbarConfig,
+                                                        );
+                                                        final effectiveToolbarUri =
+                                                            widget
+                                                                .container
+                                                                .isLocalStorage
+                                                            ? null
+                                                            : widget
+                                                                  .container
+                                                                  .uri;
+                                                        ref
+                                                            .read(
+                                                              fileManagerToolbarSettingsProvider(
+                                                                effectiveToolbarUri,
+                                                              ).notifier,
+                                                            )
+                                                            .applyImportedConfig(
+                                                              _toolbarConfig,
+                                                            );
+                                                      },
+                                                      onMasonryColumnCountChanged: (count) {
+                                                        _toolbarConfig =
+                                                            isLandscape
+                                                            ? _toolbarConfig
+                                                                  .copyWith(
+                                                                    masonryColumnsLandscape:
+                                                                        count,
+                                                                  )
+                                                            : _toolbarConfig
+                                                                  .copyWith(
+                                                                    masonryColumnsPortrait:
+                                                                        count,
+                                                                  );
+                                                        _toolbarSvc.save(
+                                                          _toolbarConfig,
+                                                        );
+                                                        final effectiveToolbarUri =
+                                                            widget
+                                                                .container
+                                                                .isLocalStorage
+                                                            ? null
+                                                            : widget
+                                                                  .container
+                                                                  .uri;
+                                                        ref
+                                                            .read(
+                                                              fileManagerToolbarSettingsProvider(
+                                                                effectiveToolbarUri,
+                                                              ).notifier,
+                                                            )
+                                                            .applyImportedConfig(
+                                                              _toolbarConfig,
+                                                            );
+                                                      },
+                                                      onListZoomLevelChanged: (newZoom) {
+                                                        setState(() {
+                                                          _toolbarConfig =
+                                                              _toolbarConfig
+                                                                  .copyWith(
+                                                                    listZoomLevel:
+                                                                        newZoom,
+                                                                  );
+                                                        });
+                                                        _toolbarSvc.save(
+                                                          _toolbarConfig,
+                                                        );
+                                                        final effectiveToolbarUri =
+                                                            widget
+                                                                .container
+                                                                .isLocalStorage
+                                                            ? null
+                                                            : widget
+                                                                  .container
+                                                                  .uri;
+                                                        ref
+                                                            .read(
+                                                              fileManagerToolbarSettingsProvider(
+                                                                effectiveToolbarUri,
+                                                              ).notifier,
+                                                            )
+                                                            .applyImportedConfig(
+                                                              _toolbarConfig,
+                                                            );
+                                                      },
+                                                      onRefresh: () {
+                                                        FolderThumbnailPreview.clearSessionCache();
+                                                        return _loadDirectoryContents(
+                                                          _currentDirPath,
+                                                          refresh: true,
+                                                        );
+                                                      },
+                                                      isListingTruncated:
+                                                          _isListingTruncated,
+                                                      scrollController:
+                                                          _browserScrollController,
+                                                      archiveContext:
+                                                          _archiveContext,
+                                                      archiveRootPath:
+                                                          _archiveRootPathForSearch,
+                                                      sortBy: sortBy,
+                                                    ),
+                                                  ),
+                                                  if (_backGestureProgress !=
+                                                      null)
+                                                    Positioned.fill(
+                                                      child: IgnorePointer(
+                                                        child: Stack(
+                                                          fit: StackFit.expand,
+                                                          children: [
+                                                            if (_backGestureProgress! >=
+                                                                    0.18 &&
+                                                                sortedPreviewItems !=
+                                                                    null) ...[
+                                                              ColoredBox(
+                                                                color: Theme.of(
+                                                                  context,
+                                                                ).scaffoldBackgroundColor,
+                                                              ),
+                                                              buildBrowserBody(
+                                                                context,
+                                                                sortedPreviewItems,
+                                                                isLoading:
+                                                                    false,
+                                                                currentItems:
+                                                                    sortedPreviewItems,
+                                                                atRoot:
+                                                                    _backGesturePreviewAtRoot,
+                                                                onNavigateUp:
+                                                                    null,
+                                                                searchQuery: '',
+                                                                layoutMode:
+                                                                    _backGesturePreviewLayoutMode ??
+                                                                    _layoutMode,
+                                                                container: widget
+                                                                    .container,
+                                                                currentDirPath:
+                                                                    previewDirPath,
+                                                                thumbnailCacheMode:
+                                                                    _resolvedThumbnailCacheMode,
+                                                                thumbnailQuality:
+                                                                    _resolvedThumbnailQuality,
+                                                                toolbarConfig:
+                                                                    _toolbarConfig,
+                                                                isSelectionMode:
+                                                                    false,
+                                                                selectedItems:
+                                                                    const {},
+                                                                searchActive:
+                                                                    false,
+                                                                mountedDocProviderFolders:
+                                                                    _mountedDocProviderFolders,
+                                                                isFolderMounted:
+                                                                    (
+                                                                      e,
+                                                                    ) => isFolderMounted(
+                                                                      e,
+                                                                      previewDirPath,
+                                                                      _mountedDocProviderFolders,
+                                                                    ),
+                                                                isPinned: (e) =>
+                                                                    isPinned(
+                                                                      e,
+                                                                      previewDirPath,
+                                                                      _pinnedPaths,
+                                                                    ),
+                                                                isBookmark: (e) =>
+                                                                    isBookmark(
+                                                                      e,
+                                                                      previewDirPath,
+                                                                      _bookmarkPaths,
+                                                                    ),
+                                                                isFolderSynced:
+                                                                    _isFolderSynced,
+                                                                onDirTap:
+                                                                    (_) {},
+                                                                onFileTap:
+                                                                    (_) {},
+                                                                onItemLongPress:
+                                                                    (_) {},
+                                                                onIconTap:
+                                                                    (_) {},
+                                                                onItemMoreTap:
+                                                                    (_) {},
+                                                                onGridColumnCountChanged:
+                                                                    (_) {},
+                                                                onMasonryColumnCountChanged:
+                                                                    (_) {},
+                                                                onListZoomLevelChanged:
+                                                                    (_) {},
+                                                                onRefresh:
+                                                                    () async {},
+                                                                isListingTruncated:
+                                                                    false,
+                                                                scrollController:
+                                                                    _backGesturePreviewScrollController,
+                                                                archiveContext:
+                                                                    previewArchiveContext,
+                                                                archiveRootPath:
+                                                                    previewArchiveRootPath,
+                                                                sortBy: sortBy,
+                                                              ),
+                                                            ],
+                                                            Opacity(
+                                                              opacity:
+                                                                  _fadeScrimOpacity(
+                                                                    _backGestureProgress!,
+                                                                  ),
+                                                              child: ColoredBox(
+                                                                color: Theme.of(
+                                                                  context,
+                                                                ).scaffoldBackgroundColor,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
-                                              isFolderSynced: _isFolderSynced,
-                                              onDirTap: (_) {},
-                                              onFileTap: (_) {},
-                                              onItemLongPress: (_) {},
-                                              onIconTap: (_) {},
-                                              onItemMoreTap: (_) {},
-                                              onGridColumnCountChanged: (_) {},
-                                              onMasonryColumnCountChanged: (_) {},
-                                              onListZoomLevelChanged: (_) {},
-                                              onRefresh: () async {},
-                                              isListingTruncated: false,
-                                              scrollController: _backGesturePreviewScrollController,
-                                              archiveContext: previewArchiveContext,
-                                              archiveRootPath: previewArchiveRootPath,
-                                              sortBy: sortBy,
                                             ),
                                           ],
-                                          Opacity(
-                                            opacity: _fadeScrimOpacity(_backGestureProgress!),
-                                            child: ColoredBox(
-                                              color: Theme.of(context).scaffoldBackgroundColor,
-                                            ),
-                                          ),
-                                        ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  AnimatedPositioned(
+                                    duration: AppMotion.short2,
+                                    curve: Curves.easeOutCubic,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: bannerBottomOffset,
+                                    child: Align(
+                                      alignment: Alignment.bottomCenter,
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 600,
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (_statusMessage != null)
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                  bottom: _searchActive
+                                                      ? 16
+                                                      : 8,
+                                                  left: 16,
+                                                  right: 16,
+                                                ),
+                                                child: AnimatedSwitcher(
+                                                  duration: AppMotion.short2,
+                                                  child: InlineBanner(
+                                                    _statusMessage!,
+                                                    key: ValueKey(
+                                                      _statusBannerKey,
+                                                    ),
+                                                    tone: _statusIsError
+                                                        ? AppBannerTone.error
+                                                        : AppBannerTone.info,
+                                                    trailing:
+                                                        _mediaScanInProgress
+                                                        ? TextButton(
+                                                            style: TextButton.styleFrom(
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                  ),
+                                                              minimumSize:
+                                                                  Size.zero,
+                                                              tapTargetSize:
+                                                                  MaterialTapTargetSize
+                                                                      .shrinkWrap,
+                                                            ),
+                                                            onPressed:
+                                                                _cancelMediaScan,
+                                                            child: Text(
+                                                              context
+                                                                  .l10n
+                                                                  .cancel,
+                                                            ),
+                                                          )
+                                                        : null,
+                                                  ),
+                                                ),
+                                              ),
+                                            if (_searchActive)
+                                              BottomSearchBar(
+                                                initialQuery: _searchQuery,
+                                                onChanged:
+                                                    _onSearchQueryChanged,
+                                                isDeepSearch: _isDeepSearch,
+                                                onDeepSearchToggle:
+                                                    _onDeepSearchToggled,
+                                                isSearchingSubfolders:
+                                                    _isSearchingSubfolders,
+                                                onClose: () => setState(
+                                                  () => _clearSearch(),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                              ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        // ── FAB Toolbar: Add FAB + "More" cascade (search/sort/filter/view/play) ──
+                        if (hasFabToolbar)
+                          ..._buildFabToolbar(
+                            bottomOffset:
+                                baseBottomOffset +
+                                ((isSelectionMode &&
+                                        _toolbarConfig.bottomSelectionBar)
+                                    ? kToolbarHeight
+                                    : 0.0),
+                          ),
+
+                        // ── Clipboard Paste FAB ────────────────────────────────────────────────
+                        if (!isSelectionMode && !_searchActive)
+                          Positioned(
+                            right: 16.0 + MediaQuery.paddingOf(context).right,
+                            bottom: useFab
+                                ? (baseBottomOffset + 68.0)
+                                : baseBottomOffset,
+                            child: ClipboardFab(
+                              onPaste: _isReadOnly ? null : _paste,
+                              heroTag:
+                                  'browser_clipboard_fab_${widget.container.volId}',
                             ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                AnimatedPositioned(
+              ),
+              // ── Top Selection Bar Overlay (when bottomSelectionBar is DISABLED) ──
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: AnimatedSwitcher(
                   duration: AppMotion.short2,
-                  curve: Curves.easeOutCubic,
-                  left: 0,
-                  right: 0,
-                  bottom: bannerBottomOffset,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 600),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_statusMessage != null)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                bottom: _searchActive ? 16 : 8,
-                                left: 16,
-                                right: 16,
-                              ),
-                              child: AnimatedSwitcher(
-                                duration: AppMotion.short2,
-                                child: InlineBanner(
-                                  _statusMessage!,
-                                  key: ValueKey(_statusBannerKey),
-                                  tone: _statusIsError ? AppBannerTone.error : AppBannerTone.info,
-                                  trailing: _mediaScanInProgress
-                                      ? TextButton(
-                                          style: TextButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                                            minimumSize: Size.zero,
-                                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                          ),
-                                          onPressed: _cancelMediaScan,
-                                          child: Text(context.l10n.cancel),
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          if (_searchActive)
-                            BottomSearchBar(
-                              initialQuery: _searchQuery,
-                              onChanged: _onSearchQueryChanged,
-                              isDeepSearch: _isDeepSearch,
-                              onDeepSearchToggle: _onDeepSearchToggled,
-                              isSearchingSubfolders: _isSearchingSubfolders,
-                              onClose: () => setState(() => _clearSearch()),
-                            ),
-                        ],
-                      ),
-                    ),
+                  layoutBuilder: (currentChild, previousChildren) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: [
+                      ...previousChildren,
+                      if (currentChild != null) currentChild,
+                    ],
                   ),
+                  transitionBuilder: (child, animation) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(0.0, -1.0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                              reverseCurve: Curves.easeInCubic,
+                            ),
+                          ),
+                      child: FadeTransition(opacity: animation, child: child),
+                    );
+                  },
+                  child: (isSelectionMode && !_toolbarConfig.bottomSelectionBar)
+                      ? Material(
+                          key: const ValueKey(
+                            'browser_selection_app_bar_overlay',
+                          ),
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          elevation: 0.0,
+                          child: SafeArea(
+                            bottom: false,
+                            child: SizedBox(
+                              height: kToolbarHeight,
+                              child: MediaQuery.removePadding(
+                                context: context,
+                                removeTop: true,
+                                child: buildAppBar(selectionMode: true),
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(
+                          key: ValueKey('no_selection_top_bar'),
+                        ),
                 ),
-            ],
-          ),
-        ),
-      ],
-    ),
-      // ── FAB Toolbar: Add FAB + "More" cascade (search/sort/filter/view/play) ──
-      if (hasFabToolbar)
-        ..._buildFabToolbar(
-          bottomOffset: baseBottomOffset +
-              ((isSelectionMode && _toolbarConfig.bottomSelectionBar)
-                  ? kToolbarHeight
-                  : 0.0),
-        ),
-        
-
-      // ── Clipboard Paste FAB ────────────────────────────────────────────────
-      if (!isSelectionMode && !_searchActive)
-        Positioned(
-          right: 16.0 + MediaQuery.paddingOf(context).right,
-          bottom: useFab
-              ? (baseBottomOffset + 68.0)
-              : baseBottomOffset,
-          child: ClipboardFab(
-            onPaste: _isReadOnly ? null : _paste,
-            heroTag: 'browser_clipboard_fab_${widget.container.volId}',
-          ),
-        ),
-    ],
-    ),
-    ),
-    ),
-    ),
-      // ── Top Selection Bar Overlay (when bottomSelectionBar is DISABLED) ──
-      Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        child: AnimatedSwitcher(
-          duration: AppMotion.short2,
-          layoutBuilder: (currentChild, previousChildren) => Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              ...previousChildren,
-              if (currentChild != null) currentChild,
-            ],
-          ),
-          transitionBuilder: (child, animation) {
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.0, -1.0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-                reverseCurve: Curves.easeInCubic,
-              )),
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
               ),
-            );
-          },
-          child: (isSelectionMode && !_toolbarConfig.bottomSelectionBar)
-              ? Material(
-                  key: const ValueKey('browser_selection_app_bar_overlay'),
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                  elevation: 0.0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: SizedBox(
-                      height: kToolbarHeight,
-                      child: MediaQuery.removePadding(
-                        context: context,
-                        removeTop: true,
-                        child: buildAppBar(selectionMode: true),
-                      ),
-                    ),
+
+              // ── Bottom Selection Bar Overlay (when bottomSelectionBar is ENABLED) ──
+              // bottom is offset by the keyboard inset (same fix BottomSearchBar
+              // already applies to itself) -- the Scaffold above uses
+              // resizeToAvoidBottomInset: false, so nothing else shifts this bar
+              // out from under the on-screen keyboard. Without it, entering
+              // selection mode while the keyboard is up (e.g. selecting a result
+              // while search is active) pins the bar to the physical bottom of the
+              // screen, underneath the keyboard, where it's invisible and untappable.
+              Positioned(
+                key: const Key(
+                  'browser_selection_bottom_bar_overlay_container',
+                ),
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 0,
+                right: 0,
+                child: AnimatedSwitcher(
+                  duration: AppMotion.short2,
+                  layoutBuilder: (currentChild, previousChildren) => Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      ...previousChildren,
+                      if (currentChild != null) currentChild,
+                    ],
                   ),
-                )
-              : const SizedBox.shrink(key: ValueKey('no_selection_top_bar')),
+                  transitionBuilder: (child, animation) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(0.0, 1.0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                              reverseCurve: Curves.easeInCubic,
+                            ),
+                          ),
+                      child: FadeTransition(opacity: animation, child: child),
+                    );
+                  },
+                  child: (isSelectionMode && _toolbarConfig.bottomSelectionBar)
+                      ? Material(
+                          key: const ValueKey(
+                            'browser_selection_bottom_bar_overlay',
+                          ),
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          elevation: 4.0,
+                          child: SafeArea(
+                            top: false,
+                            bottom:
+                                !(!isLandscape &&
+                                    (showActionBar || showBookmarkBar)),
+                            child: SizedBox(
+                              height: kToolbarHeight,
+                              child: MediaQuery.removePadding(
+                                context: context,
+                                removeTop: true,
+                                removeBottom: true,
+                                child: buildAppBar(selectionMode: true),
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(
+                          key: ValueKey('no_selection_bottom_bar'),
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-
-      // ── Bottom Selection Bar Overlay (when bottomSelectionBar is ENABLED) ──
-      // bottom is offset by the keyboard inset (same fix BottomSearchBar
-      // already applies to itself) -- the Scaffold above uses
-      // resizeToAvoidBottomInset: false, so nothing else shifts this bar
-      // out from under the on-screen keyboard. Without it, entering
-      // selection mode while the keyboard is up (e.g. selecting a result
-      // while search is active) pins the bar to the physical bottom of the
-      // screen, underneath the keyboard, where it's invisible and untappable.
-      Positioned(
-        key: const Key('browser_selection_bottom_bar_overlay_container'),
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 0,
-        right: 0,
-        child: AnimatedSwitcher(
-          duration: AppMotion.short2,
-          layoutBuilder: (currentChild, previousChildren) => Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              ...previousChildren,
-              if (currentChild != null) currentChild,
-            ],
-          ),
-          transitionBuilder: (child, animation) {
-            return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.0, 1.0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-                reverseCurve: Curves.easeInCubic,
-              )),
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
-            );
-          },
-          child: (isSelectionMode && _toolbarConfig.bottomSelectionBar)
-              ? Material(
-                  key: const ValueKey('browser_selection_bottom_bar_overlay'),
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                  elevation: 4.0,
-                  child: SafeArea(
-                    top: false,
-                    bottom: !(!isLandscape && (showActionBar || showBookmarkBar)),
-                    child: SizedBox(
-                      height: kToolbarHeight,
-                      child: MediaQuery.removePadding(
-                        context: context,
-                        removeTop: true,
-                        removeBottom: true,
-                        child: buildAppBar(selectionMode: true),
-                      ),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(key: ValueKey('no_selection_bottom_bar')),
-        ),
-      ),
-    ],
-  ),
-),
-),
-);
+    );
   }
 }

@@ -7,6 +7,7 @@ const int kExternalStorageBaseVolId = -100;
 MountedContainer buildLocalStorageContainer({
   required String rootPath,
   required String displayName,
+  bool readOnly = false,
 }) {
   return MountedContainer(
     uri: rootPath,
@@ -17,7 +18,7 @@ MountedContainer buildLocalStorageContainer({
     totalSpace: 0,
     freeSpace: 0,
     containerFormat: ContainerFormat.localStorage.wire,
-    readOnly: false,
+    readOnly: readOnly,
   );
 }
 

@@ -20,19 +20,20 @@ class _FakeArchiveApi extends VaultArchiveApi {
   late final List<String> _paths;
   final scannedVaultPaths = <String>[];
   final extractedIndexes = <int>[];
+  final stagedIndexes = <int>[];
 
   List<ArchiveEntryInfo> get _entries => [
-        for (var i = 0; i < _paths.length; i++)
-          ArchiveEntryInfo(
-            path: _paths[i],
-            uncompressedSize: _files[_paths[i]]!.length,
-            compressedSize: _files[_paths[i]]!.length,
-            modTime: DateTime.utc(2026, 1, 1),
-            isEncrypted: false,
-            isDirectory: false,
-            index: i,
-          ),
-      ];
+    for (var i = 0; i < _paths.length; i++)
+      ArchiveEntryInfo(
+        path: _paths[i],
+        uncompressedSize: _files[_paths[i]]!.length,
+        compressedSize: _files[_paths[i]]!.length,
+        modTime: DateTime.utc(2026, 1, 1),
+        isEncrypted: false,
+        isDirectory: false,
+        index: i,
+      ),
+  ];
 
   @override
   Future<ArchiveIndexResult> scanVaultArchive({
@@ -62,6 +63,18 @@ class _FakeArchiveApi extends VaultArchiveApi {
       data: _files[_paths[targetIndex]],
       errorMessage: '',
     );
+  }
+
+  @override
+  Future<String?> stageBrowseEntry({
+    required String filePath,
+    String? vaultPath,
+    required int targetIndex,
+    required String entryName,
+    String? passphrase,
+  }) async {
+    stagedIndexes.add(targetIndex);
+    return '/private/cache/archive_browse_$entryName';
   }
 }
 
@@ -95,9 +108,14 @@ void main() {
   test(
     'uses the configured archive/file-IO APIs to open and extract an archive',
     () async {
-      final archiveApi = _FakeArchiveApi({'notes.txt': Uint8List.fromList([1, 2])});
+      final archiveApi = _FakeArchiveApi({
+        'notes.txt': Uint8List.fromList([1, 2]),
+      });
       final fileIoApi = _FakeFileIoApi();
-      ArchiveService.configureWithArchiveApi(archiveApi: archiveApi, fileIoApi: fileIoApi);
+      ArchiveService.configureWithArchiveApi(
+        archiveApi: archiveApi,
+        fileIoApi: fileIoApi,
+      );
 
       final context = await ArchiveService.open(
         container: _container,
@@ -116,6 +134,31 @@ void main() {
       expect(fileIoApi.writtenPaths, ['restored/notes.txt']);
       expect(archiveApi.scannedVaultPaths, ['backup.zip']);
       expect(archiveApi.extractedIndexes, [0]);
+    },
+  );
+
+  test(
+    'streams an archive media preview through the native archive API',
+    () async {
+      final archiveApi = _FakeArchiveApi({
+        'clip.mp4': Uint8List.fromList([1, 2]),
+      });
+      ArchiveService.configureWithArchiveApi(
+        archiveApi: archiveApi,
+        fileIoApi: _FakeFileIoApi(),
+      );
+
+      final context = await ArchiveService.open(
+        container: _container,
+        archivePathInContainer: 'backup.zip',
+        pathStackEntryIndex: 0,
+      );
+
+      expect(
+        await context.stageEntryForBrowse('clip.mp4'),
+        '/private/cache/archive_browse_clip.mp4',
+      );
+      expect(archiveApi.stagedIndexes, [0]);
     },
   );
 }

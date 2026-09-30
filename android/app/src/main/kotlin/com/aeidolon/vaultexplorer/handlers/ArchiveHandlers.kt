@@ -19,6 +19,156 @@ class ArchiveHandlers(
     private val ioExecutor: ExecutorService,
     private val nativeOps: NativeOpSupport,
 ) {
+    /** Securely removes one temporary file created for archive preview.
+     *
+     * Dart can only request files immediately below this app's cache directory
+     * with the dedicated prefix; canonical paths prevent symlinks or `..`
+     * components from widening that boundary.
+     */
+    fun handleArchiveDiscardBrowseFile(call: MethodCall, result: MethodChannel.Result) {
+        val path = call.argument<String>("path")
+        if (path.isNullOrEmpty()) {
+            result.error("INVALID_ARGS", "path required", null)
+            return
+        }
+
+        ioExecutor.execute {
+            try {
+                val cacheDir = activity.cacheDir.canonicalFile
+                val file = File(path).canonicalFile
+                val isAllowed = file.parentFile == cacheDir &&
+                    file.name.startsWith("archive_browse_")
+                if (!isAllowed) {
+                    activity.runOnUiThread {
+                        result.error("INVALID_PREVIEW_PATH", "Not an archive preview file", null)
+                    }
+                    return@execute
+                }
+                val deleted = SecureFileWipe.secureDeleteFile(file)
+                activity.runOnUiThread { result.success(deleted) }
+            } catch (e: Exception) {
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            }
+        }
+    }
+
+    /**
+     * Streams one archive entry to a private cache file for the in-app PDF or
+     * media viewer. Keeping the copy native avoids allocating an entire movie
+     * as a Dart byte array, while the temporary source archive and the output
+     * are both securely wiped on their respective cleanup paths.
+     */
+    fun handleArchiveStageBrowseEntry(call: MethodCall, result: MethodChannel.Result) {
+        val filePath = call.argument<String>("filePath") ?: call.argument<String>("localUri")
+        val vaultPath = call.argument<String>("vaultPath")
+        val targetIndex = call.argument<Number>("targetIndex")?.toInt() ?: -1
+        val passphrase = call.argument<String>("passphrase")
+        val entryName = call.argument<String>("entryName") ?: "archive_entry.bin"
+
+        if (filePath.isNullOrEmpty() || targetIndex < 0) {
+            result.error("INVALID_ARGS", "filePath/localUri and targetIndex >= 0 required", null)
+            return
+        }
+
+        ioExecutor.execute {
+            var archivePfd: ParcelFileDescriptor? = null
+            var previewPfd: ParcelFileDescriptor? = null
+            var sourceArchive: File? = null
+            var previewFile: File? = null
+            try {
+                val openedArchivePfd = if (vaultPath != null) {
+                    val volId = ContainerSessionRegistry.getVolumeIdByUri(filePath)
+                    when {
+                        volId != null -> {
+                            val temp = File.createTempFile(
+                                "archive_browse_source_",
+                                ".tmp",
+                                activity.cacheDir,
+                            )
+                            sourceArchive = temp
+                            if (!ContainerFileSystem.extractToFile(volId, vaultPath, temp.absolutePath)) {
+                                throw java.io.IOException("Failed to read in-vault archive")
+                            }
+                            ParcelFileDescriptor.open(temp, ParcelFileDescriptor.MODE_READ_ONLY)
+                        }
+                        filePath.startsWith("content://") -> {
+                            val treeUri = Uri.parse(filePath)
+                            val documentUri = activity.safStorageManager.getDocumentUri(treeUri, vaultPath)
+                                ?: throw java.io.FileNotFoundException("Archive file not found in SAF storage")
+                            activity.contentResolver.openFileDescriptor(documentUri, "r")
+                                ?: throw java.io.IOException("Could not open archive descriptor")
+                        }
+                        else -> {
+                            val archiveFile = if (vaultPath.isEmpty()) File(filePath) else File(filePath, vaultPath)
+                            if (!archiveFile.exists()) {
+                                throw java.io.FileNotFoundException("Archive file not found")
+                            }
+                            ParcelFileDescriptor.open(archiveFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        }
+                    }
+                } else {
+                    val uri = Uri.parse(filePath)
+                    if (uri.scheme == null || uri.scheme == "file") {
+                        val archiveFile = File(uri.path ?: filePath)
+                        if (!archiveFile.exists()) {
+                            throw java.io.FileNotFoundException("Archive file not found")
+                        }
+                        ParcelFileDescriptor.open(archiveFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                    } else {
+                        val documentUri = activity.safStorageManager.resolveDocumentUriFromTreePath(filePath) ?: uri
+                        activity.contentResolver.openFileDescriptor(documentUri, "r")
+                            ?: throw java.io.IOException("Could not open archive descriptor")
+                    }
+                }
+                archivePfd = openedArchivePfd
+
+                val safeName = entryName.replace('\\', '/').substringAfterLast('/')
+                    .replace(Regex("[^A-Za-z0-9._ -]"), "_")
+                    .takeLast(80)
+                    .ifEmpty { "archive_entry.bin" }
+                val stagedPreviewFile = File.createTempFile(
+                    "archive_browse_",
+                    "_$safeName",
+                    activity.cacheDir,
+                )
+                previewFile = stagedPreviewFile
+                val openedPreviewPfd = ParcelFileDescriptor.open(
+                    stagedPreviewFile,
+                    ParcelFileDescriptor.MODE_CREATE or
+                        ParcelFileDescriptor.MODE_TRUNCATE or
+                        ParcelFileDescriptor.MODE_READ_WRITE,
+                )
+                previewPfd = openedPreviewPfd
+
+                val staged = NativeEngine.archiveExtractFdEntryToFdNative(
+                    openedArchivePfd.fd,
+                    targetIndex,
+                    passphrase,
+                    openedPreviewPfd.fd,
+                )
+                val status = (staged?.get("status") as? Number)?.toInt()
+                if (status != 0) {
+                    val error = staged?.get("errorMessage") as? String
+                    throw java.io.IOException(error ?: "Failed to extract archive entry")
+                }
+
+                openedPreviewPfd.fileDescriptor.sync()
+                openedPreviewPfd.close()
+                previewPfd = null
+                activity.runOnUiThread { result.success(stagedPreviewFile.canonicalPath) }
+            } catch (e: Exception) {
+                runCatching { previewPfd?.close() }
+                previewPfd = null
+                previewFile?.let { SecureFileWipe.secureDeleteFile(it) }
+                activity.runOnUiThread { nativeOps.dispatchNativeError(e, result) }
+            } finally {
+                runCatching { previewPfd?.close() }
+                runCatching { archivePfd?.close() }
+                sourceArchive?.let { SecureFileWipe.secureDeleteFile(it) }
+            }
+        }
+    }
+
     fun handleArchiveScanVault(call: MethodCall, result: MethodChannel.Result) {
         val uriString = call.argument<String>("filePath")
         val vaultPath = call.argument<String>("vaultPath")

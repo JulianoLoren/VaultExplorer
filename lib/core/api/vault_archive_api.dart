@@ -63,7 +63,9 @@ class VaultArchiveApi {
         },
       );
       if (res == null) {
-        return ArchiveEntryExtractResult.ioError('Failed to extract vault archive entry');
+        return ArchiveEntryExtractResult.ioError(
+          'Failed to extract vault archive entry',
+        );
       }
       return ArchiveEntryExtractResult.fromMap(res);
     } on PlatformException {
@@ -125,10 +127,7 @@ class VaultArchiveApi {
     try {
       final res = await _channel.invokeMethod<Map<Object?, Object?>>(
         ChannelMethods.archiveScanLocal,
-        {
-          'filePath': pathOrUri,
-          'passphrase': ?passphrase,
-        },
+        {'filePath': pathOrUri, 'passphrase': ?passphrase},
       );
       if (res == null) {
         return const ArchiveIndexResult(
@@ -168,7 +167,9 @@ class VaultArchiveApi {
         },
       );
       if (res == null) {
-        return ArchiveEntryExtractResult.ioError('Failed to extract local archive entry');
+        return ArchiveEntryExtractResult.ioError(
+          'Failed to extract local archive entry',
+        );
       }
       return ArchiveEntryExtractResult.fromMap(res);
     } on PlatformException {
@@ -176,6 +177,51 @@ class VaultArchiveApi {
     } catch (e) {
       logSwallowed('extractLocalArchiveEntry', e);
       return ArchiveEntryExtractResult.ioError(e.toString());
+    }
+  }
+
+  /// Securely discards an app-private, temporary archive-preview file.
+  ///
+  /// Native code accepts only `archive_browse_` files immediately under this
+  /// app's cache directory, so this cannot remove an arbitrary local file.
+  Future<bool> discardBrowseFile(String path) async {
+    try {
+      final ok = await _channel.invokeMethod<bool>(
+        ChannelMethods.archiveDiscardBrowseFile,
+        {'path': path},
+      );
+      return ok ?? false;
+    } on PlatformException {
+      rethrow;
+    } catch (e) {
+      logSwallowed('discardBrowseFile', e);
+      return false;
+    }
+  }
+
+  /// Streams an archive entry into a short-lived, private cache file for an
+  /// in-app PDF or media preview. Returns the staged absolute path on success.
+  Future<String?> stageBrowseEntry({
+    required String filePath,
+    String? vaultPath,
+    required int targetIndex,
+    required String entryName,
+    String? passphrase,
+  }) async {
+    try {
+      return await _channel
+          .invokeMethod<String>(ChannelMethods.archiveStageBrowseEntry, {
+            'filePath': filePath,
+            'vaultPath': ?vaultPath,
+            'targetIndex': targetIndex,
+            'entryName': entryName,
+            'passphrase': ?passphrase,
+          });
+    } on PlatformException {
+      rethrow;
+    } catch (e) {
+      logSwallowed('stageBrowseEntry', e);
+      return null;
     }
   }
 
@@ -192,20 +238,19 @@ class VaultArchiveApi {
     int? opId,
   }) async {
     try {
-      final ok = await _channel.invokeMethod<bool>(
-        ChannelMethods.archiveCreate,
-        {
-          'format': format.code,
-          'srcPaths': srcPaths,
-          'entryNames': ?entryNames,
-          'srcUri': ?srcUri,
-          'destUri': ?destUri,
-          'destVaultPath': ?destVaultPath,
-          'destFilePath': ?destFilePath,
-          if (passphrase != null && passphrase.isNotEmpty) 'passphrase': passphrase,
-          'opId': ?opId,
-        },
-      );
+      final ok = await _channel
+          .invokeMethod<bool>(ChannelMethods.archiveCreate, {
+            'format': format.code,
+            'srcPaths': srcPaths,
+            'entryNames': ?entryNames,
+            'srcUri': ?srcUri,
+            'destUri': ?destUri,
+            'destVaultPath': ?destVaultPath,
+            'destFilePath': ?destFilePath,
+            if (passphrase != null && passphrase.isNotEmpty)
+              'passphrase': passphrase,
+            'opId': ?opId,
+          });
       return ok ?? false;
     } on PlatformException {
       rethrow;

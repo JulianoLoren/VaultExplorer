@@ -92,7 +92,8 @@ class ArchiveContext {
         final parentPath = i == 0 ? '' : parts.sublist(0, i).join('/');
         if (knownDirs.add(dirPath)) {
           final dirName = parts[i];
-          final wireEntry = 'D|0|${entry.modTime.millisecondsSinceEpoch ~/ 1000}|$dirName';
+          final wireEntry =
+              'D|0|${entry.modTime.millisecondsSinceEpoch ~/ 1000}|$dirName';
           tree.putIfAbsent(parentPath, () => <String>{}).add(wireEntry);
         }
       }
@@ -103,11 +104,13 @@ class ArchiveContext {
       final baseName = parts.last;
 
       if (!entry.isDirectory) {
-        final wireEntry = 'F|${entry.uncompressedSize}|${entry.modTime.millisecondsSinceEpoch ~/ 1000}|$baseName';
+        final wireEntry =
+            'F|${entry.uncompressedSize}|${entry.modTime.millisecondsSinceEpoch ~/ 1000}|$baseName';
         tree.putIfAbsent(parentDir, () => <String>{}).add(wireEntry);
       } else {
         if (knownDirs.add(entryName)) {
-          final wireEntry = 'D|0|${entry.modTime.millisecondsSinceEpoch ~/ 1000}|$baseName';
+          final wireEntry =
+              'D|0|${entry.modTime.millisecondsSinceEpoch ~/ 1000}|$baseName';
           tree.putIfAbsent(parentDir, () => <String>{}).add(wireEntry);
         }
       }
@@ -216,6 +219,34 @@ class ArchiveContext {
     );
   }
 
+  /// Streams an entry directly into an app-private temporary file for a
+  /// seekable in-app preview. Unlike [extractEntry], this never creates a
+  /// full Dart-side byte array, so it is appropriate for large media files.
+  Future<String?> stageEntryForBrowse(String entryPath) async {
+    if (!_isSafeRelativePath(entryPath)) return null;
+    final info = findEntry(entryPath);
+    if (info == null || info.isDirectory || _api == null) return null;
+
+    if (vaultFilePath != null && vaultPath != null) {
+      return _api.stageBrowseEntry(
+        filePath: vaultFilePath!,
+        vaultPath: vaultPath,
+        targetIndex: info.index,
+        entryName: info.path,
+        passphrase: passphrase,
+      );
+    }
+    if (localPathOrUri != null) {
+      return _api.stageBrowseEntry(
+        filePath: localPathOrUri!,
+        targetIndex: info.index,
+        entryName: info.path,
+        passphrase: passphrase,
+      );
+    }
+    return null;
+  }
+
   /// Returns a copy of this context that will use [newPassphrase] for
   /// subsequent entry extraction, without re-scanning the archive -- for
   /// retrying a single [extractEntryResult] call after a
@@ -242,7 +273,9 @@ class ArchiveContext {
       final path = entry.key;
       final info = entry.value;
       if (info.isDirectory) continue;
-      if (subPath.isNotEmpty && !path.startsWith('$subPath/') && path != subPath) {
+      if (subPath.isNotEmpty &&
+          !path.startsWith('$subPath/') &&
+          path != subPath) {
         continue;
       }
       final bytes = await extractEntry(path);
@@ -256,7 +289,11 @@ class ArchiveContext {
   /// Get all directory paths that exist under [subPath].
   List<String> getSubDirectories(String subPath) {
     return _tree.keys
-        .where((k) => k.isNotEmpty && (subPath.isEmpty ? true : k.startsWith('$subPath/')))
+        .where(
+          (k) =>
+              k.isNotEmpty &&
+              (subPath.isEmpty ? true : k.startsWith('$subPath/')),
+        )
         .toList();
   }
 

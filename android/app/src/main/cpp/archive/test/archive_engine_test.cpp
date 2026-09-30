@@ -140,6 +140,19 @@ int main() {
         assert(extractedHello.status == ArchiveOpenStatus::Ok);
         assert(std::string(extractedHello.data.begin(), extractedHello.data.end()) == "hello world");
 
+        std::vector<uint8_t> streamedNested;
+        const auto streamedResult = archiveExtractEntryToSink(
+            source,
+            nestedIndex,
+            "",
+            [&streamedNested](const uint8_t* data, size_t length) {
+                streamedNested.insert(streamedNested.end(), data, data + length);
+                return true;
+            });
+        assert(streamedResult.status == ArchiveOpenStatus::Ok);
+        assert(streamedResult.data.empty());
+        assert(streamedNested == extractedNested.data);
+
         printf("zip index+extract: ok\n");
     }
 

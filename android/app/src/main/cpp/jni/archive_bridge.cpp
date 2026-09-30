@@ -601,6 +601,61 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveExtractFdEntryNative(
     JNI_CATCH_RETURN(nullptr)
 }
 
+// ── Local File Single-Entry Stream to File Descriptor ──────────────────
+extern "C" JNIEXPORT jobject JNICALL
+Java_com_aeidolon_vaultexplorer_NativeEngine_archiveExtractFdEntryToFdNative(
+        JNIEnv* env, jobject, jint sourceFd, jint targetIndex, jstring passphrase, jint destFd) {
+    JNI_TRY
+    ArchiveExtractResult result;
+    if (sourceFd < 0 || destFd < 0) {
+        result.errorMessage = "source and destination file descriptors are required";
+        return buildExtractResultMap(env, result);
+    }
+
+    const char* nativePass = passphrase ? env->GetStringUTFChars(passphrase, nullptr) : nullptr;
+    const std::string passStr = nativePass ? nativePass : "";
+
+    struct stat st;
+    if (fstat(sourceFd, &st) != 0) {
+        if (passphrase && nativePass) env->ReleaseStringUTFChars(passphrase, nativePass);
+        result.errorMessage = "Failed to stat archive file descriptor";
+        return buildExtractResultMap(env, result);
+    }
+
+    const uint64_t totalSize = static_cast<uint64_t>(st.st_size);
+    ArchiveStreamSource source;
+    source.size = [totalSize]() { return totalSize; };
+    source.read = [sourceFd](uint64_t offset, uint8_t* dest, size_t length) -> int64_t {
+        return static_cast<int64_t>(pread(sourceFd, dest, length, static_cast<off_t>(offset)));
+    };
+
+    uint64_t destinationOffset = 0;
+    result = archiveExtractEntryToSink(
+        source,
+        targetIndex,
+        passStr,
+        [destFd, &destinationOffset](const uint8_t* data, size_t length) -> bool {
+            size_t written = 0;
+            while (written < length) {
+                const ssize_t n = pwrite(
+                    destFd,
+                    data + written,
+                    length - written,
+                    static_cast<off_t>(destinationOffset + written)
+                );
+                if (n <= 0) return false;
+                written += static_cast<size_t>(n);
+            }
+            destinationOffset += length;
+            return true;
+        }
+    );
+
+    if (passphrase && nativePass) env->ReleaseStringUTFChars(passphrase, nativePass);
+    return buildExtractResultMap(env, result);
+    JNI_CATCH_RETURN(nullptr)
+}
+
 // ── Create Archive: In-Vault Files -> Local File Descriptor ────────────
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToFdNative(

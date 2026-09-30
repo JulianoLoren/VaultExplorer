@@ -3,9 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:path/path.dart' as p;
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/gestures.dart'
-    show
-        Velocity;
+import 'package:flutter/gestures.dart' show Velocity;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vaultexplorer/core/api/vault_engine_events.dart';
@@ -58,6 +56,7 @@ import 'package:vaultexplorer/features/browser/viewer/widgets/playlist_transitio
 import 'package:vaultexplorer/features/browser/viewer/media_viewer_session_controller.dart';
 import 'package:vaultexplorer/features/settings/file_manager_toolbar_settings_controller.dart';
 import 'package:vaultexplorer/data/models/media_viewer_action.dart';
+import 'package:vaultexplorer/data/models/media_viewer_toolbar_config.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/media_viewer_toolbar_settings_screen.dart';
 
 export 'package:vaultexplorer/features/browser/viewer/media_viewer_session_controller.dart'
@@ -79,6 +78,10 @@ class MediaViewerScreen extends ConsumerStatefulWidget {
   final ValueChanged<String>? onCurrentFileChanged;
   final ValueChanged<String>? onFileDeleted;
 
+  /// A media file staged from an archive. It is short-lived, so mutation,
+  /// export, bookmark, and playlist actions must not be available.
+  final bool isArchivePreview;
+
   const MediaViewerScreen({
     super.key,
     required this.container,
@@ -93,6 +96,7 @@ class MediaViewerScreen extends ConsumerStatefulWidget {
     this.pinnedPaths,
     this.onCurrentFileChanged,
     this.onFileDeleted,
+    this.isArchivePreview = false,
   });
 
   @override
@@ -189,6 +193,36 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   Map<String, int> get _rotations => _session.rotations;
   Map<String, int> get _imageReloadEpoch => _session.imageReloadEpoch;
 
+  static const _archivePreviewActions = {
+    MediaViewerAction.playPause,
+    MediaViewerAction.playbackSpeed,
+    MediaViewerAction.rotate90,
+    MediaViewerAction.screenOrientation,
+    MediaViewerAction.mute,
+    MediaViewerAction.playbackMode,
+    MediaViewerAction.subtitles,
+    MediaViewerAction.audioTrack,
+    MediaViewerAction.aspectRatio,
+    MediaViewerAction.advancedSettings,
+    MediaViewerAction.diagnostics,
+  };
+
+  MediaViewerToolbarConfig _effectiveToolbarConfig(
+    MediaViewerToolbarConfig config,
+  ) {
+    if (!widget.isArchivePreview) return config;
+    List<MediaViewerAction> filter(List<MediaViewerAction> actions) =>
+        actions.where(_archivePreviewActions.contains).toList();
+    return config.copyWith(
+      topBarActions: filter(config.topBarActions),
+      bottomBarActions: filter(config.bottomBarActions),
+      moreMenuActions: filter(config.moreMenuActions),
+      advancedSettingsActions: filter(config.advancedSettingsActions),
+      showPreviousNext: false,
+      showStatusBadge: false,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -220,19 +254,22 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _playbackManager = VideoPlaybackManager();
     _pageController = PageController(initialPage: widget.initialIndex);
     _listScrollController = ScrollController();
-     _continuousTransformationController = TransformationController();
-    _continuousTransformationController.addListener(_onContinuousTransformationChanged);
-    _continuousZoomAnimationController = AnimationController(
-      vsync: this,
-      duration: MediaViewerConstants.animationDuration,
-    )..addListener(() {
-        if (_continuousZoomAnimation != null) {
-          _isClampingContinuous = true;
-          _continuousTransformationController.value =
-              _continuousZoomAnimation!.value;
-          _isClampingContinuous = false;
-        }
-      });
+    _continuousTransformationController = TransformationController();
+    _continuousTransformationController.addListener(
+      _onContinuousTransformationChanged,
+    );
+    _continuousZoomAnimationController =
+        AnimationController(
+          vsync: this,
+          duration: MediaViewerConstants.animationDuration,
+        )..addListener(() {
+          if (_continuousZoomAnimation != null) {
+            _isClampingContinuous = true;
+            _continuousTransformationController.value =
+                _continuousZoomAnimation!.value;
+            _isClampingContinuous = false;
+          }
+        });
 
     _playlistController.addListener(_onPlaylistUpdate);
     _playbackManager.activeControllerNotifier.addListener(
@@ -356,7 +393,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _kickOffAspectRatioPreload();
   }
 
-     void _scheduleGeometryRebuild() {
+  void _scheduleGeometryRebuild() {
     if (_hasPendingGeometryRebuild) return;
     _hasPendingGeometryRebuild = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -391,13 +428,14 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
       _prefetchController.preloadAspectRatios(
         playlist,
         startIndex: start,
-        isStillWanted: () => mounted && _playlistController.selectedFolder == folder,
+        isStillWanted: () =>
+            mounted && _playlistController.selectedFolder == folder,
         onRatioLearned: _scheduleGeometryRebuild,
       ),
     );
   }
 
-int get _knownAspectRatioCount {
+  int get _knownAspectRatioCount {
     int count = 0;
     for (final file in _playlistController.playlist) {
       if (MediaAspectRatioCache.get(widget.container, file) != null) {
@@ -407,7 +445,7 @@ int get _knownAspectRatioCount {
     return count;
   }
 
- // Freezes measured item heights while the user is actively swiping or coasting
+  // Freezes measured item heights while the user is actively swiping or coasting
   // so items do not resize mid-gesture and cause screen jitter.
   final Map<int, double> _lockedExtents = {};
 
@@ -431,7 +469,8 @@ int get _knownAspectRatioCount {
     playlist: _playlistController.playlist,
     rotations: _rotations,
     isAudio: MediaViewerConstants.isAudio,
-    aspectRatioFor: (fileName) => MediaAspectRatioCache.get(widget.container, fileName),
+    aspectRatioFor: (fileName) =>
+        MediaAspectRatioCache.get(widget.container, fileName),
   );
 
   void _scrollToCurrentIndex({bool animate = false}) {
@@ -448,7 +487,6 @@ int get _knownAspectRatioCount {
           _viewportHeight,
         );
         if (animate) {
-
           _isProgrammaticScrolling = true;
           _listScrollController
               .animateTo(
@@ -661,7 +699,7 @@ int get _knownAspectRatioCount {
       // _activateCurrentMedia() above -- shouldn't break playlist
       // navigation.
     }
-   unawaited(_activateCurrentMedia());
+    unawaited(_activateCurrentMedia());
 
     _scheduleSurroundingPrefetch();
     if (_scrollMode.isContinuous) {
@@ -674,7 +712,7 @@ int get _knownAspectRatioCount {
           _viewportHeight > 0) {
         // Target offsets assume an un-zoomed list.
         _resetContinuousZoom();
-     final target = _geometry.offsetForIndex(
+        final target = _geometry.offsetForIndex(
           index,
           _viewportWidth,
           _viewportHeight,
@@ -704,7 +742,7 @@ int get _knownAspectRatioCount {
       }
     }
 
-  if (mounted && _transitionToken == token) {
+    if (mounted && _transitionToken == token) {
       _isProgrammaticScrolling = false;
       _isSwiping = false;
       _sessionController.setIsAutoAdvancing(false);
@@ -834,9 +872,15 @@ int get _knownAspectRatioCount {
     final s = _getMatrixScale(matrix);
     if (s <= 0) return;
 
-    final config = ref.read(fileManagerToolbarSettingsProvider(null)).config.mediaViewerToolbarConfig;
+    final config = ref
+        .read(fileManagerToolbarSettingsProvider(null))
+        .config
+        .mediaViewerToolbarConfig;
     final effectiveMinScale = config.pinchZoomOutEnabled
-        ? config.minVideoZoomScale.clamp(MediaViewerConstants.minVideoZoomFloor, 1.0)
+        ? config.minVideoZoomScale.clamp(
+            MediaViewerConstants.minVideoZoomFloor,
+            1.0,
+          )
         : 1.0;
 
     // Hard floor for zoom-out
@@ -877,7 +921,10 @@ int get _knownAspectRatioCount {
     }
   }
 
-  void _animateContinuousZoomTo(Matrix4 targetMatrix, {required bool toBaseline}) {
+  void _animateContinuousZoomTo(
+    Matrix4 targetMatrix, {
+    required bool toBaseline,
+  }) {
     final controller = _continuousZoomAnimationController;
     if (controller == null) {
       _continuousTransformationController.value = targetMatrix;
@@ -888,15 +935,14 @@ int get _knownAspectRatioCount {
     _continuousZoomAnimation = Matrix4Tween(
       begin: _continuousTransformationController.value,
       end: targetMatrix,
-    ).animate(
-      CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
-    );
+    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutCubic));
 
     controller.forward(from: 0.0).then((_) {
       if (mounted) {
         setState(() {
-          _continuousScale =
-              _getMatrixScale(_continuousTransformationController.value);
+          _continuousScale = _getMatrixScale(
+            _continuousTransformationController.value,
+          );
         });
         _onZoomInteractionChanged(toBaseline);
       }
@@ -904,8 +950,9 @@ int get _knownAspectRatioCount {
   }
 
   void _handleContinuousDoubleTap([TapDownDetails? details]) {
-    final currentScale =
-        _getMatrixScale(_continuousTransformationController.value);
+    final currentScale = _getMatrixScale(
+      _continuousTransformationController.value,
+    );
     final bool isDefaultZoom = (currentScale - 1.0).abs() < 0.01;
 
     if (!isDefaultZoom) {
@@ -927,10 +974,12 @@ int get _knownAspectRatioCount {
     final scaledW = vw * targetScale;
     final scaledH = vh * targetScale;
 
-    final clampedTx =
-        scaledW > vw ? x.clamp(vw - scaledW, 0.0) : (vw - scaledW) / 2.0;
-    final clampedTy =
-        scaledH > vh ? y.clamp(vh - scaledH, 0.0) : (vh - scaledH) / 2.0;
+    final clampedTx = scaledW > vw
+        ? x.clamp(vw - scaledW, 0.0)
+        : (vw - scaledW) / 2.0;
+    final clampedTy = scaledH > vh
+        ? y.clamp(vh - scaledH, 0.0)
+        : (vh - scaledH) / 2.0;
 
     final targetMatrix = Matrix4.identity()
       ..setTranslationRaw(clampedTx, clampedTy, 0.0)
@@ -1003,7 +1052,7 @@ int get _knownAspectRatioCount {
     }
   }
 
- void _onScrollStart() {
+  void _onScrollStart() {
     if (!_isSwiping) {
       _isSwiping = true;
       _lockedExtents.clear();
@@ -1066,7 +1115,11 @@ int get _knownAspectRatioCount {
     try {
       success = await _fileIoApi.deleteFile(widget.container, fileToDelete);
     } catch (e) {
-      VeLog.e('MediaViewerScreen', 'Delete failed for ${VeLog.censorName(fileToDelete)}', e);
+      VeLog.e(
+        'MediaViewerScreen',
+        'Delete failed for ${VeLog.censorName(fileToDelete)}',
+        e,
+      );
     }
 
     if (success) widget.onFileDeleted?.call(fileToDelete);
@@ -1205,7 +1258,11 @@ int get _knownAspectRatioCount {
         existingEntries = RawEntry.parseAll(raw);
       }
     } catch (e) {
-      VeLog.w('MediaViewerScreen', 'Directory listing failed at ${VeLog.censorUri(dirPath)} during rename conflict check', e);
+      VeLog.w(
+        'MediaViewerScreen',
+        'Directory listing failed at ${VeLog.censorUri(dirPath)} during rename conflict check',
+        e,
+      );
     }
 
     final currentEntry = existingEntries.firstWhere(
@@ -1311,16 +1368,16 @@ int get _knownAspectRatioCount {
         existingEntries = RawEntry.parseAll(raw);
       }
     } catch (e) {
-      VeLog.w('MediaViewerScreen', 'Directory listing failed at ${VeLog.censorUri(dirPath)} during file info lookup', e);
+      VeLog.w(
+        'MediaViewerScreen',
+        'Directory listing failed at ${VeLog.censorUri(dirPath)} during file info lookup',
+        e,
+      );
     }
     final currentEntry = existingEntries.firstWhere(
       (e) => e.name == baseName,
-      orElse: () => RawEntry(
-        name: baseName,
-        isDir: false,
-        sizeBytes: 0,
-        modifiedSecs: 0,
-      ),
+      orElse: () =>
+          RawEntry(name: baseName, isDir: false, sizeBytes: 0, modifiedSecs: 0),
     );
     if (mounted) {
       await FileInfoSheet.show(
@@ -1338,8 +1395,9 @@ int get _knownAspectRatioCount {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (sheetContext) {
         final cs = Theme.of(sheetContext).colorScheme;
@@ -1358,14 +1416,14 @@ int get _knownAspectRatioCount {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
                   child: Text(
                     l10n.screenOrientationMenu,
-                    style:
-                        Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                    style: Theme.of(sheetContext).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
                 const Divider(height: 1),
@@ -1377,8 +1435,9 @@ int get _knownAspectRatioCount {
                       : null,
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    SystemChrome.setPreferredOrientations(
-                        [DeviceOrientation.portraitUp]);
+                    SystemChrome.setPreferredOrientations([
+                      DeviceOrientation.portraitUp,
+                    ]);
                     Navigator.pop(sheetContext);
                   },
                 ),
@@ -1403,7 +1462,8 @@ int get _knownAspectRatioCount {
                   onTap: () {
                     HapticFeedback.lightImpact();
                     SystemChrome.setPreferredOrientations(
-                        DeviceOrientation.values);
+                      DeviceOrientation.values,
+                    );
                     Navigator.pop(sheetContext);
                   },
                 ),
@@ -1421,8 +1481,9 @@ int get _knownAspectRatioCount {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
@@ -1447,12 +1508,12 @@ int get _knownAspectRatioCount {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 8),
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
                       child: Text(
                         l10n.playlistOptionsTooltip,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -1471,11 +1532,13 @@ int get _knownAspectRatioCount {
                         if (isThisFolderSelected) {
                           _playlistController.disablePlaylist();
                         } else {
-                          await _playlistController
-                              .enablePlaylist('Current Folder Only');
+                          await _playlistController.enablePlaylist(
+                            'Current Folder Only',
+                          );
                         }
-                        final newIndex =
-                            _playlistController.playlist.indexOf(targetFile);
+                        final newIndex = _playlistController.playlist.indexOf(
+                          targetFile,
+                        );
                         if (newIndex != -1) {
                           _playlistController.updateIndex(newIndex);
                         }
@@ -1499,8 +1562,9 @@ int get _knownAspectRatioCount {
                         } else {
                           await _playlistController.enablePlaylist('All');
                         }
-                        final newIndex =
-                            _playlistController.playlist.indexOf(targetFile);
+                        final newIndex = _playlistController.playlist.indexOf(
+                          targetFile,
+                        );
                         if (newIndex != -1) {
                           _playlistController.updateIndex(newIndex);
                         }
@@ -1517,9 +1581,11 @@ int get _knownAspectRatioCount {
                               ? cs.primary
                               : null,
                         ),
-                        title: Text(_playlistController.isShuffled
-                            ? l10n.disableShuffleMenu
-                            : l10n.shufflePlaylistMenu),
+                        title: Text(
+                          _playlistController.isShuffled
+                              ? l10n.disableShuffleMenu
+                              : l10n.shufflePlaylistMenu,
+                        ),
                         trailing: Switch(
                           value: _playlistController.isShuffled,
                           onChanged: (_) {
@@ -1537,8 +1603,9 @@ int get _knownAspectRatioCount {
                         onTap: () {
                           final targetFile = _playlistController.currentFile;
                           _playlistController.toggleShuffle();
-                          final newIndex = _playlistController.playlist
-                              .indexOf(targetFile);
+                          final newIndex = _playlistController.playlist.indexOf(
+                            targetFile,
+                          );
                           if (newIndex != -1) {
                             _playlistController.updateIndex(newIndex);
                           }
@@ -1579,11 +1646,12 @@ int get _knownAspectRatioCount {
                                 .read(appSettingsServiceProvider)
                                 .loadSettings()
                                 .then((s) {
-                              ref
-                                  .read(appSettingsServiceProvider)
-                                  .saveSettings(
-                                      s.copyWith(playlistScrollMode: newMode));
-                            });
+                                  ref
+                                      .read(appSettingsServiceProvider)
+                                      .saveSettings(
+                                        s.copyWith(playlistScrollMode: newMode),
+                                      );
+                                });
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               if (mounted) {
                                 _scrollToCurrentIndex(animate: false);
@@ -1605,9 +1673,14 @@ int get _knownAspectRatioCount {
   }
 
   void _executeMediaAction(MediaViewerAction action) {
+    if (widget.isArchivePreview && !_archivePreviewActions.contains(action)) {
+      return;
+    }
     _startHideTimer();
     final fileIoApi = ref.read(vaultFileIoApiProvider);
-    final isImage = MediaViewerConstants.isImage(_playlistController.currentFile);
+    final isImage = MediaViewerConstants.isImage(
+      _playlistController.currentFile,
+    );
 
     switch (action) {
       case MediaViewerAction.playPause:
@@ -1637,9 +1710,9 @@ int get _knownAspectRatioCount {
         _sessionController.toggleMute();
         _playbackManager.activeController?.setVolume(_isMuted ? 0 : 100);
         ref.read(appSettingsServiceProvider).loadSettings().then((appSettings) {
-          ref.read(appSettingsServiceProvider).saveSettings(
-                appSettings.copyWith(videoMuted: _isMuted),
-              );
+          ref
+              .read(appSettingsServiceProvider)
+              .saveSettings(appSettings.copyWith(videoMuted: _isMuted));
         });
         break;
       case MediaViewerAction.playbackMode:
@@ -1676,7 +1749,10 @@ int get _knownAspectRatioCount {
         _showFileInfoHelper(fileIoApi);
         break;
       case MediaViewerAction.openWithApp:
-        fileIoApi.openWithApp(widget.container, _playlistController.currentFile);
+        fileIoApi.openWithApp(
+          widget.container,
+          _playlistController.currentFile,
+        );
         break;
       case MediaViewerAction.editImage:
         _openImageEditor();
@@ -1758,7 +1834,9 @@ int get _knownAspectRatioCount {
     _menuOpened();
 
     final toolbarSettings = ref.read(fileManagerToolbarSettingsProvider(null));
-    final mediaConfig = toolbarSettings.config.mediaViewerToolbarConfig;
+    final mediaConfig = _effectiveToolbarConfig(
+      toolbarSettings.config.mediaViewerToolbarConfig,
+    );
 
     showModalBottomSheet(
       context: context,
@@ -1802,7 +1880,10 @@ int get _knownAspectRatioCount {
           },
           onRotationChanged: (rot) {
             _startHideTimer();
-            _sessionController.setRotation(_playlistController.currentFile, rot);
+            _sessionController.setRotation(
+              _playlistController.currentFile,
+              rot,
+            );
           },
           onImageFitChanged: (fit) {
             _startHideTimer();
@@ -1881,9 +1962,11 @@ int get _knownAspectRatioCount {
     _cancelSlideshowTimer();
     _hideTimer?.cancel();
     _pageController.dispose();
-     _listScrollController.dispose();
+    _listScrollController.dispose();
     _continuousZoomAnimationController?.dispose();
-    _continuousTransformationController.removeListener(_onContinuousTransformationChanged);
+    _continuousTransformationController.removeListener(
+      _onContinuousTransformationChanged,
+    );
     _continuousTransformationController.dispose();
     _playbackManager.dispose();
     _swipePhysicsNotifier.dispose();
@@ -1905,7 +1988,7 @@ int get _knownAspectRatioCount {
     final fileName = _playlistController.playlist[index];
     final contentUriString = _contentUriFor(fileName);
     final prefetchedBytes = _prefetchedBytesFor(fileName);
-    if (prefetchedBytes == null) {
+    if (!widget.isArchivePreview && prefetchedBytes == null) {
       unawaited(_prefetchController.prefetchThumbnail(fileName));
     }
     final isImg = MediaViewerConstants.isImage(fileName);
@@ -1939,7 +2022,7 @@ int get _knownAspectRatioCount {
               edgeSwipeHudEnabled: gestureConfig.edgeSwipeHudEnabled,
               edgeSwipeWidthFraction: gestureConfig.edgeSwipeWidthFraction,
               isActive: _playlistController.currentFile == fileName,
-            onSizeKnown: (w, h) {
+              onSizeKnown: (w, h) {
                 if (_scrollMode.isContinuous) {
                   _scheduleGeometryRebuild();
                 }
@@ -1966,7 +2049,7 @@ int get _knownAspectRatioCount {
               onSubtitleVerticalPositionChanged: (pos) {
                 _sessionController.setSubtitleVerticalPosition(pos);
               },
-               playbackSpeed: _playbackSpeed,
+              playbackSpeed: _playbackSpeed,
               rotationQuarterTurns: _rotations[fileName] ?? 0,
               videoAspectRatioMode: _videoAspectRatioMode,
               isMuted: _isMuted,
@@ -1974,23 +2057,25 @@ int get _knownAspectRatioCount {
                 if (_isMuted != muted) {
                   _sessionController.setIsMuted(muted);
                   _playbackManager.activeController?.setVolume(muted ? 0 : 100);
-                  ref.read(appSettingsServiceProvider).loadSettings().then((appSettings) {
-                    ref.read(appSettingsServiceProvider).saveSettings(
-                          appSettings.copyWith(videoMuted: muted),
-                        );
+                  ref.read(appSettingsServiceProvider).loadSettings().then((
+                    appSettings,
+                  ) {
+                    ref
+                        .read(appSettingsServiceProvider)
+                        .saveSettings(appSettings.copyWith(videoMuted: muted));
                   });
                 }
               },
               edgeSwipeBrightnessEnabled:
                   gestureConfig.edgeSwipeBrightnessEnabled,
-              edgeSwipeVolumeEnabled:
-                  gestureConfig.edgeSwipeVolumeEnabled,
+              edgeSwipeVolumeEnabled: gestureConfig.edgeSwipeVolumeEnabled,
               edgeSwipeHudEnabled: gestureConfig.edgeSwipeHudEnabled,
               edgeSwipeWidthFraction: gestureConfig.edgeSwipeWidthFraction,
               pinchZoomOutEnabled: gestureConfig.pinchZoomOutEnabled,
               minVideoZoomScale: gestureConfig.minVideoZoomScale,
               holdToSpeedMultiplier: gestureConfig.holdToSpeedMultiplier,
-              swipeToSeekEnabled: !_playlistController.isPlaylistMode ||
+              swipeToSeekEnabled:
+                  !_playlistController.isPlaylistMode ||
                   gestureConfig.swipeToSeekEnabled,
               progressNotifier: _videoProgressNotifier,
               onSubtitlesAvailableChanged: (val) {
@@ -1999,7 +2084,7 @@ int get _knownAspectRatioCount {
                   setState(() {});
                 }
               },
-            onSizeKnown: (w, h) {
+              onSizeKnown: (w, h) {
                 if (_scrollMode.isContinuous) {
                   _scheduleGeometryRebuild();
                 }
@@ -2037,7 +2122,9 @@ int get _knownAspectRatioCount {
   Widget build(BuildContext context) {
     ref.watch(mediaViewerSessionProvider(_sessionKey));
     final toolbarSettings = ref.watch(fileManagerToolbarSettingsProvider(null));
-    final mediaViewerConfig = toolbarSettings.config.mediaViewerToolbarConfig;
+    final mediaViewerConfig = _effectiveToolbarConfig(
+      toolbarSettings.config.mediaViewerToolbarConfig,
+    );
     ref.listen<FileManagerToolbarSettingsState>(
       fileManagerToolbarSettingsProvider(null),
       (previous, next) {
@@ -2083,7 +2170,7 @@ int get _knownAspectRatioCount {
                 (_viewportWidth > 0 && _viewportHeight > 0) &&
                 (newWidth != _viewportWidth || newHeight != _viewportHeight);
 
-             if (dimsChanged) {
+            if (dimsChanged) {
               _viewportWidth = newWidth;
               _viewportHeight = newHeight;
               if (_scrollMode.isContinuous) {
@@ -2103,7 +2190,8 @@ int get _knownAspectRatioCount {
                 }
               }
             } else {
-              final isFirstLayout = _viewportWidth == 0.0 && _viewportHeight == 0.0;
+              final isFirstLayout =
+                  _viewportWidth == 0.0 && _viewportHeight == 0.0;
               _viewportWidth = newWidth;
               _viewportHeight = newHeight;
               if (isFirstLayout &&
@@ -2115,7 +2203,7 @@ int get _knownAspectRatioCount {
               }
             }
 
-           final builderKey = ValueKey(
+            final builderKey = ValueKey(
               '${_playlistController.isPlaylistMode}_'
               '${_playlistController.selectedFolder}_'
               '${_playlistController.isShuffled}_'
@@ -2132,7 +2220,7 @@ int get _knownAspectRatioCount {
             // not something PageView/ListView re-reads on its own.
             Widget buildMainScrollView(ScrollPhysics physics) {
               if (_scrollMode.isContinuous) {
-             final listWidget = ListView.builder(
+                final listWidget = ListView.builder(
                   key: builderKey,
                   controller: _listScrollController,
                   scrollDirection: Axis.vertical,
@@ -2163,21 +2251,19 @@ int get _knownAspectRatioCount {
 
                 // Only registered while the list is transformed, so a plain
                 // tap at 1x isn't held back waiting to rule out a double tap.
-                final zoomed =
-                    !_continuousTransformationController.value.isIdentity();
-                final listCanScroll =
-                    physics is! NeverScrollableScrollPhysics;
+                final zoomed = !_continuousTransformationController.value
+                    .isIdentity();
+                final listCanScroll = physics is! NeverScrollableScrollPhysics;
 
-              final effectiveMinScale = mediaViewerConfig.pinchZoomOutEnabled
+                final effectiveMinScale = mediaViewerConfig.pinchZoomOutEnabled
                     ? mediaViewerConfig.minVideoZoomScale.clamp(
                         MediaViewerConstants.minVideoZoomFloor,
                         1.0,
                       )
                     : 1.0;
 
-                  final continuousView = InteractiveViewer(
-                  transformationController:
-                      _continuousTransformationController,
+                final continuousView = InteractiveViewer(
+                  transformationController: _continuousTransformationController,
                   minScale: effectiveMinScale,
                   maxScale: MediaViewerConstants.maxImageZoom,
                   interactionEndFrictionCoefficient: 0.0005,
@@ -2196,14 +2282,21 @@ int get _knownAspectRatioCount {
                     }
                   },
                   onInteractionUpdate: (details) {
-                    final s = _getMatrixScale(_continuousTransformationController.value);
+                    final s = _getMatrixScale(
+                      _continuousTransformationController.value,
+                    );
                     if (s != _continuousScale) {
                       _continuousScale = s;
                     }
                   },
                   onInteractionEnd: (details) {
-                    final s = _getMatrixScale(_continuousTransformationController.value);
-                    final clampedS = s.clamp(effectiveMinScale, MediaViewerConstants.maxImageZoom);
+                    final s = _getMatrixScale(
+                      _continuousTransformationController.value,
+                    );
+                    final clampedS = s.clamp(
+                      effectiveMinScale,
+                      MediaViewerConstants.maxImageZoom,
+                    );
                     final vw = constraints.maxWidth;
                     final vh = constraints.maxHeight;
 
@@ -2212,13 +2305,16 @@ int get _knownAspectRatioCount {
                       final dx = vw * (1.0 - clampedS) / 2.0;
                       final dy = vh * (1.0 - clampedS) / 2.0;
                       _isClampingContinuous = true;
-                      _continuousTransformationController.value = Matrix4.identity()
-                        ..setTranslationRaw(dx, dy, 0.0)
-                        ..scale(clampedS, clampedS, clampedS);
+                      _continuousTransformationController.value =
+                          Matrix4.identity()
+                            ..setTranslationRaw(dx, dy, 0.0)
+                            ..scale(clampedS, clampedS, clampedS);
                       _isClampingContinuous = false;
                     }
 
-                    _continuousScale = _getMatrixScale(_continuousTransformationController.value);
+                    _continuousScale = _getMatrixScale(
+                      _continuousTransformationController.value,
+                    );
                     _onZoomInteractionChanged(true);
                     if (mounted) setState(() {});
                   },
@@ -2278,7 +2374,7 @@ int get _knownAspectRatioCount {
                               if (_scrollMode.isContinuous &&
                                   _viewportHeight > 0 &&
                                   _listScrollController.hasClients) {
-                                 final offset = _listScrollController.offset;
+                                final offset = _listScrollController.offset;
                                 final shift = _continuousVisibleCenterShift();
                                 double customHeight(int i) => _getItemExtent(
                                   i,
@@ -2292,8 +2388,11 @@ int get _knownAspectRatioCount {
                                   customHeight,
                                 );
 
-                                if (_playlistController.currentIndex != newIndex) {
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (_playlistController.currentIndex !=
+                                    newIndex) {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
                                     if (mounted &&
                                         !_isProgrammaticScrolling &&
                                         _playlistController.currentIndex !=
@@ -2356,7 +2455,9 @@ int get _knownAspectRatioCount {
                             );
                             final config = await toolbarService.load();
                             await toolbarService.save(
-                              config.copyWith(playlistTransitionEffect: newEffect),
+                              config.copyWith(
+                                playlistTransitionEffect: newEffect,
+                              ),
                             );
                           },
                           currentScrollMode: _scrollMode,
@@ -2371,7 +2472,8 @@ int get _knownAspectRatioCount {
                               appSettings.copyWith(playlistScrollMode: newMode),
                             );
                             WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (mounted) _scrollToCurrentIndex(animate: false);
+                              if (mounted)
+                                _scrollToCurrentIndex(animate: false);
                             });
                           },
                           isMuted: _isMuted,
@@ -2389,8 +2491,12 @@ int get _knownAspectRatioCount {
                           onPlaylistChanged: _onPlaylistChanged,
                           onMenuOpened: _menuOpened,
                           onMenuClosed: _menuClosed,
-                          isImage: MediaViewerConstants.isImage(_playlistController.currentFile),
-                          isAudio: MediaViewerConstants.isAudio(_playlistController.currentFile),
+                          isImage: MediaViewerConstants.isImage(
+                            _playlistController.currentFile,
+                          ),
+                          isAudio: MediaViewerConstants.isAudio(
+                            _playlistController.currentFile,
+                          ),
                         ),
                       ),
                     ),
@@ -2460,7 +2566,8 @@ int get _knownAspectRatioCount {
                                   toolbarConfig: mediaViewerConfig,
                                   isImage: isImg,
                                   isAudio: MediaViewerConstants.isAudio(
-                                      _playlistController.currentFile),
+                                    _playlistController.currentFile,
+                                  ),
                                   showUI: _showUI,
                                   isPlaylistMode:
                                       _playlistController.isPlaylistMode,

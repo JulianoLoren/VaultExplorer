@@ -117,7 +117,6 @@ Future<void> _cleanupOrphanedTempFiles() async {
           name.startsWith('xclip_') ||
           name.startsWith('tmp_') ||
           name.startsWith('vx_pdf_') ||
-          name.startsWith('archive_browse_') ||
           name.startsWith('archive_extract_');
       if (!matches) continue;
       try {

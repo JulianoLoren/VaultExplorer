@@ -125,7 +125,7 @@ abstract final class ChannelMethods {
   static const setDerivedKeyExpiry = 'setDerivedKeyExpiry';
   static const getDerivedKeyExpiry = 'getDerivedKeyExpiry';
   static const purgeExpiredDerivedKeys = 'purgeExpiredDerivedKeys';
-   static const aesGcmEncrypt = 'aesGcmEncrypt';
+  static const aesGcmEncrypt = 'aesGcmEncrypt';
   static const aesGcmDecrypt = 'aesGcmDecrypt';
   static const aesCbcDecrypt = 'aesCbcDecrypt';
   static const pbkdf2 = 'pbkdf2';
@@ -184,7 +184,8 @@ abstract final class ChannelMethods {
   static const printPdf = 'printPdf';
 
   // Check & Repair tool.
-  static const diagnoseUnmountedContainerFile = 'diagnoseUnmountedContainerFile';
+  static const diagnoseUnmountedContainerFile =
+      'diagnoseUnmountedContainerFile';
   static const diagnoseMountedVolumeFilesystem =
       'diagnoseMountedVolumeFilesystem';
   static const restoreBackupHeaderUnmounted = 'restoreBackupHeaderUnmounted';
@@ -200,6 +201,8 @@ abstract final class ChannelMethods {
   static const archiveExtractVaultAll = 'archiveExtractVaultAll';
   static const archiveScanLocal = 'archiveScanLocal';
   static const archiveExtractLocalEntry = 'archiveExtractLocalEntry';
+  static const archiveStageBrowseEntry = 'archiveStageBrowseEntry';
+  static const archiveDiscardBrowseFile = 'archiveDiscardBrowseFile';
   static const archiveCreate = 'archiveCreate';
 
   // Header Backup tool.
@@ -207,7 +210,7 @@ abstract final class ChannelMethods {
   static const restoreContainerHeaderRegion = 'restoreContainerHeaderRegion';
   static const resolveFolderVaultConfigFile = 'resolveFolderVaultConfigFile';
   static const restoreFolderVaultConfig = 'restoreFolderVaultConfig';
-  
+
   // Composite Multi-File Backing Store (Experimental)
   static const profileCarriers = 'profileCarriers';
   static const createCompositeContainer = 'createCompositeContainer';
@@ -225,10 +228,12 @@ abstract final class ChannelMethods {
   // (see QuickCaptureSettingsHandlers.kt, QuickCaptureBridge.kt,
   // lib/core/api/quick_capture_api.dart). Names match MainActivity.kt's
   // own ChannelMethods object exactly.
-  static const checkPendingQuickCaptureRequest = 'checkPendingQuickCaptureRequest';
+  static const checkPendingQuickCaptureRequest =
+      'checkPendingQuickCaptureRequest';
   static const getQuickCaptureSettings = 'getQuickCaptureSettings';
   static const setQuickCaptureTileEnabled = 'setQuickCaptureTileEnabled';
-  static const requestPinQuickCaptureShortcut = 'requestPinQuickCaptureShortcut';
+  static const requestPinQuickCaptureShortcut =
+      'requestPinQuickCaptureShortcut';
 
   // Panic, PanicKit & Emergency Tile integration (see PanicSettingsHandlers.kt,
   // lib/core/api/vault_panic_api.dart). Names match MainActivity.kt's own
@@ -246,7 +251,7 @@ abstract final class ChannelMethods {
   static const setPanicBootTriggerTier = 'setPanicBootTriggerTier';
   static const setPanicBootTriggerArmed = 'setPanicBootTriggerArmed';
 
-// Document Providers & SAF Storage
+  // Document Providers & SAF Storage
   static const String safListDirectory = 'safListDirectory';
   static const String safCheckTreeAccess = 'safCheckTreeAccess';
   static const String safGetFileSize = 'safGetFileSize';
