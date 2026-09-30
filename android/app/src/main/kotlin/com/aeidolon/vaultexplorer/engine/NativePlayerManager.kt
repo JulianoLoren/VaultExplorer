@@ -397,6 +397,7 @@ class NativePlayerManager(private val context: Context) : Player.Listener {
                     true
                 )
                 .build()
+            exoPlayer.setVideoChangeFrameRateStrategy(C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF)
             exoPlayer.addListener(this)
             exoPlayer.addAnalyticsListener(analyticsListener)
             player = exoPlayer

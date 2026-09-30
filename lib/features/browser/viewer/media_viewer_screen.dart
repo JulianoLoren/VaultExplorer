@@ -246,6 +246,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _loadConfig();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      unawaited(NativeVideoController.enableHighRefreshRate());
       unawaited(_activateCurrentMedia());
       _startSlideshowTimerIfNeeded();
       await PlaybackThrottleController.initGate;
@@ -271,6 +272,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     }
     await PlaybackThrottleController.setActive(isVid);
     if (!mounted || token != _activateToken) return;
+    _updateSwipePhysics();
     if (isVid || isAud) {
       unawaited(
         _playbackManager.activate(
@@ -760,12 +762,29 @@ int get _knownAspectRatioCount {
     }
   }
 
-  // Recomputes the shared swipe-physics notifier from the two lock sources:
-  // raw multi-touch (fires the instant a 2nd finger is detected) and the
-  // zoom/interaction state reported by the active media item. Either one
-  // holding the lock is enough to disable swipe-to-next-item.
+  bool get _isCurrentItemSwipeToSeekEnabled {
+    if (_playlistController.isEmpty) return false;
+    final currentFile = _playlistController.currentFile;
+    if (!MediaViewerConstants.isVideo(currentFile)) return false;
+    final gestureConfig = ref
+        .read(fileManagerToolbarSettingsProvider(null))
+        .config
+        .mediaViewerToolbarConfig;
+    if (!_playlistController.isPlaylistMode) {
+      return true;
+    }
+    return gestureConfig.swipeToSeekEnabled;
+  }
+
+  // Recomputes the shared swipe-physics notifier from the lock sources:
+  // raw multi-touch (fires the instant a 2nd finger is detected), zoom/interaction
+  // state reported by the active media item, and swipe-to-seek gesture on videos.
+  // Either one holding the lock is enough to disable swipe-to-next-item.
   void _updateSwipePhysics() {
-    final shouldLock = _multiTouchLock || _zoomInteractionLock;
+    final swipeToSeekActive =
+        !_scrollMode.isContinuous && _isCurrentItemSwipeToSeekEnabled;
+    final shouldLock =
+        _multiTouchLock || _zoomInteractionLock || swipeToSeekActive;
     final desired = shouldLock
         ? const NeverScrollableScrollPhysics()
         : const BouncingScrollPhysics();
@@ -1256,6 +1275,7 @@ int get _knownAspectRatioCount {
     if (mounted) {
       _sessionController.setShowUI(show);
       if (show) {
+        unawaited(NativeVideoController.enableHighRefreshRate());
         SystemChrome.setEnabledSystemUIMode(
           SystemUiMode.manual,
           overlays: SystemUiOverlay.values,
@@ -1970,6 +1990,8 @@ int get _knownAspectRatioCount {
               pinchZoomOutEnabled: gestureConfig.pinchZoomOutEnabled,
               minVideoZoomScale: gestureConfig.minVideoZoomScale,
               holdToSpeedMultiplier: gestureConfig.holdToSpeedMultiplier,
+              swipeToSeekEnabled: !_playlistController.isPlaylistMode ||
+                  gestureConfig.swipeToSeekEnabled,
               progressNotifier: _videoProgressNotifier,
               onSubtitlesAvailableChanged: (val) {
                 _playbackManager.updateSubtitleStatus(fileName, val);
@@ -2016,6 +2038,15 @@ int get _knownAspectRatioCount {
     ref.watch(mediaViewerSessionProvider(_sessionKey));
     final toolbarSettings = ref.watch(fileManagerToolbarSettingsProvider(null));
     final mediaViewerConfig = toolbarSettings.config.mediaViewerToolbarConfig;
+    ref.listen<FileManagerToolbarSettingsState>(
+      fileManagerToolbarSettingsProvider(null),
+      (previous, next) {
+        if (previous?.config.mediaViewerToolbarConfig.swipeToSeekEnabled !=
+            next.config.mediaViewerToolbarConfig.swipeToSeekEnabled) {
+          _updateSwipePhysics();
+        }
+      },
+    );
     final isContainerLocked = ref.watch(
       mediaViewerLockProvider(widget.container.volId),
     );
@@ -2305,60 +2336,62 @@ int get _knownAspectRatioCount {
                   // its height is status-bar/cutout inset + content, so it
                   // grows with display size and font scale, and a hard-coded
                   // value left part of it visible when hidden.
-                  child: AnimatedSlide(
-                    duration: MediaViewerConstants.animationDuration,
-                    curve: Curves.easeOut,
-                    offset: _showUI ? Offset.zero : const Offset(0, -1),
-                    child: ListenableBuilder(
-                      listenable: _playlistController,
-                      builder: (context, _) => MediaViewerTopBar(
-                        playlistController: _playlistController,
-                        currentFileName: _playlistController.currentFile,
-                        totalCount: _playlistController.playlist.length,
-                        toolbarConfig: mediaViewerConfig,
-                        currentTransitionEffect: _transitionEffect,
-                        onTransitionEffectChanged: (newEffect) async {
-                          _sessionController.setTransitionEffect(newEffect);
-                          final toolbarService = ref.read(
-                            fileManagerToolbarServiceProvider,
-                          );
-                          final config = await toolbarService.load();
-                          await toolbarService.save(
-                            config.copyWith(playlistTransitionEffect: newEffect),
-                          );
-                        },
-                        currentScrollMode: _scrollMode,
-                        onScrollModeChanged: (newMode) async {
-                          _sessionController.setScrollMode(newMode);
-                          final appSettingsService = ref.read(
-                            appSettingsServiceProvider,
-                          );
-                          final appSettings = await appSettingsService
-                              .loadSettings();
-                          await appSettingsService.saveSettings(
-                            appSettings.copyWith(playlistScrollMode: newMode),
-                          );
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) _scrollToCurrentIndex(animate: false);
-                          });
-                        },
-                        isMuted: _isMuted,
-                        onExecuteAction: _executeMediaAction,
-                        onCustomizeControls: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  const MediaViewerToolbarSettingsScreen(),
-                            ),
-                          );
-                        },
-                        isBookmark: _isCurrentFileBookmark,
-                        onPlaylistChanged: _onPlaylistChanged,
-                        onMenuOpened: _menuOpened,
-                        onMenuClosed: _menuClosed,
-                        isImage: MediaViewerConstants.isImage(_playlistController.currentFile),
-                        isAudio: MediaViewerConstants.isAudio(_playlistController.currentFile),
+                  child: RepaintBoundary(
+                    child: AnimatedSlide(
+                      duration: MediaViewerConstants.animationDuration,
+                      curve: Curves.easeOutCubic,
+                      offset: _showUI ? Offset.zero : const Offset(0, -1),
+                      child: ListenableBuilder(
+                        listenable: _playlistController,
+                        builder: (context, _) => MediaViewerTopBar(
+                          playlistController: _playlistController,
+                          currentFileName: _playlistController.currentFile,
+                          totalCount: _playlistController.playlist.length,
+                          toolbarConfig: mediaViewerConfig,
+                          currentTransitionEffect: _transitionEffect,
+                          onTransitionEffectChanged: (newEffect) async {
+                            _sessionController.setTransitionEffect(newEffect);
+                            final toolbarService = ref.read(
+                              fileManagerToolbarServiceProvider,
+                            );
+                            final config = await toolbarService.load();
+                            await toolbarService.save(
+                              config.copyWith(playlistTransitionEffect: newEffect),
+                            );
+                          },
+                          currentScrollMode: _scrollMode,
+                          onScrollModeChanged: (newMode) async {
+                            _sessionController.setScrollMode(newMode);
+                            final appSettingsService = ref.read(
+                              appSettingsServiceProvider,
+                            );
+                            final appSettings = await appSettingsService
+                                .loadSettings();
+                            await appSettingsService.saveSettings(
+                              appSettings.copyWith(playlistScrollMode: newMode),
+                            );
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) _scrollToCurrentIndex(animate: false);
+                            });
+                          },
+                          isMuted: _isMuted,
+                          onExecuteAction: _executeMediaAction,
+                          onCustomizeControls: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MediaViewerToolbarSettingsScreen(),
+                              ),
+                            );
+                          },
+                          isBookmark: _isCurrentFileBookmark,
+                          onPlaylistChanged: _onPlaylistChanged,
+                          onMenuOpened: _menuOpened,
+                          onMenuClosed: _menuClosed,
+                          isImage: MediaViewerConstants.isImage(_playlistController.currentFile),
+                          isAudio: MediaViewerConstants.isAudio(_playlistController.currentFile),
+                        ),
                       ),
                     ),
                   ),
@@ -2367,84 +2400,86 @@ int get _knownAspectRatioCount {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: AnimatedSlide(
-                    duration: MediaViewerConstants.animationDuration,
-                    curve: Curves.easeOut,
-                    offset: _showUI ? Offset.zero : const Offset(0, 1),
-                    child: ListenableBuilder(
-                      listenable: _playlistController,
-                      builder: (context, _) {
-                        final isImg = MediaViewerConstants.isImage(
-                          _playlistController.currentFile,
-                        );
-                        final showCarousel =
-                            _enableCarousel && _isCarouselVisible && _showUI;
+                  child: RepaintBoundary(
+                    child: AnimatedSlide(
+                      duration: MediaViewerConstants.animationDuration,
+                      curve: Curves.easeOutCubic,
+                      offset: _showUI ? Offset.zero : const Offset(0, 1),
+                      child: ListenableBuilder(
+                        listenable: _playlistController,
+                        builder: (context, _) {
+                          final isImg = MediaViewerConstants.isImage(
+                            _playlistController.currentFile,
+                          );
+                          final showCarousel =
+                              _enableCarousel && _isCarouselVisible && _showUI;
 
-                        return Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.85),
-                                Colors.black.withValues(alpha: 0.35),
-                                Colors.transparent,
+                          return Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.85),
+                                  Colors.black.withValues(alpha: 0.35),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Docked filmstrip carousel expands/collapses smoothly above controls
+                                AnimatedSize(
+                                  duration:
+                                      MediaViewerConstants.animationDuration,
+                                  curve: Curves.easeOutCubic,
+                                  alignment: Alignment.bottomCenter,
+                                  child: showCarousel
+                                      ? PlaylistCarouselOverlay(
+                                          container: widget.container,
+                                          playlist:
+                                              _playlistController.playlist,
+                                          currentIndex:
+                                              _playlistController.currentIndex,
+                                          thumbnailQuality:
+                                              widget.thumbnailQuality,
+                                          thumbnailCacheMode:
+                                              widget.thumbnailCacheMode,
+                                          onSelect: _selectFromCarousel,
+                                          onClose: _toggleCarousel,
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
+                                MediaViewerBottomControls(
+                                  playlistController: _playlistController,
+                                  playbackManager: _playbackManager,
+                                  videoProgressNotifier: _videoProgressNotifier,
+                                  scrubPreviewHost: _scrubPreviewHost,
+                                  toolbarConfig: mediaViewerConfig,
+                                  isImage: isImg,
+                                  isAudio: MediaViewerConstants.isAudio(
+                                      _playlistController.currentFile),
+                                  showUI: _showUI,
+                                  isPlaylistMode:
+                                      _playlistController.isPlaylistMode,
+                                  autoAdvance: _autoAdvance,
+                                  slideshowDelaySeconds: _slideshowDelaySeconds,
+                                  isMuted: _isMuted,
+                                  videoPlaybackMode: _videoPlaybackMode,
+                                  onExecuteAction: _executeMediaAction,
+                                  onStartHideTimer: _startHideTimer,
+                                  onShowUIChanged: _setUIVisibility,
+                                  isCarouselVisible: _isCarouselVisible,
+                                  onMenuOpened: _menuOpened,
+                                  onMenuClosed: _menuClosed,
+                                ),
                               ],
                             ),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Docked filmstrip carousel expands/collapses smoothly above controls
-                              AnimatedSize(
-                                duration:
-                                    MediaViewerConstants.animationDuration,
-                                curve: Curves.easeOutCubic,
-                                alignment: Alignment.bottomCenter,
-                                child: showCarousel
-                                    ? PlaylistCarouselOverlay(
-                                        container: widget.container,
-                                        playlist:
-                                            _playlistController.playlist,
-                                        currentIndex:
-                                            _playlistController.currentIndex,
-                                        thumbnailQuality:
-                                            widget.thumbnailQuality,
-                                        thumbnailCacheMode:
-                                            widget.thumbnailCacheMode,
-                                        onSelect: _selectFromCarousel,
-                                        onClose: _toggleCarousel,
-                                      )
-                                    : const SizedBox.shrink(),
-                              ),
-                              MediaViewerBottomControls(
-                                playlistController: _playlistController,
-                                playbackManager: _playbackManager,
-                                videoProgressNotifier: _videoProgressNotifier,
-                                scrubPreviewHost: _scrubPreviewHost,
-                                toolbarConfig: mediaViewerConfig,
-                                isImage: isImg,
-                                isAudio: MediaViewerConstants.isAudio(
-                                    _playlistController.currentFile),
-                                showUI: _showUI,
-                                isPlaylistMode:
-                                    _playlistController.isPlaylistMode,
-                                autoAdvance: _autoAdvance,
-                                slideshowDelaySeconds: _slideshowDelaySeconds,
-                                isMuted: _isMuted,
-                                videoPlaybackMode: _videoPlaybackMode,
-                                onExecuteAction: _executeMediaAction,
-                                onStartHideTimer: _startHideTimer,
-                                onShowUIChanged: _setUIVisibility,
-                                isCarouselVisible: _isCarouselVisible,
-                                onMenuOpened: _menuOpened,
-                                onMenuClosed: _menuClosed,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),

@@ -76,5 +76,18 @@ void main() {
       await controller.toggleDetailColumnVisible(FileDetailColumn.size, true);
       expect(container.read(provider).config.hiddenDetailColumns, isNot(contains(FileDetailColumn.size)));
     });
+
+    test('setMediaViewerSwipeToSeekEnabled updates mediaViewerToolbarConfig', () async {
+      final controller = container.read(provider.notifier);
+      await controller.load(null);
+
+      expect(container.read(provider).config.mediaViewerToolbarConfig.swipeToSeekEnabled, isFalse);
+
+      await controller.setMediaViewerSwipeToSeekEnabled(true);
+      expect(container.read(provider).config.mediaViewerToolbarConfig.swipeToSeekEnabled, isTrue);
+
+      await controller.setMediaViewerSwipeToSeekEnabled(false);
+      expect(container.read(provider).config.mediaViewerToolbarConfig.swipeToSeekEnabled, isFalse);
+    });
   });
 }

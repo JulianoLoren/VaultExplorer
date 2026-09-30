@@ -374,9 +374,39 @@ open class MainActivity : FlutterFragmentActivity() {
     private val quickCaptureSettingsHandlers = QuickCaptureSettingsHandlers(this)
     internal val safStorageManager by lazy { com.aeidolon.vaultexplorer.saf.SafStorageManager(this) }
 
+    fun enableHighRefreshRate() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val currentDisplay = display ?: return
+                val modes = currentDisplay.supportedModes
+                val highestMode = modes.maxByOrNull { it.refreshRate }
+                if (highestMode != null && highestMode.refreshRate > 60f) {
+                    val params = window.attributes
+                    params.preferredDisplayModeId = highestMode.modeId
+                    params.preferredRefreshRate = highestMode.refreshRate
+                    window.attributes = params
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                @Suppress("DEPRECATION")
+                val currentDisplay = windowManager.defaultDisplay ?: return
+                val modes = currentDisplay.supportedModes
+                val highestMode = modes.maxByOrNull { it.refreshRate }
+                if (highestMode != null && highestMode.refreshRate > 60f) {
+                    val params = window.attributes
+                    params.preferredDisplayModeId = highestMode.modeId
+                    params.preferredRefreshRate = highestMode.refreshRate
+                    window.attributes = params
+                }
+            }
+        } catch (e: Exception) {
+            VeLog.w("MainActivity", e) { "Failed to enable high refresh rate" }
+        }
+    }
+
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         setTheme(R.style.NormalTheme)
         super.onCreate(savedInstanceState)
+        enableHighRefreshRate()
         disguiseModeHandlers.updateActivityIdentity()
         if (this is VaultShareActivity) {
             shareIntentHandlers.handleIncomingIntent(intent)
@@ -427,6 +457,7 @@ open class MainActivity : FlutterFragmentActivity() {
 
     override fun onResume() {
         super.onResume()
+        enableHighRefreshRate()
         systemHandlers.setBackgroundProtectionActive(false)
         if (systemHandlers.userWantsSecureScreen) {
             privacyCurtain.armPendingReveal()
@@ -603,11 +634,16 @@ open class MainActivity : FlutterFragmentActivity() {
         playerChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "initialize" -> {
+                    enableHighRefreshRate()
                     val volId = call.argument<Int>("volId") ?: -1
                     val filePath = call.argument<String>("filePath") ?: ""
                     val isLocalStorage = call.argument<Boolean>("isLocalStorage") ?: false
                     val textureId = nativePlayerManager.initialize(volId, filePath, isLocalStorage)
                     result.success(mapOf("textureId" to textureId))
+                }
+                "enableHighRefreshRate" -> {
+                    enableHighRefreshRate()
+                    result.success(null)
                 }
                 "play" -> {
                     nativePlayerManager.play()

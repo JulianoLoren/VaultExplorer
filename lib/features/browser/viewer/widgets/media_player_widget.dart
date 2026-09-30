@@ -14,14 +14,18 @@ import 'package:vaultexplorer/data/models/thumbnail_quality.dart';
 import 'package:vaultexplorer/data/models/video_aspect_ratio_mode.dart';
 import 'package:vaultexplorer/data/services/media_aspect_ratio_cache.dart';
 import 'package:vaultexplorer/data/services/thumbnail_cache_service.dart';
+import 'package:vaultexplorer/core/utils/format_utils.dart';
 import 'package:vaultexplorer/features/browser/viewer/media_viewer_constants.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/edge_swipe_claim_recognizer.dart';
+import 'package:vaultexplorer/features/browser/viewer/widgets/swipe_to_seek_claim_recognizer.dart';
 import 'package:vaultexplorer/data/services/session_lock_controller.dart';
 
+import 'package:vaultexplorer/data/models/scrub_preview_style.dart';
 import 'package:vaultexplorer/features/browser/viewer/screen_brightness_bridge.dart';
 import 'package:vaultexplorer/features/browser/viewer/video_playback_manager.dart';
 import '../caption_track.dart';
 import '../native_video_controller.dart';
+import '../video_scrub_preview_controller.dart';
 
 class VideoPlaybackProgress {
   final Duration position;
@@ -98,6 +102,7 @@ class MediaPlayerWidget extends ConsumerStatefulWidget {
   final bool pinchZoomOutEnabled;
   final double minVideoZoomScale;
   final double holdToSpeedMultiplier;
+  final bool swipeToSeekEnabled;
 
   const MediaPlayerWidget({
     super.key,
@@ -134,6 +139,7 @@ class MediaPlayerWidget extends ConsumerStatefulWidget {
     this.pinchZoomOutEnabled = true,
     this.minVideoZoomScale = 0.25,
     this.holdToSpeedMultiplier = 2.0,
+    this.swipeToSeekEnabled = false,
   });
 
   @override
@@ -175,23 +181,29 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
   Animation<Matrix4>? _zoomAnimation;
 
   final Set<int> _activeTouchPointers = {};
-  int? _brightnessDragPointerId;
-  double? _brightnessDragStartY;
   double? _brightnessDragStartLevel;
   double _brightnessLevel = 0.5;
   bool _showBrightnessHud = false;
   Timer? _brightnessHudTimer;
-  int? _volumeDragPointerId;
-  double? _volumeDragStartY;
   double? _volumeDragStartLevel;
   double _volumeLevel = 1.0;
   bool _showVolumeHud = false;
   Timer? _volumeHudTimer;
-  static const double _edgeSwipeSlop = 10.0;
   bool _isBrightnessDragging = false;
   EdgeSwipeClaimRecognizer? _brightnessClaim;
   EdgeSwipeClaimRecognizer? _volumeClaim;
   bool _isVolumeDragging = false;
+  bool _isSwipeSeeking = false;
+  bool _showSwipeSeekHud = false;
+  Timer? _swipeSeekHudTimer;
+  SwipeToSeekClaimRecognizer? _swipeToSeekClaim;
+  Duration _seekDragStartPosition = Duration.zero;
+  Duration _seekDragTotalDuration = Duration.zero;
+  Duration _swipeSeekTargetPosition = Duration.zero;
+  Duration _swipeSeekDelta = Duration.zero;
+  double _seekDragAccumulatedDx = 0.0;
+  bool _wasPlayingBeforeSwipeSeek = false;
+  VideoScrubPreviewController? _swipeSeekPreview;
   double _effectiveHoldSpeed = 2.0;
   bool _isPlayingReported = false;
   late final SessionLockController _lockController;
@@ -479,6 +491,9 @@ Future<void> _ensurePosterLoaded() async {
     _skipDebounceTimer?.cancel();
     _brightnessHudTimer?.cancel();
     _volumeHudTimer?.cancel();
+    _swipeSeekHudTimer?.cancel();
+    _swipeSeekPreview?.dispose();
+    _swipeSeekPreview = null;
     _boundController?.removeListener(_onControllerTick);
     widget.playbackManager.activeControllerNotifier.removeListener(_onSharedControllerChanged);
     widget.playbackManager.currentFileNotifier.removeListener(_onCurrentFileChanged);
@@ -809,6 +824,50 @@ Widget _buildVideoTexture(NativeVideoController controller) {
     );
   }
 
+  Widget _buildScrubPreviewFrame(
+    Uint8List frameBytes,
+    NativeVideoController controller,
+  ) {
+    final mode = widget.videoAspectRatioMode;
+    final rawSize = controller.value.size;
+    double sizedWidth = rawSize.width > 0 ? rawSize.width : 1600;
+    double sizedHeight = rawSize.height > 0 ? rawSize.height : 900;
+    final BoxFit fit;
+    switch (mode) {
+      case VideoAspectRatioMode.bestFit:
+        fit = BoxFit.contain;
+      case VideoAspectRatioMode.fill:
+        fit = BoxFit.fill;
+      case VideoAspectRatioMode.ratio16x9:
+      case VideoAspectRatioMode.ratio4x3:
+        fit = BoxFit.cover;
+      case VideoAspectRatioMode.centre:
+        fit = BoxFit.none;
+        final dpr = MediaQuery.of(context).devicePixelRatio;
+        if (dpr > 0 && rawSize.width > 0 && rawSize.height > 0) {
+          sizedWidth = rawSize.width / dpr;
+          sizedHeight = rawSize.height / dpr;
+        }
+    }
+    return RotatedBox(
+      quarterTurns: widget.rotationQuarterTurns,
+      child: ColoredBox(
+        color: Colors.black,
+        child: SizedBox.expand(
+          child: FittedBox(
+            fit: fit,
+            clipBehavior: Clip.hardEdge,
+            child: SizedBox(
+              width: sizedWidth,
+              height: sizedHeight,
+              child: _ScrubPreviewFrameImage(bytes: frameBytes),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPoster(ColorScheme cs, {required bool isLoading}) {
     final poster = _localPosterBytes ??
         widget.posterBytes ??
@@ -821,12 +880,6 @@ Widget _buildVideoTexture(NativeVideoController controller) {
         (MediaQuery.of(context).size.width * MediaQuery.of(context).devicePixelRatio)
             .round()
             .clamp(1, 1 << 20);
-    final isRotated = widget.rotationQuarterTurns % 2 != 0;
-    final knownRatio = _knownAspectRatio ??
-        MediaAspectRatioCache.get(widget.container, widget.fileName);
-    final effectiveKnownRatio = (knownRatio != null && isRotated)
-        ? 1.0 / knownRatio
-        : knownRatio;
 
     Widget? posterContent;
     if (poster != null && poster.isNotEmpty) {
@@ -1017,6 +1070,25 @@ Widget _buildVideoTexture(NativeVideoController controller) {
                   },
                 ),
               ),
+            if (!widget.isAudio && controller != null && _isActive && _swipeSeekPreview != null)
+              Positioned.fill(
+                child: ValueListenableBuilder<Uint8List?>(
+                  valueListenable: _swipeSeekPreview!.frameNotifier,
+                  builder: (context, frameBytes, _) {
+                    final showFrame =
+                        (_isSwipeSeeking || _isSeeking) && frameBytes != null;
+                    return IgnorePointer(
+                      child: AnimatedOpacity(
+                        opacity: showFrame ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 100),
+                        child: frameBytes != null
+                            ? _buildScrubPreviewFrame(frameBytes, controller)
+                            : const SizedBox.shrink(),
+                      ),
+                    );
+                  },
+                ),
+              ),
           if (widget.isAudio && controller != null && isVideoReady)
               _buildAudioCenterVisual(cs, isPlaying: controller.value.isPlaying)
             else if (!widget.isAudio && widget.subtitlesEnabled)
@@ -1118,7 +1190,11 @@ Widget _buildVideoTexture(NativeVideoController controller) {
                     child: GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTap: () {
-                        if (_isSkipActive || _showLeftIndicator || _showRightIndicator) {
+                        if (_isSkipActive ||
+                            _isSwipeSeeking ||
+                            _showSwipeSeekHud ||
+                            _showLeftIndicator ||
+                            _showRightIndicator) {
                           return;
                         }
                         widget.onToggleUI(!widget.showUI);
@@ -1210,7 +1286,11 @@ if (!widget.isAudio && widget.enableZoom) {
     corePlayerWidget = GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () {
-        if (_isSkipActive || _showLeftIndicator || _showRightIndicator) {
+        if (_isSkipActive ||
+            _isSwipeSeeking ||
+            _showSwipeSeekHud ||
+            _showLeftIndicator ||
+            _showRightIndicator) {
           return;
         }
         widget.onToggleUI(!widget.showUI);
@@ -1242,6 +1322,19 @@ if (!widget.isAudio && widget.enableZoom) {
               alignment: Alignment.center,
               children: [
                 corePlayerWidget,
+                if (widget.swipeToSeekEnabled && !widget.isAudio)
+                  Positioned.fill(
+                    child: _swipeToSeekStrip(
+                      onClaimCreated: (r) => _swipeToSeekClaim = r,
+                      onDragStart: _handleSwipeToSeekStart,
+                      onDragUpdate: (d) => _handleSwipeToSeekUpdate(
+                        d,
+                        outerConstraints.maxWidth,
+                      ),
+                      onDragEnd: _handleSwipeToSeekEnd,
+                      onDragCancel: _handleSwipeToSeekCancel,
+                    ),
+                  ),
                 if (widget.edgeSwipeBrightnessEnabled)
                   Positioned(
                     left: 0,
@@ -1334,6 +1427,8 @@ if (!widget.isAudio && widget.enableZoom) {
                         : Icons.volume_up_rounded,
                     level: _volumeLevel,
                   ),
+                if (_showSwipeSeekHud)
+                  _buildSwipeSeekHud(),
               ],
             ),
           );
@@ -1409,6 +1504,52 @@ if (!widget.isAudio && widget.enableZoom) {
     );
   }
 
+  bool _canStartSwipeToSeek() {
+    if (!widget.swipeToSeekEnabled || widget.isAudio || !_isActive || _isZoomed) {
+      return false;
+    }
+    if (_activeTouchPointers.length > 1) return false;
+    final controller = _boundController;
+    if (controller == null || !controller.value.isInitialized) return false;
+    if (controller.value.duration <= Duration.zero) return false;
+    return true;
+  }
+
+  Widget _swipeToSeekStrip({
+    required void Function(SwipeToSeekClaimRecognizer) onClaimCreated,
+    required GestureDragStartCallback onDragStart,
+    required GestureDragUpdateCallback onDragUpdate,
+    required GestureDragEndCallback onDragEnd,
+    required VoidCallback onDragCancel,
+  }) {
+    return RawGestureDetector(
+      behavior: HitTestBehavior.translucent,
+      gestures: <Type, GestureRecognizerFactory>{
+        SwipeToSeekClaimRecognizer:
+            GestureRecognizerFactoryWithHandlers<SwipeToSeekClaimRecognizer>(
+          () {
+            final recognizer = SwipeToSeekClaimRecognizer(
+              canClaim: _canStartSwipeToSeek,
+            );
+            onClaimCreated(recognizer);
+            return recognizer;
+          },
+          (recognizer) {
+            recognizer
+              ..onStart = onDragStart
+              ..onUpdate = onDragUpdate
+              ..onEnd = onDragEnd
+              ..onCancel = onDragCancel;
+          },
+        ),
+      },
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+
   // The same conditions the strips' pointer-down handlers use to decide
   // whether they'll act on a touch. The claim recognizer asks this when a touch
   // lands, so a strip that wouldn't change anything (inactive video, zoomed in,
@@ -1459,6 +1600,7 @@ bool _canStartEdgeSwipe() =>
     _activeTouchPointers.add(event.pointer);
     if (_activeTouchPointers.length >= 2) {
       _abortEdgeGestures();
+      _abortSwipeToSeek();
     }
   }
 
@@ -1499,13 +1641,12 @@ bool _canStartEdgeSwipe() =>
     unawaited(ScreenBrightnessBridge.setBrightness(newLevel));
   }
 
- void _handleBrightnessDragEnd(DragEndDetails details) {
+  void _handleBrightnessDragEnd(DragEndDetails details) {
     if (_isBrightnessDragging) {
       _isBrightnessDragging = false;
       widget.onZoomChanged(!_isZoomed); // Restores scroll physics only if not zoomed
       _hideBrightnessHudSoon();
     }
-    _brightnessDragStartY = null;
     _brightnessDragStartLevel = null;
   }
 
@@ -1515,7 +1656,6 @@ bool _canStartEdgeSwipe() =>
       widget.onZoomChanged(!_isZoomed); // Restores scroll physics only if not zoomed
       _hideBrightnessHudSoon();
     }
-    _brightnessDragStartY = null;
     _brightnessDragStartLevel = null;
   }
 
@@ -1571,7 +1711,6 @@ bool _canStartEdgeSwipe() =>
       widget.onZoomChanged(!_isZoomed); // Restores scroll physics only if not zoomed
       _hideVolumeHudSoon();
     }
-    _volumeDragStartY = null;
     _volumeDragStartLevel = null;
   }
 
@@ -1581,7 +1720,6 @@ bool _canStartEdgeSwipe() =>
       widget.onZoomChanged(!_isZoomed); // Restores scroll physics only if not zoomed
       _hideVolumeHudSoon();
     }
-    _volumeDragStartY = null;
     _volumeDragStartLevel = null;
   }
   void _hideVolumeHudSoon() {
@@ -1589,6 +1727,244 @@ bool _canStartEdgeSwipe() =>
     _volumeHudTimer = Timer(MediaViewerConstants.edgeSwipeHudHideDelay, () {
       if (mounted) setState(() => _showVolumeHud = false);
     });
+  }
+
+  void _handleSwipeToSeekStart(DragStartDetails details) {
+    if (!_canStartSwipeToSeek()) return;
+    final controller = _boundController;
+    if (controller == null) return;
+
+    widget.onZoomChanged(false); // Freezes scroll physics
+    _isSwipeSeeking = true;
+    _seekDragStartPosition = controller.value.position;
+    _seekDragTotalDuration = controller.value.duration;
+    _seekDragAccumulatedDx = 0.0;
+    _swipeSeekTargetPosition = _seekDragStartPosition;
+    _swipeSeekDelta = Duration.zero;
+    _swipeSeekHudTimer?.cancel();
+    unawaited(HapticFeedback.selectionClick());
+
+    _wasPlayingBeforeSwipeSeek = controller.value.isPlaying;
+    if (_wasPlayingBeforeSwipeSeek) {
+      unawaited(controller.pause());
+    }
+
+    _cleanupSwipeSeekPreview();
+    final preview = VideoScrubPreviewController.forStyle(
+      controller,
+      ScrubPreviewStyle.fullscreen,
+      videoDuration: _seekDragTotalDuration,
+    );
+    _swipeSeekPreview = preview;
+    unawaited(preview.begin().then((_) {
+      if (!mounted || _swipeSeekPreview != preview) return;
+      if (preview.available) {
+        preview.requestFrame(_swipeSeekTargetPosition);
+      }
+      setState(() {});
+    }));
+
+    widget.progressNotifier.value = widget.progressNotifier.value.copyWith(
+      isDragging: true,
+      position: _swipeSeekTargetPosition,
+    );
+
+    setState(() => _showSwipeSeekHud = true);
+  }
+
+  void _handleSwipeToSeekUpdate(DragUpdateDetails details, double screenWidth) {
+    if (!_isSwipeSeeking) return;
+    if (_activeTouchPointers.length > 1) {
+      _abortSwipeToSeek();
+      return;
+    }
+    final dx = details.primaryDelta ?? details.delta.dx;
+    _seekDragAccumulatedDx += dx;
+
+    final width = screenWidth > 0 ? screenWidth : 360.0;
+    final totalSec = _seekDragTotalDuration.inMilliseconds / 1000.0;
+
+    double seekRangeSeconds;
+    if (totalSec <= 60) {
+      seekRangeSeconds = totalSec;
+    } else if (totalSec <= 300) {
+      seekRangeSeconds = 90.0;
+    } else if (totalSec <= 1800) {
+      seekRangeSeconds = 180.0;
+    } else {
+      seekRangeSeconds = (totalSec * 0.1).clamp(180.0, 600.0);
+    }
+
+    final dragFraction = _seekDragAccumulatedDx / width;
+    final deltaSeconds = dragFraction * seekRangeSeconds;
+    final deltaMs = (deltaSeconds * 1000).round();
+
+    final startMs = _seekDragStartPosition.inMilliseconds;
+    final totalMs = _seekDragTotalDuration.inMilliseconds;
+    final targetMs = (startMs + deltaMs).clamp(0, totalMs);
+    final targetPosition = Duration(milliseconds: targetMs);
+    final delta = targetPosition - _seekDragStartPosition;
+
+    final sliderVal = totalMs > 0 ? (targetMs / totalMs).clamp(0.0, 1.0) : 0.0;
+
+    _swipeSeekTargetPosition = targetPosition;
+    _swipeSeekDelta = delta;
+
+    _swipeSeekPreview?.requestFrame(targetPosition);
+
+    widget.progressNotifier.value = widget.progressNotifier.value.copyWith(
+      isDragging: true,
+      position: targetPosition,
+      sliderValue: sliderVal,
+    );
+
+    setState(() {});
+  }
+
+  Future<void> _handleSwipeToSeekEnd(DragEndDetails details) async {
+    if (!_isSwipeSeeking) return;
+    _isSwipeSeeking = false;
+    widget.onZoomChanged(!_isZoomed);
+
+    final target = _swipeSeekTargetPosition;
+    final controller = _boundController;
+    if (controller != null && controller.value.isInitialized) {
+      _isSeeking = true;
+      try {
+        await controller.seekTo(target);
+        if (_wasPlayingBeforeSwipeSeek) {
+          await controller.play();
+        }
+      } catch (e) {
+        // seek error handled
+      }
+      _isSeeking = false;
+    }
+    unawaited(HapticFeedback.lightImpact());
+
+    final totalMs = _seekDragTotalDuration.inMilliseconds;
+    final sliderVal = totalMs > 0
+        ? (target.inMilliseconds / totalMs).clamp(0.0, 1.0)
+        : 0.0;
+
+    widget.progressNotifier.value = widget.progressNotifier.value.copyWith(
+      isDragging: false,
+      position: target,
+      sliderValue: sliderVal,
+    );
+
+    _cleanupSwipeSeekPreview();
+    _hideSwipeSeekHudSoon();
+  }
+
+  void _handleSwipeToSeekCancel() {
+    if (!_isSwipeSeeking) return;
+    _isSwipeSeeking = false;
+    widget.onZoomChanged(!_isZoomed);
+
+    if (_wasPlayingBeforeSwipeSeek && _boundController != null) {
+      unawaited(_boundController!.play());
+    }
+
+    final totalMs = _seekDragTotalDuration.inMilliseconds;
+    final sliderVal = totalMs > 0
+        ? (_seekDragStartPosition.inMilliseconds / totalMs).clamp(0.0, 1.0)
+        : 0.0;
+
+    widget.progressNotifier.value = widget.progressNotifier.value.copyWith(
+      isDragging: false,
+      position: _seekDragStartPosition,
+      sliderValue: sliderVal,
+    );
+
+    _cleanupSwipeSeekPreview();
+    _hideSwipeSeekHudSoon();
+  }
+
+  void _abortSwipeToSeek() {
+    _swipeToSeekClaim?.abort();
+    _handleSwipeToSeekCancel();
+  }
+
+  void _cleanupSwipeSeekPreview() {
+    final preview = _swipeSeekPreview;
+    _swipeSeekPreview = null;
+    if (preview != null) {
+      unawaited(preview.end());
+      if (mounted) setState(() {});
+    }
+  }
+
+  void _hideSwipeSeekHudSoon() {
+    _swipeSeekHudTimer?.cancel();
+    _swipeSeekHudTimer = Timer(MediaViewerConstants.edgeSwipeHudHideDelay, () {
+      if (mounted) setState(() => _showSwipeSeekHud = false);
+    });
+  }
+
+  Widget _buildSwipeSeekHud() {
+    final target = _swipeSeekTargetPosition;
+    final total = _seekDragTotalDuration;
+    final delta = _swipeSeekDelta;
+    final isForward = !delta.isNegative;
+    final sign = isForward ? '+' : '-';
+    final deltaText = '$sign${formatClockDuration(delta.abs())}';
+    final posText = formatClockDuration(target);
+    final totalText = formatClockDuration(total);
+    final progressFactor = total.inMilliseconds > 0
+        ? (target.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0)
+        : 0.0;
+
+    return Center(
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(width: 6),
+                  Text(
+                    deltaText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$posText / $totalText',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 120,
+                height: 3,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: progressFactor,
+                    backgroundColor: Colors.white24,
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildIndicator(IconData icon, String text, bool isLeft) {
@@ -1870,6 +2246,43 @@ class _MediaLoadingFeedbackOverlayState extends State<_MediaLoadingFeedbackOverl
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ScrubPreviewFrameImage extends StatefulWidget {
+  final Uint8List bytes;
+  const _ScrubPreviewFrameImage({required this.bytes});
+
+  @override
+  State<_ScrubPreviewFrameImage> createState() => _ScrubPreviewFrameImageState();
+}
+
+class _ScrubPreviewFrameImageState extends State<_ScrubPreviewFrameImage> {
+  static void _evict(Uint8List bytes) {
+    unawaited(MemoryImage(bytes).evict());
+  }
+
+  @override
+  void didUpdateWidget(_ScrubPreviewFrameImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.bytes, widget.bytes)) _evict(oldWidget.bytes);
+  }
+
+  @override
+  void dispose() {
+    _evict(widget.bytes);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.memory(
+      widget.bytes,
+      fit: BoxFit.fill,
+      filterQuality: FilterQuality.medium,
+      gaplessPlayback: true,
+      errorBuilder: (context, error, stackTrace) => const SizedBox.expand(),
     );
   }
 }

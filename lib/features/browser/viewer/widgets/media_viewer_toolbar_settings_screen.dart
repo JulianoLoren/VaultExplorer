@@ -267,6 +267,27 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                       SwitchListTile(
                         contentPadding:
                             const EdgeInsets.symmetric(horizontal: 16),
+                        value: mediaConfig.swipeToSeekEnabled,
+                        onChanged:
+                            controller.setMediaViewerSwipeToSeekEnabled,
+                        title: Text(
+                          l10n.swipeToSeekTitle,
+                          style: textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          l10n.swipeToSeekSubtitle,
+                          style: textTheme.bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        secondary: Icon(
+                          Icons.swipe_rounded,
+                          color: cs.primary,
+                        ),
+                      ),
+                      SwitchListTile(
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16),
                         value: mediaConfig.edgeSwipeBrightnessEnabled,
                         onChanged:
                             controller.setMediaViewerEdgeSwipeBrightnessEnabled,

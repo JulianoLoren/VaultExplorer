@@ -76,6 +76,10 @@ class NativeVideoController extends ValueNotifier<NativeVideoValue> {
   final bool isLocalStorage;
   final NativeMedia3Controller _media3;
 
+  /// Requests the platform to enable maximum available display refresh rate (e.g. 120Hz).
+  static Future<void> enableHighRefreshRate() =>
+      NativeMedia3Controller.enableHighRefreshRate();
+
   NativeVideoController({
     required this.volId,
     required this.filePath,

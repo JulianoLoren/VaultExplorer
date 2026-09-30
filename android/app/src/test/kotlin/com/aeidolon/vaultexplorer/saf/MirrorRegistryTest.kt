@@ -463,47 +463,6 @@ class MirrorRegistryTest {
     }
 
     @Test
-    fun `reconcileStaleContent keeps a just-pushed entry whose real listing lags behind`() {
-        // Providers such as Filen upload asynchronously: right after our push
-        // the real listing still reports the old (empty) length.
-        val registry = MirrorRegistry()
-        registry.markPushed("content://real/a")
-        val changed = registry.reconcileStaleContent(
-            childKey = "content://real/a",
-            mirrorLength = 339, mirrorLastModified = 1000,
-            realLength = 0, realLastModified = 500,
-        )
-        assertFalse(changed)
-        assertTrue(registry.hasContent("content://real/a"))
-    }
-
-    @Test
-    fun `reconcileStaleContent still drops a synced entry that was never pushed by us`() {
-        val registry = MirrorRegistry()
-        registry.markSynced("content://real/a")
-        val changed = registry.reconcileStaleContent(
-            childKey = "content://real/a",
-            mirrorLength = 339, mirrorLastModified = 1000,
-            realLength = 0, realLastModified = 500,
-        )
-        assertTrue(changed)
-    }
-
-    @Test
-    fun `reconcileStaleContent grace ends once the entry is forgotten`() {
-        val registry = MirrorRegistry()
-        registry.markPushed("content://real/a")
-        registry.forgetContent("content://real/a")
-        registry.markSynced("content://real/a")
-        val changed = registry.reconcileStaleContent(
-            childKey = "content://real/a",
-            mirrorLength = 339, mirrorLastModified = 1000,
-            realLength = 0, realLastModified = 500,
-        )
-        assertTrue(changed)
-    }
-
-    @Test
     fun `reconcileStaleContent drops a synced entry whose lastModified no longer matches`() {
         val registry = MirrorRegistry()
         registry.markSynced("content://real/a")

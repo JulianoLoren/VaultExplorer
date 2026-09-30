@@ -27,6 +27,7 @@ class MediaViewerToolbarConfig {
   final double minVideoZoomScale;
   final VideoAspectRatioMode defaultAspectRatioMode;
   final double holdToSpeedMultiplier;
+  final bool swipeToSeekEnabled;
 
   const MediaViewerToolbarConfig({
     this.topBarActions = const [
@@ -77,6 +78,7 @@ class MediaViewerToolbarConfig {
     this.minVideoZoomScale = 0.25,
     this.defaultAspectRatioMode = VideoAspectRatioMode.bestFit,
     this.holdToSpeedMultiplier = 2.0,
+    this.swipeToSeekEnabled = false,
   });
 
   factory MediaViewerToolbarConfig.defaults() =>
@@ -103,6 +105,7 @@ class MediaViewerToolbarConfig {
     double? minVideoZoomScale,
     VideoAspectRatioMode? defaultAspectRatioMode,
     double? holdToSpeedMultiplier,
+    bool? swipeToSeekEnabled,
   }) =>
       MediaViewerToolbarConfig(
         topBarActions: topBarActions ?? this.topBarActions,
@@ -133,6 +136,7 @@ class MediaViewerToolbarConfig {
             defaultAspectRatioMode ?? this.defaultAspectRatioMode,
         holdToSpeedMultiplier:
             holdToSpeedMultiplier ?? this.holdToSpeedMultiplier,
+        swipeToSeekEnabled: swipeToSeekEnabled ?? this.swipeToSeekEnabled,
       );
 
   Map<String, dynamic> toJson() => {
@@ -157,6 +161,7 @@ class MediaViewerToolbarConfig {
         'minVideoZoomScale': minVideoZoomScale,
         'defaultAspectRatioMode': defaultAspectRatioMode.toJson(),
         'holdToSpeedMultiplier': holdToSpeedMultiplier,
+        'swipeToSeekEnabled': swipeToSeekEnabled,
       };
 
   factory MediaViewerToolbarConfig.fromJson(Map<String, dynamic>? j) {
@@ -235,6 +240,7 @@ class MediaViewerToolbarConfig {
       ),
       holdToSpeedMultiplier:
           (j['holdToSpeedMultiplier'] as num?)?.toDouble() ?? 2.0,
+      swipeToSeekEnabled: j['swipeToSeekEnabled'] as bool? ?? false,
     );
   }
 }

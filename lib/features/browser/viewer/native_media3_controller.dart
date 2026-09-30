@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:vaultexplorer/core/services/playback_throttle_controller.dart';
@@ -137,6 +136,14 @@ class NativeMedia3Controller extends ValueNotifier<NativeVideoValue> {
       MethodChannel('com.aeidolon.vaultexplorer/player');
   static const EventChannel _eventChannel =
       EventChannel('com.aeidolon.vaultexplorer/player_events');
+
+  /// Requests the Android window to run at the display's maximum available
+  /// refresh rate (e.g. 120Hz/90Hz) rather than throttling down during video playback.
+  static Future<void> enableHighRefreshRate() async {
+    try {
+      await _cmdChannel.invokeMethod('enableHighRefreshRate');
+    } catch (_) {}
+  }
 
   final int volId;
   final String filePath;

@@ -347,6 +347,13 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
     return updateMediaViewerConfig(updated);
   }
 
+  Future<void> setMediaViewerSwipeToSeekEnabled(bool enabled) {
+    final updated = state.config.mediaViewerToolbarConfig.copyWith(
+      swipeToSeekEnabled: enabled,
+    );
+    return updateMediaViewerConfig(updated);
+  }
+
   Future<void> resetMediaViewerConfigToDefaults() {
     final updated = state.config.copyWith(
       mediaViewerToolbarConfig: MediaViewerToolbarConfig.defaults(),
