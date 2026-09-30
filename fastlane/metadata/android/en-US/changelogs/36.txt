@@ -1,0 +1,3 @@
+• Video Editor (Beta): Fast, lossless trimming and cutting with no re-encoding or quality loss.
+• Improved cleanup operations for smoother file handling.
+• Enhanced Storage Access Framework (SAF) compatibility and reliability across third-party file providers.
