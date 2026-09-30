@@ -342,6 +342,17 @@ ThemeData buildLightTheme({ColorScheme? dynamicScheme}) => _buildTheme(
 @Deprecated('Use buildDarkTheme() (or buildLightTheme()) instead.')
 ThemeData buildTheme() => buildDarkTheme();
 
+/// Builds the full app theme (component themes included) around an arbitrary
+/// [scheme], with light/dark chosen from `scheme.brightness`.
+///
+/// For screens that re-skin themselves independently of the app's own
+/// light/dark setting -- e.g. the text editor, whose background/syntax theme
+/// is user-selectable -- so every widget inside them (app bar, menus, input
+/// fields, list tiles, ...) picks up the same colors instead of only the
+/// ones a screen remembered to recolor by hand.
+ThemeData buildThemeFromColorScheme(ColorScheme scheme) =>
+    _buildTheme(scheme, scheme.brightness);
+
 ThemeData _buildTheme(ColorScheme cs, Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   return ThemeData(

@@ -17,6 +17,7 @@ import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart';
 import 'package:vaultexplorer/features/browser/viewer/markdown/markdown_body_view.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_appearance_provider.dart';
+import 'package:vaultexplorer/features/browser/viewer/text_editor_chrome.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_formatters.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_accessory_key_bar.dart';
@@ -118,6 +119,23 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
   late final SelectionToolbarController _toolbarController;
 
   late String _projectDirPath;
+
+  /// Last resolved whole-screen theme, reused until the editor colors or the
+  /// app scheme actually change (see [EditorChrome.matches]).
+  EditorChrome? _chrome;
+
+  EditorChrome _resolveChrome(EditorSyntaxStyle style, ColorScheme appScheme) {
+    final cached = _chrome;
+    if (cached != null &&
+        cached.matches(style.backgroundColor, style.textColor, appScheme)) {
+      return cached;
+    }
+    return _chrome = EditorChrome.resolve(
+      background: style.backgroundColor,
+      foreground: style.textColor,
+      appScheme: appScheme,
+    );
+  }
 
   EditorTab get _activeTab => _tabs[_activeTabIndex];
 
@@ -1440,9 +1458,24 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
       return const Scaffold(body: SizedBox.shrink());
     }
 
-    final cs = Theme.of(context).colorScheme;
+    final appTheme = Theme.of(context);
     final activeTab = _activeTab;
     final appearance = ref.watch(textEditorAppearanceProvider);
+
+    // The editor's own background/syntax theme drives the colors of the whole
+    // screen (app bar, tabs, status bar, accessory bar, find panel, drawer,
+    // menus, system navigation bar), not just the text area. `cs` from here
+    // on is the editor-derived scheme; `appTheme` is only used to resolve the
+    // editor style itself, whose "auto" syntax theme follows the app.
+    final syntaxStyle = resolveEditorSyntaxStyle(
+      activeTab.filePath,
+      appTheme.brightness,
+      appTheme.colorScheme,
+      background: appearance.background,
+      syntaxTheme: appearance.syntaxTheme,
+    );
+    final chrome = _resolveChrome(syntaxStyle, appTheme.colorScheme);
+    final cs = chrome.colorScheme;
 
     ref.listen<TextEditorAppearancePrefs>(textEditorAppearanceProvider, (previous, next) {
       if (!next.autoSave) {
@@ -1455,7 +1488,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
 
     final anyDirty = _tabs.any((t) => t.isDirty);
 
-    return PopScope(
+    return Theme(
+      data: chrome.theme,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: chrome.overlayStyle,
+        child: PopScope(
       canPop: !anyDirty,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
@@ -1500,6 +1537,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
           key: _scaffoldKey,
           drawer: _buildProjectDrawer(cs),
         appBar: AppBar(
+          systemOverlayStyle: chrome.overlayStyle,
           leading: IconButton(
             icon: const Icon(Icons.menu_rounded),
             tooltip: context.l10n.textEditorProjectFilesTitle,
@@ -1743,10 +1781,19 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
             child: _buildTabBar(cs),
           ),
         ),
-        body: _buildBody(cs, Theme.of(context).textTheme),
+        // Keeps the last lines clear of the gesture pill / display cutouts.
+        // The Scaffold already strips the bottom inset from the body's
+        // MediaQuery whenever the status bar is present (that bar handles its
+        // own), so this never double-pads.
+        body: SafeArea(
+          top: false,
+          child: _buildBody(cs, chrome.theme.textTheme, syntaxStyle),
+        ),
         bottomNavigationBar: activeTab.isLoading || activeTab.hasError || !appearance.showStatusBar
             ? null
             : _buildBottomBar(cs),
+        ),
+      ),
         ),
       ),
     );
@@ -2143,7 +2190,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     );
   }
 
-  Widget _buildBody(ColorScheme cs, TextTheme textTheme) {
+  Widget _buildBody(ColorScheme cs, TextTheme textTheme, EditorSyntaxStyle syntaxStyle) {
     final activeTab = _activeTab;
 
     if (activeTab.isLoading) {
@@ -2204,13 +2251,6 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     }
 
     final appearance = ref.watch(textEditorAppearanceProvider);
-    final syntaxStyle = resolveEditorSyntaxStyle(
-      activeTab.filePath,
-      Theme.of(context).brightness,
-      cs,
-      background: appearance.background,
-      syntaxTheme: appearance.syntaxTheme,
-    );
     final softKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Column(
@@ -2522,11 +2562,18 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
         ? '${context.l10n.textEditorCursorPosition(activeTab.cursorLine, activeTab.cursorCol)}  •  '
         : '';
 
-    return Container(
+    // The fill is the outer DecoratedBox so it runs edge-to-edge behind the
+    // system gesture area; the SafeArea inside pushes the text up above the
+    // gesture pill (and in from display cutouts in landscape) instead of
+    // letting it sit underneath it.
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
         border: Border(top: BorderSide(color: cs.outlineVariant, width: 0.5)),
       ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
@@ -2581,6 +2628,8 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
             ),
           ],
         ],
+      ),
+        ),
       ),
     );
   }
