@@ -73,11 +73,15 @@ class MirrorSyncCoordinator(
          *  pulls/pushes. */
         private const val COPY_BUFFER_SIZE = 256 * 1024
 
-        /** How long a ".tmp" content push is held back waiting for its
-         *  rename (see deferPush). The Dart-side save does write, finish,
-         *  delete, rename back to back, so this is only a safety net for a
-         *  ".tmp" that is never renamed. */
-        private const val DEFERRED_PUSH_DELAY_MS = 5_000L
+        /** How long the first content push of a newly created file is held
+         *  back -- see [pushContent]. */
+        private const val DEFERRED_PUSH_DELAY_MS = 2_000L
+
+        /** Providers (by authority) where overwriting a real document that
+         *  already holds content in place was observed not to take effect
+         *  -- see [replaceRealDocument]. Process-wide, so the one-off
+         *  detection cost is paid once, not once per vault session. */
+        private val unreliableOverwriteAuthorities: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
         /** Below this size, a cold read of a not-yet-mirrored file just
          *  pays the synchronous full pull like before -- the latency is
@@ -144,58 +148,24 @@ class MirrorSyncCoordinator(
     // fixed number of workers instead of spawning one thread per file.
     private val pullExecutor = java.util.concurrent.Executors.newFixedThreadPool(2)
 
-    // Content pushes held back for scratch ".tmp" writes -- see
-    // VaultDocumentOps.deferContentWrite. Keyed by mirror absolute path.
-    // A rename normally cancels the entry (cancelDeferredPush) and pushes the
-    // content itself to the renamed real document; otherwise the timer below
-    // pushes it. Both maps are only touched under deferLock.
+    // What we know about a real document's content, by real URI: false =
+    // created by us and still empty, true = we pushed non-empty content.
+    // Absent = unknown (e.g. discovered by a listing).
+    private val realContent = ConcurrentHashMap<String, Boolean>()
+
+    // Write-behind for the first content push of a new file, by real URI.
+    // See pushContent.
     private val deferLock = Any()
-    private val deferredTasks = HashMap<String, () -> Unit>()
-    private val deferredFutures = HashMap<String, java.util.concurrent.ScheduledFuture<*>>()
+    private val deferred = HashMap<String, java.util.concurrent.ScheduledFuture<*>>()
     private val deferExecutor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r ->
         Thread(r, "mirror-deferred-push").apply { isDaemon = true }
     }
 
-    /** Holds [task] (a content push for [mirrored]) for [DEFERRED_PUSH_DELAY_MS]
-     *  unless [cancelDeferredPush] claims it first. A newer call for the same
-     *  file replaces the older one. */
-    fun deferPush(mirrored: File, task: () -> Unit) {
-        val path = mirrored.absolutePath
-        synchronized(deferLock) {
-            deferredFutures.remove(path)?.cancel(false)
-            deferredTasks[path] = task
-            deferredFutures[path] = deferExecutor.schedule(
-                { runDeferred(path) }, DEFERRED_PUSH_DELAY_MS, java.util.concurrent.TimeUnit.MILLISECONDS,
-            )
-        }
-    }
-
-    /** Claims (and cancels) a deferred push for [mirrored]. True means the
-     *  caller now owns pushing that content. False means there was none, or
-     *  the timer already started running it. */
-    fun cancelDeferredPush(mirrored: File): Boolean = synchronized(deferLock) {
-        deferredFutures.remove(mirrored.absolutePath)?.cancel(false)
-        deferredTasks.remove(mirrored.absolutePath) != null
-    }
-
-    private fun runDeferred(path: String) {
-        val task = synchronized(deferLock) {
-            deferredFutures.remove(path)
-            deferredTasks.remove(path)
-        } ?: return
-        try {
-            task()
-        } catch (e: Exception) {
-            VeLog.e("MirrorTrace", e) { "deferred push FAILED for $path -- real SAF file was NOT updated" }
-        }
-    }
-
-    private fun flushDeferredPushes() {
-        val paths = synchronized(deferLock) { deferredTasks.keys.toList() }
-        for (p in paths) runDeferred(p)
-    }
-
     fun markPendingLocalWrite(mirrored: File) {
+        // A write handle is being opened: its commit pushes the full
+        // content, and a deferred push firing mid-write would upload a
+        // half-written mirror.
+        cancelDeferred(mirrored)
         // Translated from mirror path to the real-URI key that
         // MirrorRegistry's content state is keyed by (see that class's doc
         // comment). Both call sites (CryptomatorSession/GocryptfsSession's
@@ -223,6 +193,8 @@ class MirrorSyncCoordinator(
         if (mirrorRoot.exists()) mirrorRoot.deleteRecursively()
         mirrorRoot.mkdirs()
         registry.clear()
+        realContent.clear()
+        synchronized(deferLock) { deferred.values.forEach { it.cancel(false) }; deferred.clear() }
         pullLocks.clear()
         folderLocks.clear()
         pullsInFlight.clear()
@@ -233,8 +205,10 @@ class MirrorSyncCoordinator(
 
     fun teardown() {
         // Don't lose content whose push was still being held back.
-        flushDeferredPushes()
+        val pending = synchronized(deferLock) { deferred.keys.toList() }
+        pending.forEach(::runDeferred)
         deferExecutor.shutdownNow()
+        realContent.clear()
         registry.clear()
         pullLocks.clear()
         folderLocks.clear()
@@ -780,7 +754,7 @@ class MirrorSyncCoordinator(
         // a failed create until the next listing. Still worth not doing.)
         var freshlyCreatedTarget: DocumentFile? = null
         try {
-            val target = existingRealDoc ?: run {
+            var target = existingRealDoc ?: run {
                 val parent = realParent ?: throw MirrorPushException("pushFileWrite: no real parent for new file $displayName")
                 val created = realOps.createFileSafe(parent, mimeType, displayName)
                     ?: throw MirrorPushException("pushFileWrite: could not create $displayName on real SAF tree")
@@ -838,7 +812,37 @@ class MirrorSyncCoordinator(
                         stagingTmp.delete()
                     }
                 } else {
-                    bytesCopied = copyDirectTruncating(mirrored, target.uri)
+                    // A content:// provider with no raw file. Overwriting a
+                    // real document that already holds content is not
+                    // reliable everywhere: Filen takes the first content
+                    // write into a document but silently keeps the old
+                    // bytes on later overwrites, so after lock/unlock the
+                    // item comes back empty. Verify the overwrite and, if
+                    // it didn't take, replace the document instead.
+                    val known = realContent[target.uri.toString()]
+                    val overwritesContent = observedLength > 0L && (
+                        known == true ||
+                            (known == null && (try { target.length() } catch (_: Exception) { 0L }) > 0L)
+                        )
+                    val authority = target.uri.authority.orEmpty()
+                    var replace = overwritesContent && authority in unreliableOverwriteAuthorities
+                    if (!replace) {
+                        bytesCopied = copyDirectTruncating(mirrored, target.uri)
+                        if (overwritesContent && bytesCopied > 0L && !awaitRealLength(target.uri, bytesCopied)) {
+                            VeLog.w("MirrorTrace") {
+                                "pushFileWrite: in-place overwrite of ${target.uri} did not take effect -- " +
+                                    "replacing documents on $authority from now on"
+                            }
+                            unreliableOverwriteAuthorities.add(authority)
+                            replace = true
+                        }
+                    }
+                    if (replace) {
+                        val created = replaceRealDocument(mirrored, target, realParent, displayName, mimeType)
+                        freshlyCreatedTarget = created
+                        target = created
+                        bytesCopied = copyDirectTruncating(mirrored, created.uri)
+                    }
                 }
             } else {
                 // Freshly-created empty file (freshlyCreatedTarget != null,
@@ -847,13 +851,16 @@ class MirrorSyncCoordinator(
                 // how it started -- and the orphan-rollback in the catch
                 // blocks below deletes it entirely on failure anyway. The
                 // truncate-before-write risk this whole branch exists to
-                // avoid does not apply here.
-                bytesCopied = copyDirectTruncating(mirrored, target.uri)
+                // avoid does not apply here. An empty new file needs no
+                // write at all: opening it just to write 0 bytes changes
+                // nothing.
+                if (observedLength > 0L) bytesCopied = copyDirectTruncating(mirrored, target.uri)
             }
             // Propagate the mirror's intended lastModified timestamp to the real SAF target
             // so the real file doesn't get stuck with the current time of the push operation.
             registerExisting(target, mirrored)
             registry.markPushed(target.uri.toString())
+            realContent[target.uri.toString()] = observedLength > 0L
             // Sync the mirror's timestamp to match SAF's current write timestamp
             val targetMtime = target.lastModified()
             if (targetMtime > 0L) {
@@ -908,6 +915,110 @@ class MirrorSyncCoordinator(
         }
     }
 
+    /** Pushes [mirrored]'s content to [realDoc] now. */
+    fun pushContentNow(mirrored: File, realDoc: DocumentFile) =
+        pushFileWrite(mirrored, null, realDoc, mirrored.name, "application/octet-stream")
+
+    /**
+     * Pushes [mirrored]'s content to [realDoc] -- except for the first
+     * content push of a file we just created, which is held back for
+     * [DEFERRED_PUSH_DELAY_MS] (write-behind). A new file is normally
+     * written more than once in quick succession (create + header, then
+     * the content; or a scratch ".tmp" that is renamed right after
+     * writing), and some providers (Filen) only honour the FIRST content
+     * write into a document and upload in the background: a later
+     * overwrite is ignored, and a rename of a document with an upload in
+     * flight leaves the content behind under the old name. Holding the
+     * push back lets a following write open ([markPendingLocalWrite]) or
+     * rename ([claimDeferred]) supersede it, so the content reaches the
+     * provider in a single write, into the final document.
+     */
+    fun pushContent(mirrored: File, realDoc: DocumentFile) {
+        if (realContent[realDoc.uri.toString()] == false) scheduleDeferred(realDoc.uri.toString())
+        else pushContentNow(mirrored, realDoc)
+    }
+
+    private fun scheduleDeferred(key: String) = synchronized(deferLock) {
+        deferred.remove(key)?.cancel(false)
+        deferred[key] = deferExecutor.schedule(
+            { runDeferred(key) }, DEFERRED_PUSH_DELAY_MS, java.util.concurrent.TimeUnit.MILLISECONDS,
+        )
+    }
+
+    /** True if a deferred push for [realDoc] was pending; the caller then
+     *  owns pushing that content (or must call [rescheduleDeferred]). */
+    fun claimDeferred(realDoc: DocumentFile): Boolean = claimDeferred(realDoc.uri.toString())
+
+    private fun claimDeferred(key: String): Boolean = synchronized(deferLock) {
+        deferred.remove(key)?.also { it.cancel(false) } != null
+    }
+
+    private fun cancelDeferred(mirrored: File) {
+        registry.keyForMirrorPath(mirrored.absolutePath)?.let { claimDeferred(it) }
+    }
+
+    fun rescheduleDeferred(realDoc: DocumentFile) = scheduleDeferred(realDoc.uri.toString())
+
+    /** Carries the content knowledge over when a rename changed the URI. */
+    fun migrateContentKnowledge(old: DocumentFile, renamed: DocumentFile) {
+        if (old.uri == renamed.uri) return
+        realContent.remove(old.uri.toString())?.let { realContent[renamed.uri.toString()] = it }
+    }
+
+    private fun runDeferred(key: String) {
+        if (!claimDeferred(key)) return
+        val mirrored = registry.mirrorFor(key) ?: return
+        val realDoc = DocumentFile.fromSingleUri(context, Uri.parse(key)) ?: return
+        try {
+            pushContentNow(mirrored, realDoc)
+        } catch (e: Exception) {
+            // The write stays PENDING_LOCAL_WRITE, so the mirror content is
+            // protected from re-listing; a later write or teardown retries.
+            VeLog.e("MirrorTrace", e) { "deferred push FAILED for $key -- real SAF file was NOT updated" }
+        }
+    }
+
+    /** Polls (about 1.5 s at most) until the real document reports
+     *  [expected] bytes. False means it never did. */
+    private fun awaitRealLength(uri: Uri, expected: Long): Boolean {
+        for (wait in longArrayOf(0L, 150L, 350L, 500L, 500L)) {
+            if (wait > 0L) Thread.sleep(wait)
+            val length = try { DocumentFile.fromSingleUri(context, uri)?.length() } catch (_: Exception) { null }
+            if (length == expected) return true
+        }
+        return false
+    }
+
+    /** Deletes [old] on the real tree and creates an empty document with
+     *  the same name in the same real parent; the caller then writes the
+     *  content into it -- a first write into a new document, which every
+     *  provider handles. Leaves the mirror file alone. */
+    private fun replaceRealDocument(
+        mirrored: File,
+        old: DocumentFile,
+        realParentHint: DocumentFile?,
+        displayName: String,
+        mimeType: String,
+    ): DocumentFile {
+        val parent = realParentHint
+            ?: mirrored.parentFile?.let { realUriFor(it) }?.let { DocumentFile.fromSingleUri(context, it) }
+            ?: throw MirrorPushException("replaceRealDocument: no real parent for $displayName")
+        val name = old.name ?: displayName
+        val oldKey = old.uri.toString()
+        realOps.deleteRecursively(old)
+        var created: DocumentFile? = null
+        for (attempt in 0..3) {
+            if (attempt > 0) Thread.sleep(150L * attempt)
+            created = try { realOps.createFileSafe(parent, mimeType, name) } catch (_: Exception) { null }
+            if (created != null) break
+        }
+        val replacement = created
+            ?: throw MirrorPushException("replaceRealDocument: could not recreate $name after deleting ${old.uri}")
+        registry.forget(oldKey)
+        realContent.remove(oldKey)
+        return replacement
+    }
+
     fun pushCreateDirectory(realParent: DocumentFile, name: String): DocumentFile {
         return realOps.createDirectorySafe(realParent, name)
             ?: throw MirrorPushException("pushCreateDirectory: could not create $name on real SAF tree")
@@ -930,6 +1041,8 @@ class MirrorSyncCoordinator(
     }
 
     fun pushDelete(realDoc: DocumentFile) {
+        claimDeferred(realDoc)
+        realContent.remove(realDoc.uri.toString())
         try {
             realOps.deleteRecursively(realDoc)
         } catch (e: Exception) {
