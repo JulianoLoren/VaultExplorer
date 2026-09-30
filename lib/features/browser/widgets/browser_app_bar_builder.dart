@@ -73,6 +73,7 @@ PreferredSizeWidget buildBrowserAppBar(
   void Function(RawEntry entry)? onSyncSettings,
   VoidCallback? onSyncRoot,
   required Future<void> Function(String fileName, String fullPath) onEditImage,
+  required Future<void> Function(String fullPath) onEditVideo,
   required Future<void> Function() onSettingsClosed,
   required bool isFiltered,
   required VoidCallback? onPaste,
@@ -133,6 +134,7 @@ PreferredSizeWidget buildBrowserAppBar(
     final showShareOption = !isInsideArchive &&
         selectedItems.any((item) => !item.isDir && !isVaultItemFile(item));
     final showEditImageOption = singleFile && MediaViewerConstants.isImage(selectedItems.first.name);
+    final showEditVideoOption = singleFile && MediaViewerConstants.isVideo(selectedItems.first.name);
     final totalBytes = selectedTotalBytes;
     final isPending = hasPendingFolderSizes;
     final sizeLabel = isPending
@@ -209,6 +211,13 @@ PreferredSizeWidget buildBrowserAppBar(
       await onEditImage(entry.name, path);
     }
 
+    Future<void> doEditVideo() async {
+      final entry = selectedItems.first;
+      final path = currentDirPath.isEmpty ? entry.name : '$currentDirPath/${entry.name}';
+      onExitSelectionMode();
+      await onEditVideo(path);
+    }
+
     void doSyncSettings() {
       final entry = selectedItems.first;
       onExitSelectionMode();
@@ -256,6 +265,8 @@ PreferredSizeWidget buildBrowserAppBar(
         onFileInfo: doShowFileInfo,
         showEditImageOption: showEditImageOption,
         onEditImage: doEditImage,
+        showEditVideoOption: showEditVideoOption,
+        onEditVideo: doEditVideo,
       );
     }
     return SelectionAppBarWide(
@@ -300,6 +311,8 @@ PreferredSizeWidget buildBrowserAppBar(
       onFileInfo: doShowFileInfo,
       showEditImageOption: showEditImageOption,
       onEditImage: doEditImage,
+      showEditVideoOption: showEditVideoOption,
+      onEditVideo: doEditVideo,
     );
   }
 

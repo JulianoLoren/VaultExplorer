@@ -3442,6 +3442,7 @@ Future<void> _extractSelectedArchive() async {
         onSyncSettings: _showSyncSettings,
         onSyncRoot: _showRootSyncSettings,
         onEditImage: _editImage,
+        onEditVideo: _editVideo,
         onSettingsClosed: _loadToolbarConfig,
         isFiltered: isFiltered,
         onPaste: _isReadOnly ? null : _paste,

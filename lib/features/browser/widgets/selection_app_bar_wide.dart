@@ -38,6 +38,8 @@ class SelectionAppBarWide extends StatelessWidget implements PreferredSizeWidget
   final VoidCallback onShare;
   final bool showEditImageOption;
   final VoidCallback onEditImage;
+  final bool showEditVideoOption;
+  final VoidCallback onEditVideo;
   final VoidCallback onToggleDocumentProvider;
   final VoidCallback? onSyncSettings;
   final VoidCallback onPin;
@@ -82,6 +84,8 @@ class SelectionAppBarWide extends StatelessWidget implements PreferredSizeWidget
     required this.onShare,
     this.showEditImageOption = false,
     required this.onEditImage,
+    this.showEditVideoOption = false,
+    required this.onEditVideo,
     required this.onToggleDocumentProvider,
     this.onSyncSettings,
     required this.onPin,
@@ -189,6 +193,7 @@ class SelectionAppBarWide extends StatelessWidget implements PreferredSizeWidget
             if (value == 'share') onShare();
             if (value == 'open_with_app') onOpenWithApp();
             if (value == 'edit_image') onEditImage();
+            if (value == 'edit_video') onEditVideo();
             if (value == 'compress') onCompressSelection();
             if (value == 'export') onExport();
             if (value == 'encrypt') onEncrypt();
@@ -239,6 +244,22 @@ class SelectionAppBarWide extends StatelessWidget implements PreferredSizeWidget
                     ),
                     const SizedBox(width: 12),
                     Text(context.l10n.editImageAction),
+                  ],
+                ),
+              ),
+            if (!isInsideArchive && showEditVideoOption)
+              PopupMenuItem<String>(
+                value: 'edit_video',
+                enabled: !readOnly,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.content_cut_rounded,
+                      color: readOnly ? cs.onSurfaceVariant.withValues(alpha: 0.4) : cs.onSurfaceVariant,
+                      size: AppIconSize.small,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(context.l10n.videoEditorEditAction),
                   ],
                 ),
               ),
