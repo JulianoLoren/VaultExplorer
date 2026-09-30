@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:ui' show Color;
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/data/models/file_manager_toolbar_config.dart';
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
 import 'package:vaultexplorer/data/models/thumbnail_quality.dart';
@@ -88,6 +92,68 @@ void main() {
       final config = FileManagerToolbarConfig.fromJson({});
       expect(config.defaultThumbnailCacheMode, ThumbnailCacheMode.disabled);
       expect(config.defaultThumbnailQuality, ThumbnailQuality.defaultQuality);
+    });
+  });
+
+  group('FileManagerToolbarConfig skin', () {
+    test('defaults to the classic skin', () {
+      expect(FileManagerToolbarConfig.defaults().skin, FileManagerSkin.classic);
+      expect(
+        const FileManagerToolbarConfig(order: [], hidden: {}).skin,
+        FileManagerSkin.classic,
+      );
+    });
+
+    test('copyWith replaces only the skin', () {
+      final base = FileManagerToolbarConfig.defaults().copyWith(
+        showHiddenFiles: true,
+      );
+      final updated = base.copyWith(skin: SkinPreset.terminal.skin);
+
+      expect(updated.skin, SkinPreset.terminal.skin);
+      expect(updated.showHiddenFiles, isTrue);
+      // Omitting skin keeps whatever was there.
+      expect(updated.copyWith(showHiddenFiles: false).skin,
+          SkinPreset.terminal.skin);
+    });
+
+    test('a skin survives the JSON round trip storage performs', () {
+      const skin = FileManagerSkin(
+        files: SkinItemStyle(
+          iconFamily: SkinIconFamily.outlined,
+          container: SkinContainerStyle.none,
+          nameColor: Color(0xFF123456),
+        ),
+        monospaceNames: true,
+      );
+      final config = FileManagerToolbarConfig.defaults().copyWith(skin: skin);
+
+      final restored = FileManagerToolbarConfig.fromJson(
+        jsonDecode(jsonEncode(config.toJson())) as Map<String, dynamic>,
+      );
+      expect(restored.skin, skin);
+    });
+
+    test('configs saved before skins existed load with the classic skin', () {
+      final legacy = FileManagerToolbarConfig.defaults().toJson()
+        ..remove('skin');
+      expect(legacy.containsKey('skin'), isFalse);
+
+      final restored = FileManagerToolbarConfig.fromJson(legacy);
+      expect(restored.skin, FileManagerSkin.classic);
+      expect(FileManagerToolbarConfig.fromJson({}).skin,
+          FileManagerSkin.classic);
+    });
+
+    test('a corrupted skin falls back to classic without losing the rest', () {
+      final json = FileManagerToolbarConfig.defaults()
+          .copyWith(showHiddenFiles: true)
+          .toJson();
+      json['skin'] = 'garbage';
+
+      final restored = FileManagerToolbarConfig.fromJson(json);
+      expect(restored.skin, FileManagerSkin.classic);
+      expect(restored.showHiddenFiles, isTrue);
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/data/models/file_manager_action.dart';
+import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/data/models/grid_aspect_ratio.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
 import 'package:vaultexplorer/data/models/media_viewer_action.dart';
@@ -75,6 +76,10 @@ class FileManagerToolbarConfig {
   final ThumbnailQuality defaultThumbnailQuality;
   final MediaViewerToolbarConfig mediaViewerToolbarConfig;
 
+  /// How file and folder icons, their backgrounds and names look in the
+  /// file manager. See [FileManagerSkin].
+  final FileManagerSkin skin;
+
   const FileManagerToolbarConfig({
     required this.order,
     required this.hidden,
@@ -111,6 +116,7 @@ class FileManagerToolbarConfig {
     this.defaultThumbnailCacheMode = ThumbnailCacheMode.disabled,
     this.defaultThumbnailQuality = ThumbnailQuality.defaultQuality,
     this.mediaViewerToolbarConfig = const MediaViewerToolbarConfig(),
+    this.skin = FileManagerSkin.classic,
   });
 
   factory FileManagerToolbarConfig.defaults() => const FileManagerToolbarConfig(
@@ -156,6 +162,7 @@ class FileManagerToolbarConfig {
         defaultThumbnailCacheMode: ThumbnailCacheMode.disabled,
         defaultThumbnailQuality: ThumbnailQuality.defaultQuality,
         mediaViewerToolbarConfig: const MediaViewerToolbarConfig(),
+        skin: FileManagerSkin.classic,
       );
 
   List<FileManagerAction> get visible =>
@@ -227,6 +234,7 @@ class FileManagerToolbarConfig {
     ThumbnailCacheMode? defaultThumbnailCacheMode,
     ThumbnailQuality? defaultThumbnailQuality,
     MediaViewerToolbarConfig? mediaViewerToolbarConfig,
+    FileManagerSkin? skin,
   }) =>
       FileManagerToolbarConfig(
         order: order ?? this.order,
@@ -271,6 +279,7 @@ class FileManagerToolbarConfig {
             defaultThumbnailQuality ?? this.defaultThumbnailQuality,
         mediaViewerToolbarConfig:
             mediaViewerToolbarConfig ?? this.mediaViewerToolbarConfig,
+        skin: skin ?? this.skin,
       );
 
   Map<String, dynamic> toJson() => {
@@ -307,6 +316,7 @@ class FileManagerToolbarConfig {
         'defaultThumbnailCacheMode': defaultThumbnailCacheMode.toJson(),
         'defaultThumbnailQuality': defaultThumbnailQuality.toJson(),
         'mediaViewerToolbarConfig': mediaViewerToolbarConfig.toJson(),
+        'skin': skin.toJson(),
       };
 
   factory FileManagerToolbarConfig.fromJson(Map<String, dynamic>? j) {
@@ -409,6 +419,8 @@ class FileManagerToolbarConfig {
       defaultThumbnailCacheMode: defaultThumbnailCacheMode,
       defaultThumbnailQuality: defaultThumbnailQuality,
       mediaViewerToolbarConfig: mediaViewerConfig,
+      // Absent in configs saved before skins existed -> classic.
+      skin: FileManagerSkin.fromJson(j['skin']),
     );
   }
 }

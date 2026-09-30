@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
 import 'package:vaultexplorer/core/utils/format_utils.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
+import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/data/models/file_manager_toolbar_config.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
 import 'package:vaultexplorer/features/browser/widgets/file_name_label.dart';
@@ -130,7 +132,10 @@ class FileRowShell extends StatelessWidget {
       child: Text(
         _columnText(col, context),
         textAlign: TextAlign.right,
-        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+        style: textTheme.bodySmall?.copyWith(
+          color: FileManagerSkinScope.of(context).detailsColor ??
+              cs.onSurfaceVariant,
+        ),
         maxLines: 1,
         softWrap: false,
       ),
@@ -158,6 +163,7 @@ class FileRowShell extends StatelessWidget {
     ColorScheme cs,
   ) {
     final caption = _buildDetailedCaption(context);
+    final skin = FileManagerSkinScope.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -167,10 +173,13 @@ class FileRowShell extends StatelessWidget {
           text: displayName,
           query: searchQuery,
           mode: longFileNameMode,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: TileSelectionStyle.titleWeight(isSelected),
-            letterSpacing: 0,
-            height: 1.2,
+          style: skin.nameStyle(
+            textTheme.titleMedium?.copyWith(
+              fontWeight: TileSelectionStyle.titleWeight(isSelected),
+              letterSpacing: 0,
+              height: 1.2,
+            ),
+            isDir: entry.isDir,
           ),
         ),
         if (caption.isNotEmpty) ...[
@@ -180,7 +189,8 @@ class FileRowShell extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: textTheme.bodySmall?.copyWith(
-              color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+              color: skin.detailsColor?.withValues(alpha: 0.9) ??
+                  cs.onSurfaceVariant.withValues(alpha: 0.7),
               height: 1.2,
             ),
           ),
@@ -204,11 +214,37 @@ class FileRowShell extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final textScaler = MediaQuery.textScalerOf(context);
 
-    final squircleBackground =
-        isSelected ? cs.primaryContainer : unselectedIconBackground;
+    final skin = FileManagerSkinScope.of(context);
     final bareIconLeading = customLeading != null && customLeadingIsIcon;
-    final leadingBackground =
-        bareIconLeading ? Colors.transparent : squircleBackground;
+
+    // The tile behind the leading icon/thumbnail. A skin can keep the tinted
+    // fill (classic), swap it for a thin outline, or drop the box entirely.
+    // An APK's own launcher icon is always drawn bare regardless of skin. A
+    // thumbnail is still clipped to the rounded shape even with no box, so
+    // photos keep their rounded corners.
+    Color leadingBackground = Colors.transparent;
+    BoxBorder? leadingBorder;
+    if (!bareIconLeading) {
+      switch (skin.styleFor(isDir: entry.isDir).container) {
+        case SkinContainerStyle.filled:
+          leadingBackground =
+              isSelected ? cs.primaryContainer : unselectedIconBackground;
+        case SkinContainerStyle.outlined:
+          leadingBackground =
+              isSelected ? cs.primaryContainer : Colors.transparent;
+          leadingBorder = Border.all(
+            color: isSelected ? cs.primary : cs.outlineVariant,
+            width: 1.2,
+          );
+        case SkinContainerStyle.none:
+          break;
+      }
+    }
+    final leadingDecoration = BoxDecoration(
+      color: leadingBackground,
+      borderRadius: BorderRadius.circular(12),
+      border: leadingBorder,
+    );
     final leadingClip = bareIconLeading ? Clip.none : Clip.antiAlias;
     final leadingPadding =
         bareIconLeading ? const EdgeInsets.all(2.0) : EdgeInsets.zero;
@@ -285,10 +321,7 @@ class FileRowShell extends StatelessWidget {
                           width: leadingSize,
                           height: leadingSize,
                           padding: leadingPadding,
-                          decoration: BoxDecoration(
-                            color: leadingBackground,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          decoration: leadingDecoration,
                           clipBehavior: leadingClip,
                           child: customLeading ??
                               Icon(
@@ -309,10 +342,7 @@ class FileRowShell extends StatelessWidget {
                             width: leadingSize,
                             height: leadingSize,
                             padding: leadingPadding,
-                            decoration: BoxDecoration(
-                              color: leadingBackground,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            decoration: leadingDecoration,
                             clipBehavior: leadingClip,
                             child: customLeading ??
                                 Icon(
@@ -355,10 +385,13 @@ class FileRowShell extends StatelessWidget {
                             text: displayName,
                             query: searchQuery,
                             mode: longFileNameMode,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight:
-                                  TileSelectionStyle.titleWeight(isSelected),
-                              letterSpacing: 0,
+                            style: skin.nameStyle(
+                              textTheme.titleMedium?.copyWith(
+                                fontWeight:
+                                    TileSelectionStyle.titleWeight(isSelected),
+                                letterSpacing: 0,
+                              ),
+                              isDir: entry.isDir,
                             ),
                           ),
                   ),

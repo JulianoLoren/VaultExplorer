@@ -8,6 +8,7 @@ import 'package:vaultexplorer/data/models/grid_aspect_ratio.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
 import 'package:vaultexplorer/data/models/playlist_transition_effect.dart';
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
+import 'package:vaultexplorer/features/settings/file_manager_skin_screen.dart';
 import 'package:vaultexplorer/features/settings/file_manager_toolbar_settings_controller.dart';
 import 'package:vaultexplorer/core/services/disguise_mode_api.dart';
 import 'package:vaultexplorer/features/settings/app_settings_controller.dart';
@@ -284,6 +285,48 @@ class FileManagerToolbarSettingsScreen extends ConsumerWidget {
                             secondary: Icon(
                               Icons.vertical_align_bottom_rounded,
                               color: cs.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ==========================================
+                      // 1b. APPEARANCE (SKIN)
+                      // ==========================================
+                      SectionHeader(context.l10n.fileSkinSectionHeader),
+                      SectionCard(
+                        children: [
+                          ListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 16),
+                            leading: Icon(
+                              Icons.palette_outlined,
+                              color: cs.primary,
+                            ),
+                            title: Text(
+                              context.l10n.fileSkinEntryTitle,
+                              style: textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              state.config.skin.matchingPreset
+                                      ?.getLocalizedLabel(context.l10n) ??
+                                  context.l10n.fileSkinPresetCustom,
+                              style: textTheme.bodySmall
+                                  ?.copyWith(color: cs.onSurfaceVariant),
+                            ),
+                            trailing: Icon(
+                              Icons.chevron_right_rounded,
+                              color: cs.onSurfaceVariant,
+                            ),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => FileManagerSkinScreen(
+                                  containerUri: containerUri,
+                                ),
+                              ),
                             ),
                           ),
                         ],

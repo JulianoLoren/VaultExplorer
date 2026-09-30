@@ -9360,4 +9360,113 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => 'Thème du gestionnaire de fichiers';
+
+  @override
+  String get fileSkinSectionHeader => 'Apparence';
+
+  @override
+  String get fileSkinEntryTitle => 'Thème';
+
+  @override
+  String get fileSkinPreviewHeader => 'Aperçu';
+
+  @override
+  String get fileSkinPresetsHeader => 'Thèmes';
+
+  @override
+  String get fileSkinFoldersHeader => 'Dossiers';
+
+  @override
+  String get fileSkinFilesHeader => 'Fichiers';
+
+  @override
+  String get fileSkinTextHeader => 'Texte';
+
+  @override
+  String get fileSkinIconStyleLabel => 'Style des icônes';
+
+  @override
+  String get fileSkinContainerLabel => 'Arrière-plan des icônes';
+
+  @override
+  String get fileSkinIconColorLabel => 'Couleur des icônes';
+
+  @override
+  String get fileSkinCustomIconColorLabel => 'Couleur d\'icône personnalisée';
+
+  @override
+  String get fileSkinNameColorLabel => 'Couleur des noms';
+
+  @override
+  String get fileSkinDetailsColorLabel => 'Couleur des détails';
+
+  @override
+  String get fileSkinMonospaceLabel => 'Noms en police à chasse fixe';
+
+  @override
+  String get fileSkinMonospaceDesc =>
+      'Utiliser une police à chasse fixe pour les noms de fichiers et de dossiers';
+
+  @override
+  String get fileSkinIconFamilyDefault => 'Par défaut';
+
+  @override
+  String get fileSkinIconFamilyFilled => 'Plein';
+
+  @override
+  String get fileSkinIconFamilyRounded => 'Arrondi';
+
+  @override
+  String get fileSkinIconFamilyOutlined => 'Contour';
+
+  @override
+  String get fileSkinIconFamilySharp => 'Anguleux';
+
+  @override
+  String get fileSkinContainerFilled => 'Plein';
+
+  @override
+  String get fileSkinContainerOutlined => 'Contour';
+
+  @override
+  String get fileSkinContainerNone => 'Aucun';
+
+  @override
+  String get fileSkinColorAuto => 'Automatique';
+
+  @override
+  String get fileSkinColorAccent => 'Accent du thème';
+
+  @override
+  String get fileSkinColorNeutral => 'Neutre';
+
+  @override
+  String get fileSkinColorCustom => 'Personnalisé';
+
+  @override
+  String get fileSkinColorDefault => 'Par défaut';
+
+  @override
+  String get fileSkinColorHexLabel => 'Couleur hexadécimale';
+
+  @override
+  String get fileSkinPresetClassic => 'Classique';
+
+  @override
+  String get fileSkinPresetMinimalOutline => 'Contour minimal';
+
+  @override
+  String get fileSkinPresetFrames => 'Cadres';
+
+  @override
+  String get fileSkinPresetVivid => 'Éclatant';
+
+  @override
+  String get fileSkinPresetTerminal => 'Terminal';
+
+  @override
+  String get fileSkinPresetCustom => 'Personnalisé';
 }

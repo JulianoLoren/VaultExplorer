@@ -11636,5 +11636,149 @@
   "videoEditorLosslessNote": "Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.",
   "@videoEditorLosslessNote": {
     "description": "Explanation in the export sheet of why cut points snap to keyframes"
+  },
+  "fileSkinScreenTitle": "File Manager Skin",
+  "@fileSkinScreenTitle": {
+    "description": "AppBar title of the screen where the file manager skin is chosen"
+  },
+  "fileSkinSectionHeader": "Appearance",
+  "@fileSkinSectionHeader": {
+    "description": "Section header in File Manager Settings above the skin entry"
+  },
+  "fileSkinEntryTitle": "Skin",
+  "@fileSkinEntryTitle": {
+    "description": "Title of the File Manager Settings row that opens the skin screen"
+  },
+  "fileSkinPreviewHeader": "Preview",
+  "@fileSkinPreviewHeader": {
+    "description": "Header above the live sample of the file manager on the skin screen"
+  },
+  "fileSkinPresetsHeader": "Skins",
+  "@fileSkinPresetsHeader": {
+    "description": "Header above the list of built-in skins on the skin screen"
+  },
+  "fileSkinFoldersHeader": "Folders",
+  "@fileSkinFoldersHeader": {
+    "description": "Header of the skin options that apply to folders"
+  },
+  "fileSkinFilesHeader": "Files",
+  "@fileSkinFilesHeader": {
+    "description": "Header of the skin options that apply to files"
+  },
+  "fileSkinTextHeader": "Text",
+  "@fileSkinTextHeader": {
+    "description": "Header of the skin options that apply to text"
+  },
+  "fileSkinIconStyleLabel": "Icon style",
+  "@fileSkinIconStyleLabel": {
+    "description": "Label of the option that picks which icon set is used"
+  },
+  "fileSkinContainerLabel": "Icon background",
+  "@fileSkinContainerLabel": {
+    "description": "Label of the option that picks the box drawn behind an icon (filled, outlined or none)"
+  },
+  "fileSkinIconColorLabel": "Icon color",
+  "@fileSkinIconColorLabel": {
+    "description": "Label of the option that picks how icons are colored"
+  },
+  "fileSkinCustomIconColorLabel": "Custom icon color",
+  "@fileSkinCustomIconColorLabel": {
+    "description": "Label of the row that picks the custom icon color, shown when icon color is set to custom"
+  },
+  "fileSkinNameColorLabel": "Name color",
+  "@fileSkinNameColorLabel": {
+    "description": "Label of the option that picks the color of file or folder names"
+  },
+  "fileSkinDetailsColorLabel": "Details color",
+  "@fileSkinDetailsColorLabel": {
+    "description": "Label of the option that picks the color of the secondary text such as date and size"
+  },
+  "fileSkinMonospaceLabel": "Monospace names",
+  "@fileSkinMonospaceLabel": {
+    "description": "Title of the switch that draws file and folder names in a monospace font"
+  },
+  "fileSkinMonospaceDesc": "Use a fixed-width font for file and folder names",
+  "@fileSkinMonospaceDesc": {
+    "description": "Subtitle of the monospace names switch"
+  },
+  "fileSkinIconFamilyDefault": "Default",
+  "@fileSkinIconFamilyDefault": {
+    "description": "Icon style choice: the app's original mix of icons"
+  },
+  "fileSkinIconFamilyFilled": "Filled",
+  "@fileSkinIconFamilyFilled": {
+    "description": "Icon style choice: solid filled icons"
+  },
+  "fileSkinIconFamilyRounded": "Rounded",
+  "@fileSkinIconFamilyRounded": {
+    "description": "Icon style choice: icons with rounded corners"
+  },
+  "fileSkinIconFamilyOutlined": "Outlined",
+  "@fileSkinIconFamilyOutlined": {
+    "description": "Icon style choice: thin outline icons"
+  },
+  "fileSkinIconFamilySharp": "Sharp",
+  "@fileSkinIconFamilySharp": {
+    "description": "Icon style choice: icons with sharp corners"
+  },
+  "fileSkinContainerFilled": "Filled",
+  "@fileSkinContainerFilled": {
+    "description": "Icon background choice: a tinted filled box behind the icon"
+  },
+  "fileSkinContainerOutlined": "Outlined",
+  "@fileSkinContainerOutlined": {
+    "description": "Icon background choice: a thin outlined box behind the icon"
+  },
+  "fileSkinContainerNone": "None",
+  "@fileSkinContainerNone": {
+    "description": "Icon background choice: no box, just the icon"
+  },
+  "fileSkinColorAuto": "Automatic",
+  "@fileSkinColorAuto": {
+    "description": "Icon color choice: files are colored by type, folders use the theme color"
+  },
+  "fileSkinColorAccent": "Theme accent",
+  "@fileSkinColorAccent": {
+    "description": "Icon color choice: use the theme's accent color"
+  },
+  "fileSkinColorNeutral": "Neutral",
+  "@fileSkinColorNeutral": {
+    "description": "Icon color choice: a muted neutral color"
+  },
+  "fileSkinColorCustom": "Custom",
+  "@fileSkinColorCustom": {
+    "description": "Icon color choice: a color picked by the user"
+  },
+  "fileSkinColorDefault": "Default",
+  "@fileSkinColorDefault": {
+    "description": "Value shown, and button label, meaning a color option follows the theme instead of a chosen color"
+  },
+  "fileSkinColorHexLabel": "Hex color",
+  "@fileSkinColorHexLabel": {
+    "description": "Label of the text field where a color is typed as a hex code"
+  },
+  "fileSkinPresetClassic": "Classic",
+  "@fileSkinPresetClassic": {
+    "description": "Name of the built-in skin that matches the original look"
+  },
+  "fileSkinPresetMinimalOutline": "Minimal outline",
+  "@fileSkinPresetMinimalOutline": {
+    "description": "Name of the built-in skin with bare outlined icons and no boxes"
+  },
+  "fileSkinPresetFrames": "Frames",
+  "@fileSkinPresetFrames": {
+    "description": "Name of the built-in skin with outlined icons inside thin frames"
+  },
+  "fileSkinPresetVivid": "Vivid",
+  "@fileSkinPresetVivid": {
+    "description": "Name of the built-in skin with solid colorful icons and no boxes"
+  },
+  "fileSkinPresetTerminal": "Terminal",
+  "@fileSkinPresetTerminal": {
+    "description": "Name of the built-in skin with sharp icons and monospaced names"
+  },
+  "fileSkinPresetCustom": "Custom",
+  "@fileSkinPresetCustom": {
+    "description": "Label shown when the skin is a custom mix that matches no built-in skin"
   }
 }

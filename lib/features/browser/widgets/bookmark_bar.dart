@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
-import 'package:vaultexplorer/core/utils/file_type_utils.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
 
 class BookmarkBar extends StatelessWidget {
   final List<String> bookmarkPaths;
@@ -33,6 +33,7 @@ class BookmarkBar extends StatelessWidget {
 
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final skin = FileManagerSkinScope.of(context);
 
     if (axis == Axis.horizontal) {
       return Container(
@@ -48,13 +49,10 @@ class BookmarkBar extends StatelessWidget {
             final path = bookmarkPaths[index];
             final name = path.split('/').last;
             final isDir = _isFolder(path);
-            final ext = name.contains('.') ? name.split('.').last : '';
-            final icon = isDir
-                ? Icons.folder_rounded
-                : (vaultIconForExt(ext) ?? iconForFile(name));
+            final icon = isDir ? skin.folderIcon : skin.fileIcon(name);
             final iconColor = isDir
-                ? cs.secondary
-                : (vaultColorForExt(ext) ?? colorForFile(name));
+                ? skin.folderIconColor(cs)
+                : skin.fileIconColor(cs, name);
 
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -111,13 +109,10 @@ class BookmarkBar extends StatelessWidget {
                 final path = bookmarkPaths[index];
                 final name = path.split('/').last;
                 final isDir = _isFolder(path);
-                final ext = name.contains('.') ? name.split('.').last : '';
-                final icon = isDir
-                    ? Icons.folder_rounded
-                    : (vaultIconForExt(ext) ?? iconForFile(name));
+                final icon = isDir ? skin.folderIcon : skin.fileIcon(name);
                 final iconColor = isDir
-                    ? cs.secondary
-                    : (vaultColorForExt(ext) ?? colorForFile(name));
+                    ? skin.folderIconColor(cs)
+                    : skin.fileIconColor(cs, name);
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),

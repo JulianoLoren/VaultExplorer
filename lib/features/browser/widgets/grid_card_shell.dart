@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
+import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
 import 'package:vaultexplorer/features/browser/widgets/file_name_label.dart';
 
@@ -89,6 +91,10 @@ class GridCardShell extends StatelessWidget {
   final bool isPlaceholder;
   final Color? cardColor;
 
+  /// Whether this card represents a folder rather than a file. Lets the active
+  /// skin style the two independently (see [FileManagerSkin]).
+  final bool isFolder;
+
   /// Pass [aspectRatio] for Masonry items. Leave null for standard GridView items.
   final double? aspectRatio;
 
@@ -110,6 +116,7 @@ class GridCardShell extends StatelessWidget {
     this.isSynced = false,
     this.isPlaceholder = false,
     this.cardColor,
+    this.isFolder = false,
     this.aspectRatio,
   });
 
@@ -117,6 +124,7 @@ class GridCardShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final skin = FileManagerSkinScope.of(context);
 
     Widget previewStack = Stack(
       fit: StackFit.expand,
@@ -222,9 +230,12 @@ class GridCardShell extends StatelessWidget {
         text: label,
         query: searchQuery,
         mode: longFileNameMode,
-        style: textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: cs.onSurface,
+        style: skin.nameStyle(
+          textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: cs.onSurface,
+          ),
+          isDir: isFolder,
         ),
       ),
     );
@@ -241,18 +252,35 @@ class GridCardShell extends StatelessWidget {
       ],
     );
 
+    // The card behind the preview: tinted (classic), a thin outline, or no
+    // box at all, per the active skin. Selection always wins so it stays
+    // visible whatever the skin.
+    Color fill = Colors.transparent;
+    BorderSide side = BorderSide.none;
+    if (isSelected) {
+      fill = cs.primaryContainer.withValues(alpha: 0.3);
+      side = BorderSide(color: cs.primary, width: 2.0);
+    } else {
+      switch (skin.styleFor(isDir: isFolder).container) {
+        case SkinContainerStyle.filled:
+          fill = cardColor ?? GridCardUtils.folderCardColor(cs, isMounted: false);
+          side = BorderSide.none;
+        case SkinContainerStyle.outlined:
+          fill = Colors.transparent;
+          side = BorderSide(color: cs.outlineVariant, width: 1.2);
+        case SkinContainerStyle.none:
+          break;
+      }
+    }
+
     Widget cell = Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isSelected
-            ? BorderSide(color: cs.primary, width: 2.0)
-            : BorderSide.none,
+        side: side,
       ),
-      color: isSelected
-          ? cs.primaryContainer.withValues(alpha: 0.3)
-          : (cardColor ?? GridCardUtils.folderCardColor(cs, isMounted: false)),
+      color: fill,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,

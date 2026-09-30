@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/api/vault_file_io_api.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
 import 'package:vaultexplorer/core/utils/file_type_utils.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
 import 'package:vaultexplorer/core/widgets/thumbnail/async_thumbnail.dart';
@@ -96,7 +97,6 @@ class FileTile extends StatelessWidget {
     String displayName = entry.name;
     final ext = displayName.split('.').last;
     final vaultIcon = vaultIconForExt(ext);
-    final vaultColor = vaultColorForExt(ext);
     if (vaultIcon != null) {
       final parts = displayName.split('.');
       if (parts.length > 1) {
@@ -104,8 +104,12 @@ class FileTile extends StatelessWidget {
         displayName = parts.join('.');
       }
     }
-    final displayIcon = vaultIcon ?? iconForFile(entry.name);
-    final iconColor = vaultColor ?? colorForFile(entry.name);
+    // Icon and color come from the active skin. With the classic skin this
+    // is exactly `vaultIcon ?? iconForFile(name)` / `vaultColor ??
+    // colorForFile(name)`, as before skins existed.
+    final skin = FileManagerSkinScope.of(context);
+    final displayIcon = skin.fileIcon(entry.name);
+    final iconColor = skin.fileIconColor(cs, entry.name);
     Widget? trailingWidget;
     if (!isSelectionMode && showItemActionsMenu && !entry.isPlaceholder) {
       trailingWidget = SizedBox(

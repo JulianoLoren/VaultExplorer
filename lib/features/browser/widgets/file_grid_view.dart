@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/api/vault_file_io_api.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
 import 'package:vaultexplorer/core/utils/file_type_utils.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
 import 'package:vaultexplorer/core/widgets/thumbnail/async_thumbnail.dart';
@@ -365,10 +366,11 @@ class _FileGridViewState extends State<FileGridView>
     final isMounted = widget.mountedFolderPaths.contains(fullPath);
 
     final iconSize = GridCardUtils.calculateIconSize(context, _crossAxisCount);
+    final skin = FileManagerSkinScope.of(context);
     final folderIcon = Icon(
-      Icons.folder_rounded,
+      skin.folderIcon,
       size: iconSize,
-      color: isSelected ? cs.primary : cs.secondary,
+      color: isSelected ? cs.primary : skin.folderIconColor(cs),
     );
 
     return GridCardShell(
@@ -376,6 +378,7 @@ class _FileGridViewState extends State<FileGridView>
       isSelected: isSelected,
       isSelectionMode: widget.isSelectionMode,
       showFileName: true,
+      isFolder: true,
       longFileNameMode: widget.longFileNameMode,
       isPinned: widget.isPinned?.call(entry) ?? false,
       isBookmark: widget.isBookmark?.call(entry) ?? false,
@@ -411,8 +414,8 @@ class _FileGridViewState extends State<FileGridView>
     final isSelected = widget.selectedItems.contains(entry);
     String displayName = cleanName;
     final ext = cleanName.split('.').last;
+    final skin = FileManagerSkinScope.of(context);
     final vaultIcon = vaultIconForExt(ext);
-    final vaultColor = vaultColorForExt(ext);
     if (vaultIcon != null) {
       final nameParts = cleanName.split('.');
       if (nameParts.length > 1) {
@@ -436,7 +439,11 @@ class _FileGridViewState extends State<FileGridView>
 
     if (vaultIcon != null) {
       previewWidget = Center(
-        child: Icon(vaultIcon, size: iconSize, color: vaultColor),
+        child: Icon(
+          skin.fileIcon(cleanName),
+          size: iconSize,
+          color: skin.fileIconColor(cs, cleanName),
+        ),
       );
     } else if (isImg) {
       previewWidget = Hero(
@@ -476,8 +483,8 @@ class _FileGridViewState extends State<FileGridView>
             filePath: fullPath,
             cacheMode: widget.thumbnailCacheMode,
             quality: widget.thumbnailQuality,
-            fallbackIcon: iconForFile(cleanName),
-            fallbackColor: colorForFile(cleanName),
+            fallbackIcon: skin.fileIcon(cleanName),
+            fallbackColor: skin.fileIconColor(cs, cleanName),
             fallbackIconSize: iconSize,
           ),
         ),
@@ -485,9 +492,9 @@ class _FileGridViewState extends State<FileGridView>
     } else {
       previewWidget = Center(
         child: Icon(
-          iconForFile(cleanName),
+          skin.fileIcon(cleanName),
           size: iconSize,
-          color: colorForFile(cleanName),
+          color: skin.fileIconColor(cs, cleanName),
         ),
       );
     }

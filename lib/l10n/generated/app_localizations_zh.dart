@@ -8673,4 +8673,112 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => '文件管理器皮肤';
+
+  @override
+  String get fileSkinSectionHeader => '外观';
+
+  @override
+  String get fileSkinEntryTitle => '皮肤';
+
+  @override
+  String get fileSkinPreviewHeader => '预览';
+
+  @override
+  String get fileSkinPresetsHeader => '皮肤';
+
+  @override
+  String get fileSkinFoldersHeader => '文件夹';
+
+  @override
+  String get fileSkinFilesHeader => '文件';
+
+  @override
+  String get fileSkinTextHeader => '文本';
+
+  @override
+  String get fileSkinIconStyleLabel => '图标样式';
+
+  @override
+  String get fileSkinContainerLabel => '图标背景';
+
+  @override
+  String get fileSkinIconColorLabel => '图标颜色';
+
+  @override
+  String get fileSkinCustomIconColorLabel => '自定义图标颜色';
+
+  @override
+  String get fileSkinNameColorLabel => '名称颜色';
+
+  @override
+  String get fileSkinDetailsColorLabel => '详细信息颜色';
+
+  @override
+  String get fileSkinMonospaceLabel => '等宽名称';
+
+  @override
+  String get fileSkinMonospaceDesc => '对文件和文件夹名称使用等宽字体';
+
+  @override
+  String get fileSkinIconFamilyDefault => '默认';
+
+  @override
+  String get fileSkinIconFamilyFilled => '实心';
+
+  @override
+  String get fileSkinIconFamilyRounded => '圆角';
+
+  @override
+  String get fileSkinIconFamilyOutlined => '轮廓';
+
+  @override
+  String get fileSkinIconFamilySharp => '直角';
+
+  @override
+  String get fileSkinContainerFilled => '实心';
+
+  @override
+  String get fileSkinContainerOutlined => '轮廓';
+
+  @override
+  String get fileSkinContainerNone => '无';
+
+  @override
+  String get fileSkinColorAuto => '自动';
+
+  @override
+  String get fileSkinColorAccent => '主题强调色';
+
+  @override
+  String get fileSkinColorNeutral => '中性';
+
+  @override
+  String get fileSkinColorCustom => '自定义';
+
+  @override
+  String get fileSkinColorDefault => '默认';
+
+  @override
+  String get fileSkinColorHexLabel => '十六进制颜色';
+
+  @override
+  String get fileSkinPresetClassic => '经典';
+
+  @override
+  String get fileSkinPresetMinimalOutline => '极简轮廓';
+
+  @override
+  String get fileSkinPresetFrames => '边框';
+
+  @override
+  String get fileSkinPresetVivid => '鲜艳';
+
+  @override
+  String get fileSkinPresetTerminal => '终端';
+
+  @override
+  String get fileSkinPresetCustom => '自定义';
 }

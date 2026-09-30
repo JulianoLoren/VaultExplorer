@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vaultexplorer/data/models/file_manager_action.dart';
+import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/data/models/file_manager_toolbar_config.dart';
 import 'package:vaultexplorer/data/models/playlist_transition_effect.dart';
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
@@ -64,6 +65,27 @@ void main() {
 
       await controller.toggleActionVisible(FileManagerAction.search, true);
       expect(container.read(provider).config.hidden, isNot(contains(FileManagerAction.search)));
+    });
+
+    test('setSkin updates the skin and leaves other settings alone', () async {
+      final controller = container.read(provider.notifier);
+      await controller.load(null);
+
+      await controller.setShowHiddenFiles(true);
+      await controller.setSkin(SkinPreset.minimalOutline.skin);
+
+      final config = container.read(provider).config;
+      expect(config.skin, SkinPreset.minimalOutline.skin);
+      expect(config.showHiddenFiles, isTrue);
+
+      // Tweaking one option makes it a custom skin rather than a preset.
+      final tweaked = config.skin.copyWith(monospaceNames: true);
+      await controller.setSkin(tweaked);
+      expect(container.read(provider).config.skin, tweaked);
+      expect(container.read(provider).config.skin.matchingPreset, isNull);
+
+      await controller.setSkin(FileManagerSkin.classic);
+      expect(container.read(provider).config.skin, FileManagerSkin.classic);
     });
 
     test('toggleDetailColumnVisible hides and reveals detail columns', () async {

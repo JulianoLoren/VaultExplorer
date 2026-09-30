@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vaultexplorer/data/services/file_manager_toolbar_service.dart';
 import 'package:vaultexplorer/data/models/file_manager_action.dart';
 import 'package:vaultexplorer/data/models/grid_aspect_ratio.dart';
+import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/data/models/file_manager_toolbar_config.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
 import 'package:vaultexplorer/data/models/media_viewer_action.dart';
@@ -142,6 +143,12 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
 
   Future<void> setLongFileNameDisplayMode(LongFileNameDisplayMode mode) =>
       _updateConfig(state.config.copyWith(longFileNameDisplayMode: mode));
+
+  /// Applies [skin] to the file manager. Persisted with the rest of the
+  /// toolbar config, and pushed to any open browser via the synchronized
+  /// family instances in [_updateConfig].
+  Future<void> setSkin(FileManagerSkin skin) =>
+      _updateConfig(state.config.copyWith(skin: skin));
 
   Future<void> setAutoStartPlaylistMode(bool val) =>
       _updateConfig(state.config.copyWith(autoStartPlaylistMode: val));

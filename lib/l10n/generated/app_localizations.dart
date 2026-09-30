@@ -15366,6 +15366,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.'**
   String get videoEditorLosslessNote;
+
+  /// AppBar title of the screen where the file manager skin is chosen
+  ///
+  /// In en, this message translates to:
+  /// **'File Manager Skin'**
+  String get fileSkinScreenTitle;
+
+  /// Section header in File Manager Settings above the skin entry
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get fileSkinSectionHeader;
+
+  /// Title of the File Manager Settings row that opens the skin screen
+  ///
+  /// In en, this message translates to:
+  /// **'Skin'**
+  String get fileSkinEntryTitle;
+
+  /// Header above the live sample of the file manager on the skin screen
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get fileSkinPreviewHeader;
+
+  /// Header above the list of built-in skins on the skin screen
+  ///
+  /// In en, this message translates to:
+  /// **'Skins'**
+  String get fileSkinPresetsHeader;
+
+  /// Header of the skin options that apply to folders
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get fileSkinFoldersHeader;
+
+  /// Header of the skin options that apply to files
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get fileSkinFilesHeader;
+
+  /// Header of the skin options that apply to text
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get fileSkinTextHeader;
+
+  /// Label of the option that picks which icon set is used
+  ///
+  /// In en, this message translates to:
+  /// **'Icon style'**
+  String get fileSkinIconStyleLabel;
+
+  /// Label of the option that picks the box drawn behind an icon (filled, outlined or none)
+  ///
+  /// In en, this message translates to:
+  /// **'Icon background'**
+  String get fileSkinContainerLabel;
+
+  /// Label of the option that picks how icons are colored
+  ///
+  /// In en, this message translates to:
+  /// **'Icon color'**
+  String get fileSkinIconColorLabel;
+
+  /// Label of the row that picks the custom icon color, shown when icon color is set to custom
+  ///
+  /// In en, this message translates to:
+  /// **'Custom icon color'**
+  String get fileSkinCustomIconColorLabel;
+
+  /// Label of the option that picks the color of file or folder names
+  ///
+  /// In en, this message translates to:
+  /// **'Name color'**
+  String get fileSkinNameColorLabel;
+
+  /// Label of the option that picks the color of the secondary text such as date and size
+  ///
+  /// In en, this message translates to:
+  /// **'Details color'**
+  String get fileSkinDetailsColorLabel;
+
+  /// Title of the switch that draws file and folder names in a monospace font
+  ///
+  /// In en, this message translates to:
+  /// **'Monospace names'**
+  String get fileSkinMonospaceLabel;
+
+  /// Subtitle of the monospace names switch
+  ///
+  /// In en, this message translates to:
+  /// **'Use a fixed-width font for file and folder names'**
+  String get fileSkinMonospaceDesc;
+
+  /// Icon style choice: the app's original mix of icons
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get fileSkinIconFamilyDefault;
+
+  /// Icon style choice: solid filled icons
+  ///
+  /// In en, this message translates to:
+  /// **'Filled'**
+  String get fileSkinIconFamilyFilled;
+
+  /// Icon style choice: icons with rounded corners
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded'**
+  String get fileSkinIconFamilyRounded;
+
+  /// Icon style choice: thin outline icons
+  ///
+  /// In en, this message translates to:
+  /// **'Outlined'**
+  String get fileSkinIconFamilyOutlined;
+
+  /// Icon style choice: icons with sharp corners
+  ///
+  /// In en, this message translates to:
+  /// **'Sharp'**
+  String get fileSkinIconFamilySharp;
+
+  /// Icon background choice: a tinted filled box behind the icon
+  ///
+  /// In en, this message translates to:
+  /// **'Filled'**
+  String get fileSkinContainerFilled;
+
+  /// Icon background choice: a thin outlined box behind the icon
+  ///
+  /// In en, this message translates to:
+  /// **'Outlined'**
+  String get fileSkinContainerOutlined;
+
+  /// Icon background choice: no box, just the icon
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get fileSkinContainerNone;
+
+  /// Icon color choice: files are colored by type, folders use the theme color
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get fileSkinColorAuto;
+
+  /// Icon color choice: use the theme's accent color
+  ///
+  /// In en, this message translates to:
+  /// **'Theme accent'**
+  String get fileSkinColorAccent;
+
+  /// Icon color choice: a muted neutral color
+  ///
+  /// In en, this message translates to:
+  /// **'Neutral'**
+  String get fileSkinColorNeutral;
+
+  /// Icon color choice: a color picked by the user
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get fileSkinColorCustom;
+
+  /// Value shown, and button label, meaning a color option follows the theme instead of a chosen color
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get fileSkinColorDefault;
+
+  /// Label of the text field where a color is typed as a hex code
+  ///
+  /// In en, this message translates to:
+  /// **'Hex color'**
+  String get fileSkinColorHexLabel;
+
+  /// Name of the built-in skin that matches the original look
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get fileSkinPresetClassic;
+
+  /// Name of the built-in skin with bare outlined icons and no boxes
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal outline'**
+  String get fileSkinPresetMinimalOutline;
+
+  /// Name of the built-in skin with outlined icons inside thin frames
+  ///
+  /// In en, this message translates to:
+  /// **'Frames'**
+  String get fileSkinPresetFrames;
+
+  /// Name of the built-in skin with solid colorful icons and no boxes
+  ///
+  /// In en, this message translates to:
+  /// **'Vivid'**
+  String get fileSkinPresetVivid;
+
+  /// Name of the built-in skin with sharp icons and monospaced names
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get fileSkinPresetTerminal;
+
+  /// Label shown when the skin is a custom mix that matches no built-in skin
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get fileSkinPresetCustom;
 }
 
 class _AppLocalizationsDelegate

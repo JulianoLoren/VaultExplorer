@@ -9145,4 +9145,113 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => 'File Manager Skin';
+
+  @override
+  String get fileSkinSectionHeader => 'Appearance';
+
+  @override
+  String get fileSkinEntryTitle => 'Skin';
+
+  @override
+  String get fileSkinPreviewHeader => 'Preview';
+
+  @override
+  String get fileSkinPresetsHeader => 'Skins';
+
+  @override
+  String get fileSkinFoldersHeader => 'Folders';
+
+  @override
+  String get fileSkinFilesHeader => 'Files';
+
+  @override
+  String get fileSkinTextHeader => 'Text';
+
+  @override
+  String get fileSkinIconStyleLabel => 'Icon style';
+
+  @override
+  String get fileSkinContainerLabel => 'Icon background';
+
+  @override
+  String get fileSkinIconColorLabel => 'Icon color';
+
+  @override
+  String get fileSkinCustomIconColorLabel => 'Custom icon color';
+
+  @override
+  String get fileSkinNameColorLabel => 'Name color';
+
+  @override
+  String get fileSkinDetailsColorLabel => 'Details color';
+
+  @override
+  String get fileSkinMonospaceLabel => 'Monospace names';
+
+  @override
+  String get fileSkinMonospaceDesc =>
+      'Use a fixed-width font for file and folder names';
+
+  @override
+  String get fileSkinIconFamilyDefault => 'Default';
+
+  @override
+  String get fileSkinIconFamilyFilled => 'Filled';
+
+  @override
+  String get fileSkinIconFamilyRounded => 'Rounded';
+
+  @override
+  String get fileSkinIconFamilyOutlined => 'Outlined';
+
+  @override
+  String get fileSkinIconFamilySharp => 'Sharp';
+
+  @override
+  String get fileSkinContainerFilled => 'Filled';
+
+  @override
+  String get fileSkinContainerOutlined => 'Outlined';
+
+  @override
+  String get fileSkinContainerNone => 'None';
+
+  @override
+  String get fileSkinColorAuto => 'Automatic';
+
+  @override
+  String get fileSkinColorAccent => 'Theme accent';
+
+  @override
+  String get fileSkinColorNeutral => 'Neutral';
+
+  @override
+  String get fileSkinColorCustom => 'Custom';
+
+  @override
+  String get fileSkinColorDefault => 'Default';
+
+  @override
+  String get fileSkinColorHexLabel => 'Hex color';
+
+  @override
+  String get fileSkinPresetClassic => 'Classic';
+
+  @override
+  String get fileSkinPresetMinimalOutline => 'Minimal outline';
+
+  @override
+  String get fileSkinPresetFrames => 'Frames';
+
+  @override
+  String get fileSkinPresetVivid => 'Vivid';
+
+  @override
+  String get fileSkinPresetTerminal => 'Terminal';
+
+  @override
+  String get fileSkinPresetCustom => 'Custom';
 }

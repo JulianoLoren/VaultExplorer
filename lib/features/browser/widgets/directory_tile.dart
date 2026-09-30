@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
 import 'package:vaultexplorer/data/models/file_manager_toolbar_config.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
@@ -78,7 +79,9 @@ class DirectoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final iconColor = cs.secondary;
+    final skin = FileManagerSkinScope.of(context);
+    final folderIcon = skin.folderIcon;
+    final iconColor = skin.folderIconColor(cs);
     final iconBackground = cs.secondaryContainer.withValues(alpha: 0.4);
 
     final folderIconSize = (AppIconSize.action + 4) * zoomLevel;
@@ -145,7 +148,7 @@ class DirectoryTile extends StatelessWidget {
         quality: quality,
         iconSize: folderIconSize,
         child: Icon(
-          Icons.folder_rounded,
+          folderIcon,
           size: folderIconSize,
           color: iconColor,
         ),
@@ -168,7 +171,7 @@ class DirectoryTile extends StatelessWidget {
     }
 
     return FileRowShell(
-      icon: Icons.folder_rounded,
+      icon: folderIcon,
       iconColor: iconColor,
       unselectedIconBackground: iconBackground,
       customLeading: customLeading,

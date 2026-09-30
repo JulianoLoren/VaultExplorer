@@ -13,6 +13,7 @@ import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/data/models/external_storage_location.dart';
 import 'package:vaultexplorer/core/services/playback_throttle_controller.dart';
 import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
 import 'package:vaultexplorer/core/utils/cancellation_token.dart';
 import 'package:vaultexplorer/core/utils/file_type_utils.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
@@ -3262,6 +3263,16 @@ Future<void> _extractSelectedArchive() async {
 
   @override
   Widget build(BuildContext context) {
+    // Every file/folder tile, and the bookmark bar, below this point reads the
+    // user's chosen skin from here. Kept as a thin wrapper so the (very
+    // large) screen body itself is untouched.
+    return FileManagerSkinScope(
+      skin: _toolbarConfig.skin,
+      child: _buildBrowser(context),
+    );
+  }
+
+  Widget _buildBrowser(BuildContext context) {
     ref.watch(fileBrowserSelectionProvider(widget.container.volId));
     ref.watch(fileBrowserSortProvider(widget.container.volId));
     ref.watch(fileBrowserNavigationProvider(widget.container.volId));

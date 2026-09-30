@@ -9299,4 +9299,113 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => 'Aspecto del gestor de archivos';
+
+  @override
+  String get fileSkinSectionHeader => 'Apariencia';
+
+  @override
+  String get fileSkinEntryTitle => 'Aspecto';
+
+  @override
+  String get fileSkinPreviewHeader => 'Vista previa';
+
+  @override
+  String get fileSkinPresetsHeader => 'Aspectos';
+
+  @override
+  String get fileSkinFoldersHeader => 'Carpetas';
+
+  @override
+  String get fileSkinFilesHeader => 'Archivos';
+
+  @override
+  String get fileSkinTextHeader => 'Texto';
+
+  @override
+  String get fileSkinIconStyleLabel => 'Estilo de icono';
+
+  @override
+  String get fileSkinContainerLabel => 'Fondo del icono';
+
+  @override
+  String get fileSkinIconColorLabel => 'Color del icono';
+
+  @override
+  String get fileSkinCustomIconColorLabel => 'Color de icono personalizado';
+
+  @override
+  String get fileSkinNameColorLabel => 'Color del nombre';
+
+  @override
+  String get fileSkinDetailsColorLabel => 'Color de los detalles';
+
+  @override
+  String get fileSkinMonospaceLabel => 'Nombres en fuente monoespaciada';
+
+  @override
+  String get fileSkinMonospaceDesc =>
+      'Usar una fuente de ancho fijo para nombres de archivos y carpetas';
+
+  @override
+  String get fileSkinIconFamilyDefault => 'Predeterminado';
+
+  @override
+  String get fileSkinIconFamilyFilled => 'Relleno';
+
+  @override
+  String get fileSkinIconFamilyRounded => 'Redondeado';
+
+  @override
+  String get fileSkinIconFamilyOutlined => 'Contorno';
+
+  @override
+  String get fileSkinIconFamilySharp => 'Angular';
+
+  @override
+  String get fileSkinContainerFilled => 'Relleno';
+
+  @override
+  String get fileSkinContainerOutlined => 'Contorno';
+
+  @override
+  String get fileSkinContainerNone => 'Ninguno';
+
+  @override
+  String get fileSkinColorAuto => 'Automático';
+
+  @override
+  String get fileSkinColorAccent => 'Acento del tema';
+
+  @override
+  String get fileSkinColorNeutral => 'Neutro';
+
+  @override
+  String get fileSkinColorCustom => 'Personalizado';
+
+  @override
+  String get fileSkinColorDefault => 'Predeterminado';
+
+  @override
+  String get fileSkinColorHexLabel => 'Color hexadecimal';
+
+  @override
+  String get fileSkinPresetClassic => 'Clásico';
+
+  @override
+  String get fileSkinPresetMinimalOutline => 'Contorno minimalista';
+
+  @override
+  String get fileSkinPresetFrames => 'Marcos';
+
+  @override
+  String get fileSkinPresetVivid => 'Vívido';
+
+  @override
+  String get fileSkinPresetTerminal => 'Terminal';
+
+  @override
+  String get fileSkinPresetCustom => 'Personalizado';
 }

@@ -8794,4 +8794,112 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => 'ファイルマネージャーのスキン';
+
+  @override
+  String get fileSkinSectionHeader => '外観';
+
+  @override
+  String get fileSkinEntryTitle => 'スキン';
+
+  @override
+  String get fileSkinPreviewHeader => 'プレビュー';
+
+  @override
+  String get fileSkinPresetsHeader => 'スキン';
+
+  @override
+  String get fileSkinFoldersHeader => 'フォルダ';
+
+  @override
+  String get fileSkinFilesHeader => 'ファイル';
+
+  @override
+  String get fileSkinTextHeader => 'テキスト';
+
+  @override
+  String get fileSkinIconStyleLabel => 'アイコンのスタイル';
+
+  @override
+  String get fileSkinContainerLabel => 'アイコンの背景';
+
+  @override
+  String get fileSkinIconColorLabel => 'アイコンの色';
+
+  @override
+  String get fileSkinCustomIconColorLabel => 'カスタムのアイコン色';
+
+  @override
+  String get fileSkinNameColorLabel => '名前の色';
+
+  @override
+  String get fileSkinDetailsColorLabel => '詳細の色';
+
+  @override
+  String get fileSkinMonospaceLabel => '等幅フォントの名前';
+
+  @override
+  String get fileSkinMonospaceDesc => 'ファイル名とフォルダ名に等幅フォントを使用します';
+
+  @override
+  String get fileSkinIconFamilyDefault => 'デフォルト';
+
+  @override
+  String get fileSkinIconFamilyFilled => '塗りつぶし';
+
+  @override
+  String get fileSkinIconFamilyRounded => '丸み';
+
+  @override
+  String get fileSkinIconFamilyOutlined => 'アウトライン';
+
+  @override
+  String get fileSkinIconFamilySharp => 'シャープ';
+
+  @override
+  String get fileSkinContainerFilled => '塗りつぶし';
+
+  @override
+  String get fileSkinContainerOutlined => 'アウトライン';
+
+  @override
+  String get fileSkinContainerNone => 'なし';
+
+  @override
+  String get fileSkinColorAuto => '自動';
+
+  @override
+  String get fileSkinColorAccent => 'テーマのアクセント';
+
+  @override
+  String get fileSkinColorNeutral => 'ニュートラル';
+
+  @override
+  String get fileSkinColorCustom => 'カスタム';
+
+  @override
+  String get fileSkinColorDefault => 'デフォルト';
+
+  @override
+  String get fileSkinColorHexLabel => '16進カラー';
+
+  @override
+  String get fileSkinPresetClassic => 'クラシック';
+
+  @override
+  String get fileSkinPresetMinimalOutline => 'ミニマルアウトライン';
+
+  @override
+  String get fileSkinPresetFrames => 'フレーム';
+
+  @override
+  String get fileSkinPresetVivid => 'ビビッド';
+
+  @override
+  String get fileSkinPresetTerminal => 'ターミナル';
+
+  @override
+  String get fileSkinPresetCustom => 'カスタム';
 }

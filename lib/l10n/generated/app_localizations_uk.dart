@@ -9356,4 +9356,113 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => 'Скін файлового менеджера';
+
+  @override
+  String get fileSkinSectionHeader => 'Вигляд';
+
+  @override
+  String get fileSkinEntryTitle => 'Скін';
+
+  @override
+  String get fileSkinPreviewHeader => 'Попередній перегляд';
+
+  @override
+  String get fileSkinPresetsHeader => 'Скіни';
+
+  @override
+  String get fileSkinFoldersHeader => 'Папки';
+
+  @override
+  String get fileSkinFilesHeader => 'Файли';
+
+  @override
+  String get fileSkinTextHeader => 'Текст';
+
+  @override
+  String get fileSkinIconStyleLabel => 'Стиль піктограм';
+
+  @override
+  String get fileSkinContainerLabel => 'Тло піктограми';
+
+  @override
+  String get fileSkinIconColorLabel => 'Колір піктограми';
+
+  @override
+  String get fileSkinCustomIconColorLabel => 'Власний колір піктограми';
+
+  @override
+  String get fileSkinNameColorLabel => 'Колір назви';
+
+  @override
+  String get fileSkinDetailsColorLabel => 'Колір відомостей';
+
+  @override
+  String get fileSkinMonospaceLabel => 'Назви моноширинним шрифтом';
+
+  @override
+  String get fileSkinMonospaceDesc =>
+      'Використовувати шрифт фіксованої ширини для назв файлів і папок';
+
+  @override
+  String get fileSkinIconFamilyDefault => 'Типовий';
+
+  @override
+  String get fileSkinIconFamilyFilled => 'Заповнений';
+
+  @override
+  String get fileSkinIconFamilyRounded => 'Округлий';
+
+  @override
+  String get fileSkinIconFamilyOutlined => 'Контурний';
+
+  @override
+  String get fileSkinIconFamilySharp => 'Гострий';
+
+  @override
+  String get fileSkinContainerFilled => 'Заповнений';
+
+  @override
+  String get fileSkinContainerOutlined => 'Контурний';
+
+  @override
+  String get fileSkinContainerNone => 'Немає';
+
+  @override
+  String get fileSkinColorAuto => 'Автоматично';
+
+  @override
+  String get fileSkinColorAccent => 'Акцент теми';
+
+  @override
+  String get fileSkinColorNeutral => 'Нейтральний';
+
+  @override
+  String get fileSkinColorCustom => 'Власний';
+
+  @override
+  String get fileSkinColorDefault => 'Типовий';
+
+  @override
+  String get fileSkinColorHexLabel => 'Колір у форматі HEX';
+
+  @override
+  String get fileSkinPresetClassic => 'Класичний';
+
+  @override
+  String get fileSkinPresetMinimalOutline => 'Мінімальний контур';
+
+  @override
+  String get fileSkinPresetFrames => 'Рамки';
+
+  @override
+  String get fileSkinPresetVivid => 'Яскравий';
+
+  @override
+  String get fileSkinPresetTerminal => 'Термінал';
+
+  @override
+  String get fileSkinPresetCustom => 'Власний';
 }

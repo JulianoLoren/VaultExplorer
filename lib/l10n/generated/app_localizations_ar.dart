@@ -8111,7 +8111,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get swipeToSeekSubtitle =>
-      'اسحب أفقياً عبر الشاشة للتقديم والتأخير. في قوائم التشغيل، يجب استخدام أزرar التنقل بدلاً من السحب بين العناصر';
+      'اسحب أفقياً عبر الشاشة للتقديم والتأخير. في قوائم التشغيل، يجب استخدام أزرار التنقل بدلاً من السحب بين العناصر';
 
   @override
   String get edgeSwipeBrightnessTitle => 'إيماءة سحب السطوع';
@@ -9339,4 +9339,113 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => 'مظهر مدير الملفات';
+
+  @override
+  String get fileSkinSectionHeader => 'المظهر';
+
+  @override
+  String get fileSkinEntryTitle => 'السمة';
+
+  @override
+  String get fileSkinPreviewHeader => 'معاينة';
+
+  @override
+  String get fileSkinPresetsHeader => 'السمات';
+
+  @override
+  String get fileSkinFoldersHeader => 'المجلدات';
+
+  @override
+  String get fileSkinFilesHeader => 'الملفات';
+
+  @override
+  String get fileSkinTextHeader => 'نص';
+
+  @override
+  String get fileSkinIconStyleLabel => 'نمط الأيقونة';
+
+  @override
+  String get fileSkinContainerLabel => 'خلفية الأيقونة';
+
+  @override
+  String get fileSkinIconColorLabel => 'لون الأيقونة';
+
+  @override
+  String get fileSkinCustomIconColorLabel => 'لون أيقونة مخصص';
+
+  @override
+  String get fileSkinNameColorLabel => 'لون الاسم';
+
+  @override
+  String get fileSkinDetailsColorLabel => 'لون التفاصيل';
+
+  @override
+  String get fileSkinMonospaceLabel => 'أسماء بخط أحادي المسافة';
+
+  @override
+  String get fileSkinMonospaceDesc =>
+      'استخدام خط ثابت العرض لأسماء الملفات والمجلدات';
+
+  @override
+  String get fileSkinIconFamilyDefault => 'افتراضي';
+
+  @override
+  String get fileSkinIconFamilyFilled => 'ممتلئ';
+
+  @override
+  String get fileSkinIconFamilyRounded => 'مستدير';
+
+  @override
+  String get fileSkinIconFamilyOutlined => 'مخطط';
+
+  @override
+  String get fileSkinIconFamilySharp => 'حاد';
+
+  @override
+  String get fileSkinContainerFilled => 'ممتلئ';
+
+  @override
+  String get fileSkinContainerOutlined => 'مخطط';
+
+  @override
+  String get fileSkinContainerNone => 'لا شيء';
+
+  @override
+  String get fileSkinColorAuto => 'تلقائي';
+
+  @override
+  String get fileSkinColorAccent => 'لون التمييز للسمة';
+
+  @override
+  String get fileSkinColorNeutral => 'محايد';
+
+  @override
+  String get fileSkinColorCustom => 'مخصص';
+
+  @override
+  String get fileSkinColorDefault => 'افتراضي';
+
+  @override
+  String get fileSkinColorHexLabel => 'لون سداسي عشري';
+
+  @override
+  String get fileSkinPresetClassic => 'كلاسيكي';
+
+  @override
+  String get fileSkinPresetMinimalOutline => 'مخطط بسيط';
+
+  @override
+  String get fileSkinPresetFrames => 'إطارات';
+
+  @override
+  String get fileSkinPresetVivid => 'نابض بالحياة';
+
+  @override
+  String get fileSkinPresetTerminal => 'طرفية';
+
+  @override
+  String get fileSkinPresetCustom => 'مخصص';
 }

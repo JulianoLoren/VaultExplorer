@@ -8791,4 +8791,112 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get videoEditorLosslessNote =>
       'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+
+  @override
+  String get fileSkinScreenTitle => '파일 관리자 스킨';
+
+  @override
+  String get fileSkinSectionHeader => '모양';
+
+  @override
+  String get fileSkinEntryTitle => '스킨';
+
+  @override
+  String get fileSkinPreviewHeader => '미리보기';
+
+  @override
+  String get fileSkinPresetsHeader => '스킨';
+
+  @override
+  String get fileSkinFoldersHeader => '폴더';
+
+  @override
+  String get fileSkinFilesHeader => '파일';
+
+  @override
+  String get fileSkinTextHeader => '텍스트';
+
+  @override
+  String get fileSkinIconStyleLabel => '아이콘 스타일';
+
+  @override
+  String get fileSkinContainerLabel => '아이콘 배경';
+
+  @override
+  String get fileSkinIconColorLabel => '아이콘 색상';
+
+  @override
+  String get fileSkinCustomIconColorLabel => '사용자 지정 아이콘 색상';
+
+  @override
+  String get fileSkinNameColorLabel => '이름 색상';
+
+  @override
+  String get fileSkinDetailsColorLabel => '세부 정보 색상';
+
+  @override
+  String get fileSkinMonospaceLabel => '고정폭 이름';
+
+  @override
+  String get fileSkinMonospaceDesc => '파일 및 폴더 이름에 고정폭 글꼴을 사용합니다';
+
+  @override
+  String get fileSkinIconFamilyDefault => '기본값';
+
+  @override
+  String get fileSkinIconFamilyFilled => '채움';
+
+  @override
+  String get fileSkinIconFamilyRounded => '둥근';
+
+  @override
+  String get fileSkinIconFamilyOutlined => '윤곽선';
+
+  @override
+  String get fileSkinIconFamilySharp => '각진';
+
+  @override
+  String get fileSkinContainerFilled => '채움';
+
+  @override
+  String get fileSkinContainerOutlined => '윤곽선';
+
+  @override
+  String get fileSkinContainerNone => '없음';
+
+  @override
+  String get fileSkinColorAuto => '자동';
+
+  @override
+  String get fileSkinColorAccent => '테마 강조색';
+
+  @override
+  String get fileSkinColorNeutral => '중립';
+
+  @override
+  String get fileSkinColorCustom => '사용자 지정';
+
+  @override
+  String get fileSkinColorDefault => '기본값';
+
+  @override
+  String get fileSkinColorHexLabel => '16진수 색상';
+
+  @override
+  String get fileSkinPresetClassic => '클래식';
+
+  @override
+  String get fileSkinPresetMinimalOutline => '미니멀 윤곽선';
+
+  @override
+  String get fileSkinPresetFrames => '프레임';
+
+  @override
+  String get fileSkinPresetVivid => '선명한';
+
+  @override
+  String get fileSkinPresetTerminal => '터미널';
+
+  @override
+  String get fileSkinPresetCustom => '사용자 지정';
 }
