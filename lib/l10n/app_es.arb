@@ -2533,5 +2533,7 @@
   "videoEditorExportMergeHint": "Clips are joined in timeline order.",
   "videoEditorExportSeparate": "Save as separate videos",
   "videoEditorExportSeparateHint": "{count, plural, =1{One new file} other{{count} new files}}",
-  "videoEditorLosslessNote": "Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved."
+  "videoEditorLosslessNote": "Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.",
+  "swipeToSeekTitle": "Deslizar para buscar",
+  "swipeToSeekSubtitle": "Desliza horizontalmente por la pantalla para buscar. En listas de reproducción, se deben usar los botones de navegación en lugar de deslizar entre elementos"
 }

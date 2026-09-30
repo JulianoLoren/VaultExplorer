@@ -8046,6 +8046,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get videoGesturesHeader => 'Gestos de vídeo e zoom';
 
   @override
+  String get swipeToSeekTitle => 'Deslizar para buscar';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      'Deslize horizontalmente pela tela para buscar. Em listas de reprodução, use os botões de navegação em vez de deslizar entre os itens';
+
+  @override
   String get edgeSwipeBrightnessTitle => 'Gesto de deslize para brilho';
 
   @override

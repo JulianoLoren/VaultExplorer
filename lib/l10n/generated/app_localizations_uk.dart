@@ -8103,6 +8103,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get videoGesturesHeader => 'Жести відео та масштабування';
 
   @override
+  String get swipeToSeekTitle => 'Проведення для перемотування';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      'Проведіть горизонтально по екрану для перемотування. У списках відтворення слід використовувати кнопки навігації замість проведення між елементами';
+
+  @override
   String get edgeSwipeBrightnessTitle => 'Свайп для регулювання яскравості';
 
   @override

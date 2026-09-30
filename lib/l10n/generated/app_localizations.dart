@@ -13303,6 +13303,18 @@ abstract class AppLocalizations {
   /// **'Video Gestures & Zoom'**
   String get videoGesturesHeader;
 
+  /// Title for swipe across screen to seek gesture setting
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to Seek'**
+  String get swipeToSeekTitle;
+
+  /// Description for swipe across screen to seek gesture setting
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe horizontally across the screen to seek. In playlists, navigation buttons must be used instead of swiping between items'**
+  String get swipeToSeekSubtitle;
+
   /// Title for brightness swipe gesture setting
   ///
   /// In en, this message translates to:

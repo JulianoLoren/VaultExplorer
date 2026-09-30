@@ -7910,6 +7910,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoGesturesHeader => 'Video Gestures & Zoom';
 
   @override
+  String get swipeToSeekTitle => 'Swipe to Seek';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      'Swipe horizontally across the screen to seek. In playlists, navigation buttons must be used instead of swiping between items';
+
+  @override
   String get edgeSwipeBrightnessTitle => 'Brightness Swipe Gesture';
 
   @override

@@ -8035,6 +8035,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get videoGesturesHeader => 'Gesti video e zoom';
 
   @override
+  String get swipeToSeekTitle => 'Scorri per cercare';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      'Scorri orizzontalmente sullo schermo per cercare. Nelle playlist, è necessario utilizzare i pulsanti di navigazione anziché scorrere tra gli elementi';
+
+  @override
   String get edgeSwipeBrightnessTitle => 'Gesto scorrimento luminosità';
 
   @override

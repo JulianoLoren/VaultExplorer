@@ -10124,6 +10124,14 @@
   "@videoGesturesHeader": {
     "description": "Header for video playback gestures and zoom controls section"
   },
+  "swipeToSeekTitle": "Swipe to Seek",
+  "@swipeToSeekTitle": {
+    "description": "Title for swipe across screen to seek gesture setting"
+  },
+  "swipeToSeekSubtitle": "Swipe horizontally across the screen to seek. In playlists, navigation buttons must be used instead of swiping between items",
+  "@swipeToSeekSubtitle": {
+    "description": "Description for swipe across screen to seek gesture setting"
+  },
   "edgeSwipeBrightnessTitle": "Brightness Swipe Gesture",
   "@edgeSwipeBrightnessTitle": {
     "description": "Title for brightness swipe gesture setting"

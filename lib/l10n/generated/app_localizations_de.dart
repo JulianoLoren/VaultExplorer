@@ -8036,6 +8036,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get videoGesturesHeader => 'Videogesten & Zoom';
 
   @override
+  String get swipeToSeekTitle => 'Wischen zum Spulen';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      'Horizontal über den Bildschirm wischen, um zu spulen. In Wiedergabelisten müssen Navigationstasten verwendet werden, anstatt zwischen Elementen zu wischen';
+
+  @override
   String get edgeSwipeBrightnessTitle => 'Helligkeits-Wischgeste';
 
   @override

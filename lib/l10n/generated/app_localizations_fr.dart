@@ -8104,6 +8104,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get videoGesturesHeader => 'Gestes vidéo et zoom';
 
   @override
+  String get swipeToSeekTitle => 'Balayer pour naviguer';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      'Balayez horizontalement l\'écran pour naviguer. Dans les listes de lecture, utilisez les boutons de navigation au lieu de balayer entre les éléments';
+
+  @override
   String get edgeSwipeBrightnessTitle =>
       'Geste de glissement pour la luminosité';
 

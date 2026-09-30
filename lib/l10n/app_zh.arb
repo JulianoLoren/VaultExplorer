@@ -2533,5 +2533,7 @@
   "videoEditorExportMergeHint": "Clips are joined in timeline order.",
   "videoEditorExportSeparate": "Save as separate videos",
   "videoEditorExportSeparateHint": "{count, plural, =1{One new file} other{{count} new files}}",
-  "videoEditorLosslessNote": "Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved."
+  "videoEditorLosslessNote": "Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.",
+  "swipeToSeekTitle": "滑动快进/快退",
+  "swipeToSeekSubtitle": "在屏幕上水平滑动以调整进度。在播放列表中，必须使用导航按钮而不是通过滑动来切换项目"
 }

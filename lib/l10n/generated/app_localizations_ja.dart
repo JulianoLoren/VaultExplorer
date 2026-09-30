@@ -7603,6 +7603,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get videoGesturesHeader => '動画のジェスチャーとズーム';
 
   @override
+  String get swipeToSeekTitle => 'スワイプでシーク';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      '画面を水平にスワイプしてシークします。プレイリストでは、項目の切り替えにスワイプではなくナビゲーションボタンを使用する必要があります';
+
+  @override
   String get edgeSwipeBrightnessTitle => '明るさスワイプジェスチャー';
 
   @override

@@ -7505,6 +7505,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get videoGesturesHeader => '视频手势与缩放';
 
   @override
+  String get swipeToSeekTitle => '滑动快进/快退';
+
+  @override
+  String get swipeToSeekSubtitle => '在屏幕上水平滑动以调整进度。在播放列表中，必须使用导航按钮而不是通过滑动来切换项目';
+
+  @override
   String get edgeSwipeBrightnessTitle => '边缘滑动调节亮度';
 
   @override

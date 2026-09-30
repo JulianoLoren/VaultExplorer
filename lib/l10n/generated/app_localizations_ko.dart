@@ -7604,6 +7604,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get videoGesturesHeader => '동영상 제스처 및 줌';
 
   @override
+  String get swipeToSeekTitle => '스와이프하여 탐색';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      '화면을 가로로 스와이프하여 탐색합니다. 재생목록에서는 항목 간 이동 시 스와이프 대신 탐색 버튼을 사용해야 합니다';
+
+  @override
   String get edgeSwipeBrightnessTitle => '밝기 조절 스와이프 제스처';
 
   @override

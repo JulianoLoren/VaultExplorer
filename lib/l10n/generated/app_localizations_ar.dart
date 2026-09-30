@@ -8107,6 +8107,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get videoGesturesHeader => 'إيماءات الفيديو والتكبير';
 
   @override
+  String get swipeToSeekTitle => 'السحب للتقديم والتأخير';
+
+  @override
+  String get swipeToSeekSubtitle =>
+      'اسحب أفقياً عبر الشاشة للتقديم والتأخير. في قوائم التشغيل، يجب استخدام أزرar التنقل بدلاً من السحب بين العناصر';
+
+  @override
   String get edgeSwipeBrightnessTitle => 'إيماءة سحب السطوع';
 
   @override
