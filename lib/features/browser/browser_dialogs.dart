@@ -54,6 +54,7 @@ abstract class BrowserDialogs {
     required String currentDirPath,
     required List<RawEntry> existingEntries,
     required VoidCallback onSuccess,
+    String? suggestedName,
     bool readOnly = false,
   }) {
     if (readOnly) {
@@ -67,6 +68,7 @@ abstract class BrowserDialogs {
         currentDirPath: currentDirPath,
         existingEntries: existingEntries,
         onSuccess: onSuccess,
+        suggestedName: suggestedName,
       ),
     );
   }
@@ -411,11 +413,13 @@ class _CreateFileDialog extends ConsumerStatefulWidget {
   final String currentDirPath;
   final List<RawEntry> existingEntries;
   final VoidCallback onSuccess;
+  final String? suggestedName;
   const _CreateFileDialog({
     required this.container,
     required this.currentDirPath,
     required this.existingEntries,
     required this.onSuccess,
+    this.suggestedName,
   });
 
   @override
@@ -427,12 +431,40 @@ class _CreateFileDialogState extends ConsumerState<_CreateFileDialog>
   VaultFileIoApi get _fileIoApi => ref.read(vaultFileIoApiProvider);
   late final TextEditingController _ctrl;
   late final FilesystemType _fsType;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     _ctrl = TextEditingController();
     _fsType = resolveFilesystemType(widget.container);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final existingNames =
+          widget.existingEntries.map((e) => e.name.toLowerCase()).toSet();
+      final baseName = widget.suggestedName ?? context.l10n.filenameHint;
+      final defaultName = FileOperationService.makeUniqueName(
+        baseName,
+        existingNames,
+      );
+      final dotIdx = defaultName.lastIndexOf('.');
+      final selectionEnd = dotIdx > 0 ? dotIdx : defaultName.length;
+      _ctrl.value = TextEditingValue(
+        text: defaultName,
+        selection: TextSelection(baseOffset: 0, extentOffset: selectionEnd),
+      );
+      seedValidation(
+        text: _ctrl.text,
+        fsType: _fsType,
+        entryType: EntryType.file,
+        existingEntries: widget.existingEntries,
+      );
+    }
   }
 
   @override
@@ -802,8 +834,14 @@ class _RenameDialogState extends ConsumerState<_RenameDialog>
   @override
   void initState() {
     super.initState();
-    _ctrl = TextEditingController(
-      text: _isSingle ? widget.oldEntries.first.name : '',
+    final oldName = _isSingle ? widget.oldEntries.first.name : '';
+    final dotIdx = _isSingle && !widget.oldEntries.first.isDir ? oldName.lastIndexOf('.') : -1;
+    final selectionEnd = dotIdx > 0 ? dotIdx : oldName.length;
+    _ctrl = TextEditingController.fromValue(
+      TextEditingValue(
+        text: oldName,
+        selection: TextSelection(baseOffset: 0, extentOffset: selectionEnd),
+      ),
     );
     _fsType = resolveFilesystemType(widget.container);
   }

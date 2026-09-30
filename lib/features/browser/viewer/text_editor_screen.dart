@@ -607,7 +607,12 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
 
   Future<void> _createNewFileTab() async {
     final parentDir = _projectDirPath;
-    final controller = TextEditingController(text: 'untitled.txt');
+    final controller = TextEditingController.fromValue(
+      const TextEditingValue(
+        text: 'untitled.txt',
+        selection: TextSelection(baseOffset: 0, extentOffset: 8),
+      ),
+    );
     final formKey = GlobalKey<FormState>();
 
     final result = await showDialog<String>(
