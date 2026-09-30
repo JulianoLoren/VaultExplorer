@@ -28,6 +28,7 @@ class MediaViewerBottomControls extends StatelessWidget {
   final int slideshowDelaySeconds;
   final bool isMuted;
   final VideoPlaybackMode videoPlaybackMode;
+  final IconData screenOrientationIcon;
   final ValueChanged<MediaViewerAction> onExecuteAction;
   final VoidCallback onStartHideTimer;
   final ValueChanged<bool> onShowUIChanged;
@@ -50,6 +51,7 @@ class MediaViewerBottomControls extends StatelessWidget {
     required this.slideshowDelaySeconds,
     required this.isMuted,
     required this.videoPlaybackMode,
+    required this.screenOrientationIcon,
     required this.onExecuteAction,
     required this.onStartHideTimer,
     required this.onShowUIChanged,
@@ -69,19 +71,36 @@ class MediaViewerBottomControls extends StatelessWidget {
     if (action == MediaViewerAction.previous) {
       final bool isFirst = playlistController.currentIndex == 0;
       return IconButton(
-        icon: const Icon(Icons.skip_previous_rounded,
-            color: Colors.white, size: 26),
-        onPressed:
-            isFirst ? null : () => onExecuteAction(MediaViewerAction.previous),
+        icon: const Icon(
+          Icons.skip_previous_rounded,
+          color: Colors.white,
+          size: 26,
+        ),
+        onPressed: isFirst
+            ? null
+            : () => onExecuteAction(MediaViewerAction.previous),
       );
     }
     if (action == MediaViewerAction.next) {
-      final bool isLast = playlistController.currentIndex ==
+      final bool isLast =
+          playlistController.currentIndex ==
           playlistController.playlist.length - 1;
       return IconButton(
-        icon:
-            const Icon(Icons.skip_next_rounded, color: Colors.white, size: 26),
-        onPressed: isLast ? null : () => onExecuteAction(MediaViewerAction.next),
+        icon: const Icon(
+          Icons.skip_next_rounded,
+          color: Colors.white,
+          size: 26,
+        ),
+        onPressed: isLast
+            ? null
+            : () => onExecuteAction(MediaViewerAction.next),
+      );
+    }
+    if (action == MediaViewerAction.screenOrientation) {
+      return MediaViewerActionButton(
+        action: action,
+        customIcon: screenOrientationIcon,
+        onTap: () => onExecuteAction(action),
       );
     }
 
@@ -360,8 +379,7 @@ class _SlideshowStatusChipState extends State<_SlideshowStatusChip>
                           value: _controller.value,
                           strokeWidth: 1.4,
                           strokeCap: StrokeCap.round,
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.08),
+                          backgroundColor: Colors.white.withValues(alpha: 0.08),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             Colors.white.withValues(alpha: 0.7),
                           ),
@@ -383,7 +401,8 @@ class _SlideshowStatusChipState extends State<_SlideshowStatusChip>
               Text(
                 widget.autoAdvance
                     ? context.l10n.slideshowDelaySecondsValue(
-                        widget.slideshowDelaySeconds)
+                        widget.slideshowDelaySeconds,
+                      )
                     : context.l10n.staticLabel,
                 style: const TextStyle(
                   color: Colors.white,

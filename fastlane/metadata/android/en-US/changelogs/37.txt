@@ -1,0 +1,6 @@
+• File manager skins: customizable icon styles, colors & backgrounds
+• Video player: optional swipe-to-seek gesture
+• View videos and PDFs directly inside archives
+• Composite vaults: reliable carrier sizing & excluded archive files
+• Text editor: full UI theming & improved .txt creation
+• Fixed item timestamps and context menu options in archives

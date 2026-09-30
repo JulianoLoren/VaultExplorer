@@ -16,6 +16,7 @@ class FastScrollbar extends StatefulWidget {
   final SortBy? sortBy;
   final EdgeInsets padding;
   final double touchWidth;
+  final Axis axis;
 
   const FastScrollbar({
     super.key,
@@ -25,6 +26,7 @@ class FastScrollbar extends StatefulWidget {
     this.sortBy,
     this.padding = EdgeInsets.zero,
     this.touchWidth = 28.0,
+    this.axis = Axis.vertical,
   });
 
   @override
@@ -88,7 +90,8 @@ class _FastScrollbarState extends State<FastScrollbar>
   void _safeSetState(VoidCallback fn) {
     if (!mounted) return;
 
-    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
       fn();
       if (!_postFrameCallbackPending) {
         _postFrameCallbackPending = true;
@@ -108,7 +111,9 @@ class _FastScrollbarState extends State<FastScrollbar>
     if (!widget.controller.hasClients) return false;
     try {
       final pos = widget.controller.position;
-      return pos.hasContentDimensions && pos.maxScrollExtent > 0;
+      return pos.axis == widget.axis &&
+          pos.hasContentDimensions &&
+          pos.maxScrollExtent > 0;
     } catch (_) {
       return false;
     }
@@ -129,15 +134,15 @@ class _FastScrollbarState extends State<FastScrollbar>
   }
 
   bool _handleScrollNotification(ScrollNotification notification) {
-    if (notification.depth == 0) {
+    if (notification.depth == 0 && notification.metrics.axis == widget.axis) {
       if (notification.metrics.maxScrollExtent <= 0) {
         return false;
       }
 
       if (!_isDragging) {
-        final newFraction = (notification.metrics.pixels /
-                notification.metrics.maxScrollExtent)
-            .clamp(0.0, 1.0);
+        final newFraction =
+            (notification.metrics.pixels / notification.metrics.maxScrollExtent)
+                .clamp(0.0, 1.0);
 
         if (notification is ScrollUpdateNotification ||
             notification is ScrollStartNotification) {
@@ -173,7 +178,7 @@ class _FastScrollbarState extends State<FastScrollbar>
     });
   }
 
-  double _calculateThumbHeight(double trackHeight) {
+  double _calculateThumbExtent(double trackExtent) {
     if (!_canScroll) return 48.0;
     final pos = widget.controller.position;
     final viewport = pos.viewportDimension;
@@ -181,7 +186,7 @@ class _FastScrollbarState extends State<FastScrollbar>
     final total = maxScroll + viewport;
     if (total <= 0) return 48.0;
     final ratio = (viewport / total).clamp(0.0, 1.0);
-    return (trackHeight * ratio).clamp(44.0, trackHeight * 0.65);
+    return (trackExtent * ratio).clamp(44.0, trackExtent * 0.65);
   }
 
   String _formatPopupDate(DateTime dt) {
@@ -197,8 +202,10 @@ class _FastScrollbarState extends State<FastScrollbar>
     final items = widget.items;
     if (items == null || items.isEmpty) return null;
 
-    final index =
-        (fraction * (items.length - 1)).round().clamp(0, items.length - 1);
+    final index = (fraction * (items.length - 1)).round().clamp(
+      0,
+      items.length - 1,
+    );
     final entry = items[index];
 
     if (entry.isDir) {
@@ -245,8 +252,8 @@ class _FastScrollbarState extends State<FastScrollbar>
 
   void _handleDragStart(
     DragStartDetails details,
-    double trackHeight,
-    double topInset,
+    double trackExtent,
+    double leadingInset,
   ) {
     if (!_canScroll) return;
 
@@ -254,10 +261,12 @@ class _FastScrollbarState extends State<FastScrollbar>
     if (box == null) return;
 
     final localPos = box.globalToLocal(details.globalPosition);
-    final trackY = localPos.dy - topInset;
+    final trackPosition =
+        (widget.axis == Axis.vertical ? localPos.dy : localPos.dx) -
+        leadingInset;
 
-    final thumbHeight = _calculateThumbHeight(trackHeight);
-    final travelDistance = trackHeight - thumbHeight;
+    final thumbExtent = _calculateThumbExtent(trackExtent);
+    final travelDistance = trackExtent - thumbExtent;
 
     if (travelDistance <= 0) return;
 
@@ -266,17 +275,18 @@ class _FastScrollbarState extends State<FastScrollbar>
     _fadeController.value = 1.0;
 
     final currentThumbTop = _scrollFraction * travelDistance;
-    final isTouchingThumb = trackY >= currentThumbTop &&
-        trackY <= currentThumbTop + thumbHeight;
+    final isTouchingThumb =
+        trackPosition >= currentThumbTop &&
+        trackPosition <= currentThumbTop + thumbExtent;
 
     if (isTouchingThumb) {
-      _dragTouchOffsetInThumb = trackY - currentThumbTop;
+      _dragTouchOffsetInThumb = trackPosition - currentThumbTop;
     } else {
-      _dragTouchOffsetInThumb = thumbHeight / 2;
+      _dragTouchOffsetInThumb = thumbExtent / 2;
     }
 
-    final targetThumbTop = trackY - _dragTouchOffsetInThumb;
-    final fraction = (targetThumbTop / travelDistance).clamp(0.0, 1.0);
+    final targetThumbStart = trackPosition - _dragTouchOffsetInThumb;
+    final fraction = (targetThumbStart / travelDistance).clamp(0.0, 1.0);
 
     _scrollFraction = fraction;
     final targetOffset = fraction * widget.controller.position.maxScrollExtent;
@@ -297,8 +307,8 @@ class _FastScrollbarState extends State<FastScrollbar>
 
   void _handleDragUpdate(
     DragUpdateDetails details,
-    double trackHeight,
-    double topInset,
+    double trackExtent,
+    double leadingInset,
   ) {
     if (!_isDragging || !_canScroll) return;
 
@@ -306,15 +316,17 @@ class _FastScrollbarState extends State<FastScrollbar>
     if (box == null) return;
 
     final localPos = box.globalToLocal(details.globalPosition);
-    final trackY = localPos.dy - topInset;
+    final trackPosition =
+        (widget.axis == Axis.vertical ? localPos.dy : localPos.dx) -
+        leadingInset;
 
-    final thumbHeight = _calculateThumbHeight(trackHeight);
-    final travelDistance = trackHeight - thumbHeight;
+    final thumbExtent = _calculateThumbExtent(trackExtent);
+    final travelDistance = trackExtent - thumbExtent;
 
     if (travelDistance <= 0) return;
 
-    final targetThumbTop = trackY - _dragTouchOffsetInThumb;
-    final fraction = (targetThumbTop / travelDistance).clamp(0.0, 1.0);
+    final targetThumbStart = trackPosition - _dragTouchOffsetInThumb;
+    final fraction = (targetThumbStart / travelDistance).clamp(0.0, 1.0);
 
     if ((fraction - _scrollFraction).abs() > 0.0001) {
       _scrollFraction = fraction;
@@ -347,11 +359,13 @@ class _FastScrollbarState extends State<FastScrollbar>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final scrollbarTheme = Theme.of(context).scrollbarTheme;
-    final thumbColor = scrollbarTheme.thumbColor?.resolve({
+    final thumbColor =
+        scrollbarTheme.thumbColor?.resolve({
           if (_isDragging) WidgetState.dragged,
         }) ??
         (_isDragging ? cs.primary : cs.primary.withValues(alpha: 0.5));
-    final trackColor = scrollbarTheme.trackColor?.resolve({
+    final trackColor =
+        scrollbarTheme.trackColor?.resolve({
           if (_isDragging) WidgetState.dragged,
         }) ??
         cs.primary.withValues(alpha: 0.15);
@@ -365,81 +379,132 @@ class _FastScrollbarState extends State<FastScrollbar>
           Positioned.fill(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final topInset = widget.padding.top;
-                final bottomInset = widget.padding.bottom;
-                final trackHeight =
-                    constraints.maxHeight - topInset - bottomInset;
+                final isVertical = widget.axis == Axis.vertical;
+                final leadingInset = isVertical
+                    ? widget.padding.top
+                    : widget.padding.left;
+                final trailingInset = isVertical
+                    ? widget.padding.bottom
+                    : widget.padding.right;
+                final trackExtent = isVertical
+                    ? constraints.maxHeight - leadingInset - trailingInset
+                    : constraints.maxWidth - leadingInset - trailingInset;
 
-                if (trackHeight <= 0) return const SizedBox.shrink();
+                if (trackExtent <= 0) return const SizedBox.shrink();
 
                 final canScroll = _canScroll;
-                final thumbHeight = _calculateThumbHeight(trackHeight);
-                final travelDistance = trackHeight - thumbHeight;
-                final thumbTop =
-                    topInset + (_scrollFraction * travelDistance);
+                final thumbExtent = _calculateThumbExtent(trackExtent);
+                final travelDistance = trackExtent - thumbExtent;
+                final thumbStart =
+                    leadingInset + (_scrollFraction * travelDistance);
+
+                final interactiveTrack = GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  dragStartBehavior: DragStartBehavior.down,
+                  onVerticalDragStart: isVertical
+                      ? (e) => _handleDragStart(e, trackExtent, leadingInset)
+                      : null,
+                  onVerticalDragUpdate: isVertical
+                      ? (e) => _handleDragUpdate(e, trackExtent, leadingInset)
+                      : null,
+                  onHorizontalDragStart: !isVertical
+                      ? (e) => _handleDragStart(e, trackExtent, leadingInset)
+                      : null,
+                  onHorizontalDragUpdate: !isVertical
+                      ? (e) => _handleDragUpdate(e, trackExtent, leadingInset)
+                      : null,
+                  onVerticalDragEnd: isVertical ? _handleDragEnd : null,
+                  onVerticalDragCancel: isVertical ? _handleDragCancel : null,
+                  onHorizontalDragEnd: !isVertical ? _handleDragEnd : null,
+                  onHorizontalDragCancel: !isVertical
+                      ? _handleDragCancel
+                      : null,
+                  child: const SizedBox.expand(),
+                );
 
                 return Stack(
                   key: _trackKey,
                   children: [
                     // Interactive edge strip covering the full track.
                     if (canScroll)
-                      Positioned(
-                        right: 0,
-                        top: topInset,
-                        height: trackHeight,
-                        width: widget.touchWidth,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          dragStartBehavior: DragStartBehavior.down,
-                          onVerticalDragStart: (e) =>
-                              _handleDragStart(e, trackHeight, topInset),
-                          onVerticalDragUpdate: (e) =>
-                              _handleDragUpdate(e, trackHeight, topInset),
-                          onVerticalDragEnd: _handleDragEnd,
-                          onVerticalDragCancel: _handleDragCancel,
-                          child: const SizedBox.expand(),
-                        ),
-                      ),
+                      isVertical
+                          ? Positioned(
+                              right: 0,
+                              top: leadingInset,
+                              height: trackExtent,
+                              width: widget.touchWidth,
+                              child: interactiveTrack,
+                            )
+                          : Positioned(
+                              bottom: 0,
+                              left: leadingInset,
+                              width: trackExtent,
+                              height: widget.touchWidth,
+                              child: interactiveTrack,
+                            ),
 
                     // Guide track line when actively dragging
                     if (_isDragging && canScroll)
-                      Positioned(
-                        right: 6.0,
-                        top: topInset,
-                        height: trackHeight,
-                        width: 2.0,
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: trackColor,
-                              borderRadius: BorderRadius.circular(1.0),
+                      isVertical
+                          ? Positioned(
+                              right: 6.0,
+                              top: leadingInset,
+                              height: trackExtent,
+                              width: 2.0,
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: trackColor,
+                                    borderRadius: BorderRadius.circular(1.0),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Positioned(
+                              bottom: 6.0,
+                              left: leadingInset,
+                              width: trackExtent,
+                              height: 2.0,
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: trackColor,
+                                    borderRadius: BorderRadius.circular(1.0),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
 
                     // Scrollbar thumb indicator
                     if (canScroll)
                       Positioned(
-                        right: _isDragging ? 2.0 : 3.0,
-                        top: thumbTop,
+                        right: isVertical ? (_isDragging ? 2.0 : 3.0) : null,
+                        bottom: isVertical ? null : (_isDragging ? 2.0 : 3.0),
+                        top: isVertical ? thumbStart : null,
+                        left: isVertical ? null : thumbStart,
                         child: IgnorePointer(
                           child: FadeTransition(
                             opacity: _fadeAnimation,
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
                               curve: Curves.easeOut,
-                              width: _isDragging ? 10.0 : 4.0,
-                              height: thumbHeight,
+                              width: isVertical
+                                  ? (_isDragging ? 10.0 : 4.0)
+                                  : thumbExtent,
+                              height: isVertical
+                                  ? thumbExtent
+                                  : (_isDragging ? 10.0 : 4.0),
                               decoration: BoxDecoration(
                                 color: thumbColor,
                                 borderRadius: BorderRadius.circular(
-                                    _isDragging ? 5.0 : 2.0),
+                                  _isDragging ? 5.0 : 2.0,
+                                ),
                                 boxShadow: _isDragging
                                     ? [
                                         BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.25),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.25,
+                                          ),
                                           blurRadius: 4,
                                           offset: const Offset(-1, 1),
                                         ),
@@ -451,13 +516,16 @@ class _FastScrollbarState extends State<FastScrollbar>
                         ),
                       ),
 
-                    // Section popup bubble
-                    if (canScroll && _isDragging && _popupBadge != null)
+                    // Section popup bubble (vertical lists only)
+                    if (isVertical &&
+                        canScroll &&
+                        _isDragging &&
+                        _popupBadge != null)
                       Positioned(
                         right: widget.touchWidth + 8.0,
-                        top: (thumbTop + thumbHeight / 2 - 24.0).clamp(
-                          topInset + 8.0,
-                          topInset + trackHeight - 48.0 - 8.0,
+                        top: (thumbStart + thumbExtent / 2 - 24.0).clamp(
+                          leadingInset + 8.0,
+                          leadingInset + trackExtent - 48.0 - 8.0,
                         ),
                         child: IgnorePointer(
                           child: Container(

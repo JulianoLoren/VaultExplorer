@@ -3980,11 +3980,6 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
                                               BreadcrumbBar(
                                                 stack: _pathStack,
                                                 onTap: _jumpTo,
-                                                backgroundColor: isSelectionMode
-                                                    ? Theme.of(context)
-                                                          .colorScheme
-                                                          .surfaceContainer
-                                                    : null,
                                               ),
                                             ],
                                             if (!widget

@@ -27,6 +27,7 @@ import 'package:vaultexplorer/features/browser/controllers/file_browser_navigati
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_find_panel.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/markdown_image.dart';
 import 'package:vaultexplorer/features/browser/widgets/breadcrumb_bar.dart';
+import 'package:vaultexplorer/features/browser/widgets/fast_scrollbar.dart';
 
 class EditorTab {
   String filePath;
@@ -2445,10 +2446,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
               }
               return KeyEventResult.ignored;
             },
-            child: CodeEditor(
-              key: ValueKey(activeTab.filePath),
-              controller: activeTab.codeController,
-              scrollController: activeTab.scrollController,
+            child: FastScrollbar(
+              controller: activeTab.verticalScrollController,
+              child: FastScrollbar(
+                controller: activeTab.horizontalScrollController,
+                axis: Axis.horizontal,
+                child: CodeEditor(
+                  key: ValueKey(activeTab.filePath),
+                  controller: activeTab.codeController,
+                  scrollController: activeTab.scrollController,
+              scrollbarBuilder: (context, child, details) => child,
               toolbarController: _toolbarController,
               focusNode: _focusNode,
               readOnly: _readOnly,
@@ -2519,9 +2526,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
                       );
                     }
                   : null,
-              ),
+            ),
             ),
           ),
+        ),
+        ),
         ),
         if (!_readOnly &&
             softKeyboardVisible &&

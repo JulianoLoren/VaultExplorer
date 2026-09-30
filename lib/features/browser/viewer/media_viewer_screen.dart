@@ -163,6 +163,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   NativeVideoController? _lastListenedController;
   bool _wakelockEnabled = false;
   int _transitionToken = 0;
+  int _screenOrientationModeIndex = 2;
 
   String get _sessionKey => widget.container.uri;
 
@@ -1390,89 +1391,27 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _menuClosed();
   }
 
-  void _showOrientationSheet(BuildContext context) {
-    _menuOpened();
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.sheet),
-        ),
-      ),
-      builder: (sheetContext) {
-        final cs = Theme.of(sheetContext).colorScheme;
-        final l10n = sheetContext.l10n;
-        final isLandscape =
-            MediaQuery.of(sheetContext).orientation == Orientation.landscape;
+  IconData _screenOrientationIcon() => switch (_screenOrientationModeIndex) {
+    0 => Icons.stay_current_portrait_rounded,
+    1 => Icons.stay_current_landscape_rounded,
+    _ => Icons.screen_rotation_rounded,
+  };
 
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    l10n.screenOrientationMenu,
-                    style: Theme.of(sheetContext).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.stay_current_portrait_rounded),
-                  title: Text(l10n.forcePortraitMenu),
-                  trailing: !isLandscape
-                      ? Icon(Icons.check_rounded, color: cs.primary)
-                      : null,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    SystemChrome.setPreferredOrientations([
-                      DeviceOrientation.portraitUp,
-                    ]);
-                    Navigator.pop(sheetContext);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.stay_current_landscape_rounded),
-                  title: Text(l10n.forceLandscapeMenu),
-                  trailing: isLandscape
-                      ? Icon(Icons.check_rounded, color: cs.primary)
-                      : null,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    SystemChrome.setPreferredOrientations([
-                      DeviceOrientation.landscapeLeft,
-                      DeviceOrientation.landscapeRight,
-                    ]);
-                    Navigator.pop(sheetContext);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.screen_rotation_rounded),
-                  title: Text(l10n.autoRotateSensorMenu),
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    SystemChrome.setPreferredOrientations(
-                      DeviceOrientation.values,
-                    );
-                    Navigator.pop(sheetContext);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ).whenComplete(_menuClosed);
+  void _cycleScreenOrientation() {
+    final nextMode = (_screenOrientationModeIndex + 1) % 3;
+    setState(() => _screenOrientationModeIndex = nextMode);
+
+    switch (nextMode) {
+      case 0:
+        SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      case 1:
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      case 2:
+        SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    }
   }
 
   void _showPlaylistOptionsMenu() {
@@ -1791,7 +1730,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
         _showAdvancedSettings(context, isImage, initialPage: 'audioTracks');
         break;
       case MediaViewerAction.screenOrientation:
-        _showOrientationSheet(context);
+        _cycleScreenOrientation();
         break;
     }
   }
@@ -2575,6 +2514,8 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
                                   slideshowDelaySeconds: _slideshowDelaySeconds,
                                   isMuted: _isMuted,
                                   videoPlaybackMode: _videoPlaybackMode,
+                                  screenOrientationIcon:
+                                      _screenOrientationIcon(),
                                   onExecuteAction: _executeMediaAction,
                                   onStartHideTimer: _startHideTimer,
                                   onShowUIChanged: _setUIVisibility,
