@@ -83,6 +83,7 @@ import 'package:vaultexplorer/features/browser/widgets/open_with_dialog.dart';
 import 'package:vaultexplorer/features/browser/widgets/sort_menu_button.dart';
 import 'package:vaultexplorer/features/camera/camera_capture_screen.dart';
 import 'package:vaultexplorer/features/image_editor/image_editor_screen.dart';
+import 'package:vaultexplorer/features/video_editor/video_editor_screen.dart';
 import 'package:vaultexplorer/features/settings/file_manager_toolbar_settings_controller.dart';
 import 'package:vaultexplorer/features/sync/services/sync_providers.dart';
 import 'package:vaultexplorer/features/sync/ui/sync_rule_editor_sheet.dart';
@@ -949,6 +950,9 @@ void _showItemActionsSheet(RawEntry entry) {
       onEditImage: (!entry.isDir && MediaViewerConstants.isImage(entry.name))
           ? () => _editImage(entry.name, fullPath)
           : null,
+      onEditVideo: (!entry.isDir && MediaViewerConstants.isVideo(entry.name))
+          ? () => _editVideo(fullPath)
+          : null,
       onToggleDocProvider: entry.isDir && !widget.container.isLocalStorage
           ? () {
               if (_isFolderMounted(entry)) {
@@ -1672,6 +1676,21 @@ void _navigateUp() {
       ),
     );
     if (!mounted) return;
+    _loadDirectoryContents(_currentDirPath);
+  }
+
+  Future<void> _editVideo(String fullPath) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VideoEditorScreen(
+          container: widget.container,
+          filePath: fullPath,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    // The editor writes new files next to the original.
     _loadDirectoryContents(_currentDirPath);
   }
 

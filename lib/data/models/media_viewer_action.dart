@@ -20,6 +20,7 @@ enum MediaViewerAction {
   fileInfo,
   openWithApp,
   editImage,
+  editVideo,
   rename,
   delete,
   playlistMenu,
@@ -45,6 +46,7 @@ enum MediaViewerAction {
         MediaViewerAction.fileInfo => Icons.info_outline_rounded,
         MediaViewerAction.openWithApp => Icons.open_in_new_rounded,
         MediaViewerAction.editImage => Icons.edit_outlined,
+        MediaViewerAction.editVideo => Icons.content_cut_rounded,
         MediaViewerAction.rename => Icons.drive_file_rename_outline_rounded,
         MediaViewerAction.delete => Icons.delete_outline_rounded,
         MediaViewerAction.playlistMenu => Icons.playlist_play_rounded,
@@ -71,6 +73,7 @@ enum MediaViewerAction {
         MediaViewerAction.fileInfo => l10n.fileInfoAction,
         MediaViewerAction.openWithApp => l10n.openWithAppAction,
         MediaViewerAction.editImage => l10n.editImageAction,
+        MediaViewerAction.editVideo => l10n.videoEditorEditAction,
         MediaViewerAction.rename => l10n.renameFileMenu,
         MediaViewerAction.delete => l10n.deleteFileMenu,
         MediaViewerAction.playlistMenu => l10n.playlistOptionsTooltip,
@@ -85,6 +88,7 @@ enum MediaViewerAction {
           this == MediaViewerAction.subtitles ||
           this == MediaViewerAction.audioTrack ||
           this == MediaViewerAction.aspectRatio ||
+          this == MediaViewerAction.editVideo ||
           this == MediaViewerAction.diagnostics) {
         return false;
       }
@@ -103,7 +107,8 @@ enum MediaViewerAction {
       return false;
     }
     if (isAudio &&
-        (this == MediaViewerAction.subtitles ||
+        (this == MediaViewerAction.editVideo ||
+            this == MediaViewerAction.subtitles ||
             this == MediaViewerAction.rotate90 ||
             this == MediaViewerAction.screenOrientation ||
             this == MediaViewerAction.aspectRatio)) {

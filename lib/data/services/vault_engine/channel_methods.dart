@@ -79,6 +79,9 @@ abstract final class ChannelMethods {
   static const splitContainer = 'splitContainer';
   static const joinContainer = 'joinContainer';
   static const cancelSplitJoin = 'cancelSplitJoin';
+  static const videoEditProbe = 'videoEditProbe';
+  static const videoEditExport = 'videoEditExport';
+  static const cancelVideoEdit = 'cancelVideoEdit';
   static const unlockSplitContainer = 'unlockSplitContainer';
   static const encryptSingleFile = 'encryptSingleFile';
   static const decryptSingleFile = 'decryptSingleFile';

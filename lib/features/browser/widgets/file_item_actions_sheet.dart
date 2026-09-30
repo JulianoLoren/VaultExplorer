@@ -44,6 +44,7 @@ class FileItemActionsSheet extends ConsumerWidget {
   final VoidCallback? onOpenWith;
   final VoidCallback? onShare;
   final VoidCallback? onEditImage;
+  final VoidCallback? onEditVideo;
   final VoidCallback? onToggleDocProvider;
   final VoidCallback? onSyncSettings;
 
@@ -71,6 +72,7 @@ class FileItemActionsSheet extends ConsumerWidget {
     this.onOpenWith,
     this.onShare,
     this.onEditImage,
+    this.onEditVideo,
     this.onToggleDocProvider,
     this.onSyncSettings,
   });
@@ -99,6 +101,7 @@ class FileItemActionsSheet extends ConsumerWidget {
     VoidCallback? onOpenWith,
     VoidCallback? onShare,
     VoidCallback? onEditImage,
+    VoidCallback? onEditVideo,
     VoidCallback? onToggleDocProvider,
     VoidCallback? onSyncSettings,
   }) {
@@ -132,6 +135,7 @@ class FileItemActionsSheet extends ConsumerWidget {
         onOpenWith: onOpenWith,
         onShare: onShare,
         onEditImage: onEditImage,
+        onEditVideo: onEditVideo,
         onToggleDocProvider: onToggleDocProvider,
         onSyncSettings: onSyncSettings,
       ),
@@ -320,7 +324,20 @@ class FileItemActionsSheet extends ConsumerWidget {
                           onEditImage!();
                         },
                       ),
-                    if (onOpenWith != null || onShare != null || onEditImage != null)
+                    if (onEditVideo != null)
+                      _ActionTile(
+                        icon: Icons.content_cut_rounded,
+                        label: context.l10n.videoEditorEditAction,
+                        enabled: !isReadOnly,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onEditVideo!();
+                        },
+                      ),
+                    if (onOpenWith != null ||
+                        onShare != null ||
+                        onEditImage != null ||
+                        onEditVideo != null)
                       const SizedBox(height: 8),
 
                     // Group 2: Core File Operations

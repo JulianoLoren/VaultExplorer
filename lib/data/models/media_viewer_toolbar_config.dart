@@ -46,6 +46,7 @@ class MediaViewerToolbarConfig {
       MediaViewerAction.fileInfo,
       MediaViewerAction.openWithApp,
       MediaViewerAction.editImage,
+      MediaViewerAction.editVideo,
       MediaViewerAction.rename,
       MediaViewerAction.delete,
     ],
@@ -196,10 +197,18 @@ class MediaViewerToolbarConfig {
         .whereType<MediaViewerAction>()
         .toSet();
 
+    // A config saved before `editVideo` existed doesn't list it anywhere. Every
+    // action always lives in exactly one section (the settings screen only ever
+    // moves them), so "in none" means "new": put it in the More menu.
+    final placed = {...top, ...bottom, ...more, ...advanced, ...hidden};
+    final moreWithNew = placed.contains(MediaViewerAction.editVideo)
+        ? more
+        : [...more, MediaViewerAction.editVideo];
+
     return MediaViewerToolbarConfig(
       topBarActions: top,
       bottomBarActions: bottom,
-      moreMenuActions: more,
+      moreMenuActions: moreWithNew,
       advancedSettingsActions: advanced,
       hiddenActions: hidden,
       showProgressBar: j['showProgressBar'] as bool? ?? true,

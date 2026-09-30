@@ -52,6 +52,7 @@ import 'package:vaultexplorer/features/browser/viewer/widgets/advanced_settings_
 import 'package:vaultexplorer/features/browser/viewer/widgets/media_diagnostics_sheet.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/video_scrub_fullscreen_layer.dart';
 import 'package:vaultexplorer/features/image_editor/image_editor_screen.dart';
+import 'package:vaultexplorer/features/video_editor/video_editor_screen.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/playlist_carousel_overlay.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/playlist_transition_transformer.dart';
 import 'package:vaultexplorer/features/browser/viewer/media_viewer_session_controller.dart';
@@ -1143,6 +1144,32 @@ int get _knownAspectRatioCount {
     _sessionController.bumpImageReloadEpoch(fileToEdit);
   }
 
+  Future<void> _openVideoEditor() async {
+    final fileToEdit = _playlistController.currentFile;
+    if (!MediaViewerConstants.isVideo(fileToEdit)) return;
+    _menuOpened();
+    // The app has a single native player. Release the viewer's before the
+    // editor creates its own, and wait for that release to finish so it can't
+    // land on top of the editor's player.
+    _playbackManager.pauseActive();
+    await _playbackManager.invalidateActive();
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VideoEditorScreen(
+          container: widget.container,
+          filePath: fileToEdit,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    _menuClosed();
+    // The editor has released the player by now (it does so before popping);
+    // bring this video back up.
+    unawaited(_activateCurrentMedia());
+  }
+
   Future<void> _renameCurrentFile() async {
     _menuOpened();
     final fileToRename = _playlistController.currentFile;
@@ -1633,6 +1660,9 @@ int get _knownAspectRatioCount {
         break;
       case MediaViewerAction.editImage:
         _openImageEditor();
+        break;
+      case MediaViewerAction.editVideo:
+        _openVideoEditor();
         break;
       case MediaViewerAction.rename:
         _renameCurrentFile();

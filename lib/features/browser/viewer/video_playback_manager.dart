@@ -154,6 +154,21 @@ class VideoPlaybackManager {
 
   void pauseActive() => activeController?.pause();
 
+  /// Tears down the active controller and forgets it, so the next [activate]
+  /// builds a fresh one. Used when another screen (the video editor) is about
+  /// to take over the app's single native player: the returned future
+  /// completes once the native release has finished, so the caller can start
+  /// the other player without this one's late `release` killing it.
+  Future<void> invalidateActive() async {
+    _activationToken++; // abandon any activation still in flight
+    final file = currentFileNotifier.value;
+    if (file == null) return;
+    final controller = _controllers.remove(file);
+    activeControllerNotifier.value = null;
+    currentFileNotifier.value = null;
+    await controller?.dispose();
+  }
+
   void dispose() {
     _activationToken++;
     currentFileNotifier.dispose();

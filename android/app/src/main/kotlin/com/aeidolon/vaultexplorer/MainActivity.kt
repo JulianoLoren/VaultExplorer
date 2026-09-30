@@ -35,6 +35,7 @@ import com.aeidolon.vaultexplorer.bridge.UnlockProgressBridge
 import com.aeidolon.vaultexplorer.bridge.VaultAutomationUnlockedBridge
 import com.aeidolon.vaultexplorer.bridge.VaultCameraStopRequestedBridge
 import com.aeidolon.vaultexplorer.bridge.VaultForceLockedBridge
+import com.aeidolon.vaultexplorer.bridge.VideoEditProgressBridge
 import com.aeidolon.vaultexplorer.container.VideoThumbnailCoordinator
 import com.aeidolon.vaultexplorer.service.VaultCameraRecordingService
 import com.aeidolon.vaultexplorer.handlers.AppSettingsFileHandlers
@@ -59,6 +60,7 @@ import com.aeidolon.vaultexplorer.handlers.UsbContainerHandlers
 import com.aeidolon.vaultexplorer.handlers.VaultCreationHandlers
 import com.aeidolon.vaultexplorer.handlers.VaultPickerHandlers
 import com.aeidolon.vaultexplorer.handlers.VaultUnlockHandlers
+import com.aeidolon.vaultexplorer.handlers.VideoEditHandlers
 import com.aeidolon.vaultexplorer.handlers.LocalFileHandlers
 import com.aeidolon.vaultexplorer.handlers.ShareIntentHandlers
 import com.aeidolon.vaultexplorer.handlers.PanicSettingsHandlers
@@ -218,6 +220,9 @@ private object ChannelMethods {
     const val SPLIT_CONTAINER = "splitContainer"
     const val JOIN_CONTAINER = "joinContainer"
     const val CANCEL_SPLIT_JOIN = "cancelSplitJoin"
+    const val VIDEO_EDIT_PROBE = "videoEditProbe"
+    const val VIDEO_EDIT_EXPORT = "videoEditExport"
+    const val CANCEL_VIDEO_EDIT = "cancelVideoEdit"
     const val UNLOCK_SPLIT_CONTAINER = "unlockSplitContainer"
     const val ENCRYPT_SINGLE_FILE = "encryptSingleFile"
     const val DECRYPT_SINGLE_FILE = "decryptSingleFile"
@@ -364,6 +369,7 @@ open class MainActivity : FlutterFragmentActivity() {
     private val archiveHandlers = com.aeidolon.vaultexplorer.handlers.ArchiveHandlers(this, ioExecutor, nativeOps)
     private val nativePlayerManager by lazy { com.aeidolon.vaultexplorer.engine.NativePlayerManager(this) }
     private val compositeHandlers = com.aeidolon.vaultexplorer.handlers.CompositeContainerHandlers(this, ioExecutor, nativeOps)
+    private val videoEditHandlers = VideoEditHandlers(this, ioExecutor)
      private val panicSettingsHandlers = PanicSettingsHandlers(this, ioExecutor)
     private val quickCaptureSettingsHandlers = QuickCaptureSettingsHandlers(this)
     internal val safStorageManager by lazy { com.aeidolon.vaultexplorer.saf.SafStorageManager(this) }
@@ -748,6 +754,7 @@ open class MainActivity : FlutterFragmentActivity() {
         ExportProgressBridge.channel = channel
         HiddenVolumeProtectionBridge.channel = channel
         SplitJoinProgressBridge.channel = channel
+        VideoEditProgressBridge.channel = channel
         RepairLogBridge.channel = channel
         HashProgressBridge.channel = channel
         VaultForceLockedBridge.channel = channel
@@ -1143,6 +1150,9 @@ open class MainActivity : FlutterFragmentActivity() {
                 ChannelMethods.SPLIT_CONTAINER -> splitJoinHandlers.handleSplitContainer(call, result)
                 ChannelMethods.JOIN_CONTAINER -> splitJoinHandlers.handleJoinContainer(call, result)
                 ChannelMethods.CANCEL_SPLIT_JOIN -> splitJoinHandlers.handleCancelSplitJoin(call, result)
+                ChannelMethods.VIDEO_EDIT_PROBE -> videoEditHandlers.handleProbe(call, result)
+                ChannelMethods.VIDEO_EDIT_EXPORT -> videoEditHandlers.handleExport(call, result)
+                ChannelMethods.CANCEL_VIDEO_EDIT -> videoEditHandlers.handleCancel(call, result)
                 ChannelMethods.UNLOCK_SPLIT_CONTAINER -> splitContainerMountHandlers.handleUnlockSplitContainer(call, result)
                 ChannelMethods.ENCRYPT_SINGLE_FILE -> singleFileCryptoHandlers.handleEncryptSingleFile(call, result)
                 ChannelMethods.DECRYPT_SINGLE_FILE -> singleFileCryptoHandlers.handleDecryptSingleFile(call, result)

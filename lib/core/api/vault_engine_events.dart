@@ -193,6 +193,15 @@ class VaultEngineEvents {
     void Function(SplitJoinProgress progress) listener,
   ) => _splitJoinProgressRegistry.remove(listener);
 
+  final ListenerRegistry<VideoEditProgress> _videoEditProgressRegistry =
+      ListenerRegistry<VideoEditProgress>();
+  void addVideoEditProgressListener(
+    void Function(VideoEditProgress progress) listener,
+  ) => _videoEditProgressRegistry.add(listener);
+  void removeVideoEditProgressListener(
+    void Function(VideoEditProgress progress) listener,
+  ) => _videoEditProgressRegistry.remove(listener);
+
   final ListenerRegistry<CopyProgress> _copyProgressRegistry =
       ListenerRegistry<CopyProgress>();
   void addCopyProgressListener(
@@ -443,6 +452,26 @@ class VaultEngineEvents {
             opId: opId,
             bytesDone: bytesDone,
             bytesTotal: bytesTotal,
+          ));
+        }
+      } else if (call.method == 'onVideoEditProgress') {
+        final args = call.arguments as Map<Object?, Object?>;
+        final opId = (args['opId'] as num?)?.toInt();
+        final outputIndex = (args['outputIndex'] as num?)?.toInt();
+        final outputCount = (args['outputCount'] as num?)?.toInt();
+        final phase = args['phase'] as String?;
+        final fraction = (args['fraction'] as num?)?.toDouble();
+        if (opId != null &&
+            outputIndex != null &&
+            outputCount != null &&
+            phase != null &&
+            fraction != null) {
+          _videoEditProgressRegistry.notify((
+            opId: opId,
+            outputIndex: outputIndex,
+            outputCount: outputCount,
+            phase: phase,
+            fraction: fraction,
           ));
         }
       } else if (call.method == 'onCopyProgress') {

@@ -134,6 +134,17 @@ IncomingShareItem? incomingShareItemFromWire(Map<Object?, Object?> map) {
 
 typedef SplitJoinProgress = ({int opId, int bytesDone, int bytesTotal});
 
+/// One tick of a Video Editor export. [phase] is `'cutting'` or `'saving'`;
+/// [fraction] is 0..1 within that phase for output [outputIndex] (0-based)
+/// of [outputCount].
+typedef VideoEditProgress = ({
+  int opId,
+  int outputIndex,
+  int outputCount,
+  String phase,
+  double fraction,
+});
+
 typedef CopyProgress = ({int opId, int bytesDelta});
 
 typedef HashProgress = ({int opId, int bytesDone, int bytesTotal});
