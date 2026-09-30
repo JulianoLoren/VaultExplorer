@@ -674,6 +674,7 @@ class ArchiveHandlers(
         val srcUri = call.argument<String>("srcUri")
         val rawSrcPaths = call.argument<List<String>>("srcPaths")
         val entryNames = call.argument<List<String>>("entryNames") ?: rawSrcPaths?.map { it.substringAfterLast("/") }
+        val modifiedSecs = call.argument<List<Number>>("modifiedSecs")
 
         val destUri = call.argument<String>("destUri")
         val destVaultPath = call.argument<String>("destVaultPath")
@@ -683,6 +684,11 @@ class ArchiveHandlers(
             result.error("INVALID_ARGS", "srcPaths and matching entryNames required", null)
             return
         }
+        if (modifiedSecs != null && modifiedSecs.size != rawSrcPaths.size) {
+            result.error("INVALID_ARGS", "modifiedSecs must match srcPaths when provided", null)
+            return
+        }
+        val sourceModifiedSecs = (modifiedSecs ?: List(rawSrcPaths.size) { 0 }).map { it.toLong() }.toLongArray()
 
         val srcVolId = if (!srcUri.isNullOrEmpty()) ContainerSessionRegistry.getVolumeIdByUri(srcUri) else null
         val destVolId = if (!destUri.isNullOrEmpty()) ContainerSessionRegistry.getVolumeIdByUri(destUri) else null
@@ -707,7 +713,7 @@ class ArchiveHandlers(
                 try {
                     if (srcVolId != null && destVolId != null && destVaultPath != null) {
                         val ok = NativeEngine.archiveCreateVaultToVaultNative(
-                            srcVolId, srcPaths.toTypedArray(), entryNames.toTypedArray(),
+                            srcVolId, srcPaths.toTypedArray(), entryNames.toTypedArray(), sourceModifiedSecs,
                             destVolId, destVaultPath, format, passphrase, opId
                         )
                         activity.runOnUiThread { result.success(ok) }
@@ -735,7 +741,7 @@ class ArchiveHandlers(
                         }
 
                         val ok = NativeEngine.archiveCreateVaultToFdNative(
-                            srcVolId, srcPaths.toTypedArray(), entryNames.toTypedArray(),
+                            srcVolId, srcPaths.toTypedArray(), entryNames.toTypedArray(), sourceModifiedSecs,
                             destPfd.fd, format, passphrase, opId
                         )
                         activity.runOnUiThread { result.success(ok) }
@@ -763,7 +769,7 @@ class ArchiveHandlers(
                         }
 
                         val ok = NativeEngine.archiveCreateLocalToFdNative(
-                            srcPaths.toTypedArray(), entryNames.toTypedArray(),
+                            srcPaths.toTypedArray(), entryNames.toTypedArray(), sourceModifiedSecs,
                             destPfd.fd, format, passphrase, opId
                         )
                         activity.runOnUiThread { result.success(ok) }
@@ -786,12 +792,14 @@ class ArchiveHandlers(
                 // A. Prepare source files
                 val localSourcePaths: List<String>
                 val localEntryNames: List<String>
+                val localModifiedSecs: LongArray
 
                 if (srcIsFolderVault) {
                     val dir = File(activity.cacheDir, "arch_src_${System.nanoTime()}").apply { mkdirs() }
                     tempSrcDir = dir
                     val files = mutableListOf<String>()
                     val names = mutableListOf<String>()
+                    val modified = mutableListOf<Long>()
                     for (i in srcPaths.indices) {
                         val sp = srcPaths[i]
                         val en = entryNames[i]
@@ -800,13 +808,16 @@ class ArchiveHandlers(
                         if (ok && tmp.exists()) {
                             files.add(tmp.absolutePath)
                             names.add(en)
+                            modified.add(sourceModifiedSecs[i])
                         }
                     }
                     localSourcePaths = files
                     localEntryNames = names
+                    localModifiedSecs = modified.toLongArray()
                 } else {
                     localSourcePaths = srcPaths
                     localEntryNames = entryNames
+                    localModifiedSecs = sourceModifiedSecs
                 }
 
                 // B. Prepare target file descriptor
@@ -848,12 +859,12 @@ class ArchiveHandlers(
                 // C. Create archive
                 val ok = if (srcIsFolderVault || srcVolId == null) {
                     NativeEngine.archiveCreateLocalToFdNative(
-                        localSourcePaths.toTypedArray(), localEntryNames.toTypedArray(),
+                        localSourcePaths.toTypedArray(), localEntryNames.toTypedArray(), localModifiedSecs,
                         targetPfd.fd, format, passphrase, opId
                     )
                 } else {
                     NativeEngine.archiveCreateVaultToFdNative(
-                        srcVolId, srcPaths.toTypedArray(), entryNames.toTypedArray(),
+                        srcVolId, srcPaths.toTypedArray(), entryNames.toTypedArray(), sourceModifiedSecs,
                         targetPfd.fd, format, passphrase, opId
                     )
                 }

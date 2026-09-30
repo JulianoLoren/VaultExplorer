@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <ctime>
 #include <cstring>
 
 namespace {
@@ -607,9 +608,10 @@ ArchiveCreateResult archiveCreate(
         archive_entry_set_filetype(ae, entry.isDirectory ? AE_IFDIR : AE_IFREG);
         archive_entry_set_perm(ae, entry.isDirectory ? 0755 : 0644);
         archive_entry_set_size(ae, static_cast<int64_t>(entry.uncompressedSize));
-        if (entry.modTimeEpochSeconds > 0) {
-            archive_entry_set_mtime(ae, entry.modTimeEpochSeconds, 0);
-        }
+        const int64_t mtime = entry.modTimeEpochSeconds > 0
+            ? entry.modTimeEpochSeconds
+            : static_cast<int64_t>(std::time(nullptr));
+        archive_entry_set_mtime(ae, mtime, 0);
 
         if (archive_write_header(a, ae) != ARCHIVE_OK) {
             result.status = state.ioErrorSeen ? ArchiveOpenStatus::IoError : ArchiveOpenStatus::UnsupportedFormat;

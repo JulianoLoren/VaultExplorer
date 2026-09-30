@@ -878,6 +878,12 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     _signalActivity();
     HapticFeedback.selectionClick();
     final fullPath = _fullPathOf(entry);
+    final extension = entry.name.contains('.')
+        ? entry.name.split('.').last.toLowerCase()
+        : '';
+    final canExtract =
+        _archiveContext != null ||
+        (!entry.isDir && ArchiveService.isArchive(extension));
     FileItemActionsSheet.show(
       context,
       entry: entry,
@@ -988,6 +994,12 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
           currentDirPath: _currentDirPath,
         );
       },
+      onExtract: canExtract
+          ? () async {
+              setSelectedItems({entry});
+              await _extractSelectedArchive();
+            }
+          : null,
       onOpenWith: !entry.isDir
           ? () async {
               final parts = entry.name.split('.');

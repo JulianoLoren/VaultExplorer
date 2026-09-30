@@ -5,12 +5,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/core/api/vault_file_io_api.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
-import 'package:vaultexplorer/core/theme/app_theme.dart';
 import 'package:vaultexplorer/core/utils/file_type_utils.dart';
 import 'package:vaultexplorer/core/utils/format_utils.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
 import 'package:vaultexplorer/core/widgets/thumbnail/async_thumbnail.dart';
-import 'package:vaultexplorer/core/widgets/thumbnail/thumbnail_concurrency.dart';
 import 'package:vaultexplorer/data/models/archive_context.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
@@ -41,6 +39,7 @@ class FileItemActionsSheet extends ConsumerWidget {
   final VoidCallback onTogglePin;
   final VoidCallback onToggleBookmark;
   final VoidCallback onInfo;
+  final VoidCallback? onExtract;
   final VoidCallback? onOpenWith;
   final VoidCallback? onShare;
   final VoidCallback? onEditImage;
@@ -69,6 +68,7 @@ class FileItemActionsSheet extends ConsumerWidget {
     required this.onTogglePin,
     required this.onToggleBookmark,
     required this.onInfo,
+    this.onExtract,
     this.onOpenWith,
     this.onShare,
     this.onEditImage,
@@ -98,6 +98,7 @@ class FileItemActionsSheet extends ConsumerWidget {
     required VoidCallback onTogglePin,
     required VoidCallback onToggleBookmark,
     required VoidCallback onInfo,
+    VoidCallback? onExtract,
     VoidCallback? onOpenWith,
     VoidCallback? onShare,
     VoidCallback? onEditImage,
@@ -132,6 +133,7 @@ class FileItemActionsSheet extends ConsumerWidget {
         onTogglePin: onTogglePin,
         onToggleBookmark: onToggleBookmark,
         onInfo: onInfo,
+        onExtract: onExtract,
         onOpenWith: onOpenWith,
         onShare: onShare,
         onEditImage: onEditImage,
@@ -152,8 +154,12 @@ class FileItemActionsSheet extends ConsumerWidget {
     if (customLeading != null) return customLeading!;
 
     final cleanName = entry.name;
-    final fullPath = currentDirPath.isEmpty ? cleanName : '$currentDirPath/$cleanName';
-    final ext = cleanName.contains('.') ? cleanName.split('.').last.toLowerCase() : '';
+    final fullPath = currentDirPath.isEmpty
+        ? cleanName
+        : '$currentDirPath/$cleanName';
+    final ext = cleanName.contains('.')
+        ? cleanName.split('.').last.toLowerCase()
+        : '';
     final vaultIcon = vaultIconForExt(ext);
     final vaultColor = vaultColorForExt(ext);
 
@@ -171,13 +177,13 @@ class FileItemActionsSheet extends ConsumerWidget {
     }
 
     if (vaultIcon != null) {
-      return Center(
-        child: Icon(vaultIcon, color: vaultColor, size: 24),
-      );
+      return Center(child: Icon(vaultIcon, color: vaultColor, size: 24));
     }
 
-    final isImg = MediaViewerConstants.isImage(cleanName) && !entry.isPlaceholder;
-    final isVid = MediaViewerConstants.isVideo(cleanName) && !entry.isPlaceholder;
+    final isImg =
+        MediaViewerConstants.isImage(cleanName) && !entry.isPlaceholder;
+    final isVid =
+        MediaViewerConstants.isVideo(cleanName) && !entry.isPlaceholder;
 
     if (isImg) {
       return _ItemImageThumbnail(
@@ -214,9 +220,14 @@ class FileItemActionsSheet extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final isDir = entry.isDir;
-    final ext = isDir ? '' : (entry.name.contains('.') ? entry.name.split('.').last : '');
+    final isInsideArchive = archiveContext != null;
+    final ext = isDir
+        ? ''
+        : (entry.name.contains('.') ? entry.name.split('.').last : '');
     final icon = isDir
-        ? (isDocumentProviderMounted ? Icons.folder_shared_rounded : Icons.folder_rounded)
+        ? (isDocumentProviderMounted
+              ? Icons.folder_shared_rounded
+              : Icons.folder_rounded)
         : (vaultIconForExt(ext) ?? iconForFile(entry.name));
     final iconColor = isDir
         ? (isDocumentProviderMounted ? cs.tertiary : cs.secondary)
@@ -274,16 +285,17 @@ class FileItemActionsSheet extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.info_outline_rounded),
-                    iconSize: 22,
-                    color: cs.onSurfaceVariant,
-                    tooltip: context.l10n.fileInfoAction,
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onInfo();
-                    },
-                  ),
+                  if (!isInsideArchive)
+                    IconButton(
+                      icon: const Icon(Icons.info_outline_rounded),
+                      iconSize: 22,
+                      color: cs.onSurfaceVariant,
+                      tooltip: context.l10n.fileInfoAction,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onInfo();
+                      },
+                    ),
                 ],
               ),
             ),
@@ -295,8 +307,22 @@ class FileItemActionsSheet extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Archive entries are virtual, read-only entries. The
+                    // sole file operation available here is staging one for
+                    // extraction into a real destination.
+                    if (onExtract != null)
+                      _ActionTile(
+                        icon: Icons.unarchive_outlined,
+                        label: context.l10n.extract,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onExtract!();
+                        },
+                      ),
+                    if (onExtract != null) const SizedBox(height: 8),
+
                     // Group 1: Consumption & Sharing
-                    if (onOpenWith != null)
+                    if (!isInsideArchive && onOpenWith != null)
                       _ActionTile(
                         icon: Icons.open_in_new_rounded,
                         label: context.l10n.openWithAppAction,
@@ -305,7 +331,7 @@ class FileItemActionsSheet extends ConsumerWidget {
                           onOpenWith!();
                         },
                       ),
-                    if (onShare != null)
+                    if (!isInsideArchive && onShare != null)
                       _ActionTile(
                         icon: Icons.share_rounded,
                         label: context.l10n.shareAction,
@@ -314,7 +340,7 @@ class FileItemActionsSheet extends ConsumerWidget {
                           onShare!();
                         },
                       ),
-                    if (onEditImage != null)
+                    if (!isInsideArchive && onEditImage != null)
                       _ActionTile(
                         icon: Icons.edit_outlined,
                         label: context.l10n.editImageAction,
@@ -324,7 +350,7 @@ class FileItemActionsSheet extends ConsumerWidget {
                           onEditImage!();
                         },
                       ),
-                    if (onEditVideo != null)
+                    if (!isInsideArchive && onEditVideo != null)
                       _ActionTile(
                         icon: Icons.content_cut_rounded,
                         label: context.l10n.videoEditorEditAction,
@@ -334,102 +360,119 @@ class FileItemActionsSheet extends ConsumerWidget {
                           onEditVideo!();
                         },
                       ),
-                    if (onOpenWith != null ||
-                        onShare != null ||
-                        onEditImage != null ||
-                        onEditVideo != null)
+                    if (!isInsideArchive &&
+                        (onOpenWith != null ||
+                            onShare != null ||
+                            onEditImage != null ||
+                            onEditVideo != null))
                       const SizedBox(height: 8),
 
                     // Group 2: Core File Operations
-                    _ActionTile(
-                      icon: Icons.drive_file_rename_outline_rounded,
-                      label: context.l10n.renameAction,
-                      enabled: !isReadOnly,
-                      onTap: () {
-                        Navigator.pop(context);
-                        onRename();
-                      },
-                    ),
-                    _ActionTile(
-                      icon: Icons.copy_rounded,
-                      label: context.l10n.copyAction,
-                      onTap: () {
-                        Navigator.pop(context);
-                        onCopy();
-                      },
-                    ),
-                    _ActionTile(
-                      icon: Icons.cut_rounded,
-                      label: context.l10n.moveAction,
-                      enabled: !isReadOnly,
-                      onTap: () {
-                        Navigator.pop(context);
-                        onCut();
-                      },
-                    ),
-                    const SizedBox(height: 8),
+                    if (!isInsideArchive) ...[
+                      _ActionTile(
+                        icon: Icons.drive_file_rename_outline_rounded,
+                        label: context.l10n.renameAction,
+                        enabled: !isReadOnly,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onRename();
+                        },
+                      ),
+                      _ActionTile(
+                        icon: Icons.copy_rounded,
+                        label: context.l10n.copyAction,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onCopy();
+                        },
+                      ),
+                      _ActionTile(
+                        icon: Icons.cut_rounded,
+                        label: context.l10n.moveAction,
+                        enabled: !isReadOnly,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onCut();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                    ],
 
                     // Group 3: Shortcuts & Integrations
-                    _ActionTile(
-                      icon: isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
-                      label: isPinned ? context.l10n.unpinAction : context.l10n.pinAction,
-                      onTap: () {
-                        Navigator.pop(context);
-                        onTogglePin();
-                      },
-                    ),
-                    _ActionTile(
-                      icon: isBookmark ? Icons.star_outline_rounded : Icons.star_rounded,
-                      label: isBookmark ? context.l10n.unbookmarkAction : context.l10n.bookmarkAction,
-                      onTap: () {
-                        Navigator.pop(context);
-                        onToggleBookmark();
-                      },
-                    ),
-                    if (onToggleDocProvider != null)
+                    if (!isInsideArchive) ...[
                       _ActionTile(
-                        icon: isDocumentProviderMounted
-                            ? Icons.folder_shared_rounded
-                            : Icons.folder_shared_outlined,
-                        label: isDocumentProviderMounted
-                            ? context.l10n.documentProviderSettingsMenu
-                            : context.l10n.exposeAsDocumentProviderMenu,
+                        icon: isPinned
+                            ? Icons.push_pin_outlined
+                            : Icons.push_pin_rounded,
+                        label: isPinned
+                            ? context.l10n.unpinAction
+                            : context.l10n.pinAction,
                         onTap: () {
                           Navigator.pop(context);
-                          onToggleDocProvider!();
+                          onTogglePin();
                         },
                       ),
-                    if (onSyncSettings != null)
                       _ActionTile(
-                        icon: Icons.sync_rounded,
-                        label: context.l10n.autoSyncMenuAction,
+                        icon: isBookmark
+                            ? Icons.star_outline_rounded
+                            : Icons.star_rounded,
+                        label: isBookmark
+                            ? context.l10n.unbookmarkAction
+                            : context.l10n.bookmarkAction,
                         onTap: () {
                           Navigator.pop(context);
-                          onSyncSettings!();
+                          onToggleBookmark();
                         },
                       ),
-                    const SizedBox(height: 10),
-
-                    // Group 4: Destructive Action (Safely isolated in a soft tinted container)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                      child: Material(
-                        color: cs.errorContainer.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        clipBehavior: Clip.antiAlias,
-                        child: _ActionTile(
-                          icon: Icons.delete_outline_rounded,
-                          label: context.l10n.delete,
-                          color: cs.error,
-                          enabled: !isReadOnly,
+                      if (onToggleDocProvider != null)
+                        _ActionTile(
+                          icon: isDocumentProviderMounted
+                              ? Icons.folder_shared_rounded
+                              : Icons.folder_shared_outlined,
+                          label: isDocumentProviderMounted
+                              ? context.l10n.documentProviderSettingsMenu
+                              : context.l10n.exposeAsDocumentProviderMenu,
                           onTap: () {
                             Navigator.pop(context);
-                            onDelete();
+                            onToggleDocProvider!();
                           },
                         ),
-                      ),
-                    ),
+                      if (onSyncSettings != null)
+                        _ActionTile(
+                          icon: Icons.sync_rounded,
+                          label: context.l10n.autoSyncMenuAction,
+                          onTap: () {
+                            Navigator.pop(context);
+                            onSyncSettings!();
+                          },
+                        ),
+                      const SizedBox(height: 10),
                     ],
+
+                    // Group 4: Destructive Action (Safely isolated in a soft tinted container)
+                    if (!isInsideArchive)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 2,
+                        ),
+                        child: Material(
+                          color: cs.errorContainer.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          clipBehavior: Clip.antiAlias,
+                          child: _ActionTile(
+                            icon: Icons.delete_outline_rounded,
+                            label: context.l10n.delete,
+                            color: cs.error,
+                            enabled: !isReadOnly,
+                            onTap: () {
+                              Navigator.pop(context);
+                              onDelete();
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -569,7 +612,8 @@ class _ItemImageThumbnail extends ConsumerWidget {
           ),
         ),
       ),
-      errorBuilder: (context) => Icon(fallbackIcon, color: fallbackIconColor, size: 24),
+      errorBuilder: (context) =>
+          Icon(fallbackIcon, color: fallbackIconColor, size: 24),
     );
   }
 }
@@ -617,7 +661,8 @@ class _ItemVideoThumbnail extends ConsumerWidget {
             targetSize: quality.scaledSize(180),
           ),
           debounce: const Duration(milliseconds: 50),
-          syncLookup: () => thumbnailCache.peekMemory(container, filePath, quality),
+          syncLookup: () =>
+              thumbnailCache.peekMemory(container, filePath, quality),
           cacheHeight: quality.scaledSize(180),
           imageBuilder: (context, bytes, cacheHeight) => Image.memory(
             bytes,
@@ -642,7 +687,8 @@ class _ItemVideoThumbnail extends ConsumerWidget {
               ),
             ),
           ),
-          errorBuilder: (context) => Icon(fallbackIcon, color: fallbackIconColor, size: 24),
+          errorBuilder: (context) =>
+              Icon(fallbackIcon, color: fallbackIconColor, size: 24),
         ),
         Align(
           alignment: Alignment.bottomRight,
@@ -687,10 +733,7 @@ class _ActionTile extends StatelessWidget {
       leading: Icon(icon, color: effectiveColor, size: 22),
       title: Text(
         label,
-        style: TextStyle(
-          color: effectiveColor,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(color: effectiveColor, fontWeight: FontWeight.w500),
       ),
       enabled: enabled,
       onTap: enabled ? onTap : null,

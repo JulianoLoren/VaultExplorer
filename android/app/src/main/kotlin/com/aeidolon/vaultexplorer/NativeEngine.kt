@@ -290,17 +290,17 @@ internal object NativeEngine {
     ): Map<String, Any>?
 
     @JvmStatic external fun archiveCreateVaultToFdNative(
-        srcVolId: Int, vaultPaths: Array<String>, entryNames: Array<String>,
+        srcVolId: Int, vaultPaths: Array<String>, entryNames: Array<String>, modifiedSecs: LongArray,
         destFd: Int, format: Int, passphrase: String?, opId: Int
     ): Boolean
 
     @JvmStatic external fun archiveCreateVaultToVaultNative(
-        srcVolId: Int, vaultPaths: Array<String>, entryNames: Array<String>,
+        srcVolId: Int, vaultPaths: Array<String>, entryNames: Array<String>, modifiedSecs: LongArray,
         destVolId: Int, destVaultPath: String, format: Int, passphrase: String?, opId: Int
     ): Boolean
 
     @JvmStatic external fun archiveCreateLocalToFdNative(
-        localPaths: Array<String>, entryNames: Array<String>,
+        localPaths: Array<String>, entryNames: Array<String>, modifiedSecs: LongArray,
         destFd: Int, format: Int, passphrase: String?, opId: Int
     ): Boolean
     

@@ -230,6 +230,7 @@ class VaultArchiveApi {
     required ArchiveFormatType format,
     required List<String> srcPaths,
     List<String>? entryNames,
+    List<int>? modifiedSecs,
     String? srcUri,
     String? destUri,
     String? destVaultPath,
@@ -238,19 +239,22 @@ class VaultArchiveApi {
     int? opId,
   }) async {
     try {
-      final ok = await _channel
-          .invokeMethod<bool>(ChannelMethods.archiveCreate, {
-            'format': format.code,
-            'srcPaths': srcPaths,
-            'entryNames': ?entryNames,
-            'srcUri': ?srcUri,
-            'destUri': ?destUri,
-            'destVaultPath': ?destVaultPath,
-            'destFilePath': ?destFilePath,
-            if (passphrase != null && passphrase.isNotEmpty)
-              'passphrase': passphrase,
-            'opId': ?opId,
-          });
+      final ok = await _channel.invokeMethod<bool>(
+        ChannelMethods.archiveCreate,
+        {
+          'format': format.code,
+          'srcPaths': srcPaths,
+          'entryNames': ?entryNames,
+          'modifiedSecs': modifiedSecs ?? List<int>.filled(srcPaths.length, 0),
+          'srcUri': ?srcUri,
+          'destUri': ?destUri,
+          'destVaultPath': ?destVaultPath,
+          'destFilePath': ?destFilePath,
+          if (passphrase != null && passphrase.isNotEmpty)
+            'passphrase': passphrase,
+          'opId': ?opId,
+        },
+      );
       return ok ?? false;
     } on PlatformException {
       rethrow;

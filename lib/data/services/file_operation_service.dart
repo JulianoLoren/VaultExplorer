@@ -379,7 +379,7 @@ class FileOperationService extends ChangeNotifier {
     return op;
   }
 
- FileOperation enqueueArchiveExtract({
+  FileOperation enqueueArchiveExtract({
     required MountedContainer source,
     required MountedContainer dest,
     required String destDirPath,
@@ -400,13 +400,7 @@ class FileOperationService extends ChangeNotifier {
       destVolId: dest.volId,
       destDisplayName: dest.displayName,
       destDirPath: destDirPath,
-      items: [
-        ClipboardItem(
-          path: archivePath,
-          isDir: false,
-          sizeBytes: 0,
-        ),
-      ],
+      items: [ClipboardItem(path: archivePath, isDir: false, sizeBytes: 0)],
       isArchiveExtract: true,
       l10n: l10n,
       cancelNativeOperation: _cancelNativeOperation,
@@ -430,6 +424,7 @@ class FileOperationService extends ChangeNotifier {
     );
     return op;
   }
+
   void clearForVolume(int volId) {
     final toRemove = _operations
         .where((op) => op.sourceVolId == volId || op.destVolId == volId)
@@ -726,6 +721,7 @@ class FileOperationService extends ChangeNotifier {
 
       final srcPaths = <String>[];
       final entryNames = <String>[];
+      final modifiedSecs = <int>[];
 
       Future<void> collect(String containerPath, String archivePath) async {
         if (op.cancelRequested) throw const _CancelledException();
@@ -744,6 +740,7 @@ class FileOperationService extends ChangeNotifier {
                   : childContainerPath,
             );
             entryNames.add(childArchivePath);
+            modifiedSecs.add(child.modifiedSecs);
           }
         }
       }
@@ -754,11 +751,10 @@ class FileOperationService extends ChangeNotifier {
           await collect(item.path, item.name);
         } else {
           srcPaths.add(
-            source.isLocalStorage
-                ? p.join(source.uri, item.path)
-                : item.path,
+            source.isLocalStorage ? p.join(source.uri, item.path) : item.path,
           );
           entryNames.add(item.name);
+          modifiedSecs.add(item.modifiedSecs);
         }
       }
 
@@ -775,10 +771,13 @@ class FileOperationService extends ChangeNotifier {
         format: format,
         srcPaths: srcPaths,
         entryNames: entryNames,
+        modifiedSecs: modifiedSecs,
         srcUri: source.isLocalStorage ? source.uri : source.uri,
         destUri: dest.isLocalStorage ? dest.uri : dest.uri,
         destVaultPath: destVaultPath,
-        destFilePath: dest.isLocalStorage ? p.join(dest.uri, destVaultPath) : null,
+        destFilePath: dest.isLocalStorage
+            ? p.join(dest.uri, destVaultPath)
+            : null,
         passphrase: passphrase,
         opId: op.id,
       );
@@ -817,7 +816,7 @@ class FileOperationService extends ChangeNotifier {
 
   // ── Operation runner: Archive Extract ──────────────────────────────────────
 
-   Future<void> _runArchiveExtract(
+  Future<void> _runArchiveExtract(
     FileOperation op,
     MountedContainer source,
     MountedContainer dest,
@@ -941,7 +940,9 @@ class FileOperationService extends ChangeNotifier {
       } else if (e.code == 'INSUFFICIENT_SPACE') {
         final details = e.details;
         final needed = details is Map ? details['neededBytes'] as int? : null;
-        final available = details is Map ? details['availableBytes'] as int? : null;
+        final available = details is Map
+            ? details['availableBytes'] as int?
+            : null;
         op._setError(
           (needed != null && available != null)
               ? op.l10n.fileOpNotEnoughSpace(
@@ -1371,7 +1372,9 @@ class FileOperationService extends ChangeNotifier {
       op._setTotalBytes(op.items.fold(0, (sum, item) => sum + item.sizeBytes));
 
       final resolved =
-          <({ClipboardItem item, String srcPath, String destPath, bool skip})>[];
+          <
+            ({ClipboardItem item, String srcPath, String destPath, bool skip})
+          >[];
       for (final item in op.items) {
         final fileName = item.name;
         final srcPath = _resolveLocal(source.uri, item.path);
@@ -1382,11 +1385,21 @@ class FileOperationService extends ChangeNotifier {
         final isSelfPath = srcPath == destPath;
 
         if (op.isCut && isSelfPath) {
-          resolved.add((item: item, srcPath: srcPath, destPath: destPath, skip: true));
+          resolved.add((
+            item: item,
+            srcPath: srcPath,
+            destPath: destPath,
+            skip: true,
+          ));
           continue;
         }
         if (item.isDir && p.isWithin(srcPath, destPath)) {
-          resolved.add((item: item, srcPath: srcPath, destPath: destPath, skip: true));
+          resolved.add((
+            item: item,
+            srcPath: srcPath,
+            destPath: destPath,
+            skip: true,
+          ));
           continue;
         }
 
@@ -1396,7 +1409,12 @@ class FileOperationService extends ChangeNotifier {
               ConflictResolution.keepBoth;
           switch (resolution) {
             case ConflictResolution.skip:
-              resolved.add((item: item, srcPath: srcPath, destPath: destPath, skip: true));
+              resolved.add((
+                item: item,
+                srcPath: srcPath,
+                destPath: destPath,
+                skip: true,
+              ));
               continue;
             case ConflictResolution.overwrite:
               if (isSelfPath) {
@@ -1404,7 +1422,12 @@ class FileOperationService extends ChangeNotifier {
                 // source file itself here, so deleting it before the
                 // copy step would destroy the only copy before it's
                 // ever read. No-op instead.
-                resolved.add((item: item, srcPath: srcPath, destPath: destPath, skip: true));
+                resolved.add((
+                  item: item,
+                  srcPath: srcPath,
+                  destPath: destPath,
+                  skip: true,
+                ));
                 continue;
               }
               await _deleteLocalRecursive(destPath);
@@ -1414,7 +1437,12 @@ class FileOperationService extends ChangeNotifier {
               destPath = p.join(destDirAbs, unique);
           }
         }
-        resolved.add((item: item, srcPath: srcPath, destPath: destPath, skip: false));
+        resolved.add((
+          item: item,
+          srcPath: srcPath,
+          destPath: destPath,
+          skip: false,
+        ));
       }
 
       for (int i = 0; i < resolved.length; i++) {
@@ -1527,7 +1555,7 @@ class FileOperationService extends ChangeNotifier {
 
   // ── Operation runner: Delete ──────────────────────────────────────────────
 
-   Future<void> _runDelete(FileOperation op, MountedContainer container) async {
+  Future<void> _runDelete(FileOperation op, MountedContainer container) async {
     if (container.isLocalStorage) {
       return _runDeleteLocal(op, container);
     }
@@ -1737,7 +1765,7 @@ class FileOperationService extends ChangeNotifier {
         if (modifiedSecs > 0) {
           await _fileIoApi.setLastModifiedTime(dest, destPath, modifiedSecs);
         }
-      if (src.isLocalStorage || dest.isLocalStorage) {
+        if (src.isLocalStorage || dest.isLocalStorage) {
           // The Local Storage fast path VaultFileIoApi.copyFile takes here
           // (writeBackFile/decryptFile's single raw-path native call) is
           // supposed to stream real CopyProgressBridge chunk events for

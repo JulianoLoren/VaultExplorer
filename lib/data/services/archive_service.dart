@@ -162,7 +162,8 @@ class ArchiveService {
     ValueChanged<String>? onProgress,
     int? opId,
   }) async {
-    if (archiveContext.vaultFilePath != null && archiveContext.vaultPath != null) {
+    if (archiveContext.vaultFilePath != null &&
+        archiveContext.vaultPath != null) {
       final bulkRes = await _archive.extractVaultArchiveAll(
         filePath: archiveContext.vaultFilePath!,
         vaultPath: archiveContext.vaultPath!,
@@ -209,7 +210,9 @@ class ArchiveService {
     final allFiles = archiveContext.allEntries.where((e) => !e.isDirectory);
     for (final entry in allFiles) {
       final name = entry.path.replaceAll('\\', '/');
-      if (subPath.isNotEmpty && !name.startsWith('$subPath/') && name != subPath) {
+      if (subPath.isNotEmpty &&
+          !name.startsWith('$subPath/') &&
+          name != subPath) {
         continue;
       }
 
@@ -251,8 +254,11 @@ class ArchiveService {
       for (final entry in archiveContext.allEntries) {
         if (entry.isDirectory) continue;
         final entryPath = entry.path.replaceAll('\\', '/');
-        final cleanEntry = entryPath.startsWith('/') ? entryPath.substring(1) : entryPath;
-        if (cleanEntry == cleanSelected || cleanEntry.startsWith('$cleanSelected/')) {
+        final cleanEntry = entryPath.startsWith('/')
+            ? entryPath.substring(1)
+            : entryPath;
+        if (cleanEntry == cleanSelected ||
+            cleanEntry.startsWith('$cleanSelected/')) {
           targetFiles.add(cleanEntry);
         }
       }
@@ -289,6 +295,7 @@ class ArchiveService {
     required ArchiveFormatType format,
     required List<String> srcPaths,
     List<String>? entryNames,
+    List<int>? modifiedSecs,
     String? srcUri,
     String? destUri,
     String? destVaultPath,
@@ -300,6 +307,7 @@ class ArchiveService {
       format: format,
       srcPaths: srcPaths,
       entryNames: entryNames,
+      modifiedSecs: modifiedSecs,
       srcUri: srcUri,
       destUri: destUri,
       destVaultPath: destVaultPath,
@@ -320,6 +328,7 @@ class ArchiveService {
   }) async {
     final srcPaths = <String>[];
     final entryNames = <String>[];
+    final modifiedSecs = <int>[];
 
     Future<void> collect(String containerPath, String archivePath) async {
       final rawList = await _fileIo.listDirectory(container, containerPath);
@@ -332,6 +341,7 @@ class ArchiveService {
         } else {
           srcPaths.add(childContainerPath);
           entryNames.add(childArchivePath);
+          modifiedSecs.add(child.modifiedSecs);
         }
       }
     }
@@ -345,6 +355,7 @@ class ArchiveService {
       } else {
         srcPaths.add(containerPath);
         entryNames.add(entry.name);
+        modifiedSecs.add(entry.modifiedSecs);
       }
     }
 
@@ -356,6 +367,7 @@ class ArchiveService {
       format: format,
       srcPaths: srcPaths,
       entryNames: entryNames,
+      modifiedSecs: modifiedSecs,
       srcUri: container.uri,
       destUri: container.uri,
       destVaultPath: destPathInContainer,

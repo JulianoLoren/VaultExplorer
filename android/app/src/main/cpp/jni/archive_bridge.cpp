@@ -27,6 +27,19 @@ static void ensureParentDirs(int volId, const std::string& path) {
     }
 }
 
+static bool readModifiedSecs(JNIEnv* env, jlongArray modifiedSecs, jsize count,
+                             std::vector<int64_t>& out) {
+    if (!modifiedSecs || env->GetArrayLength(modifiedSecs) != count) return false;
+    std::vector<jlong> sourceTimes(count);
+    env->GetLongArrayRegion(modifiedSecs, 0, count, sourceTimes.data());
+    if (env->ExceptionCheck()) return false;
+    out.resize(count);
+    for (jsize i = 0; i < count; ++i) {
+        out[i] = static_cast<int64_t>(sourceTimes[i]);
+    }
+    return true;
+}
+
 static jobject buildEntryInfoMap(JNIEnv* env, jclass mapClass, jmethodID mapInit, jmethodID mapPut,
                                  jclass longClass, jmethodID longInit, jclass boolClass, jmethodID boolInit,
                                  jclass intClass, jmethodID intInit, const ArchiveEntryInfo& entry) {
@@ -660,16 +673,18 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveExtractFdEntryToFdNative(
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToFdNative(
         JNIEnv* env, jobject,
-        jint srcVolId, jobjectArray vaultPaths, jobjectArray entryNames,
+        jint srcVolId, jobjectArray vaultPaths, jobjectArray entryNames, jlongArray modifiedSecs,
         jint destFd, jint format, jstring passphrase, jint opId) {
     JNI_TRY
-    if (destFd < 0 || !vaultPaths || !entryNames) return JNI_FALSE;
+    if (destFd < 0 || !vaultPaths || !entryNames || !modifiedSecs) return JNI_FALSE;
     if (!requireActiveSession(srcVolId, "archiveCreateVaultToFd")) {
         throwNotUnlocked(env, srcVolId, "archiveCreateVaultToFd");
         return JNI_FALSE;
     }
 
     const jsize count = env->GetArrayLength(vaultPaths);
+    std::vector<int64_t> sourceModifiedSecs;
+    if (!readModifiedSecs(env, modifiedSecs, count, sourceModifiedSecs)) return JNI_FALSE;
     const char* nativePass = passphrase ? env->GetStringUTFChars(passphrase, nullptr) : nullptr;
     std::string passStr = nativePass ? nativePass : "";
 
@@ -712,6 +727,7 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToFdNative(
             entries[i].pathInArchive = inArchivePaths[i];
             entries[i].uncompressedSize = fsGetFileSize(srcVolId, vPaths[i]);
             entries[i].isDirectory = false;
+            entries[i].modTimeEpochSeconds = sourceModifiedSecs[i];
 
             void* stream = fsOpenStream(srcVolId, vPaths[i]);
             openStreams[i] = stream;
@@ -753,10 +769,10 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToFdNative(
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToVaultNative(
         JNIEnv* env, jobject,
-        jint srcVolId, jobjectArray vaultPaths, jobjectArray entryNames,
+        jint srcVolId, jobjectArray vaultPaths, jobjectArray entryNames, jlongArray modifiedSecs,
         jint destVolId, jstring destVaultPath, jint format, jstring passphrase, jint opId) {
     JNI_TRY
-    if (!vaultPaths || !entryNames || !destVaultPath) return JNI_FALSE;
+    if (!vaultPaths || !entryNames || !modifiedSecs || !destVaultPath) return JNI_FALSE;
     if (!requireActiveSession(srcVolId, "archiveCreateVaultToVault (src)") ||
         !requireActiveSession(destVolId, "archiveCreateVaultToVault (dest)")) {
         throwNotUnlocked(env, srcVolId, "archiveCreateVaultToVault");
@@ -764,6 +780,8 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToVaultNative(
     }
 
     const jsize count = env->GetArrayLength(vaultPaths);
+    std::vector<int64_t> sourceModifiedSecs;
+    if (!readModifiedSecs(env, modifiedSecs, count, sourceModifiedSecs)) return JNI_FALSE;
     const char* nativeDestPath = env->GetStringUTFChars(destVaultPath, nullptr);
     const char* nativePass = passphrase ? env->GetStringUTFChars(passphrase, nullptr) : nullptr;
     std::string passStr = nativePass ? nativePass : "";
@@ -813,6 +831,7 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToVaultNative(
             entries[i].pathInArchive = inArchivePaths[i];
             entries[i].uncompressedSize = fsGetFileSize(srcVolId, vPaths[i]);
             entries[i].isDirectory = false;
+            entries[i].modTimeEpochSeconds = sourceModifiedSecs[i];
 
             void* stream = fsOpenStream(srcVolId, vPaths[i]);
             openStreams[i] = stream;
@@ -856,12 +875,14 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateVaultToVaultNative(
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateLocalToFdNative(
         JNIEnv* env, jobject,
-        jobjectArray localPaths, jobjectArray entryNames,
+        jobjectArray localPaths, jobjectArray entryNames, jlongArray modifiedSecs,
         jint destFd, jint format, jstring passphrase, jint opId) {
     JNI_TRY
-    if (destFd < 0 || !localPaths || !entryNames) return JNI_FALSE;
+    if (destFd < 0 || !localPaths || !entryNames || !modifiedSecs) return JNI_FALSE;
 
     const jsize count = env->GetArrayLength(localPaths);
+    std::vector<int64_t> sourceModifiedSecs;
+    if (!readModifiedSecs(env, modifiedSecs, count, sourceModifiedSecs)) return JNI_FALSE;
     const char* nativePass = passphrase ? env->GetStringUTFChars(passphrase, nullptr) : nullptr;
     std::string passStr = nativePass ? nativePass : "";
 
@@ -900,7 +921,9 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_archiveCreateLocalToFdNative(
         if (stat(lPaths[i].c_str(), &st) == 0) {
             entries[i].isDirectory = S_ISDIR(st.st_mode);
             entries[i].uncompressedSize = entries[i].isDirectory ? 0 : static_cast<uint64_t>(st.st_size);
-            entries[i].modTimeEpochSeconds = static_cast<int64_t>(st.st_mtime);
+            entries[i].modTimeEpochSeconds = sourceModifiedSecs[i] > 0
+                ? sourceModifiedSecs[i]
+                : static_cast<int64_t>(st.st_mtime);
 
             if (!entries[i].isDirectory) {
                 int sfd = open(lPaths[i].c_str(), O_RDONLY);
