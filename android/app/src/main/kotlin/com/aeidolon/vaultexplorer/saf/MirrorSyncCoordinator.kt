@@ -876,25 +876,19 @@ class MirrorSyncCoordinator(
                 // clearNeverListed in pullListingIfMissing below).
                 registry.markNeverListed(target.uri.toString())
             }
-            // Reaching here means the copy itself succeeded (however many
-            // bytes it moved) -- freshlyCreatedTarget is no longer an
-            // orphan risk from this point on regardless of what the
-            // zero-bytes check below decides to do, since the file is now
-            // fully registered either way. Clearing it means the catch
-            // blocks below (reached only by what this throw itself raises)
-            // correctly do NOT delete a real file with real content on it
-            // just because its size looked suspicious -- that's a
-            // data-integrity flag on a successful write, not a creation
-            // failure to roll back.
-            freshlyCreatedTarget = null
             if (bytesCopied == 0L && observedLength > 0L) {
                 // The retry above saw real content moments before the
                 // actual copy, but the copy itself still moved 0 bytes --
                 // this is now a genuinely inconsistent state worth failing
-                // loudly on rather than silently leaving a 0-byte file on
-                // real storage.
+                // loudly on. Keep freshlyCreatedTarget set until after this
+                // check so the catch block rolls back the empty real file
+                // created by this call.
                 throw MirrorPushException("pushFileWrite: copied 0 bytes for $displayName despite mirror showing ${observedLength} bytes moments earlier")
             }
+            // The copy and consistency checks succeeded (or this was a
+            // legitimate empty file), so later bookkeeping failures should
+            // not roll back this newly-created real file.
+            freshlyCreatedTarget = null
             if (retriedAndStillZero && bytesCopied == 0L) {
                 VeLog.w("MirrorTrace") { "pushFileWrite: displayName=$displayName confirmed 0-byte push after unconfirmed retries -- treating as legitimate empty write" }
             }

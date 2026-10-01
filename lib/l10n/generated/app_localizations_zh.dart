@@ -6956,36 +6956,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sectionPanicBootTrigger => 'Wipe on Reboot';
 
   @override
-  String get panicBootTriggerLevelLabel => 'Level to Run on Reboot';
+  String get panicBootTriggerLevelLabel => '重启时运行的级别';
 
   @override
-  String get panicBootTriggerArmTitle => 'Arm for Next Boot';
+  String get panicBootTriggerArmTitle => '为下次启动准备';
 
   @override
-  String panicBootTriggerArmedSubtitle(String tier) {
-    return 'Armed — $tier will run automatically the next time this device boots, then disarm itself';
+  String panicBootTriggerArmedSubtitle(Object tier) {
+    return '已就绪 — 下次设备启动时将自动运行 $tier，随后解除准备';
   }
 
   @override
-  String get panicBootTriggerDisarmedSubtitle =>
-      'Off — rebooting this device behaves normally';
+  String get panicBootTriggerDisarmedSubtitle => '关闭 — 设备将正常重启';
 
   @override
-  String get panicBootTriggerConfirmTitle => 'Arm Wipe on Reboot?';
+  String get panicBootTriggerConfirmTitle => '是否准备重启时擦除？';
 
   @override
-  String panicBootTriggerConfirmMessage(String tier) {
-    return 'The next time this device boots — including an ordinary restart or automatic update, not only one you trigger yourself — $tier will run automatically, before you open the app. This fires once, then disarms itself.';
+  String panicBootTriggerConfirmMessage(Object tier) {
+    return '下次设备启动时（包括普通重启或自动更新），在您打开应用之前，$tier 将自动运行。此操作仅执行一次，随后会自动解除准备。';
   }
 
   @override
-  String get panicBootTriggerArmButton => 'Arm';
+  String get panicBootTriggerArmButton => '准备';
 
   @override
-  String get panicBootTriggerArmedSuccessMessage => 'Boot trigger armed';
+  String get panicBootTriggerArmedSuccessMessage => '启动触发器已准备就绪';
 
   @override
-  String get panicBootTriggerDisarmedSuccessMessage => 'Boot trigger disarmed';
+  String get panicBootTriggerDisarmedSuccessMessage => '启动触发器已解除';
 
   @override
   String get sectionPanicKit => 'PanicKit 响应程序';

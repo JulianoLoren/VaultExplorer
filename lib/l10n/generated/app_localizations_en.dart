@@ -7305,7 +7305,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panicBootTriggerArmTitle => 'Arm for Next Boot';
 
   @override
-  String panicBootTriggerArmedSubtitle(String tier) {
+  String panicBootTriggerArmedSubtitle(Object tier) {
     return 'Armed — $tier will run automatically the next time this device boots, then disarm itself';
   }
 
@@ -7317,7 +7317,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panicBootTriggerConfirmTitle => 'Arm Wipe on Reboot?';
 
   @override
-  String panicBootTriggerConfirmMessage(String tier) {
+  String panicBootTriggerConfirmMessage(Object tier) {
     return 'The next time this device boots — including an ordinary restart or automatic update, not only one you trigger yourself — $tier will run automatically, before you open the app. This fires once, then disarms itself.';
   }
 

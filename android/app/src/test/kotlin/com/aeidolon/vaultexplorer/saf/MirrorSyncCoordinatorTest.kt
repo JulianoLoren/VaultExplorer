@@ -785,15 +785,17 @@ class MirrorSyncCoordinatorTest {
         // ordinary new child and mirrors it fresh), but a spurious empty
         // file surviving a failed create until then.
         //
-        // Forces the failure by pointing `mirrored` at a File that does
-        // not exist on disk: existingRealDoc is null (this is a NEW-file
-        // push, the only case where a real file even gets freshly created
-        // inside pushFileWrite), so the zero-length retry block above is
-        // skipped entirely (it's gated on existingRealDoc != null) and the
-        // function proceeds straight to creating the real file -- which
-        // succeeds -- before attempting to open the nonexistent `mirrored`
-        // for reading, which fails.
-        val nonExistentMirrorFile = File(File(sync.mirrorRoot, "root"), "never-actually-written.bin")
+        // Reports a positive source length so pushFileWrite enters the copy
+        // path, but leaves the backing path nonexistent so opening the source
+        // fails after the real target has been created. A plain missing File
+        // reports length 0 and is treated as a legitimate empty file, which
+        // would not exercise rollback.
+        val nonExistentMirrorFile = object : File(
+            File(sync.mirrorRoot, "root"),
+            "never-actually-written.bin",
+        ) {
+            override fun length(): Long = 1L
+        }
         assertFalse(nonExistentMirrorFile.exists())
 
         var thrown: Exception? = null

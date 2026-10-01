@@ -7480,36 +7480,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sectionPanicBootTrigger => 'Wipe on Reboot';
 
   @override
-  String get panicBootTriggerLevelLabel => 'Level to Run on Reboot';
+  String get panicBootTriggerLevelLabel =>
+      'المستوى الذي سيتم تشغيله عند إعادة التشغيل';
 
   @override
-  String get panicBootTriggerArmTitle => 'Arm for Next Boot';
+  String get panicBootTriggerArmTitle => 'التجهيز للتشغيل القادم';
 
   @override
-  String panicBootTriggerArmedSubtitle(String tier) {
-    return 'Armed — $tier will run automatically the next time this device boots, then disarm itself';
+  String panicBootTriggerArmedSubtitle(Object tier) {
+    return 'مجهز — سيتم تشغيل $tier تلقائياً في المرة القادمة التي يعمل فيها الجهاز، ثم سيتوقف المفعول';
   }
 
   @override
   String get panicBootTriggerDisarmedSubtitle =>
-      'Off — rebooting this device behaves normally';
+      'متوقف — إعادة تشغيل الجهاز ستتم بشكل طبيعي';
 
   @override
-  String get panicBootTriggerConfirmTitle => 'Arm Wipe on Reboot?';
+  String get panicBootTriggerConfirmTitle => 'تجهيز المسح عند إعادة التشغيل؟';
 
   @override
-  String panicBootTriggerConfirmMessage(String tier) {
-    return 'The next time this device boots — including an ordinary restart or automatic update, not only one you trigger yourself — $tier will run automatically, before you open the app. This fires once, then disarms itself.';
+  String panicBootTriggerConfirmMessage(Object tier) {
+    return 'في المرة القادمة التي يعمل فيها الجهاز — بما في ذلك إعادة التشغيل العادية أو التحديث التلقائي — سيتم تشغيل $tier تلقائياً قبل فتح التطبيق. يتم هذا لمرة واحدة فقط ثم يتوقف.';
   }
 
   @override
-  String get panicBootTriggerArmButton => 'Arm';
+  String get panicBootTriggerArmButton => 'تجهيز';
 
   @override
-  String get panicBootTriggerArmedSuccessMessage => 'Boot trigger armed';
+  String get panicBootTriggerArmedSuccessMessage => 'تم تجهيز مشغل التشغيل';
 
   @override
-  String get panicBootTriggerDisarmedSuccessMessage => 'Boot trigger disarmed';
+  String get panicBootTriggerDisarmedSuccessMessage => 'تم إيقاف مشغل التشغيل';
 
   @override
   String get sectionPanicKit => 'مستجيب PanicKit';

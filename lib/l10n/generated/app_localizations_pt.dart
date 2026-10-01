@@ -7418,36 +7418,38 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sectionPanicBootTrigger => 'Wipe on Reboot';
 
   @override
-  String get panicBootTriggerLevelLabel => 'Level to Run on Reboot';
+  String get panicBootTriggerLevelLabel => 'Nível a executar ao reiniciar';
 
   @override
-  String get panicBootTriggerArmTitle => 'Arm for Next Boot';
+  String get panicBootTriggerArmTitle => 'Armar para o próximo reinício';
 
   @override
-  String panicBootTriggerArmedSubtitle(String tier) {
-    return 'Armed — $tier will run automatically the next time this device boots, then disarm itself';
+  String panicBootTriggerArmedSubtitle(Object tier) {
+    return 'Armado — $tier será executado automaticamente na próxima vez que o dispositivo iniciar, depois desarma-se';
   }
 
   @override
   String get panicBootTriggerDisarmedSubtitle =>
-      'Off — rebooting this device behaves normally';
+      'Desativado — o reinício do dispositivo funcionará normalmente';
 
   @override
-  String get panicBootTriggerConfirmTitle => 'Arm Wipe on Reboot?';
+  String get panicBootTriggerConfirmTitle => 'Armar limpeza ao reiniciar?';
 
   @override
-  String panicBootTriggerConfirmMessage(String tier) {
-    return 'The next time this device boots — including an ordinary restart or automatic update, not only one you trigger yourself — $tier will run automatically, before you open the app. This fires once, then disarms itself.';
+  String panicBootTriggerConfirmMessage(Object tier) {
+    return 'Na próxima vez que este dispositivo iniciar — incluindo um reinício comum ou atualização automática — $tier será executado automaticamente antes de abrir a aplicação. Isto ocorre uma vez e depois desarma-se.';
   }
 
   @override
-  String get panicBootTriggerArmButton => 'Arm';
+  String get panicBootTriggerArmButton => 'Armar';
 
   @override
-  String get panicBootTriggerArmedSuccessMessage => 'Boot trigger armed';
+  String get panicBootTriggerArmedSuccessMessage =>
+      'Acionador de inicialização armado';
 
   @override
-  String get panicBootTriggerDisarmedSuccessMessage => 'Boot trigger disarmed';
+  String get panicBootTriggerDisarmedSuccessMessage =>
+      'Acionador de inicialização desarmado';
 
   @override
   String get sectionPanicKit => 'Respondente PanicKit';

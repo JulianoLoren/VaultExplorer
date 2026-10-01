@@ -7407,36 +7407,40 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sectionPanicBootTrigger => 'Wipe on Reboot';
 
   @override
-  String get panicBootTriggerLevelLabel => 'Level to Run on Reboot';
+  String get panicBootTriggerLevelLabel =>
+      'Stufe, die beim Neustart ausgeführt wird';
 
   @override
-  String get panicBootTriggerArmTitle => 'Arm for Next Boot';
+  String get panicBootTriggerArmTitle => 'Für nächsten Neustart scharfschalten';
 
   @override
-  String panicBootTriggerArmedSubtitle(String tier) {
-    return 'Armed — $tier will run automatically the next time this device boots, then disarm itself';
+  String panicBootTriggerArmedSubtitle(Object tier) {
+    return 'Scharfgeschaltet — $tier wird beim nächsten Gerätenestart automatisch ausgeführt und danach deaktiviert';
   }
 
   @override
   String get panicBootTriggerDisarmedSubtitle =>
-      'Off — rebooting this device behaves normally';
+      'Aus — Das Gerät verhält sich beim Neustart normal';
 
   @override
-  String get panicBootTriggerConfirmTitle => 'Arm Wipe on Reboot?';
+  String get panicBootTriggerConfirmTitle =>
+      'Löschung beim Neustart scharfschalten?';
 
   @override
-  String panicBootTriggerConfirmMessage(String tier) {
-    return 'The next time this device boots — including an ordinary restart or automatic update, not only one you trigger yourself — $tier will run automatically, before you open the app. This fires once, then disarms itself.';
+  String panicBootTriggerConfirmMessage(Object tier) {
+    return 'Beim nächsten Start dieses Geräts — einschließlich eines normalen Neustarts oder automatischen Updates — wird $tier automatisch ausgeführt, noch bevor Sie die App öffnen. Dies geschieht einmalig und wird danach deaktiviert.';
   }
 
   @override
-  String get panicBootTriggerArmButton => 'Arm';
+  String get panicBootTriggerArmButton => 'Scharfschalten';
 
   @override
-  String get panicBootTriggerArmedSuccessMessage => 'Boot trigger armed';
+  String get panicBootTriggerArmedSuccessMessage =>
+      'Boot-Trigger scharfgeschaltet';
 
   @override
-  String get panicBootTriggerDisarmedSuccessMessage => 'Boot trigger disarmed';
+  String get panicBootTriggerDisarmedSuccessMessage =>
+      'Boot-Trigger deaktiviert';
 
   @override
   String get sectionPanicKit => 'PanicKit-Responder';

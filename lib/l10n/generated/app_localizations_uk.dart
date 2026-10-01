@@ -7462,28 +7462,28 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get panicBootTriggerLevelLabel =>
-      'Рівень для виконання під час перезавантаження';
+      'Рівень для запуску під час перезавантаження';
 
   @override
   String get panicBootTriggerArmTitle =>
-      'Активувати для наступного перезавантаження';
+      'Активувати для наступного завантаження';
 
   @override
-  String panicBootTriggerArmedSubtitle(String tier) {
-    return 'Активовано — $tier виконається автоматично під час наступного завантаження пристрою, після чого тригер вимкнеться';
+  String panicBootTriggerArmedSubtitle(Object tier) {
+    return 'Активовано — $tier запуститься автоматично під час наступного завантаження, після чого вимкнеться';
   }
 
   @override
   String get panicBootTriggerDisarmedSubtitle =>
-      'Вимкнено — під час перезавантаження пристрій працюватиме у звичайному режимі';
+      'Вимкнено — пристрій перезавантажиться у звичайному режимі';
 
   @override
   String get panicBootTriggerConfirmTitle =>
-      'Активувати очищення під час перезавантаження?';
+      'Активувати очищення під час завантаження?';
 
   @override
-  String panicBootTriggerConfirmMessage(String tier) {
-    return 'Під час наступного запуску або перезавантаження пристрою (зокрема звичайного перезапуску чи автоматичного оновлення, а не лише ініційованого вами) $tier виконається автоматично ще до відкриття програми. Спрацьовує один раз, після чого тригер вимикається.';
+  String panicBootTriggerConfirmMessage(Object tier) {
+    return 'Під час наступного завантаження пристрою (включаючи звичайне перезавантаження або оновлення) $tier запуститься автоматично до відкриття програми. Це спрацює один раз.';
   }
 
   @override
@@ -7491,11 +7491,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get panicBootTriggerArmedSuccessMessage =>
-      'Тригер під час перезавантаження активовано';
+      'Тригер завантаження активовано';
 
   @override
   String get panicBootTriggerDisarmedSuccessMessage =>
-      'Тригер під час перезавантаження вимкнено';
+      'Тригер завантаження вимкнено';
 
   @override
   String get sectionPanicKit => 'Служба реагування PanicKit';

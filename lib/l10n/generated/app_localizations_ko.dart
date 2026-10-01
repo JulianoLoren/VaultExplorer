@@ -7036,36 +7036,35 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sectionPanicBootTrigger => 'Wipe on Reboot';
 
   @override
-  String get panicBootTriggerLevelLabel => 'Level to Run on Reboot';
+  String get panicBootTriggerLevelLabel => '재부팅 시 실행할 레벨';
 
   @override
-  String get panicBootTriggerArmTitle => 'Arm for Next Boot';
+  String get panicBootTriggerArmTitle => '다음 부팅을 위해 가동';
 
   @override
-  String panicBootTriggerArmedSubtitle(String tier) {
-    return 'Armed — $tier will run automatically the next time this device boots, then disarm itself';
+  String panicBootTriggerArmedSubtitle(Object tier) {
+    return '가동됨 — 다음 부팅 시 $tier이(가) 자동으로 실행된 후 해제됩니다';
   }
 
   @override
-  String get panicBootTriggerDisarmedSubtitle =>
-      'Off — rebooting this device behaves normally';
+  String get panicBootTriggerDisarmedSubtitle => '꺼짐 — 기기가 정상적으로 재부팅됩니다';
 
   @override
-  String get panicBootTriggerConfirmTitle => 'Arm Wipe on Reboot?';
+  String get panicBootTriggerConfirmTitle => '재부팅 시 초기화를 가동할까요?';
 
   @override
-  String panicBootTriggerConfirmMessage(String tier) {
-    return 'The next time this device boots — including an ordinary restart or automatic update, not only one you trigger yourself — $tier will run automatically, before you open the app. This fires once, then disarms itself.';
+  String panicBootTriggerConfirmMessage(Object tier) {
+    return '일반적인 재시작이나 자동 업데이트를 포함하여 다음 번에 기기가 부팅될 때, 앱을 열기 전에 $tier이(가) 자동으로 실행됩니다. 이 작업은 한 번만 실행된 후 해제됩니다.';
   }
 
   @override
-  String get panicBootTriggerArmButton => 'Arm';
+  String get panicBootTriggerArmButton => '가동';
 
   @override
-  String get panicBootTriggerArmedSuccessMessage => 'Boot trigger armed';
+  String get panicBootTriggerArmedSuccessMessage => '부팅 트리거 가동됨';
 
   @override
-  String get panicBootTriggerDisarmedSuccessMessage => 'Boot trigger disarmed';
+  String get panicBootTriggerDisarmedSuccessMessage => '부팅 트리거 해제됨';
 
   @override
   String get sectionPanicKit => 'PanicKit 응답기';
