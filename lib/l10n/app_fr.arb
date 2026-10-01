@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "Recommencer",
   "resumePlaybackResume": "Reprendre",
   "compositeArchiveCarrierBlockingWarning": "Retirez l’archive de cette sélection pour continuer. Les archives ne peuvent pas servir de supports pour un coffre composite, car l’ajout d’un coffre risque de les endommager.",
-  "compositeArchiveCarrierRowWarning": "Archive non prise en charge : retirez-la de la sélection."
+  "compositeArchiveCarrierRowWarning": "Archive non prise en charge : retirez-la de la sélection.",
+  "videoEditorSelectedSegmentSummary": "Segment {current} sur {total} : {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "Exportez les segments sélectionnés et ignorez tout le reste.",
+  "videoEditorCutOutModeDescription": "Supprimez les segments sélectionnés et exportez le reste de la vidéo."
 }

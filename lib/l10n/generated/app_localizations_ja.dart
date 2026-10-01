@@ -8935,4 +8935,22 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'サポートされていないアーカイブです。選択から削除してください。';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'セグメント $current/$total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription => '選択したセグメントをエクスポートし、それ以外を破棄します。';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      '選択したセグメントを削除し、残りの映像をエクスポートします。';
 }

@@ -9483,4 +9483,23 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'أرشيف غير مدعوم — أزله من التحديد.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'المقطع $current من $total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription =>
+      'صدّر المقاطع المحددة واحذف كل ما عداها.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      'أزل المقاطع المحددة وصدّر بقية الفيديو.';
 }

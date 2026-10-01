@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "最初から",
   "resumePlaybackResume": "再開",
   "compositeArchiveCarrierBlockingWarning": "続行するには、この選択からアーカイブを削除してください。複合保管庫を追加すると破損するおそれがあるため、アーカイブを複合保管庫のキャリアとして使用できません。",
-  "compositeArchiveCarrierRowWarning": "サポートされていないアーカイブです。選択から削除してください。"
+  "compositeArchiveCarrierRowWarning": "サポートされていないアーカイブです。選択から削除してください。",
+  "videoEditorSelectedSegmentSummary": "セグメント {current}/{total}: {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "選択したセグメントをエクスポートし、それ以外を破棄します。",
+  "videoEditorCutOutModeDescription": "選択したセグメントを削除し、残りの映像をエクスポートします。"
 }

@@ -9506,4 +9506,23 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'Archive non prise en charge : retirez-la de la sélection.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'Segment $current sur $total : $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription =>
+      'Exportez les segments sélectionnés et ignorez tout le reste.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      'Supprimez les segments sélectionnés et exportez le reste de la vidéo.';
 }

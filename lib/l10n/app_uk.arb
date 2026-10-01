@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "Спочатку",
   "resumePlaybackResume": "Відновити",
   "compositeArchiveCarrierBlockingWarning": "Щоб продовжити, вилучіть архів із цього набору. Архіви не можна використовувати як носії складеного сховища, оскільки додавання сховища може їх пошкодити.",
-  "compositeArchiveCarrierRowWarning": "Непідтримуваний архів — вилучіть його з набору."
+  "compositeArchiveCarrierRowWarning": "Непідтримуваний архів — вилучіть його з набору.",
+  "videoEditorSelectedSegmentSummary": "Сегмент {current} із {total}: {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "Експортувати вибрані сегменти, відкинувши решту.",
+  "videoEditorCutOutModeDescription": "Вилучити вибрані сегменти й експортувати решту відео."
 }

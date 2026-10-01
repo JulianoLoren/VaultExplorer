@@ -9499,4 +9499,23 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'Непідтримуваний архів — вилучіть його з набору.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'Сегмент $current із $total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription =>
+      'Експортувати вибрані сегменти, відкинувши решту.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      'Вилучити вибрані сегменти й експортувати решту відео.';
 }

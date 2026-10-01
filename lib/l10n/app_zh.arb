@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "从头开始",
   "resumePlaybackResume": "继续",
   "compositeArchiveCarrierBlockingWarning": "要继续，请从所选文件中移除压缩包。压缩包不能用作组合保险库的载体，因为添加保险库可能会损坏它。",
-  "compositeArchiveCarrierRowWarning": "不支持此压缩包，请将其从所选文件中移除。"
+  "compositeArchiveCarrierRowWarning": "不支持此压缩包，请将其从所选文件中移除。",
+  "videoEditorSelectedSegmentSummary": "片段 {current}/{total}：{start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "导出选中的片段并舍弃其余部分。",
+  "videoEditorCutOutModeDescription": "移除选中的片段并导出剩余视频。"
 }

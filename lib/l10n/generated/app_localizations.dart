@@ -15642,6 +15642,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unsupported archive — remove it from the selection.'**
   String get compositeArchiveCarrierRowWarning;
+
+  /// Readout of the selected video segment number, time range, and duration.
+  ///
+  /// In en, this message translates to:
+  /// **'Segment {current} of {total}: {start} – {end} ({duration})'**
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  );
+
+  /// Explains that Keep mode exports selected video segments and excludes other footage.
+  ///
+  /// In en, this message translates to:
+  /// **'Export the selected segments and discard everything else.'**
+  String get videoEditorKeepModeDescription;
+
+  /// Explains that Cut Out mode removes selected video segments and keeps the rest.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the selected segments and export the remaining footage.'**
+  String get videoEditorCutOutModeDescription;
 }
 
 class _AppLocalizationsDelegate

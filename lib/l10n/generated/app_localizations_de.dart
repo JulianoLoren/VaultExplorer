@@ -9430,4 +9430,23 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'Nicht unterstütztes Archiv – entferne es aus der Auswahl.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'Segment $current von $total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription =>
+      'Exportiere die ausgewählten Segmente und verwerfe den Rest.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      'Entferne die ausgewählten Segmente und exportiere das übrige Video.';
 }

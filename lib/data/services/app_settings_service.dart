@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:vaultexplorer/data/models/browser_layout_mode.dart';
 import 'package:vaultexplorer/data/models/delete_after_import_mode.dart';
 import 'package:vaultexplorer/data/models/playlist_scroll_mode.dart';
+import 'package:vaultexplorer/data/models/video_playback_mode.dart';
 import 'package:vaultexplorer/data/models/container_sort_mode.dart';
 import 'package:vaultexplorer/features/browser/mixins/sort_mixin.dart';
 import 'package:vaultexplorer/data/services/app_secure_storage.dart';
@@ -152,6 +153,7 @@ class AppSettings {
   bool debugLoggingEnabled;
   DeleteAfterImportMode deleteAfterImportMode;
   bool videoMuted;
+  VideoPlaybackMode videoPlaybackMode;
   bool showStorageLocationsInDrawer;
   bool autoLockOnShareImport;
   QuickActionLockMode quickActionLockMode;
@@ -191,6 +193,7 @@ class AppSettings {
     this.debugLoggingEnabled = false,
     this.deleteAfterImportMode = DeleteAfterImportMode.ask,
     this.videoMuted = false,
+    this.videoPlaybackMode = VideoPlaybackMode.playOnce,
     this.showStorageLocationsInDrawer = true,
     this.autoLockOnShareImport = true,
     this.quickActionLockMode = QuickActionLockMode.leaveAsFound,
@@ -271,6 +274,7 @@ class AppSettings {
     bool? debugLoggingEnabled,
     DeleteAfterImportMode? deleteAfterImportMode,
     bool? videoMuted,
+    VideoPlaybackMode? videoPlaybackMode,
     bool? showStorageLocationsInDrawer,
     bool? autoLockOnShareImport,
     QuickActionLockMode? quickActionLockMode,
@@ -318,6 +322,7 @@ class AppSettings {
       debugLoggingEnabled: debugLoggingEnabled ?? this.debugLoggingEnabled,
       deleteAfterImportMode: deleteAfterImportMode ?? this.deleteAfterImportMode,
       videoMuted: videoMuted ?? this.videoMuted,
+      videoPlaybackMode: videoPlaybackMode ?? this.videoPlaybackMode,
        showStorageLocationsInDrawer: showStorageLocationsInDrawer ?? this.showStorageLocationsInDrawer,
       autoLockOnShareImport: autoLockOnShareImport ?? (quickActionLockMode != null ? quickActionLockMode != QuickActionLockMode.leaveOpen : this.autoLockOnShareImport),
       quickActionLockMode: quickActionLockMode ?? this.quickActionLockMode,
@@ -361,6 +366,7 @@ class AppSettings {
     'debugLoggingEnabled': debugLoggingEnabled,
     'deleteAfterImportMode': deleteAfterImportMode.toJson(),
     'videoMuted': videoMuted,
+    'videoPlaybackMode': videoPlaybackMode.name,
      'showStorageLocationsInDrawer': showStorageLocationsInDrawer,
     'autoLockOnShareImport': autoLockOnShareImport,
     'quickActionLockMode': quickActionLockMode.toJson(),
@@ -431,6 +437,9 @@ class AppSettings {
       j['deleteAfterImportMode'] as String?,
     ),
     videoMuted: j['videoMuted'] as bool? ?? false,
+    videoPlaybackMode: VideoPlaybackMode.fromJson(
+      j['videoPlaybackMode'] as String?,
+    ),
      showStorageLocationsInDrawer: j['showStorageLocationsInDrawer'] as bool? ?? true,
     autoLockOnShareImport: j['autoLockOnShareImport'] as bool? ?? true,
     quickActionLockMode: j['quickActionLockMode'] != null

@@ -156,6 +156,8 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   Timer? _slideshowTimer;
   Timer? _hideTimer;
   Timer? _prefetchDebounceTimer;
+  Future<void> _playbackModeSaveQueue = Future<void>.value();
+  int _playbackModeInteractionRevision = 0;
 
   final bool _autoPlay = true;
   final int _doubleTapSkipSeconds = 5;
@@ -474,6 +476,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   }
 
   Future<void> _loadConfig() async {
+    final playbackModeRevision = _playbackModeInteractionRevision;
     final config = await ref.read(fileManagerToolbarServiceProvider).load();
     final appSettings = await ref
         .read(appSettingsServiceProvider)
@@ -495,6 +498,9 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
         List<String>.from(bookmarkPaths ?? const []),
       );
       _sessionController.setIsMuted(appSettings.videoMuted);
+      if (playbackModeRevision == _playbackModeInteractionRevision) {
+        _updatePlaybackMode(appSettings.videoPlaybackMode, persist: false);
+      }
 
       if (appSettings.videoMuted) {
         _playbackManager.activeController?.setVolume(0);
@@ -1903,8 +1909,15 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _transitionTo(index, animate: false);
   }
 
-  void _updatePlaybackMode(VideoPlaybackMode mode) {
-    _startHideTimer();
+  void _updatePlaybackMode(
+    VideoPlaybackMode mode, {
+    bool persist = true,
+  }) {
+    if (persist) {
+      _playbackModeInteractionRevision++;
+      _startHideTimer();
+      _persistVideoPlaybackMode(mode);
+    }
     _sessionController.setVideoPlaybackMode(mode);
     final autoAdvance = (mode == VideoPlaybackMode.playAndAdvance);
     _sessionController.setAutoAdvance(autoAdvance);
@@ -1915,6 +1928,20 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     }
     final controller = _playbackManager.activeController;
     controller?.setLooping(mode == VideoPlaybackMode.loop);
+  }
+
+  void _persistVideoPlaybackMode(VideoPlaybackMode mode) {
+    final settingsService = ref.read(appSettingsServiceProvider);
+    _playbackModeSaveQueue = _playbackModeSaveQueue
+        .catchError((Object error) {
+          VeLog.w('MediaViewer', 'Could not persist video playback mode', error);
+        })
+        .then((_) async {
+          final settings = await settingsService.loadSettings();
+          await settingsService.saveSettings(
+            settings.copyWith(videoPlaybackMode: mode),
+          );
+        });
   }
 
   void _showAdvancedSettings(

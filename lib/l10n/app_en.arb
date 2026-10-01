@@ -11826,5 +11826,34 @@
   "compositeArchiveCarrierRowWarning": "Unsupported archive — remove it from the selection.",
   "@compositeArchiveCarrierRowWarning": {
     "description": "Short warning shown beside an archive in the composite carrier list."
+  },
+  "videoEditorSelectedSegmentSummary": "Segment {current} of {total}: {start} – {end} ({duration})",
+  "@videoEditorSelectedSegmentSummary": {
+    "description": "Readout of the selected video segment number, time range, and duration.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "videoEditorKeepModeDescription": "Export the selected segments and discard everything else.",
+  "@videoEditorKeepModeDescription": {
+    "description": "Explains that Keep mode exports selected video segments and excludes other footage."
+  },
+  "videoEditorCutOutModeDescription": "Remove the selected segments and export the remaining footage.",
+  "@videoEditorCutOutModeDescription": {
+    "description": "Explains that Cut Out mode removes selected video segments and keeps the rest."
   }
 }

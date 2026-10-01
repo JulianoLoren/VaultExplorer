@@ -8932,4 +8932,22 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       '지원되지 않는 압축 파일입니다. 선택 항목에서 제거하세요.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return '세그먼트 $current/$total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription => '선택한 세그먼트만 내보내고 나머지는 제외합니다.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      '선택한 세그먼트를 제거하고 나머지 영상을 내보냅니다.';
 }

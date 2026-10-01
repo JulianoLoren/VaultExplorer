@@ -1,7 +1,8 @@
 import 'package:flutter/gestures.dart';
 
-/// Claims a horizontal drag across the screen for seeking in the video player,
-/// resolving eagerly in the gesture arena before parent scrollables can claim it.
+const double _seekGestureThreshold = 12.0;
+
+/// Claims a clearly horizontal seek drag after a short movement threshold.
 class SwipeToSeekClaimRecognizer extends HorizontalDragGestureRecognizer {
   SwipeToSeekClaimRecognizer({required this.canClaim})
       : super(supportedDevices: const {PointerDeviceKind.touch}) {
@@ -9,6 +10,7 @@ class SwipeToSeekClaimRecognizer extends HorizontalDragGestureRecognizer {
   }
 
   final bool Function() canClaim;
+  final Map<int, Offset> _movementByPointer = {};
 
   @override
   bool isPointerAllowed(PointerEvent event) =>
@@ -16,15 +18,22 @@ class SwipeToSeekClaimRecognizer extends HorizontalDragGestureRecognizer {
 
   @override
   void handleEvent(PointerEvent event) {
-    // Eagerly resolve as accepted once horizontal movement begins,
-    // locking out ancestor scrollables before touch-slop is crossed.
-    if (event is PointerMoveEvent) {
-      final dx = event.delta.dx.abs();
-      final dy = event.delta.dy.abs();
-      if (dx > dy && dx > 2.0) {
+    if (event is PointerDownEvent) {
+      _movementByPointer[event.pointer] = Offset.zero;
+    } else if (event is PointerMoveEvent) {
+      final movement = (_movementByPointer[event.pointer] ?? Offset.zero) +
+          event.delta;
+      _movementByPointer[event.pointer] = movement;
+
+      final dx = movement.dx.abs();
+      final dy = movement.dy.abs();
+      if (dx >= _seekGestureThreshold && dx > dy * 1.2) {
         resolve(GestureDisposition.accepted);
       }
+    } else if (event is PointerUpEvent || event is PointerCancelEvent) {
+      _movementByPointer.remove(event.pointer);
     }
+
     super.handleEvent(event);
   }
 

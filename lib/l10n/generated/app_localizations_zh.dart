@@ -8813,4 +8813,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get compositeArchiveCarrierRowWarning => '不支持此压缩包，请将其从所选文件中移除。';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return '片段 $current/$total：$start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription => '导出选中的片段并舍弃其余部分。';
+
+  @override
+  String get videoEditorCutOutModeDescription => '移除选中的片段并导出剩余视频。';
 }

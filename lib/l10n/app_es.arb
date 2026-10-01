@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "Empezar de nuevo",
   "resumePlaybackResume": "Reanudar",
   "compositeArchiveCarrierBlockingWarning": "Quita el archivo comprimido de esta selección para continuar. Los archivos comprimidos no se pueden usar como portadores de un almacén compuesto porque añadir un almacén podría dañarlos.",
-  "compositeArchiveCarrierRowWarning": "Archivo comprimido no compatible: quítalo de la selección."
+  "compositeArchiveCarrierRowWarning": "Archivo comprimido no compatible: quítalo de la selección.",
+  "videoEditorSelectedSegmentSummary": "Segmento {current} de {total}: {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "Exporta los segmentos seleccionados y descarta el resto.",
+  "videoEditorCutOutModeDescription": "Elimina los segmentos seleccionados y exporta el resto del vídeo."
 }

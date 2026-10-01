@@ -8,6 +8,9 @@ class MediaViewerConstants {
 
   static const double maxImageZoom = 12.0;
 
+  /// Keeps horizontal seek drags away from the OS back-gesture zones.
+  static const double swipeToSeekEdgeInset = 24.0;
+
   /// Full-resolution decode headroom used by [EncryptedImageWidget] to
   /// bound `Image.memory`'s decode target (Finding F-10). Deliberately
   /// smaller than [maxImageZoom]: this caps how many *pixels* Skia decodes

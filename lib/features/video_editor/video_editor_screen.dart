@@ -65,7 +65,8 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
   /// is scrubbing or a seek is still in flight, when it holds the requested
   /// position so the UI doesn't jump back.
   final ValueNotifier<int> _playhead = ValueNotifier<int>(0);
-  final GlobalKey<VideoTimelineState> _timelineKey = GlobalKey<VideoTimelineState>();
+  final GlobalKey<VideoTimelineState> _timelineKey =
+      GlobalKey<VideoTimelineState>();
 
   bool _scrubbing = false;
   bool _resumeAfterScrub = false;
@@ -80,8 +81,9 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
 
   /// Path the native side reads from: real and absolute for local storage,
   /// container-relative for a vault (same rule the media viewer follows).
-  String get _nativePath =>
-      _isLocal ? p.join(widget.container.uri, widget.filePath) : widget.filePath;
+  String get _nativePath => _isLocal
+      ? p.join(widget.container.uri, widget.filePath)
+      : widget.filePath;
 
   String get _fileName => widget.filePath.split('/').last;
 
@@ -145,9 +147,11 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
       );
       _player = player;
       player.addListener(_onPlayerChanged);
-      unawaited(player.initialize().catchError((Object e) {
-        VeLog.w(_tag, 'Player initialization failed', e);
-      }));
+      unawaited(
+        player.initialize().catchError((Object e) {
+          VeLog.w(_tag, 'Player initialization failed', e);
+        }),
+      );
 
       final probe = await api.probe(
         volId: widget.container.volId,
@@ -337,10 +341,16 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
 
     var existing = <RawEntry>[];
     try {
-      final raw = await ref.read(vaultFileIoApiProvider).listDirectory(container, dirPath);
+      final raw = await ref
+          .read(vaultFileIoApiProvider)
+          .listDirectory(container, dirPath);
       if (raw != null) existing = RawEntry.parseAll(raw);
     } catch (e) {
-      VeLog.w(_tag, 'Directory listing failed at ${VeLog.censorUri(dirPath)} while naming exports', e);
+      VeLog.w(
+        _tag,
+        'Directory listing failed at ${VeLog.censorUri(dirPath)} while naming exports',
+        e,
+      );
     }
     if (!mounted) return;
 
@@ -404,18 +414,20 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
     events.addVideoEditProgressListener(onProgress);
     setState(() => _exporting = true);
 
-    unawaited(showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: _ExportProgressDialog(
-          progress: progress,
-          outputCount: outputCount,
-          onCancel: () => unawaited(api.cancel(opId)),
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => PopScope(
+          canPop: false,
+          child: _ExportProgressDialog(
+            progress: progress,
+            outputCount: outputCount,
+            onCancel: () => unawaited(api.cancel(opId)),
+          ),
         ),
       ),
-    ));
+    );
 
     VideoExportResult? result;
     VideoEditException? failure;
@@ -500,8 +512,9 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
                           minimumSize: const Size(0, 40),
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                         ),
-                        onPressed:
-                            editor.canExport && !_exporting ? _onExport : null,
+                        onPressed: editor.canExport && !_exporting
+                            ? _onExport
+                            : null,
                         child: Text(l10n.videoEditorExportAction),
                       ),
                     ),
@@ -554,7 +567,8 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
       listenable: editor,
       builder: (context, _) {
         final controls = _buildControls(context, editor, player);
-        final landscape = MediaQuery.orientationOf(context) == Orientation.landscape;
+        final landscape =
+            MediaQuery.orientationOf(context) == Orientation.landscape;
         if (landscape) {
           return Row(
             children: [
@@ -571,7 +585,9 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
             children: [
               Expanded(child: preview),
               ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: constraints.maxHeight * 0.65),
+                constraints: BoxConstraints(
+                  maxHeight: constraints.maxHeight * 0.65,
+                ),
                 child: SingleChildScrollView(child: controls),
               ),
             ],
@@ -680,6 +696,23 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
             onTapAt: _onTimelineTap,
           ),
           const SizedBox(height: 4),
+          if (selected != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                l10n.videoEditorSelectedSegmentSummary(
+                  editor.selectedIndex + 1,
+                  segments.length,
+                  formatTimecode(selected.startUs),
+                  formatTimecode(selected.endUs),
+                  formatTimecode(selected.endUs - selected.startUs),
+                ),
+                style: text.labelMedium?.copyWith(color: cs.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          const SizedBox(height: 4),
 
           // Transport. Scales down rather than overflowing on narrow screens.
           FittedBox(
@@ -703,7 +736,9 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
                     ),
                     tooltip: l10n.mediaViewerActionPlayPause,
                     icon: Icon(
-                      v.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      v.isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
                     ),
                     onPressed: () => unawaited(_togglePlay()),
                   ),
@@ -773,6 +808,13 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
             selected: {editor.mode},
             onSelectionChanged: (s) => editor.setMode(s.first),
           ),
+          const SizedBox(height: 4),
+          Text(
+            editor.mode == VideoEditMode.keep
+                ? l10n.videoEditorKeepModeDescription
+                : l10n.videoEditorCutOutModeDescription,
+            style: summaryStyle,
+          ),
           const SizedBox(height: 8),
 
           // Segment chips.
@@ -803,7 +845,7 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
             ),
           const SizedBox(height: 8),
 
-           SizedBox(
+          SizedBox(
             height: MediaQuery.textScalerOf(context).scale(36.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -848,7 +890,8 @@ class _VideoEditorScreenState extends ConsumerState<VideoEditorScreen>
       return null;
     }
     final snapped = editor.snappedFor(selected);
-    if (snapped.startUs == selected.startUs && snapped.endUs == selected.endUs) {
+    if (snapped.startUs == selected.startUs &&
+        snapped.endUs == selected.endUs) {
       return null;
     }
     return context.l10n.videoEditorSnapNote(
@@ -880,7 +923,11 @@ class _ToolButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
-  const _ToolButton({required this.icon, required this.label, required this.onTap});
+  const _ToolButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -910,8 +957,12 @@ class _ExportProgressDialog extends StatelessWidget {
   /// Cutting is the long phase; the copy into the vault gets the last 15%.
   static double? _overall(VideoEditProgress? e) {
     if (e == null) return null;
-    final within = e.phase == 'saving' ? 0.85 + 0.15 * e.fraction : 0.85 * e.fraction;
-    return ((e.outputIndex + within) / e.outputCount).clamp(0.0, 1.0).toDouble();
+    final within = e.phase == 'saving'
+        ? 0.85 + 0.15 * e.fraction
+        : 0.85 * e.fraction;
+    return ((e.outputIndex + within) / e.outputCount)
+        .clamp(0.0, 1.0)
+        .toDouble();
   }
 
   @override
@@ -926,7 +977,10 @@ class _ExportProgressDialog extends StatelessWidget {
           if (e != null && e.phase == 'saving') {
             label = l10n.videoEditorSaving;
           } else if (outputCount > 1) {
-            label = l10n.videoEditorCutting((e?.outputIndex ?? 0) + 1, outputCount);
+            label = l10n.videoEditorCutting(
+              (e?.outputIndex ?? 0) + 1,
+              outputCount,
+            );
           } else {
             label = l10n.videoEditorCuttingOne;
           }
@@ -941,9 +995,7 @@ class _ExportProgressDialog extends StatelessWidget {
           );
         },
       ),
-      actions: [
-        TextButton(onPressed: onCancel, child: Text(l10n.cancel)),
-      ],
+      actions: [TextButton(onPressed: onCancel, child: Text(l10n.cancel))],
     );
   }
 }

@@ -1323,7 +1323,17 @@ if (!widget.isAudio && widget.enableZoom) {
               children: [
                 corePlayerWidget,
                 if (widget.swipeToSeekEnabled && !widget.isAudio)
-                  Positioned.fill(
+                  Positioned(
+                    left: math.min(
+                      MediaViewerConstants.swipeToSeekEdgeInset,
+                      outerConstraints.maxWidth * 0.2,
+                    ),
+                    right: math.min(
+                      MediaViewerConstants.swipeToSeekEdgeInset,
+                      outerConstraints.maxWidth * 0.2,
+                    ),
+                    top: 0,
+                    bottom: 0,
                     child: _swipeToSeekStrip(
                       onClaimCreated: (r) => _swipeToSeekClaim = r,
                       onDragStart: _handleSwipeToSeekStart,

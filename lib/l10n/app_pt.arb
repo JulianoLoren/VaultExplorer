@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "Começar do início",
   "resumePlaybackResume": "Retomar",
   "compositeArchiveCarrierBlockingWarning": "Remova o arquivo compactado desta seleção para continuar. Arquivos compactados não podem ser usados como portadores de um cofre composto, pois adicionar um cofre pode danificá-los.",
-  "compositeArchiveCarrierRowWarning": "Arquivo compactado não compatível: remova-o da seleção."
+  "compositeArchiveCarrierRowWarning": "Arquivo compactado não compatível: remova-o da seleção.",
+  "videoEditorSelectedSegmentSummary": "Segmento {current} de {total}: {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "Exporte os segmentos selecionados e descarte o restante.",
+  "videoEditorCutOutModeDescription": "Remova os segmentos selecionados e exporte o restante do vídeo."
 }

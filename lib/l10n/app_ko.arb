@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "처음부터",
   "resumePlaybackResume": "이어보기",
   "compositeArchiveCarrierBlockingWarning": "계속하려면 선택 항목에서 압축 파일을 제거하세요. 볼트를 추가하면 손상될 수 있으므로 압축 파일을 복합 볼트의 캐리어로 사용할 수 없습니다.",
-  "compositeArchiveCarrierRowWarning": "지원되지 않는 압축 파일입니다. 선택 항목에서 제거하세요."
+  "compositeArchiveCarrierRowWarning": "지원되지 않는 압축 파일입니다. 선택 항목에서 제거하세요.",
+  "videoEditorSelectedSegmentSummary": "세그먼트 {current}/{total}: {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "선택한 세그먼트만 내보내고 나머지는 제외합니다.",
+  "videoEditorCutOutModeDescription": "선택한 세그먼트를 제거하고 나머지 영상을 내보냅니다."
 }

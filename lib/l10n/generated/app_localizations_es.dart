@@ -9444,4 +9444,23 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'Archivo comprimido no compatible: quítalo de la selección.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'Segmento $current de $total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription =>
+      'Exporta los segmentos seleccionados y descarta el resto.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      'Elimina los segmentos seleccionados y exporta el resto del vídeo.';
 }

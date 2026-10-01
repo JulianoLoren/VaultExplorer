@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "Ricomincia da capo",
   "resumePlaybackResume": "Riprendi",
   "compositeArchiveCarrierBlockingWarning": "Rimuovi l’archivio da questa selezione per continuare. Gli archivi non possono essere usati come supporti per un vault composito perché l’aggiunta di un vault potrebbe danneggiarli.",
-  "compositeArchiveCarrierRowWarning": "Archivio non supportato: rimuovilo dalla selezione."
+  "compositeArchiveCarrierRowWarning": "Archivio non supportato: rimuovilo dalla selezione.",
+  "videoEditorSelectedSegmentSummary": "Segmento {current} di {total}: {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "Esporta i segmenti selezionati ed escludi tutto il resto.",
+  "videoEditorCutOutModeDescription": "Rimuovi i segmenti selezionati ed esporta il resto del video."
 }

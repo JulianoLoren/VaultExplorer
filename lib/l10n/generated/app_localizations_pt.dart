@@ -9430,4 +9430,23 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'Arquivo compactado não compatível: remova-o da seleção.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'Segmento $current de $total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription =>
+      'Exporte os segmentos selecionados e descarte o restante.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      'Remova os segmentos selecionados e exporte o restante do vídeo.';
 }

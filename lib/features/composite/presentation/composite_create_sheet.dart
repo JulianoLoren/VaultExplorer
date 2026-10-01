@@ -713,7 +713,7 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
         label: l10n.wizardSummaryPimLabel,
         value: _pimController.text.trim().isEmpty
             ? l10n.wizardSummaryPimDefaultValue
-            : _pimController.text.trim(),
+            : l10n.wizardPasswordSetValue,
       ),
       WizardSummaryRow(
         icon: Icons.bolt_rounded,

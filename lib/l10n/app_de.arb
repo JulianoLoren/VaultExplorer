@@ -2581,5 +2581,8 @@
   "resumePlaybackStartOver": "Von vorne beginnen",
   "resumePlaybackResume": "Fortsetzen",
   "compositeArchiveCarrierBlockingWarning": "Entferne das Archiv aus der Auswahl, um fortzufahren. Archive können nicht als Träger für einen zusammengesetzten Tresor verwendet werden, da das Hinzufügen eines Tresors sie beschädigen kann.",
-  "compositeArchiveCarrierRowWarning": "Nicht unterstütztes Archiv – entferne es aus der Auswahl."
+  "compositeArchiveCarrierRowWarning": "Nicht unterstütztes Archiv – entferne es aus der Auswahl.",
+  "videoEditorSelectedSegmentSummary": "Segment {current} von {total}: {start} – {end} ({duration})",
+  "videoEditorKeepModeDescription": "Exportiere die ausgewählten Segmente und verwerfe den Rest.",
+  "videoEditorCutOutModeDescription": "Entferne die ausgewählten Segmente und exportiere das übrige Video."
 }

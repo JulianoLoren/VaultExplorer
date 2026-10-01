@@ -9426,4 +9426,23 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get compositeArchiveCarrierRowWarning =>
       'Archivio non supportato: rimuovilo dalla selezione.';
+
+  @override
+  String videoEditorSelectedSegmentSummary(
+    int current,
+    int total,
+    String start,
+    String end,
+    String duration,
+  ) {
+    return 'Segmento $current di $total: $start – $end ($duration)';
+  }
+
+  @override
+  String get videoEditorKeepModeDescription =>
+      'Esporta i segmenti selezionati ed escludi tutto il resto.';
+
+  @override
+  String get videoEditorCutOutModeDescription =>
+      'Rimuovi i segmenti selezionati ed esporta il resto del video.';
 }

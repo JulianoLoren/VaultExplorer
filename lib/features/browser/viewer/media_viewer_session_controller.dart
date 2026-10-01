@@ -3,10 +3,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vaultexplorer/data/models/playlist_scroll_mode.dart';
 import 'package:vaultexplorer/data/models/playlist_transition_effect.dart';
 import 'package:vaultexplorer/data/models/video_aspect_ratio_mode.dart';
-
+import 'package:vaultexplorer/data/models/video_playback_mode.dart';
+export 'package:vaultexplorer/data/models/video_playback_mode.dart'
+    show VideoPlaybackMode;
 part 'media_viewer_session_controller.g.dart';
 
-enum VideoPlaybackMode { playOnce, loop, playAndAdvance }
+
 
 /// User-facing media viewer session options, chrome visibility, playback
 /// preferences, and transient per-file rotations and reload counters.
