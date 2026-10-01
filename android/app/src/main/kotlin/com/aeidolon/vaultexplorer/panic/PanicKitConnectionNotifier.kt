@@ -10,6 +10,7 @@ import com.aeidolon.vaultexplorer.MainActivity
 import com.aeidolon.vaultexplorer.R
 import com.aeidolon.vaultexplorer.VeLog
 import com.aeidolon.vaultexplorer.handlers.DisguiseModeHandlers
+import com.aeidolon.vaultexplorer.util.NotificationLocale
 
 /**
  * Posts a plain, always-visible notification whenever an external app
@@ -43,27 +44,29 @@ object PanicKitConnectionNotifier {
     private const val NOTIFICATION_ID = 4301
 
     fun notifyPaired(context: Context, triggerPackageName: String) {
+        val localized = NotificationLocale.wrap(context)
         val decoy = DisguiseModeHandlers.isDecoyActive(context)
-        val title = context.getString(if (decoy) R.string.decoy_app_name else R.string.panickit_paired_notification_title)
+        val title = localized.getString(if (decoy) R.string.decoy_app_name else R.string.panickit_paired_notification_title)
         val text = if (decoy) {
-            context.getString(R.string.panickit_paired_notification_text_decoy)
+            localized.getString(R.string.panickit_paired_notification_text_decoy)
         } else {
-            context.getString(R.string.panickit_paired_notification_text, appLabelOrPackageName(context, triggerPackageName))
+            localized.getString(R.string.panickit_paired_notification_text, appLabelOrPackageName(localized, triggerPackageName))
         }
-        post(context, title, text, decoy)
+        post(localized, title, text, decoy)
     }
 
     fun notifyUnpaired(context: Context, previousTriggerPackageName: String?) {
+        val localized = NotificationLocale.wrap(context)
         val decoy = DisguiseModeHandlers.isDecoyActive(context)
-        val title = context.getString(if (decoy) R.string.decoy_app_name else R.string.panickit_unpaired_notification_title)
+        val title = localized.getString(if (decoy) R.string.decoy_app_name else R.string.panickit_unpaired_notification_title)
         val text = if (decoy) {
-            context.getString(R.string.panickit_unpaired_notification_text_decoy)
+            localized.getString(R.string.panickit_unpaired_notification_text_decoy)
         } else {
-            val label = previousTriggerPackageName?.let { appLabelOrPackageName(context, it) }
-                ?: context.getString(R.string.panickit_unknown_app)
-            context.getString(R.string.panickit_unpaired_notification_text, label)
+            val label = previousTriggerPackageName?.let { appLabelOrPackageName(localized, it) }
+                ?: localized.getString(R.string.panickit_unknown_app)
+            localized.getString(R.string.panickit_unpaired_notification_text, label)
         }
-        post(context, title, text, decoy)
+        post(localized, title, text, decoy)
     }
 
     private fun appLabelOrPackageName(context: Context, packageName: String): String = try {

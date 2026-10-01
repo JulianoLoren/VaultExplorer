@@ -180,7 +180,13 @@ class AppSettingsController extends _$AppSettingsController {
     AppSettings Function(AppSettings current) updater,
   ) async {
     final updated = updater(state.settings);
+    final languageChanged = updated.languageCode != state.settings.languageCode;
     state = state._copy(settings: updated);
+    if (languageChanged) {
+      await ref
+          .read(vaultLifecycleApiProvider)
+          .setNotificationLocale(updated.languageCode);
+    }
     try {
       await ref.read(appSettingsServiceProvider).saveSettings(updated);
     } catch (e) {
@@ -354,7 +360,12 @@ class AppSettingsController extends _$AppSettingsController {
     }
   }
 
-  void applyImportedSettings(AppSettings imported) {
+  Future<void> applyImportedSettings(AppSettings imported) async {
+    if (imported.languageCode != state.settings.languageCode) {
+      await ref
+          .read(vaultLifecycleApiProvider)
+          .setNotificationLocale(imported.languageCode);
+    }
     state = state._copy(settings: imported);
   }
 }

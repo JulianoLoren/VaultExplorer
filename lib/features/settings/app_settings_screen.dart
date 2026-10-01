@@ -1861,7 +1861,9 @@ class AdvancedSettingsScreen extends ConsumerWidget {
     try {
       await ref.read(settingsBackupServiceProvider).applyImportedBundle(bundle);
       if (!context.mounted) return;
-      ref.read(appSettingsControllerProvider.notifier).applyImportedSettings(bundle.appSettings);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .applyImportedSettings(bundle.appSettings);
       ref
           .read(fileManagerToolbarSettingsProvider(null).notifier)
           .applyImportedConfig(bundle.toolbarConfig);

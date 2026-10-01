@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.concurrent.withLock
 import com.aeidolon.vaultexplorer.VeLog
+import com.aeidolon.vaultexplorer.util.NotificationLocale
 
 private const val CONTAINER_DOCUMENTS_AUTHORITY = "com.aeidolon.vaultexplorer.documents"
 
@@ -98,10 +99,16 @@ class VaultKeepAliveService : Service() {
                 nm.notify(NOTIFICATION_ID, s.buildNotification())
             }
         }
+
+        fun refreshNotification() {
+            val service = instance ?: return
+            if (!isRunning || !ContainerSessionRegistry.hasAnyActiveSessions()) return
+            service.getSystemService(NotificationManager::class.java)
+                .notify(NOTIFICATION_ID, service.buildNotification())
+        }
     }
 
     private lateinit var executor: ExecutorService
-    private var lastChannelIdentity: String? = null
     private var cachedContentIntent: PendingIntent? = null
     private var cachedLockAllIntent: PendingIntent? = null
 
@@ -147,7 +154,6 @@ class VaultKeepAliveService : Service() {
         currentProgressText = null
         currentProgress = null
         isIndeterminate = false
-        lastChannelIdentity = null
         cachedContentIntent = null
         cachedLockAllIntent = null
         executor.shutdown()
@@ -190,22 +196,21 @@ class VaultKeepAliveService : Service() {
 
     private fun currentIdentityLabel(): String =
         if (DisguiseModeHandlers.isDecoyActive(this)) {
-            getString(R.string.decoy_app_name)
+            NotificationLocale.wrap(this).getString(R.string.decoy_app_name)
         } else {
-            getString(R.string.app_name)
+            NotificationLocale.wrap(this).getString(R.string.app_name)
         }
 
     private fun ensureChannel() {
         val identity = currentIdentityLabel()
-        if (identity == lastChannelIdentity) return
-        lastChannelIdentity = identity
+        val localized = NotificationLocale.wrap(this)
         val nm = getSystemService(NotificationManager::class.java)
         val channel = NotificationChannel(
             CHANNEL_ID,
             identity,
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = getString(R.string.vault_keep_alive_channel_description)
+            description = localized.getString(R.string.vault_keep_alive_channel_description)
             setShowBadge(false)
         }
         nm.createNotificationChannel(channel)
@@ -241,6 +246,7 @@ class VaultKeepAliveService : Service() {
 
     fun buildNotification(): Notification {
         ensureChannel()
+        val localized = NotificationLocale.wrap(this)
         val decoyActive = DisguiseModeHandlers.isDecoyActive(this)
 
         val contentIntent = getContentIntent()
@@ -251,28 +257,28 @@ class VaultKeepAliveService : Service() {
         val actionLabel: String
         val smallIcon: Int
         if (decoyActive) {
-            contentTitle = getString(R.string.decoy_app_name)
+            contentTitle = localized.getString(R.string.decoy_app_name)
             contentText = if (hasActiveOperations) {
-                currentProgressText ?: getString(R.string.vault_keep_alive_notification_text_decoy)
+                currentProgressText ?: localized.getString(R.string.vault_keep_alive_notification_text_decoy)
             } else {
-                getString(R.string.vault_keep_alive_notification_text_decoy)
+                localized.getString(R.string.vault_keep_alive_notification_text_decoy)
             }
-            actionLabel = getString(R.string.vault_keep_alive_close_action_decoy)
+            actionLabel = localized.getString(R.string.vault_keep_alive_close_action_decoy)
             smallIcon = R.drawable.ic_notification_folder
         } else {
             val openCount = ContainerSessionRegistry.activeSessions.size
             if (hasActiveOperations) {
                 contentTitle = currentProgressTitle ?: currentIdentityLabel()
-                contentText = currentProgressText ?: resources.getQuantityString(
+                contentText = currentProgressText ?: localized.resources.getQuantityString(
                     R.plurals.vault_keep_alive_notification_text, openCount, openCount,
                 )
             } else {
                 contentTitle = currentIdentityLabel()
-                contentText = resources.getQuantityString(
+                contentText = localized.resources.getQuantityString(
                     R.plurals.vault_keep_alive_notification_text, openCount, openCount,
                 )
             }
-            actionLabel = getString(R.string.vault_keep_alive_lock_all_action)
+            actionLabel = localized.getString(R.string.vault_keep_alive_lock_all_action)
             smallIcon = R.drawable.ic_notification_vault
         }
 

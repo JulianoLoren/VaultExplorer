@@ -15,6 +15,7 @@ import com.aeidolon.vaultexplorer.MainActivity
 import com.aeidolon.vaultexplorer.R
 import com.aeidolon.vaultexplorer.bridge.VaultCameraStopRequestedBridge
 import com.aeidolon.vaultexplorer.handlers.DisguiseModeHandlers
+import com.aeidolon.vaultexplorer.util.NotificationLocale
 
 /**
  * Foreground service (type "camera|microphone") that keeps an in-progress
@@ -58,16 +59,25 @@ class VaultCameraRecordingService : Service() {
         @Volatile
         var isRunning: Boolean = false
             private set
+
+        @Volatile
+        private var instance: VaultCameraRecordingService? = null
+
+        fun refreshNotification() {
+            val service = instance ?: return
+            service.getSystemService(NotificationManager::class.java)
+                .notify(NOTIFICATION_ID, service.buildNotification())
+        }
     }
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentVolId: Int = -1
     private var currentContainerName: String = ""
-    private var lastChannelIdentity: String? = null
     private var cachedContentIntent: PendingIntent? = null
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         isRunning = true
         val pm = getSystemService(POWER_SERVICE) as PowerManager
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG).apply {
@@ -107,33 +117,32 @@ class VaultCameraRecordingService : Service() {
 
     override fun onDestroy() {
         isRunning = false
+        if (instance === this) instance = null
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
         currentVolId = -1
         currentContainerName = ""
-        lastChannelIdentity = null
         cachedContentIntent = null
         super.onDestroy()
     }
 
     private fun currentIdentityLabel(): String =
         if (DisguiseModeHandlers.isDecoyActive(this)) {
-            getString(R.string.decoy_app_name)
+            NotificationLocale.wrap(this).getString(R.string.decoy_app_name)
         } else {
-            getString(R.string.app_name)
+            NotificationLocale.wrap(this).getString(R.string.app_name)
         }
 
     private fun ensureChannel() {
         val identity = currentIdentityLabel()
-        if (identity == lastChannelIdentity) return
-        lastChannelIdentity = identity
+        val localized = NotificationLocale.wrap(this)
         val nm = getSystemService(NotificationManager::class.java)
         val channel = NotificationChannel(
             CHANNEL_ID,
             identity,
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = getString(R.string.camera_recording_channel_description)
+            description = localized.getString(R.string.camera_recording_channel_description)
             setShowBadge(false)
         }
         nm.createNotificationChannel(channel)
@@ -162,6 +171,7 @@ class VaultCameraRecordingService : Service() {
 
     private fun buildNotification(): Notification {
         ensureChannel()
+        val localized = NotificationLocale.wrap(this)
         val decoyActive = DisguiseModeHandlers.isDecoyActive(this)
 
         val contentTitle: String
@@ -172,14 +182,14 @@ class VaultCameraRecordingService : Service() {
             // Never reveal that a recording is in progress while decoy
             // mode is active -- same rationale as VaultKeepAliveService's
             // decoy text.
-            contentTitle = getString(R.string.decoy_app_name)
-            contentText = getString(R.string.camera_recording_notification_text_decoy)
-            actionLabel = getString(R.string.camera_recording_stop_action_decoy)
+            contentTitle = localized.getString(R.string.decoy_app_name)
+            contentText = localized.getString(R.string.camera_recording_notification_text_decoy)
+            actionLabel = localized.getString(R.string.camera_recording_stop_action_decoy)
             smallIcon = R.drawable.ic_notification_folder
         } else {
-            contentTitle = getString(R.string.camera_recording_notification_title)
-            contentText = getString(R.string.camera_recording_notification_text, currentContainerName)
-            actionLabel = getString(R.string.camera_recording_stop_action)
+            contentTitle = localized.getString(R.string.camera_recording_notification_title)
+            contentText = localized.getString(R.string.camera_recording_notification_text, currentContainerName)
+            actionLabel = localized.getString(R.string.camera_recording_stop_action)
             smallIcon = R.drawable.ic_notification_camera
         }
 

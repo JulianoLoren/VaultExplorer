@@ -6,10 +6,21 @@ import com.aeidolon.vaultexplorer.MainActivity
 import com.aeidolon.vaultexplorer.VeLog
 import com.aeidolon.vaultexplorer.container.ContainerSessionRegistry
 import com.aeidolon.vaultexplorer.service.VaultKeepAliveService
+import com.aeidolon.vaultexplorer.service.VaultCameraRecordingService
+import com.aeidolon.vaultexplorer.service.VaultAutomationRecordingService
+import com.aeidolon.vaultexplorer.util.NotificationLocale
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
 class BackgroundServiceHandlers(private val activity: MainActivity) {
+    fun handleSetNotificationLocale(call: MethodCall, result: MethodChannel.Result) {
+        NotificationLocale.save(activity, call.argument<String>("languageCode"))
+        VaultKeepAliveService.refreshNotification()
+        VaultCameraRecordingService.refreshNotification()
+        VaultAutomationRecordingService.refreshNotification()
+        result.success(null)
+    }
+
     fun handleSyncBackgroundService(call: MethodCall, result: MethodChannel.Result) {
         val enabled = call.argument<Boolean>("enabled") ?: false
         val hasSessions = ContainerSessionRegistry.hasAnyActiveSessions()

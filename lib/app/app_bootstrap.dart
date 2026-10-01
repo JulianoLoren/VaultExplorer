@@ -56,6 +56,9 @@ Future<void> runDeferredStartupWork(ProviderContainer container) async {
     final settings = await container
         .read(appSettingsServiceProvider)
         .loadSettings();
+    await container
+        .read(vaultLifecycleApiProvider)
+        .setNotificationLocale(settings.languageCode);
     final disguiseMode = await disguiseModeApi.getMode();
     final secureScreenPolicy = container.read(secureScreenPolicyProvider);
 

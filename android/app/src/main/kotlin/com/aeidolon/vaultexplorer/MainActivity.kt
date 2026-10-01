@@ -90,6 +90,7 @@ private object ChannelMethods {
     const val LOCK_CONTAINER            = "lockContainer"
     const val SYNC_BACKGROUND_SERVICE   = "syncBackgroundService"
     const val UPDATE_BACKGROUND_SERVICE_PROGRESS = "updateBackgroundServiceProgress"
+    const val SET_NOTIFICATION_LOCALE = "setNotificationLocale"
     const val START_BACKGROUND_RECORDING = "startBackgroundRecording"
     const val STOP_BACKGROUND_RECORDING = "stopBackgroundRecording"
     const val DECRYPT_FILE              = "decryptFile"
@@ -1000,6 +1001,7 @@ open class MainActivity : FlutterFragmentActivity() {
                 ChannelMethods.LOCK_CONTAINER -> vaultUnlockHandlers.handleLockContainer(call, result)
                 ChannelMethods.SYNC_BACKGROUND_SERVICE -> backgroundServiceHandlers.handleSyncBackgroundService(call, result)
                 ChannelMethods.UPDATE_BACKGROUND_SERVICE_PROGRESS -> backgroundServiceHandlers.handleUpdateProgress(call, result)
+                ChannelMethods.SET_NOTIFICATION_LOCALE -> backgroundServiceHandlers.handleSetNotificationLocale(call, result)
                 ChannelMethods.START_BACKGROUND_RECORDING -> cameraRecordingServiceHandlers.handleStartBackgroundRecording(call, result)
                 ChannelMethods.STOP_BACKGROUND_RECORDING -> cameraRecordingServiceHandlers.handleStopBackgroundRecording(call, result)
                 ChannelMethods.UPDATE_CONTAINER_SETTINGS -> vaultUnlockHandlers.handleUpdateContainerSettings(call, result)

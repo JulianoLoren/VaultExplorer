@@ -14,6 +14,7 @@ abstract final class ChannelMethods {
   static const stopBackgroundRecording = 'stopBackgroundRecording';
   static const updateBackgroundServiceProgress =
       'updateBackgroundServiceProgress';
+  static const setNotificationLocale = 'setNotificationLocale';
   static const updateContainerSettings = 'updateContainerSettings';
   static const cancelUnlock = 'cancelUnlock';
   static const changeContainerPassword = 'changeContainerPassword';

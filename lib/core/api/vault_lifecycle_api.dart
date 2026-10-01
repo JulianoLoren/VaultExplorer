@@ -1136,6 +1136,19 @@ class VaultLifecycleApi {
     }
   }
 
+  /// Keeps Android-created notifications in sync with the language selected
+  /// in the app. A null or empty code means use the device language.
+  Future<void> setNotificationLocale(String? languageCode) async {
+    try {
+      await _channel.invokeMethod(
+        ChannelMethods.setNotificationLocale,
+        {'languageCode': languageCode},
+      );
+    } catch (e) {
+      logSwallowed('setNotificationLocale', e);
+    }
+  }
+
   Future<void> updateBackgroundServiceProgress({
     required bool hasActive,
     String? title,
