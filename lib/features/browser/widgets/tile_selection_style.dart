@@ -104,6 +104,12 @@ class FileRowShell extends StatelessWidget {
     this.customLeadingIsIcon = false,
   });
 
+  static double _columnBaseWidth(FileDetailColumn col) => switch (col) {
+    FileDetailColumn.date => 100,
+    FileDetailColumn.size => 60,
+    FileDetailColumn.type => 50,
+  };
+
   String _columnText(FileDetailColumn col, BuildContext context) =>
       switch (col) {
         FileDetailColumn.date => formatEntryDate(entry.modifiedSecs, context),
@@ -111,18 +117,28 @@ class FileRowShell extends StatelessWidget {
         FileDetailColumn.type => _getTypeLabel(entry, context),
       };
 
+  double _columnWidth(FileDetailColumn col, BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    final maxWidth = textScaler.scale(_columnBaseWidth(col));
+    if (col != FileDetailColumn.date) return maxWidth;
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: _columnText(col, context),
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      maxLines: 1,
+      textDirection: Directionality.of(context),
+      textScaler: textScaler,
+    )..layout();
+    return painter.width > maxWidth ? maxWidth : painter.width;
+  }
+
   Widget _buildColumnWidget(
     FileDetailColumn col,
     BuildContext context,
   ) {
-    final double baseWidth = switch (col) {
-      FileDetailColumn.date => 75,
-      FileDetailColumn.size => 60,
-      FileDetailColumn.type => 50,
-    };
-
-    final textScaler = MediaQuery.textScalerOf(context);
-    final effectiveWidth = textScaler.scale(baseWidth);
+    final effectiveWidth = _columnWidth(col, context);
 
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -285,13 +301,8 @@ class FileRowShell extends StatelessWidget {
               double columnsRequiredWidth = 0.0;
               if (!isCompact && detailColumns.isNotEmpty) {
                 for (final col in detailColumns) {
-                  final double colBaseWidth = switch (col) {
-                    FileDetailColumn.date => 68.0,
-                    FileDetailColumn.size => 60.0,
-                    FileDetailColumn.type => 50.0,
-                  };
                   columnsRequiredWidth +=
-                      textScaler.scale(colBaseWidth) + 8.0; // 8.0 for SizedBox
+                      textScaler.scale(_columnBaseWidth(col)) + 8.0; // 8.0 for SizedBox
                 }
               }
 

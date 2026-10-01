@@ -378,28 +378,34 @@ open class MainActivity : FlutterFragmentActivity() {
 
     fun enableHighRefreshRate() {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val currentDisplay = display ?: return
-                val modes = currentDisplay.supportedModes
-                val highestMode = modes.maxByOrNull { it.refreshRate }
-                if (highestMode != null && highestMode.refreshRate > 60f) {
-                    val params = window.attributes
-                    params.preferredDisplayModeId = highestMode.modeId
-                    params.preferredRefreshRate = highestMode.refreshRate
-                    window.attributes = params
-                }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+
+            val currentDisplay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display
+            } else {
                 @Suppress("DEPRECATION")
-                val currentDisplay = windowManager.defaultDisplay ?: return
-                val modes = currentDisplay.supportedModes
-                val highestMode = modes.maxByOrNull { it.refreshRate }
-                if (highestMode != null && highestMode.refreshRate > 60f) {
-                    val params = window.attributes
-                    params.preferredDisplayModeId = highestMode.modeId
-                    params.preferredRefreshRate = highestMode.refreshRate
-                    window.attributes = params
+                windowManager.defaultDisplay
+            } ?: return
+            val activeMode = currentDisplay.mode
+            val highestMatchingMode = currentDisplay.supportedModes
+                .asSequence()
+                .filter {
+                    it.physicalWidth == activeMode.physicalWidth &&
+                        it.physicalHeight == activeMode.physicalHeight
                 }
+                .maxByOrNull { it.refreshRate }
+                ?: return
+
+            if (highestMatchingMode.refreshRate <= 60f) return
+
+            val params = window.attributes
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                params.preferredMinDisplayRefreshRate = highestMatchingMode.refreshRate
+                params.preferredMaxDisplayRefreshRate = highestMatchingMode.refreshRate
+            } else {
+                params.preferredRefreshRate = highestMatchingMode.refreshRate
             }
+            window.attributes = params
         } catch (e: Exception) {
             VeLog.w("MainActivity", e) { "Failed to enable high refresh rate" }
         }
