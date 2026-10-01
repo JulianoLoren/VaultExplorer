@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_keep_alive_channel_description">Notificações de estado contínuas</string><plurals name="vault_keep_alive_notification_text"><item quantity="one">%d cofre aberto</item><item quantity="other">%d cofres abertos</item></plurals>
+    <string name="panickit_notification_channel_name">Ligações de aplicações</string><string name="panickit_notification_channel_description">Exibida quando uma aplicação externa é ligada ou desligada</string>
+    <string name="panickit_paired_notification_title">Acionador de emergência ligado</string><string name="panickit_paired_notification_text">%1$s pode agora acionar a resposta de emergência desta aplicação</string><string name="panickit_paired_notification_text_decoy">Foi adicionada uma aplicação ligada</string>
+    <string name="panickit_unpaired_notification_title">Acionador de emergência desligado</string><string name="panickit_unpaired_notification_text">%1$s já não pode acionar a resposta de emergência desta aplicação</string><string name="panickit_unpaired_notification_text_decoy">Foi removida uma aplicação ligada</string><string name="panickit_unknown_app">uma aplicação</string>
+    <string name="vault_keep_alive_lock_all_action">Bloquear todos os cofres</string><string name="vault_keep_alive_notification_text_decoy">O Archive Explorer está em execução</string><string name="vault_keep_alive_close_action_decoy">Fechar</string>
+    <string name="camera_recording_channel_description">Estado de gravação contínua</string><string name="camera_recording_notification_title">A gravar vídeo</string><string name="camera_recording_notification_text">A guardar em %1$s</string><string name="camera_recording_stop_action">Parar e guardar</string><string name="camera_recording_notification_text_decoy">O Archive Explorer está em execução</string><string name="camera_recording_stop_action_decoy">Fechar</string>
+</resources>

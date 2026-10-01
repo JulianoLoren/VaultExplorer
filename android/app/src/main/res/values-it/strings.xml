@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_keep_alive_channel_description">Notifiche di stato persistenti</string><plurals name="vault_keep_alive_notification_text"><item quantity="one">%d vault aperto</item><item quantity="other">%d vault aperti</item></plurals>
+    <string name="panickit_notification_channel_name">Connessioni app</string><string name="panickit_notification_channel_description">Mostrata quando un’app esterna viene collegata o scollegata</string>
+    <string name="panickit_paired_notification_title">Attivatore di emergenza collegato</string><string name="panickit_paired_notification_text">%1$s può ora attivare la risposta di emergenza di questa app</string><string name="panickit_paired_notification_text_decoy">È stata aggiunta un’app collegata</string>
+    <string name="panickit_unpaired_notification_title">Attivatore di emergenza scollegato</string><string name="panickit_unpaired_notification_text">%1$s non può più attivare la risposta di emergenza di questa app</string><string name="panickit_unpaired_notification_text_decoy">È stata rimossa un’app collegata</string><string name="panickit_unknown_app">un’app</string>
+    <string name="vault_keep_alive_lock_all_action">Blocca tutti i vault</string><string name="vault_keep_alive_notification_text_decoy">Archive Explorer è in esecuzione</string><string name="vault_keep_alive_close_action_decoy">Chiudi</string>
+    <string name="camera_recording_channel_description">Stato di registrazione in corso</string><string name="camera_recording_notification_title">Registrazione video</string><string name="camera_recording_notification_text">Salvataggio in %1$s</string><string name="camera_recording_stop_action">Interrompi e salva</string><string name="camera_recording_notification_text_decoy">Archive Explorer è in esecuzione</string><string name="camera_recording_stop_action_decoy">Chiudi</string>
+</resources>

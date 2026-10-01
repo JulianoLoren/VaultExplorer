@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_keep_alive_channel_description">継続的な状態通知</string><plurals name="vault_keep_alive_notification_text"><item quantity="other">開いている保管庫: %d 個</item></plurals>
+    <string name="panickit_notification_channel_name">アプリの接続</string><string name="panickit_notification_channel_description">外部アプリが接続または切断されたときに表示</string>
+    <string name="panickit_paired_notification_title">緊急トリガーを接続しました</string><string name="panickit_paired_notification_text">%1$s がこのアプリの緊急対応を起動できるようになりました</string><string name="panickit_paired_notification_text_decoy">接続済みアプリを追加しました</string>
+    <string name="panickit_unpaired_notification_title">緊急トリガーを切断しました</string><string name="panickit_unpaired_notification_text">%1$s はこのアプリの緊急対応を起動できなくなりました</string><string name="panickit_unpaired_notification_text_decoy">接続済みアプリを削除しました</string><string name="panickit_unknown_app">アプリ</string>
+    <string name="vault_keep_alive_lock_all_action">すべての保管庫をロック</string><string name="vault_keep_alive_notification_text_decoy">Archive Explorer を実行中</string><string name="vault_keep_alive_close_action_decoy">閉じる</string>
+    <string name="camera_recording_channel_description">録画中の状態</string><string name="camera_recording_notification_title">動画を録画中</string><string name="camera_recording_notification_text">保存先: %1$s</string><string name="camera_recording_stop_action">停止して保存</string><string name="camera_recording_notification_text_decoy">Archive Explorer を実行中</string><string name="camera_recording_stop_action_decoy">閉じる</string>
+</resources>

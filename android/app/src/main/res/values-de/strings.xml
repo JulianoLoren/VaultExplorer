@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_keep_alive_channel_description">Laufende Statusbenachrichtigungen</string><plurals name="vault_keep_alive_notification_text"><item quantity="one">%d Tresor geöffnet</item><item quantity="other">%d Tresore geöffnet</item></plurals>
+    <string name="panickit_notification_channel_name">App-Verbindungen</string><string name="panickit_notification_channel_description">Wird angezeigt, wenn eine externe App verknüpft oder getrennt wird</string>
+    <string name="panickit_paired_notification_title">Panik-Auslöser verbunden</string><string name="panickit_paired_notification_text">%1$s kann jetzt die Panikreaktion dieser App auslösen</string><string name="panickit_paired_notification_text_decoy">Eine verbundene App wurde hinzugefügt</string>
+    <string name="panickit_unpaired_notification_title">Panik-Auslöser getrennt</string><string name="panickit_unpaired_notification_text">%1$s kann die Panikreaktion dieser App nicht mehr auslösen</string><string name="panickit_unpaired_notification_text_decoy">Eine verbundene App wurde entfernt</string><string name="panickit_unknown_app">eine App</string>
+    <string name="vault_keep_alive_lock_all_action">Alle Tresore sperren</string><string name="vault_keep_alive_notification_text_decoy">Archive Explorer läuft</string><string name="vault_keep_alive_close_action_decoy">Schließen</string>
+    <string name="camera_recording_channel_description">Laufender Aufnahmestatus</string><string name="camera_recording_notification_title">Videoaufnahme</string><string name="camera_recording_notification_text">Speichern unter %1$s</string><string name="camera_recording_stop_action">Stoppen und speichern</string><string name="camera_recording_notification_text_decoy">Archive Explorer läuft</string><string name="camera_recording_stop_action_decoy">Schließen</string>
+</resources>

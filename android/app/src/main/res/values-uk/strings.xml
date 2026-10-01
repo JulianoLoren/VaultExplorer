@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vault_keep_alive_channel_description">Постійні сповіщення про стан</string><plurals name="vault_keep_alive_notification_text"><item quantity="one">Відкрито %d сховище</item><item quantity="few">Відкрито %d сховища</item><item quantity="many">Відкрито %d сховищ</item><item quantity="other">Відкрито %d сховища</item></plurals>
+    <string name="panickit_notification_channel_name">Підключення програм</string><string name="panickit_notification_channel_description">Показується, коли зовнішню програму підключено або відключено</string>
+    <string name="panickit_paired_notification_title">Тригер тривоги підключено</string><string name="panickit_paired_notification_text">%1$s тепер може запускати реакцію на тривогу цього додатка</string><string name="panickit_paired_notification_text_decoy">Додано підключену програму</string>
+    <string name="panickit_unpaired_notification_title">Тригер тривоги відключено</string><string name="panickit_unpaired_notification_text">%1$s більше не може запускати реакцію на тривогу цього додатка</string><string name="panickit_unpaired_notification_text_decoy">Видалено підключену програму</string><string name="panickit_unknown_app">програма</string>
+    <string name="vault_keep_alive_lock_all_action">Заблокувати всі сховища</string><string name="vault_keep_alive_notification_text_decoy">Archive Explorer працює</string><string name="vault_keep_alive_close_action_decoy">Закрити</string>
+    <string name="camera_recording_channel_description">Стан поточного запису</string><string name="camera_recording_notification_title">Запис відео</string><string name="camera_recording_notification_text">Збереження до %1$s</string><string name="camera_recording_stop_action">Зупинити й зберегти</string><string name="camera_recording_notification_text_decoy">Archive Explorer працює</string><string name="camera_recording_stop_action_decoy">Закрити</string>
+</resources>
