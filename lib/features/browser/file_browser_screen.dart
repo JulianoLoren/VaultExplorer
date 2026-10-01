@@ -3809,24 +3809,30 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     }
 
     final bool canPop = _atRoot && !isSelectionMode && !_searchActive;
+    final systemOverlayStyle = Theme.of(context).appBarTheme.systemOverlayStyle ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? AppSystemUI.transparentDark
+            : SystemUiOverlayStyle.dark);
 
-    return Listener(
-      onPointerDown: _handlePointerDown,
-      onPointerUp: _handlePointerUp,
-      onPointerCancel: _handlePointerCancel,
-      child: PopScope(
-        canPop: canPop,
-        onPopInvokedWithResult: (bool didPop, Object? result) {
-          if (didPop) return;
-          if (isSelectionMode) {
-            exitSelectionMode();
-          } else if (_searchActive) {
-            setState(() => _clearSearch());
-          } else if (!_atRoot) {
-            _navigateUp();
-          }
-        },
-        child: Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: systemOverlayStyle,
+      child: Listener(
+        onPointerDown: _handlePointerDown,
+        onPointerUp: _handlePointerUp,
+        onPointerCancel: _handlePointerCancel,
+        child: PopScope(
+          canPop: canPop,
+          onPopInvokedWithResult: (bool didPop, Object? result) {
+            if (didPop) return;
+            if (isSelectionMode) {
+              exitSelectionMode();
+            } else if (_searchActive) {
+              setState(() => _clearSearch());
+            } else if (!_atRoot) {
+              _navigateUp();
+            }
+          },
+          child: Scaffold(
           key: _scaffoldKey,
           resizeToAvoidBottomInset: false,
           drawerEnableOpenDragGesture: false,
@@ -4536,6 +4542,6 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
           ),
         ),
       ),
-    );
+    ));
   }
 }

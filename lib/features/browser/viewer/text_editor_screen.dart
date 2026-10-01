@@ -192,9 +192,58 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
           return const SizedBox.shrink();
         }
 
-        return AdaptiveTextSelectionToolbar.buttonItems(
-          anchors: anchors,
-          buttonItems: items,
+        final appTheme = Theme.of(this.context);
+        final cs = appTheme.colorScheme;
+
+        // Resolve current editor background to check for color collisions
+        final appearance = ref.read(textEditorAppearanceProvider);
+        final editorStyle = resolveEditorSyntaxStyle(
+          _activeTab.filePath,
+          appTheme.brightness,
+          cs,
+          background: appearance.background,
+          syntaxTheme: appearance.syntaxTheme,
+        );
+        final editorBg = editorStyle.backgroundColor;
+
+        // Base floating toolbar surface color
+        Color surfaceColor = cs.surfaceContainerHigh;
+
+        // If the floating menu and editor background share almost the exact same darkness,
+        // boost the surface tone slightly so the card doesn't wash into the background.
+        final lumDiff = (surfaceColor.computeLuminance() - editorBg.computeLuminance()).abs();
+        if (lumDiff < 0.06) {
+          surfaceColor = editorBg.computeLuminance() < 0.5
+              ? Color.alphaBlend(Colors.white.withValues(alpha: 0.12), surfaceColor)
+              : Color.alphaBlend(Colors.black.withValues(alpha: 0.08), surfaceColor);
+        }
+
+        return Theme(
+          data: appTheme,
+          child: TextSelectionToolbar(
+            anchorAbove: anchors.primaryAnchor,
+            anchorBelow: anchors.secondaryAnchor ?? anchors.primaryAnchor,
+            toolbarBuilder: (context, child) {
+              return Material(
+                color: surfaceColor,
+                elevation: 6,
+                shadowColor: Colors.black.withValues(alpha: 0.55),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: cs.outlineVariant.withValues(alpha: 0.8),
+                    width: 1,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: child,
+              );
+            },
+            children: AdaptiveTextSelectionToolbar.getAdaptiveButtons(
+              context,
+              items,
+            ).toList(),
+          ),
         );
       },
     );
@@ -2259,6 +2308,14 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     final appearance = ref.watch(textEditorAppearanceProvider);
     final softKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
 
+    // Calculate a high-contrast accent color for the cursor, selection, and teardrop handles
+    final bgLuminance = syntaxStyle.backgroundColor.computeLuminance();
+    final primaryLuminance = cs.primary.computeLuminance();
+    final contrast = (primaryLuminance - bgLuminance).abs();
+    final safeAccentColor = contrast > 0.25
+        ? cs.primary
+        : (bgLuminance < 0.5 ? Colors.white : Colors.black);
+
     return Column(
       children: [
         Expanded(
@@ -2451,84 +2508,90 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
               child: FastScrollbar(
                 controller: activeTab.horizontalScrollController,
                 axis: Axis.horizontal,
-                child: CodeEditor(
-                  key: ValueKey(activeTab.filePath),
-                  controller: activeTab.codeController,
-                  scrollController: activeTab.scrollController,
-              scrollbarBuilder: (context, child, details) => child,
-              toolbarController: _toolbarController,
-              focusNode: _focusNode,
-              readOnly: _readOnly,
-              showCursorWhenReadOnly: true,
-              wordWrap: _wordWrap,
-              autofocus: false,
-              findController: activeTab.findController,
-              findBuilder: (context, controller, readOnly) => EditorFindPanel(
-                controller: controller,
-                readOnly: readOnly,
+                child: TextSelectionTheme(
+                  data: TextSelectionThemeData(
+                    selectionColor: safeAccentColor.withValues(alpha: 0.28),
+                    selectionHandleColor: safeAccentColor,
+                  ),
+                  child: CodeEditor(
+                    key: ValueKey(activeTab.filePath),
+                    controller: activeTab.codeController,
+                    scrollController: activeTab.scrollController,
+                    scrollbarBuilder: (context, child, details) => child,
+                    toolbarController: _toolbarController,
+                    focusNode: _focusNode,
+                    readOnly: _readOnly,
+                    showCursorWhenReadOnly: true,
+                    wordWrap: _wordWrap,
+                    autofocus: false,
+                    findController: activeTab.findController,
+                    findBuilder: (context, controller, readOnly) => EditorFindPanel(
+                      controller: controller,
+                      readOnly: readOnly,
+                    ),
+                    chunkAnalyzer: const DefaultCodeChunkAnalyzer(),
+                    style: CodeEditorStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontFamilyFallback: const ['monospace'],
+                      fontSize: appearance.fontSize,
+                      fontHeight: 1.5,
+                      backgroundColor: syntaxStyle.backgroundColor,
+                      textColor: syntaxStyle.textColor,
+                      cursorColor: safeAccentColor,
+                      cursorLineColor: safeAccentColor.withValues(alpha: 0.15),
+                      chunkIndicatorColor: safeAccentColor,
+                      selectionColor: safeAccentColor.withValues(alpha: 0.28),
+                      codeTheme: syntaxStyle.codeTheme,
+                    ),
+                    commentFormatter: _getCommentFormatter(activeTab.filePath),
+                    indicatorBuilder: appearance.showLineNumbers
+                        ? (context, editingController, chunkController, notifier) {
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                DefaultCodeLineNumber(
+                                  controller: editingController,
+                                  notifier: notifier,
+                                  textStyle: TextStyle(
+                                    color: syntaxStyle.textColor.withValues(alpha: 0.45),
+                                    fontFamily: 'JetBrains Mono',
+                                    fontFamilyFallback: const ['monospace'],
+                                    fontSize: appearance.fontSize,
+                                    height: 1.5,
+                                  ),
+                                  focusedTextStyle: TextStyle(
+                                    color: safeAccentColor,
+                                    fontFamily: 'JetBrains Mono',
+                                    fontFamilyFallback: const ['monospace'],
+                                    fontSize: appearance.fontSize,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.5,
+                                  ),
+                                  customLineIndex2Text: appearance.relativeLineNumbers
+                                      ? (lineIndex) {
+                                          final current = editingController.selection.extentIndex;
+                                          return lineIndex == current
+                                              ? '${lineIndex + 1}'
+                                              : '${(lineIndex - current).abs()}';
+                                        }
+                                      : null,
+                                ),
+                                DefaultCodeChunkIndicator(
+                                  width: 14,
+                                  controller: chunkController,
+                                  notifier: notifier,
+                                  painter: DefaultCodeChunkIndicatorPainter(
+                                    color: syntaxStyle.textColor.withValues(alpha: 0.45),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                        : null,
+                  ),
+                ),
               ),
-              chunkAnalyzer: const DefaultCodeChunkAnalyzer(),
-              style: CodeEditorStyle(
-                fontFamily: 'JetBrains Mono',
-                fontFamilyFallback: const ['monospace'],
-                fontSize: appearance.fontSize,
-                fontHeight: 1.5,
-                backgroundColor: syntaxStyle.backgroundColor,
-                textColor: syntaxStyle.textColor,
-                cursorColor: cs.primary,
-                cursorLineColor: cs.primary.withValues(alpha: 0.35),
-                chunkIndicatorColor: cs.primary,
-                selectionColor: cs.primary.withValues(alpha: 0.28),
-                codeTheme: syntaxStyle.codeTheme,
-              ),
-              commentFormatter: _getCommentFormatter(activeTab.filePath),
-              indicatorBuilder: appearance.showLineNumbers
-                  ? (context, editingController, chunkController, notifier) {
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          DefaultCodeLineNumber(
-                            controller: editingController,
-                            notifier: notifier,
-                            textStyle: TextStyle(
-                              color: syntaxStyle.textColor.withValues(alpha: 0.45),
-                              fontFamily: 'JetBrains Mono',
-                              fontFamilyFallback: const ['monospace'],
-                              fontSize: appearance.fontSize,
-                              height: 1.5,
-                            ),
-                            focusedTextStyle: TextStyle(
-                              color: cs.primary,
-                              fontFamily: 'JetBrains Mono',
-                              fontFamilyFallback: const ['monospace'],
-                              fontSize: appearance.fontSize,
-                              fontWeight: FontWeight.w700,
-                              height: 1.5,
-                            ),
-                            customLineIndex2Text: appearance.relativeLineNumbers
-                                ? (lineIndex) {
-                                    final current = editingController.selection.extentIndex;
-                                    return lineIndex == current
-                                        ? '${lineIndex + 1}'
-                                        : '${(lineIndex - current).abs()}';
-                                  }
-                                : null,
-                          ),
-                          DefaultCodeChunkIndicator(
-                            width: 14,
-                            controller: chunkController,
-                            notifier: notifier,
-                            painter: DefaultCodeChunkIndicatorPainter(
-                              color: syntaxStyle.textColor.withValues(alpha: 0.45),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                  : null,
             ),
-            ),
-          ),
         ),
         ),
         ),
