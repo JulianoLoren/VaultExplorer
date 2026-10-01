@@ -13,6 +13,8 @@ struct CarrierTarget {
     std::string path;
     bool readOnly = false;
     bool closeOnDestruct = false;
+    // Original picker order, preserved when carriers are canonically sorted.
+    uint32_t inputIndex = 0;
 };
 
 class CarrierFdCache {

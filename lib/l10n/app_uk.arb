@@ -2579,5 +2579,7 @@
   "resumePlaybackPromptTitle": "Відновити відтворення?",
   "resumePlaybackPromptMessage": "Продовжити з {position}?",
   "resumePlaybackStartOver": "Спочатку",
-  "resumePlaybackResume": "Відновити"
+  "resumePlaybackResume": "Відновити",
+  "compositeArchiveCarrierBlockingWarning": "Щоб продовжити, вилучіть архів із цього набору. Архіви не можна використовувати як носії складеного сховища, оскільки додавання сховища може їх пошкодити.",
+  "compositeArchiveCarrierRowWarning": "Непідтримуваний архів — вилучіть його з набору."
 }

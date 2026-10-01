@@ -12,6 +12,7 @@ enum class CarrierTier : uint8_t {
 
 struct CarrierBudget {
     uint32_t fileIndex = 0;
+    uint32_t inputIndex = 0;
     std::string path;
     std::string detectedFormat; // "png", "isobmff", "ebml", "jpeg", "wav", "flac", "generic"
     uint64_t fileSize = 0;

@@ -2588,7 +2588,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
       child: SafeArea(
         top: false,
         child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       child: Row(
         children: [
           Expanded(

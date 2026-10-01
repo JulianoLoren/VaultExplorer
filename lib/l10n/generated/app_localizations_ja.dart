@@ -8927,4 +8927,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'カスタム';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      '続行するには、この選択からアーカイブを削除してください。複合保管庫を追加すると破損するおそれがあるため、アーカイブを複合保管庫のキャリアとして使用できません。';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'サポートされていないアーカイブです。選択から削除してください。';
 }

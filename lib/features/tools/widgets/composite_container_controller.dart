@@ -2,11 +2,23 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vaultexplorer/core/api/vault_engine_types.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
+import 'package:vaultexplorer/data/services/archive_service.dart';
 import 'package:vaultexplorer/data/services/container_repository.dart';
 import 'package:vaultexplorer/features/dashboard/widgets/container_wizard_shared.dart';
 import 'package:vaultexplorer/l10n/generated/app_localizations.dart';
 
 part 'composite_container_controller.g.dart';
+
+bool isUnsupportedArchiveCarrierName(
+  String displayName, {
+  String? detectedFormat,
+}) {
+  if (detectedFormat == 'composite_carrier') return false;
+  if (detectedFormat == 'archive_unsupported') return true;
+  final dot = displayName.lastIndexOf('.');
+  if (dot < 0 || dot == displayName.length - 1) return false;
+  return ArchiveService.isArchive(displayName.substring(dot + 1));
+}
 
 class CompositeContainerState {
   final bool isCreating; // true = creation tab, false = unlock tab
@@ -25,6 +37,24 @@ class CompositeContainerState {
   final String? error;
   final String? statusMessage;
   final bool remember;
+
+  bool get hasUnsupportedArchiveCarrier {
+    for (var index = 0; index < pickedCarriers.length; index++) {
+      final matchingBudgets = profile?.carriers
+          .where((budget) => budget.inputIndex == index)
+          .toList();
+      final detectedFormat = matchingBudgets == null || matchingBudgets.isEmpty
+          ? null
+          : matchingBudgets.first.detectedFormat;
+      if (isUnsupportedArchiveCarrierName(
+        pickedCarriers[index].displayName,
+        detectedFormat: detectedFormat,
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   const CompositeContainerState({
     this.isCreating = true,
@@ -88,6 +118,8 @@ class CompositeContainerState {
 
 @riverpod
 class CompositeContainer extends _$CompositeContainer {
+  int _carrierProfileRequestId = 0;
+
   @override
   CompositeContainerState build() => const CompositeContainerState();
 
@@ -137,11 +169,7 @@ class CompositeContainer extends _$CompositeContainer {
     if (index < 0 || index >= state.pickedCarriers.length) return;
     final updated = List<KeyfileRef>.from(state.pickedCarriers)..removeAt(index);
     state = state._copy(pickedCarriers: updated);
-    if (updated.isEmpty) {
-      state = state._copy(clearProfile: true);
-    } else {
-      analyzeCarriers();
-    }
+    analyzeCarriers();
   }
 
   Future<void> pickKeyfiles() async {
@@ -166,17 +194,28 @@ class CompositeContainer extends _$CompositeContainer {
   }
 
   Future<void> analyzeCarriers() async {
-    if (state.pickedCarriers.isEmpty) return;
-    state = state._copy(isAnalyzing: true, clearError: true);
+    final requestId = ++_carrierProfileRequestId;
+    final carriers = List<KeyfileRef>.of(state.pickedCarriers);
+    final safetyMarginPct = state.safetyMarginPct;
+    state = state._copy(
+      isAnalyzing: carriers.isNotEmpty,
+      clearProfile: true,
+      clearError: true,
+    );
+    if (carriers.isEmpty) return;
 
     final compositeApi = ref.read(vaultCompositeApiProvider);
     final profile = await compositeApi.profileCarriers(
-      carrierUris: state.pickedCarriers.map((e) => e.uri).toList(),
-      safetyMarginPct: state.safetyMarginPct,
+      carrierUris: carriers.map((e) => e.uri).toList(),
+      safetyMarginPct: safetyMarginPct,
     );
 
-    if (!ref.mounted) return;
-    state = state._copy(profile: profile, isAnalyzing: false);
+    if (!ref.mounted || requestId != _carrierProfileRequestId) return;
+    state = state._copy(
+      profile: profile,
+      clearProfile: profile == null,
+      isAnalyzing: false,
+    );
   }
 
   Future<bool> createContainer({
@@ -184,6 +223,7 @@ class CompositeContainer extends _$CompositeContainer {
     required String confirmPassword,
     AppLocalizations? l10n,
   }) async {
+    if (state.hasUnsupportedArchiveCarrier) return false;
     final profile = state.profile;
     if (profile == null || profile.carriers.isEmpty || profile.totalAllocatableBytes < 300 * 1024) {
       state = state._copy(error: l10n?.compositeSpaceTooSmallError ?? 'Allocatable space is too small (minimum 300 KB required)');
@@ -205,8 +245,10 @@ class CompositeContainer extends _$CompositeContainer {
     );
 
     final carrierUris = state.pickedCarriers.map((e) => e.uri).toList();
-    final payloadOffsets = profile.carriers.map((c) => c.payloadOffset).toList();
-    final extentLengths = profile.carriers.map((c) => c.allocatableBytes).toList();
+    final orderedBudgets = List.of(profile.carriers)
+      ..sort((a, b) => a.fileIndex.compareTo(b.fileIndex));
+    final payloadOffsets = orderedBudgets.map((c) => c.payloadOffset).toList();
+    final extentLengths = orderedBudgets.map((c) => c.allocatableBytes).toList();
 
     final compositeApi = ref.read(vaultCompositeApiProvider);
     final ok = await compositeApi.createCompositeContainer(

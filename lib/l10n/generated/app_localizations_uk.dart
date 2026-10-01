@@ -9491,4 +9491,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'Власний';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'Щоб продовжити, вилучіть архів із цього набору. Архіви не можна використовувати як носії складеного сховища, оскільки додавання сховища може їх пошкодити.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'Непідтримуваний архів — вилучіть його з набору.';
 }

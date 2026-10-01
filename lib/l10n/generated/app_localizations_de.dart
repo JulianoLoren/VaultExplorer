@@ -9422,4 +9422,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'Benutzerdefiniert';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'Entferne das Archiv aus der Auswahl, um fortzufahren. Archive können nicht als Träger für einen zusammengesetzten Tresor verwendet werden, da das Hinzufügen eines Tresors sie beschädigen kann.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'Nicht unterstütztes Archiv – entferne es aus der Auswahl.';
 }

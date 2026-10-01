@@ -9475,4 +9475,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'مخصص';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'أزل الأرشيف من هذا التحديد للمتابعة. لا يمكن استخدام الأرشيفات كملفات حاملة للحاوية المركبة، لأن إضافة خزنة إليها قد تتلفها.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'أرشيف غير مدعوم — أزله من التحديد.';
 }

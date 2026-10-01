@@ -2579,5 +2579,7 @@
   "resumePlaybackPromptTitle": "Riprendere la riproduzione?",
   "resumePlaybackPromptMessage": "Continuare da {position}?",
   "resumePlaybackStartOver": "Ricomincia da capo",
-  "resumePlaybackResume": "Riprendi"
+  "resumePlaybackResume": "Riprendi",
+  "compositeArchiveCarrierBlockingWarning": "Rimuovi l’archivio da questa selezione per continuare. Gli archivi non possono essere usati come supporti per un vault composito perché l’aggiunta di un vault potrebbe danneggiarli.",
+  "compositeArchiveCarrierRowWarning": "Archivio non supportato: rimuovilo dalla selezione."
 }

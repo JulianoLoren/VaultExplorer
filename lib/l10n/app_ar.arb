@@ -2579,5 +2579,7 @@
   "resumePlaybackPromptTitle": "استئناف التشغيل؟",
   "resumePlaybackPromptMessage": "المتابعة من {position}؟",
   "resumePlaybackStartOver": "البدء من جديد",
-  "resumePlaybackResume": "استئناف"
+  "resumePlaybackResume": "استئناف",
+  "compositeArchiveCarrierBlockingWarning": "أزل الأرشيف من هذا التحديد للمتابعة. لا يمكن استخدام الأرشيفات كملفات حاملة للحاوية المركبة، لأن إضافة خزنة إليها قد تتلفها.",
+  "compositeArchiveCarrierRowWarning": "أرشيف غير مدعوم — أزله من التحديد."
 }

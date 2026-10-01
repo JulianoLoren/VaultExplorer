@@ -8924,4 +8924,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => '사용자 지정';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      '계속하려면 선택 항목에서 압축 파일을 제거하세요. 볼트를 추가하면 손상될 수 있으므로 압축 파일을 복합 볼트의 캐리어로 사용할 수 없습니다.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      '지원되지 않는 압축 파일입니다. 선택 항목에서 제거하세요.';
 }

@@ -15630,6 +15630,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Custom'**
   String get fileSkinPresetCustom;
+
+  /// Persistent warning above the carrier list explaining why selected archives block composite vault creation and must be removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the archive from this selection to continue. Archives cannot be used as composite carriers because adding a vault can corrupt them.'**
+  String get compositeArchiveCarrierBlockingWarning;
+
+  /// Short warning shown beside an archive in the composite carrier list.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported archive — remove it from the selection.'**
+  String get compositeArchiveCarrierRowWarning;
 }
 
 class _AppLocalizationsDelegate

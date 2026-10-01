@@ -2579,5 +2579,7 @@
   "resumePlaybackPromptTitle": "¿Reanudar reproducción?",
   "resumePlaybackPromptMessage": "¿Continuar desde {position}?",
   "resumePlaybackStartOver": "Empezar de nuevo",
-  "resumePlaybackResume": "Reanudar"
+  "resumePlaybackResume": "Reanudar",
+  "compositeArchiveCarrierBlockingWarning": "Quita el archivo comprimido de esta selección para continuar. Los archivos comprimidos no se pueden usar como portadores de un almacén compuesto porque añadir un almacén podría dañarlos.",
+  "compositeArchiveCarrierRowWarning": "Archivo comprimido no compatible: quítalo de la selección."
 }

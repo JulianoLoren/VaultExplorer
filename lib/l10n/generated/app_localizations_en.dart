@@ -9280,4 +9280,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'Custom';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'Remove the archive from this selection to continue. Archives cannot be used as composite carriers because adding a vault can corrupt them.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'Unsupported archive — remove it from the selection.';
 }

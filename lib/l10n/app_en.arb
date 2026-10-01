@@ -11818,5 +11818,13 @@
   },
   "@resumePlaybackResume": {
     "description": "Action button to resume playback from the saved position"
+  },
+  "compositeArchiveCarrierBlockingWarning": "Remove the archive from this selection to continue. Archives cannot be used as composite carriers because adding a vault can corrupt them.",
+  "@compositeArchiveCarrierBlockingWarning": {
+    "description": "Persistent warning above the carrier list explaining why selected archives block composite vault creation and must be removed."
+  },
+  "compositeArchiveCarrierRowWarning": "Unsupported archive — remove it from the selection.",
+  "@compositeArchiveCarrierRowWarning": {
+    "description": "Short warning shown beside an archive in the composite carrier list."
   }
 }

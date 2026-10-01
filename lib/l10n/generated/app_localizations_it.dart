@@ -9418,4 +9418,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'Personalizzato';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'Rimuovi l’archivio da questa selezione per continuare. Gli archivi non possono essere usati come supporti per un vault composito perché l’aggiunta di un vault potrebbe danneggiarli.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'Archivio non supportato: rimuovilo dalla selezione.';
 }

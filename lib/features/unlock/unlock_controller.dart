@@ -317,6 +317,7 @@ String _fallbackCarrierName(String uri) {
 /// Placeholder profile for a carrier that couldn't be analyzed at all.
 CarrierBudget _unknownCarrierBudget(String uri) => (
   fileIndex: 0,
+  inputIndex: 0,
   path: uri,
   detectedFormat: 'unknown',
   fileSize: 0,

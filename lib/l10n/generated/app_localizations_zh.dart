@@ -8806,4 +8806,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => '自定义';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      '要继续，请从所选文件中移除压缩包。压缩包不能用作组合保险库的载体，因为添加保险库可能会损坏它。';
+
+  @override
+  String get compositeArchiveCarrierRowWarning => '不支持此压缩包，请将其从所选文件中移除。';
 }

@@ -9422,4 +9422,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'Personalizado';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'Remova o arquivo compactado desta seleção para continuar. Arquivos compactados não podem ser usados como portadores de um cofre composto, pois adicionar um cofre pode danificá-los.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'Arquivo compactado não compatível: remova-o da seleção.';
 }

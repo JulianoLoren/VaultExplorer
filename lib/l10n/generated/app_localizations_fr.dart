@@ -9498,4 +9498,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'Personnalisé';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'Retirez l’archive de cette sélection pour continuer. Les archives ne peuvent pas servir de supports pour un coffre composite, car l’ajout d’un coffre risque de les endommager.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'Archive non prise en charge : retirez-la de la sélection.';
 }

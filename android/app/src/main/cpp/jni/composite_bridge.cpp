@@ -30,6 +30,7 @@ std::vector<CarrierTarget> parseCarrierTargets(
     for (jsize i = 0; i < count; ++i) {
         CarrierTarget t;
         if (fds) t.fd = fds[i];
+        t.inputIndex = static_cast<uint32_t>(i);
         if (carrierPaths) {
             jstring jstr = static_cast<jstring>(env->GetObjectArrayElement(carrierPaths, i));
             if (jstr) {
@@ -103,6 +104,7 @@ Java_com_aeidolon_vaultexplorer_NativeEngine_profileCarriersNative(
         };
 
         putInt("fileIndex", static_cast<int>(b.fileIndex));
+        putInt("inputIndex", static_cast<int>(b.inputIndex));
         putString("path", b.path);
         putString("detectedFormat", b.detectedFormat);
         putLong("fileSize", b.fileSize);

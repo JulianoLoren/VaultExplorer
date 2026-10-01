@@ -50,6 +50,7 @@ enum CarrierTier {
 
 typedef CarrierBudget = ({
   int fileIndex,
+  int inputIndex,
   String path,
   String detectedFormat,
   int fileSize,

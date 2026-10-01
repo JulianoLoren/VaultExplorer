@@ -2579,5 +2579,7 @@
   "resumePlaybackPromptTitle": "再生を再開しますか？",
   "resumePlaybackPromptMessage": "{position} から再開しますか？",
   "resumePlaybackStartOver": "最初から",
-  "resumePlaybackResume": "再開"
+  "resumePlaybackResume": "再開",
+  "compositeArchiveCarrierBlockingWarning": "続行するには、この選択からアーカイブを削除してください。複合保管庫を追加すると破損するおそれがあるため、アーカイブを複合保管庫のキャリアとして使用できません。",
+  "compositeArchiveCarrierRowWarning": "サポートされていないアーカイブです。選択から削除してください。"
 }

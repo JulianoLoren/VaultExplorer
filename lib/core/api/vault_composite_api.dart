@@ -28,6 +28,9 @@ class VaultCompositeApi {
         final m = elem as Map<dynamic, dynamic>;
         return (
           fileIndex: (m['fileIndex'] as num?)?.toInt() ?? 0,
+          inputIndex: (m['inputIndex'] as num?)?.toInt() ??
+              (m['fileIndex'] as num?)?.toInt() ??
+              0,
           path: m['path'] as String? ?? '',
           detectedFormat: m['detectedFormat'] as String? ?? 'generic',
           fileSize: (m['fileSize'] as num?)?.toInt() ?? 0,

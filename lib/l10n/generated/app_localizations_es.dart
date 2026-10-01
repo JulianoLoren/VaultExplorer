@@ -9436,4 +9436,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get fileSkinPresetCustom => 'Personalizado';
+
+  @override
+  String get compositeArchiveCarrierBlockingWarning =>
+      'Quita el archivo comprimido de esta selección para continuar. Los archivos comprimidos no se pueden usar como portadores de un almacén compuesto porque añadir un almacén podría dañarlos.';
+
+  @override
+  String get compositeArchiveCarrierRowWarning =>
+      'Archivo comprimido no compatible: quítalo de la selección.';
 }

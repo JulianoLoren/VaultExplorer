@@ -200,6 +200,7 @@ CapacityProfile CarrierProfiler::profileForAllocation(
         }
 
         CarrierBudget b = inspectSingleCarrier(fd, i, carriers[i].path, true, safetyMarginPct);
+        b.inputIndex = carriers[i].inputIndex;
         if (openedHere && fd >= 0) ::close(fd);
 
         profile.totalAllocatableBytes += b.allocatableBytes;
@@ -223,6 +224,7 @@ CapacityProfile CarrierProfiler::profileForRecovery(
         }
 
         CarrierBudget b = inspectSingleCarrier(fd, i, carriers[i].path, false, 90);
+        b.inputIndex = carriers[i].inputIndex;
         if (openedHere && fd >= 0) ::close(fd);
 
         if (b.alreadyAllocated) {

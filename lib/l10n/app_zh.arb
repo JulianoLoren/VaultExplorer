@@ -2579,5 +2579,7 @@
   "resumePlaybackPromptTitle": "恢复播放？",
   "resumePlaybackPromptMessage": "从 {position} 继续播放？",
   "resumePlaybackStartOver": "从头开始",
-  "resumePlaybackResume": "继续"
+  "resumePlaybackResume": "继续",
+  "compositeArchiveCarrierBlockingWarning": "要继续，请从所选文件中移除压缩包。压缩包不能用作组合保险库的载体，因为添加保险库可能会损坏它。",
+  "compositeArchiveCarrierRowWarning": "不支持此压缩包，请将其从所选文件中移除。"
 }

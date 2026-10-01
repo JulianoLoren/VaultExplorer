@@ -2579,5 +2579,7 @@
   "resumePlaybackPromptTitle": "Wiedergabe fortsetzen?",
   "resumePlaybackPromptMessage": "Bei {position} fortsetzen?",
   "resumePlaybackStartOver": "Von vorne beginnen",
-  "resumePlaybackResume": "Fortsetzen"
+  "resumePlaybackResume": "Fortsetzen",
+  "compositeArchiveCarrierBlockingWarning": "Entferne das Archiv aus der Auswahl, um fortzufahren. Archive können nicht als Träger für einen zusammengesetzten Tresor verwendet werden, da das Hinzufügen eines Tresors sie beschädigen kann.",
+  "compositeArchiveCarrierRowWarning": "Nicht unterstütztes Archiv – entferne es aus der Auswahl."
 }

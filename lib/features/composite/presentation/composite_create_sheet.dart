@@ -139,7 +139,10 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
 
   bool _canProceedFor(_CompositeWizStep step, CompositeContainerState state) =>
       switch (step) {
-        _CompositeWizStep.carriers => state.pickedCarriers.isNotEmpty,
+        _CompositeWizStep.carriers =>
+          state.pickedCarriers.isNotEmpty &&
+              !state.hasUnsupportedArchiveCarrier &&
+              !state.isAnalyzing,
         _CompositeWizStep.security =>
           (_passwordController.text.isNotEmpty || state.keyfiles.isNotEmpty) &&
               (_passwordController.text.isEmpty ||
@@ -280,6 +283,14 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
           tone: AppBannerTone.info,
           icon: Icons.info_outline_rounded,
         ),
+        if (state.hasUnsupportedArchiveCarrier) ...[
+          const SizedBox(height: 10),
+          InlineBanner(
+            l10n.compositeArchiveCarrierBlockingWarning,
+            tone: AppBannerTone.error,
+            icon: Icons.warning_amber_rounded,
+          ),
+        ],
         const SizedBox(height: 14),
         SectionHeader(l10n.compositeCarrierFilesCountHeader(state.pickedCarriers.length)),
         SectionCard(
@@ -342,14 +353,21 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
                     shrinkWrap: true,
                     physics: const ClampingScrollPhysics(),
                     itemCount: state.pickedCarriers.length,
-                    itemExtent: 54,
                     padding: const EdgeInsets.only(right: 6),
                     itemBuilder: (context, index) {
                       final carrier = state.pickedCarriers[index];
-                      final budget = state.profile != null &&
-                              index < state.profile!.carriers.length
-                          ? state.profile!.carriers[index]
-                          : null;
+                      final matchingBudgets = state.profile?.carriers
+                          .where((budget) => budget.inputIndex == index)
+                          .toList();
+                      final budget = matchingBudgets == null ||
+                              matchingBudgets.isEmpty
+                          ? null
+                          : matchingBudgets.first;
+                      final unsupportedArchive =
+                          isUnsupportedArchiveCarrierName(
+                            carrier.displayName,
+                            detectedFormat: budget?.detectedFormat,
+                          );
 
                       Widget leadingWidget;
                       if (budget == null || state.isAnalyzing) {
@@ -387,6 +405,7 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
                       }
 
                       return ListTile(
+                        key: ValueKey(carrier.uri),
                         dense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14),
                         leading: leadingWidget,
@@ -400,14 +419,18 @@ class _CompositeCreateSheetState extends ConsumerState<CompositeCreateSheet> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
-                          budget != null
-                              ? l10n.compositeCarrierAllocatableSubtitle(
-                                  budget.detectedFormat.toUpperCase(),
-                                  formatBytes(budget.allocatableBytes),
-                                )
-                              : l10n.compositeCarrierAnalyzingStatus,
+                          unsupportedArchive
+                              ? l10n.compositeArchiveCarrierRowWarning
+                              : budget != null
+                                  ? l10n.compositeCarrierAllocatableSubtitle(
+                                      budget.detectedFormat.toUpperCase(),
+                                      formatBytes(budget.allocatableBytes),
+                                    )
+                                  : l10n.compositeCarrierAnalyzingStatus,
                           style: textTheme.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant,
+                            color: unsupportedArchive
+                                ? cs.error
+                                : cs.onSurfaceVariant,
                           ),
                         ),
                         trailing: IconButton(
