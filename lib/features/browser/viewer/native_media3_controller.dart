@@ -137,14 +137,6 @@ class NativeMedia3Controller extends ValueNotifier<NativeVideoValue> {
   static const EventChannel _eventChannel =
       EventChannel('com.aeidolon.vaultexplorer/player_events');
 
-  /// Requests the Android window to run at the display's maximum available
-  /// refresh rate (e.g. 120Hz/90Hz) rather than throttling down during video playback.
-  static Future<void> enableHighRefreshRate() async {
-    try {
-      await _cmdChannel.invokeMethod('enableHighRefreshRate');
-    } catch (_) {}
-  }
-
   final int volId;
   final String filePath;
   final bool autoPlay;

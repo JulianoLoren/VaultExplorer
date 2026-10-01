@@ -420,7 +420,6 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _loadConfig();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      unawaited(NativeVideoController.enableHighRefreshRate());
       unawaited(_activateCurrentMedia());
       _startSlideshowTimerIfNeeded();
       await PlaybackThrottleController.initGate;
@@ -1487,7 +1486,6 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     if (mounted) {
       _sessionController.setShowUI(show);
       if (show) {
-        unawaited(NativeVideoController.enableHighRefreshRate());
         SystemChrome.setEnabledSystemUIMode(
           SystemUiMode.manual,
           overlays: SystemUiOverlay.values,
