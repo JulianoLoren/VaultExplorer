@@ -1,0 +1,5 @@
+• Fixed screen scaling glitch caused by high refresh rate mode
+• Added option to save and resume video playback
+• Excluded archive types from composite container creation
+• Added missing localization strings
+• Minor UI tweaks and refinements
