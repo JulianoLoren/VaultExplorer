@@ -399,12 +399,7 @@ open class MainActivity : FlutterFragmentActivity() {
             if (highestMatchingMode.refreshRate <= 60f) return
 
             val params = window.attributes
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                params.preferredMinDisplayRefreshRate = highestMatchingMode.refreshRate
-                params.preferredMaxDisplayRefreshRate = highestMatchingMode.refreshRate
-            } else {
-                params.preferredRefreshRate = highestMatchingMode.refreshRate
-            }
+            params.preferredRefreshRate = highestMatchingMode.refreshRate
             window.attributes = params
         } catch (e: Exception) {
             VeLog.w("MainActivity", e) { "Failed to enable high refresh rate" }
