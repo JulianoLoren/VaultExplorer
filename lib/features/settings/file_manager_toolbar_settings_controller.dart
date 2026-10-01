@@ -7,6 +7,7 @@ import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/data/models/file_manager_toolbar_config.dart';
 import 'package:vaultexplorer/data/models/long_file_name_display_mode.dart';
 import 'package:vaultexplorer/data/models/media_viewer_action.dart';
+import 'package:vaultexplorer/data/models/resume_playback_mode.dart';
 import 'package:vaultexplorer/data/models/media_viewer_toolbar_config.dart';
 import 'package:vaultexplorer/data/models/playlist_transition_effect.dart';
 import 'package:vaultexplorer/data/models/scrub_preview_style.dart';
@@ -34,12 +35,11 @@ class FileManagerToolbarSettingsState {
     ContainerRecord? record,
     bool setRecord = false,
     bool? loading,
-  }) =>
-      FileManagerToolbarSettingsState(
-        config: config ?? this.config,
-        record: setRecord ? record : (record ?? this.record),
-        loading: loading ?? this.loading,
-      );
+  }) => FileManagerToolbarSettingsState(
+    config: config ?? this.config,
+    record: setRecord ? record : (record ?? this.record),
+    loading: loading ?? this.loading,
+  );
 }
 
 @riverpod
@@ -82,8 +82,9 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
   }
 
   Future<void> _updateConfig(FileManagerToolbarConfig newConfig) async {
-    final currentServiceConfig =
-        await ref.read(fileManagerToolbarServiceProvider).load();
+    final currentServiceConfig = await ref
+        .read(fileManagerToolbarServiceProvider)
+        .load();
     final preservedConfig = newConfig.copyWith(
       listZoomLevel: currentServiceConfig.listZoomLevel,
       gridColumnsPortrait: currentServiceConfig.gridColumnsPortrait,
@@ -173,7 +174,10 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
     await _updateConfig(newConfig);
   }
 
-  Future<void> toggleActionVisible(FileManagerAction action, bool visible) async {
+  Future<void> toggleActionVisible(
+    FileManagerAction action,
+    bool visible,
+  ) async {
     final hidden = Set<FileManagerAction>.from(state.config.hidden);
     if (visible) {
       hidden.remove(action);
@@ -192,7 +196,10 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
     await _updateConfig(newConfig);
   }
 
-  Future<void> toggleDetailColumnVisible(FileDetailColumn col, bool visible) async {
+  Future<void> toggleDetailColumnVisible(
+    FileDetailColumn col,
+    bool visible,
+  ) async {
     final hidden = Set<FileDetailColumn>.from(state.config.hiddenDetailColumns);
     if (visible) {
       hidden.remove(col);
@@ -338,9 +345,7 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
     return updateMediaViewerConfig(updated);
   }
 
-  Future<void> setMediaViewerDefaultAspectRatioMode(
-    VideoAspectRatioMode mode,
-  ) {
+  Future<void> setMediaViewerDefaultAspectRatioMode(VideoAspectRatioMode mode) {
     final updated = state.config.mediaViewerToolbarConfig.copyWith(
       defaultAspectRatioMode: mode,
     );
@@ -357,6 +362,13 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
   Future<void> setMediaViewerSwipeToSeekEnabled(bool enabled) {
     final updated = state.config.mediaViewerToolbarConfig.copyWith(
       swipeToSeekEnabled: enabled,
+    );
+    return updateMediaViewerConfig(updated);
+  }
+
+  Future<void> setMediaViewerResumePlaybackMode(ResumePlaybackMode mode) {
+    final updated = state.config.mediaViewerToolbarConfig.copyWith(
+      resumePlaybackMode: mode,
     );
     return updateMediaViewerConfig(updated);
   }

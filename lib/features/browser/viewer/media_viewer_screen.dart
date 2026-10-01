@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:path/path.dart' as p;
@@ -14,6 +15,7 @@ import 'package:vaultexplorer/core/services/playback_throttle_controller.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
 import 'package:vaultexplorer/core/utils/retry.dart';
 import 'package:vaultexplorer/core/utils/ve_log.dart';
+import 'package:vaultexplorer/core/utils/format_utils.dart';
 import 'package:vaultexplorer/core/widgets/thumbnail/async_thumbnail.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
@@ -23,7 +25,9 @@ import 'package:vaultexplorer/data/models/scrub_preview_style.dart';
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
 import 'package:vaultexplorer/data/models/thumbnail_quality.dart';
 import 'package:vaultexplorer/data/models/video_aspect_ratio_mode.dart';
+import 'package:vaultexplorer/data/models/resume_playback_mode.dart';
 import 'package:vaultexplorer/data/services/app_settings_service.dart';
+import 'package:vaultexplorer/data/services/app_secure_storage.dart';
 import 'package:vaultexplorer/data/services/container_repository.dart';
 import 'package:vaultexplorer/data/services/file_manager_toolbar_service.dart';
 import 'package:vaultexplorer/data/services/full_res_image_cache.dart';
@@ -163,7 +167,139 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   NativeVideoController? _lastListenedController;
   bool _wakelockEnabled = false;
   int _transitionToken = 0;
+  int _resumeFlowToken = 0;
+  bool _resumeFlowStarted = false;
+  final Map<String, String> _resumePositionKeys = {};
+  final Map<String, Duration> _lastSavedPlaybackPositions = {};
   int _screenOrientationModeIndex = 2;
+
+  Future<String> _resumePositionKey(String fileName) async {
+    final cached = _resumePositionKeys[fileName];
+    if (cached != null) return cached;
+    final identity = '${widget.container.uri}\u001f$fileName';
+    final digest = await ref
+        .read(vaultHashApiProvider)
+        .hashBytesSha256(Uint8List.fromList(utf8.encode(identity)));
+    if (digest.isEmpty) throw StateError('Could not derive playback key');
+    final key = 'media_resume_$digest';
+    _resumePositionKeys[fileName] = key;
+    return key;
+  }
+
+  Future<Duration?> _readResumePosition(String fileName) async {
+    try {
+      final key = await _resumePositionKey(fileName);
+      final raw = await AppSecureStorage.instance.read(key: key);
+      final milliseconds = int.tryParse(raw ?? '');
+      return milliseconds == null || milliseconds <= 0
+          ? null
+          : Duration(milliseconds: milliseconds);
+    } catch (e) {
+      VeLog.w('MediaViewer', 'Could not read saved playback position', e);
+      return null;
+    }
+  }
+
+  Future<void> _savePlaybackPosition(
+    String fileName,
+    Duration position, {
+    Duration? duration,
+  }) async {
+    if (widget.isArchivePreview) return;
+    try {
+      final key = await _resumePositionKey(fileName);
+      if (position <= const Duration(seconds: 3) ||
+          (duration != null &&
+              duration > Duration.zero &&
+              position >= duration - const Duration(seconds: 3))) {
+        await AppSecureStorage.instance.delete(key: key);
+        _lastSavedPlaybackPositions.remove(fileName);
+      } else {
+        await AppSecureStorage.instance.write(
+          key: key,
+          value: position.inMilliseconds.toString(),
+        );
+        _lastSavedPlaybackPositions[fileName] = position;
+      }
+    } catch (e) {
+      VeLog.w('MediaViewer', 'Could not save playback position', e);
+    }
+  }
+
+  Future<void> _saveActivePlaybackPosition() async {
+    final fileName = _playbackManager.currentFileName;
+    final value = _playbackManager.activeController?.value;
+    if (fileName == null || value == null || !value.isInitialized) return;
+    await _savePlaybackPosition(
+      fileName,
+      value.position,
+      duration: value.duration,
+    );
+  }
+
+  Future<void> _resolveInitialPlayback(
+    NativeVideoController controller,
+    String fileName,
+    int flowToken,
+  ) async {
+    if (_resumeFlowStarted || !controller.value.isInitialized) return;
+    _resumeFlowStarted = true;
+    final config = await ref.read(fileManagerToolbarServiceProvider).load();
+    final mode = config.mediaViewerToolbarConfig.resumePlaybackMode;
+    final savedPosition = widget.isArchivePreview
+        ? null
+        : await _readResumePosition(fileName);
+    if (!mounted ||
+        flowToken != _resumeFlowToken ||
+        controller != _playbackManager.activeController) {
+      return;
+    }
+
+    final duration = controller.value.duration;
+    final canResume =
+        savedPosition != null &&
+        savedPosition >= const Duration(seconds: 5) &&
+        duration > Duration.zero &&
+        savedPosition < duration - const Duration(seconds: 5);
+    var shouldResume = canResume && mode == ResumePlaybackMode.always;
+    if (canResume && mode == ResumePlaybackMode.askEveryTime) {
+      final answer = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(context.l10n.resumePlaybackPromptTitle),
+          content: Text(
+            context.l10n.resumePlaybackPromptMessage(
+              formatClockDuration(savedPosition),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(context.l10n.resumePlaybackStartOver),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(context.l10n.resumePlaybackResume),
+            ),
+          ],
+        ),
+      );
+      shouldResume = answer == true;
+    }
+    if (!mounted ||
+        flowToken != _resumeFlowToken ||
+        controller != _playbackManager.activeController) {
+      return;
+    }
+    if (shouldResume && savedPosition != null) {
+      try {
+        await controller.seekTo(savedPosition);
+      } catch (e) {
+        VeLog.w('MediaViewer', 'Could not resume playback position', e);
+      }
+    }
+    await controller.play();
+  }
 
   String get _sessionKey => widget.container.uri;
 
@@ -295,6 +431,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   int _activateToken = 0;
   Future<void> _activateCurrentMedia() async {
     if (_playlistController.isEmpty) return;
+    await _saveActivePlaybackPosition();
     final file = _playlistController.currentFile;
     try {
       widget.onCurrentFileChanged?.call(file);
@@ -325,7 +462,9 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
               ? p.join(widget.container.uri, file)
               : file,
           isLocalStorage: widget.container.isLocalStorage,
-          autoPlay: _autoPlay,
+          // Wait until the position preference and any resume prompt have
+          // been handled before starting audio/video output.
+          autoPlay: false,
           playbackSpeed: _playbackSpeed,
           looping: _videoPlaybackMode == VideoPlaybackMode.loop,
         ),
@@ -588,6 +727,8 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
 
   void _onCurrentMediaFileChanged() {
     _videoProgressNotifier.value = const VideoPlaybackProgress();
+    _resumeFlowToken++;
+    _resumeFlowStarted = false;
   }
 
   void _onControllerTickUpdate() {
@@ -601,6 +742,19 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     final duration = controller.value.duration;
 
     if (!isInitialized || duration <= Duration.zero) return;
+
+    final fileName = _playbackManager.currentFileName;
+    if (fileName != null) {
+      final lastSaved = _lastSavedPlaybackPositions[fileName] ?? Duration.zero;
+      if (position.inSeconds - lastSaved.inSeconds >= 5) {
+        unawaited(
+          _savePlaybackPosition(fileName, position, duration: duration),
+        );
+      }
+      unawaited(
+        _resolveInitialPlayback(controller, fileName, _resumeFlowToken),
+      );
+    }
 
     if (_videoPlaybackMode == VideoPlaybackMode.loop) {
       if (controller.value.isPlaying && position >= duration) {
@@ -1879,6 +2033,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
 
   @override
   void dispose() {
+    unawaited(_saveActivePlaybackPosition());
     PlaybackThrottleController.setActive(false);
     _engineEvents.removeUsbContainerDetachedListener(_onContainerDetached);
     _playlistController.removeListener(_onPlaylistUpdate);

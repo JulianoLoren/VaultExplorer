@@ -8,6 +8,7 @@ import 'package:vaultexplorer/core/widgets/inputs/option_picker_tile.dart';
 import 'package:vaultexplorer/data/models/media_viewer_action.dart';
 import 'package:vaultexplorer/data/models/scrub_preview_style.dart';
 import 'package:vaultexplorer/data/models/video_aspect_ratio_mode.dart';
+import 'package:vaultexplorer/data/models/resume_playback_mode.dart';
 import 'package:vaultexplorer/features/browser/viewer/media_viewer_constants.dart';
 import 'package:vaultexplorer/features/settings/file_manager_toolbar_settings_controller.dart';
 
@@ -22,8 +23,9 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
   }) {
     final state = ref.read(fileManagerToolbarSettingsProvider(null));
     final mediaConfig = state.config.mediaViewerToolbarConfig;
-    final controller =
-        ref.read(fileManagerToolbarSettingsProvider(null).notifier);
+    final controller = ref.read(
+      fileManagerToolbarSettingsProvider(null).notifier,
+    );
 
     // Standard Flutter ReorderableListView index offset adjustment
     if (oldIndex < newIndex) {
@@ -33,8 +35,9 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
     final top = List<MediaViewerAction>.from(mediaConfig.topBarActions);
     final bottom = List<MediaViewerAction>.from(mediaConfig.bottomBarActions);
     final more = List<MediaViewerAction>.from(mediaConfig.moreMenuActions);
-    final advanced =
-        List<MediaViewerAction>.from(mediaConfig.advancedSettingsActions);
+    final advanced = List<MediaViewerAction>.from(
+      mediaConfig.advancedSettingsActions,
+    );
 
     switch (sectionName) {
       case 'top':
@@ -75,14 +78,16 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
 
     final state = ref.read(fileManagerToolbarSettingsProvider(null));
     final mediaConfig = state.config.mediaViewerToolbarConfig;
-    final controller =
-        ref.read(fileManagerToolbarSettingsProvider(null).notifier);
+    final controller = ref.read(
+      fileManagerToolbarSettingsProvider(null).notifier,
+    );
 
     final top = List<MediaViewerAction>.from(mediaConfig.topBarActions);
     final bottom = List<MediaViewerAction>.from(mediaConfig.bottomBarActions);
     final more = List<MediaViewerAction>.from(mediaConfig.moreMenuActions);
-    final advanced =
-        List<MediaViewerAction>.from(mediaConfig.advancedSettingsActions);
+    final advanced = List<MediaViewerAction>.from(
+      mediaConfig.advancedSettingsActions,
+    );
 
     // 1. Remove from source list
     switch (fromSection) {
@@ -132,8 +137,9 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final mediaConfig = state.config.mediaViewerToolbarConfig;
-    final controller =
-        ref.read(fileManagerToolbarSettingsProvider(null).notifier);
+    final controller = ref.read(
+      fileManagerToolbarSettingsProvider(null).notifier,
+    );
 
     final l10n = context.l10n;
 
@@ -175,19 +181,22 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                   SectionCard(
                     children: [
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.showProgressBar,
                         onChanged: controller.setMediaViewerShowProgressBar,
                         title: Text(
                           l10n.showProgressBarTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.showProgressBarSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         secondary: Icon(
                           Icons.linear_scale_rounded,
@@ -210,9 +219,29 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                         }).toList(),
                         onChanged: controller.setMediaViewerScrubPreviewStyle,
                       ),
+                      OptionPickerTile<ResumePlaybackMode>(
+                        label: l10n.resumePlaybackTitle,
+                        value: mediaConfig.resumePlaybackMode,
+                        prefixIcon: Icons.history_rounded,
+                        options: ResumePlaybackMode.values.map((mode) {
+                          return SelectOption(
+                            value: mode,
+                            label: switch (mode) {
+                              ResumePlaybackMode.askEveryTime =>
+                                l10n.resumePlaybackAskEveryTime,
+                              ResumePlaybackMode.never =>
+                                l10n.resumePlaybackNever,
+                              ResumePlaybackMode.always =>
+                                l10n.resumePlaybackAlways,
+                            },
+                          );
+                        }).toList(),
+                        onChanged: controller.setMediaViewerResumePlaybackMode,
+                      ),
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.showCenterTransportForImages,
                         onChanged: (val) {
                           controller.updateMediaViewerConfig(
@@ -223,13 +252,15 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                         },
                         title: Text(
                           l10n.showTransportControlsOnPhotosTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.showTransportControlsOnPhotosSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         secondary: Icon(
                           Icons.slideshow_rounded,
@@ -237,22 +268,27 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.showStatusBadge,
                         onChanged: controller.setMediaViewerShowStatusBadge,
                         title: Text(
                           l10n.statusBadgeTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.statusBadgeSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
-                        secondary:
-                            Icon(Icons.badge_outlined, color: cs.primary),
+                        secondary: Icon(
+                          Icons.badge_outlined,
+                          color: cs.primary,
+                        ),
                       ),
                     ],
                   ),
@@ -265,78 +301,90 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                   SectionCard(
                     children: [
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.swipeToSeekEnabled,
-                        onChanged:
-                            controller.setMediaViewerSwipeToSeekEnabled,
+                        onChanged: controller.setMediaViewerSwipeToSeekEnabled,
                         title: Text(
                           l10n.swipeToSeekTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.swipeToSeekSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
-                        secondary: Icon(
-                          Icons.swipe_rounded,
-                          color: cs.primary,
-                        ),
+                        secondary: Icon(Icons.swipe_rounded, color: cs.primary),
                       ),
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.edgeSwipeBrightnessEnabled,
                         onChanged:
                             controller.setMediaViewerEdgeSwipeBrightnessEnabled,
                         title: Text(
                           l10n.edgeSwipeBrightnessTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.edgeSwipeBrightnessSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
-                        secondary:
-                            Icon(Icons.wb_sunny_rounded, color: cs.primary),
+                        secondary: Icon(
+                          Icons.wb_sunny_rounded,
+                          color: cs.primary,
+                        ),
                       ),
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.edgeSwipeVolumeEnabled,
                         onChanged:
                             controller.setMediaViewerEdgeSwipeVolumeEnabled,
                         title: Text(
                           l10n.edgeSwipeVolumeTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.edgeSwipeVolumeSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
-                        secondary:
-                            Icon(Icons.volume_up_rounded, color: cs.primary),
+                        secondary: Icon(
+                          Icons.volume_up_rounded,
+                          color: cs.primary,
+                        ),
                       ),
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.edgeSwipeHudEnabled,
                         onChanged: controller.setMediaViewerEdgeSwipeHudEnabled,
                         title: Text(
                           l10n.edgeSwipeHudTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.edgeSwipeHudSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         secondary: Icon(
                           Icons.picture_in_picture_alt_rounded,
@@ -344,14 +392,18 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       ListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
-                        leading:
-                            Icon(Icons.swipe_vertical_rounded, color: cs.primary),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        leading: Icon(
+                          Icons.swipe_vertical_rounded,
+                          color: cs.primary,
+                        ),
                         title: Text(
                           l10n.edgeSwipeWidthTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: _SettingsSlider(
                           value: mediaConfig.edgeSwipeWidthFraction,
@@ -365,19 +417,22 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                       ),
 
                       SwitchListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.pinchZoomOutEnabled,
                         onChanged: controller.setMediaViewerPinchZoomOutEnabled,
                         title: Text(
                           l10n.pinchZoomOutTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Text(
                           l10n.pinchZoomOutSubtitle,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         secondary: Icon(
                           Icons.zoom_out_map_rounded,
@@ -386,16 +441,18 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                       ),
                       if (mediaConfig.pinchZoomOutEnabled)
                         ListTile(
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 16),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
                           leading: Icon(
                             Icons.photo_size_select_small_rounded,
                             color: cs.primary,
                           ),
                           title: Text(
                             l10n.minZoomTitle,
-                            style: textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           subtitle: _SettingsSlider(
                             value: mediaConfig.minVideoZoomScale,
@@ -407,10 +464,11 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                                 controller.setMediaViewerMinVideoZoomScale,
                           ),
                         ),
-                     
-                     ListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
+
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         leading: Icon(
                           mediaConfig.holdToSpeedMultiplier < 1.0
                               ? Icons.slow_motion_video_rounded
@@ -419,16 +477,18 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                         ),
                         title: Text(
                           l10n.holdSpeedMultiplierTitle,
-                          style: textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               l10n.holdSpeedMultiplierSubtitle,
-                              style: textTheme.bodySmall
-                                  ?.copyWith(color: cs.onSurfaceVariant),
+                              style: textTheme.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                             _SettingsSlider(
                               value: mediaConfig.holdToSpeedMultiplier,
@@ -437,13 +497,13 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                               divisions: 15,
                               labelBuilder: (v) =>
                                   '${v.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')}x',
-                              onChangeEnd:
-                                  controller.setMediaViewerHoldToSpeedMultiplier,
+                              onChangeEnd: controller
+                                  .setMediaViewerHoldToSpeedMultiplier,
                             ),
                           ],
                         ),
                       ),
-                      
+
                       OptionPickerTile<VideoAspectRatioMode>(
                         label: l10n.defaultAspectRatioTitle,
                         value: mediaConfig.defaultAspectRatioMode,
@@ -652,8 +712,9 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color:
-                            cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                        color: cs.surfaceContainerHighest.withValues(
+                          alpha: 0.5,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -749,11 +810,7 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
             value: 'more',
             child: Row(
               children: [
-                Icon(
-                  Icons.more_horiz_rounded,
-                  size: 18,
-                  color: cs.primary,
-                ),
+                Icon(Icons.more_horiz_rounded, size: 18, color: cs.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -770,11 +827,7 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
             value: 'advanced',
             child: Row(
               children: [
-                Icon(
-                  Icons.tune_rounded,
-                  size: 18,
-                  color: cs.primary,
-                ),
+                Icon(Icons.tune_rounded, size: 18, color: cs.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -850,10 +903,9 @@ class _SettingsSliderState extends State<_SettingsSlider> {
           child: Text(
             widget.labelBuilder(clamped),
             textAlign: TextAlign.end,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
       ],
