@@ -1,0 +1,4 @@
+• Persist media player loop/repeat settings across sessions
+• Fixed PIM shown in plain text in composite vault creation summary
+• Fixed localization issues in the video editor
+• Adjusted gesture sensitivity for seeking in the video player
