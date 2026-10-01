@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "Рамки",
   "fileSkinPresetVivid": "Яскравий",
   "fileSkinPresetTerminal": "Термінал",
-  "fileSkinPresetCustom": "Власний"
+  "fileSkinPresetCustom": "Власний",
+  "resumePlaybackTitle": "Відновити відтворення",
+  "resumePlaybackAskEveryTime": "Запитувати щоразу",
+  "resumePlaybackNever": "Ніколи",
+  "resumePlaybackAlways": "Завжди",
+  "resumePlaybackPromptTitle": "Відновити відтворення?",
+  "resumePlaybackPromptMessage": "Продовжити з {position}?",
+  "resumePlaybackStartOver": "Спочатку",
+  "resumePlaybackResume": "Відновити"
 }

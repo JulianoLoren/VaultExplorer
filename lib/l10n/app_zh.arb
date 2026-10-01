@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "边框",
   "fileSkinPresetVivid": "鲜艳",
   "fileSkinPresetTerminal": "终端",
-  "fileSkinPresetCustom": "自定义"
+  "fileSkinPresetCustom": "自定义",
+  "resumePlaybackTitle": "恢复播放",
+  "resumePlaybackAskEveryTime": "每次询问",
+  "resumePlaybackNever": "从不",
+  "resumePlaybackAlways": "总是",
+  "resumePlaybackPromptTitle": "恢复播放？",
+  "resumePlaybackPromptMessage": "从 {position} 继续播放？",
+  "resumePlaybackStartOver": "从头开始",
+  "resumePlaybackResume": "继续"
 }

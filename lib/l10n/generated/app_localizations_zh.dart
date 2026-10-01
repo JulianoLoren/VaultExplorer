@@ -7376,6 +7376,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mediaPlayerControlsTitle => '媒体播放器控制';
 
   @override
+  String get resumePlaybackTitle => '恢复播放';
+
+  @override
+  String get resumePlaybackAskEveryTime => '每次询问';
+
+  @override
+  String get resumePlaybackNever => '从不';
+
+  @override
+  String get resumePlaybackAlways => '总是';
+
+  @override
+  String get resumePlaybackPromptTitle => '恢复播放？';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return '从 $position 继续播放？';
+  }
+
+  @override
+  String get resumePlaybackStartOver => '从头开始';
+
+  @override
+  String get resumePlaybackResume => '继续';
+
+  @override
   String get mediaControlsResetSuccess => '媒体控制已重置为默认设置';
 
   @override

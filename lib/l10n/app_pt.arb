@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "Molduras",
   "fileSkinPresetVivid": "Vívido",
   "fileSkinPresetTerminal": "Terminal",
-  "fileSkinPresetCustom": "Personalizado"
+  "fileSkinPresetCustom": "Personalizado",
+  "resumePlaybackTitle": "Retomar reprodução",
+  "resumePlaybackAskEveryTime": "Perguntar sempre",
+  "resumePlaybackNever": "Nunca",
+  "resumePlaybackAlways": "Sempre",
+  "resumePlaybackPromptTitle": "Retomar reprodução?",
+  "resumePlaybackPromptMessage": "Continuar de {position}?",
+  "resumePlaybackStartOver": "Começar do início",
+  "resumePlaybackResume": "Retomar"
 }

@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "Cornici",
   "fileSkinPresetVivid": "Vivace",
   "fileSkinPresetTerminal": "Terminale",
-  "fileSkinPresetCustom": "Personalizzato"
+  "fileSkinPresetCustom": "Personalizzato",
+  "resumePlaybackTitle": "Riprendi riproduzione",
+  "resumePlaybackAskEveryTime": "Chiedi ogni volta",
+  "resumePlaybackNever": "Mai",
+  "resumePlaybackAlways": "Sempre",
+  "resumePlaybackPromptTitle": "Riprendere la riproduzione?",
+  "resumePlaybackPromptMessage": "Continuare da {position}?",
+  "resumePlaybackStartOver": "Ricomincia da capo",
+  "resumePlaybackResume": "Riprendi"
 }

@@ -7962,6 +7962,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mediaPlayerControlsTitle => 'Commandes du lecteur multimédia';
 
   @override
+  String get resumePlaybackTitle => 'Reprendre la lecture';
+
+  @override
+  String get resumePlaybackAskEveryTime => 'Toujours demander';
+
+  @override
+  String get resumePlaybackNever => 'Jamais';
+
+  @override
+  String get resumePlaybackAlways => 'Toujours';
+
+  @override
+  String get resumePlaybackPromptTitle => 'Reprendre la lecture ?';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return 'Reprendre à $position ?';
+  }
+
+  @override
+  String get resumePlaybackStartOver => 'Recommencer';
+
+  @override
+  String get resumePlaybackResume => 'Reprendre';
+
+  @override
   String get mediaControlsResetSuccess =>
       'Commandes multimédias réinitialisées par défaut';
 

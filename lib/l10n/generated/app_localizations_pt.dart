@@ -7904,6 +7904,32 @@ class AppLocalizationsPt extends AppLocalizations {
   String get mediaPlayerControlsTitle => 'Controles do reprodutor multimídia';
 
   @override
+  String get resumePlaybackTitle => 'Retomar reprodução';
+
+  @override
+  String get resumePlaybackAskEveryTime => 'Perguntar sempre';
+
+  @override
+  String get resumePlaybackNever => 'Nunca';
+
+  @override
+  String get resumePlaybackAlways => 'Sempre';
+
+  @override
+  String get resumePlaybackPromptTitle => 'Retomar reprodução?';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return 'Continuar de $position?';
+  }
+
+  @override
+  String get resumePlaybackStartOver => 'Começar do início';
+
+  @override
+  String get resumePlaybackResume => 'Retomar';
+
+  @override
   String get mediaControlsResetSuccess =>
       'Controles multimídia redefinidos para os padrões';
 

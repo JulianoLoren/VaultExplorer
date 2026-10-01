@@ -9956,6 +9956,14 @@
     "description": "Message when all actions are used"
   },
   "mediaPlayerControlsTitle": "Media Player Controls",
+  "resumePlaybackTitle": "Resume playback",
+  "resumePlaybackAskEveryTime": "Ask every time",
+  "resumePlaybackNever": "Never",
+  "resumePlaybackAlways": "Always",
+  "resumePlaybackPromptTitle": "Resume playback?",
+  "resumePlaybackPromptMessage": "Continue from {position}?",
+  "resumePlaybackStartOver": "Start over",
+  "resumePlaybackResume": "Resume",
   "@mediaPlayerControlsTitle": {
     "description": "Title for media player toolbar customization screen"
   },
@@ -11780,5 +11788,35 @@
   "fileSkinPresetCustom": "Custom",
   "@fileSkinPresetCustom": {
     "description": "Label shown when the skin is a custom mix that matches no built-in skin"
+  },
+  "@resumePlaybackTitle": {
+    "description": "Title for the resume playback settings section"
+  },
+  "@resumePlaybackAskEveryTime": {
+    "description": "Option to prompt the user every time whether to resume playback"
+  },
+  "@resumePlaybackNever": {
+    "description": "Option to never resume playback (always start from the beginning)"
+  },
+  "@resumePlaybackAlways": {
+    "description": "Option to always resume playback automatically"
+  },
+  "@resumePlaybackPromptTitle": {
+    "description": "Title of the confirmation dialog asking if playback should resume"
+  },
+  "@resumePlaybackPromptMessage": {
+    "description": "Prompt asking user to continue playback from a specific timestamp",
+    "placeholders": {
+      "position": {
+        "type": "String",
+        "example": "01:23"
+      }
+    }
+  },
+  "@resumePlaybackStartOver": {
+    "description": "Action button to start playback from the beginning"
+  },
+  "@resumePlaybackResume": {
+    "description": "Action button to resume playback from the saved position"
   }
 }

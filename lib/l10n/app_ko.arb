@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "프레임",
   "fileSkinPresetVivid": "선명한",
   "fileSkinPresetTerminal": "터미널",
-  "fileSkinPresetCustom": "사용자 지정"
+  "fileSkinPresetCustom": "사용자 지정",
+  "resumePlaybackTitle": "재생 이어보기",
+  "resumePlaybackAskEveryTime": "매번 묻기",
+  "resumePlaybackNever": "안 함",
+  "resumePlaybackAlways": "항상",
+  "resumePlaybackPromptTitle": "이어서 재생하시겠습니까?",
+  "resumePlaybackPromptMessage": "{position}부터 계속하시겠습니까?",
+  "resumePlaybackStartOver": "처음부터",
+  "resumePlaybackResume": "이어보기"
 }

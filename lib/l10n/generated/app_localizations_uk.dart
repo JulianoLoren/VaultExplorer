@@ -7957,6 +7957,32 @@ class AppLocalizationsUk extends AppLocalizations {
   String get mediaPlayerControlsTitle => 'Керування плеєром';
 
   @override
+  String get resumePlaybackTitle => 'Відновити відтворення';
+
+  @override
+  String get resumePlaybackAskEveryTime => 'Запитувати щоразу';
+
+  @override
+  String get resumePlaybackNever => 'Ніколи';
+
+  @override
+  String get resumePlaybackAlways => 'Завжди';
+
+  @override
+  String get resumePlaybackPromptTitle => 'Відновити відтворення?';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return 'Продовжити з $position?';
+  }
+
+  @override
+  String get resumePlaybackStartOver => 'Спочатку';
+
+  @override
+  String get resumePlaybackResume => 'Відновити';
+
+  @override
   String get mediaControlsResetSuccess =>
       'Елементи керування мультимедіа скинуто до стандартних';
 

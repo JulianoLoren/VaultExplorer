@@ -7964,6 +7964,32 @@ class AppLocalizationsAr extends AppLocalizations {
   String get mediaPlayerControlsTitle => 'عناصر تحكم مشغل الوسائط';
 
   @override
+  String get resumePlaybackTitle => 'استئناف التشغيل';
+
+  @override
+  String get resumePlaybackAskEveryTime => 'السؤال في كل مرة';
+
+  @override
+  String get resumePlaybackNever => 'أبدًا';
+
+  @override
+  String get resumePlaybackAlways => 'دائمًا';
+
+  @override
+  String get resumePlaybackPromptTitle => 'استئناف التشغيل؟';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return 'المتابعة من $position؟';
+  }
+
+  @override
+  String get resumePlaybackStartOver => 'البدء من جديد';
+
+  @override
+  String get resumePlaybackResume => 'استئناف';
+
+  @override
   String get mediaControlsResetSuccess =>
       'تمت إعادة ضبط عناصر تحكم الوسائط إلى الإعدادات الافتراضية';
 

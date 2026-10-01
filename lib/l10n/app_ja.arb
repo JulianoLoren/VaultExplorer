@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "フレーム",
   "fileSkinPresetVivid": "ビビッド",
   "fileSkinPresetTerminal": "ターミナル",
-  "fileSkinPresetCustom": "カスタム"
+  "fileSkinPresetCustom": "カスタム",
+  "resumePlaybackTitle": "再生を再開",
+  "resumePlaybackAskEveryTime": "毎回確認",
+  "resumePlaybackNever": "しない",
+  "resumePlaybackAlways": "常に",
+  "resumePlaybackPromptTitle": "再生を再開しますか？",
+  "resumePlaybackPromptMessage": "{position} から再開しますか？",
+  "resumePlaybackStartOver": "最初から",
+  "resumePlaybackResume": "再開"
 }

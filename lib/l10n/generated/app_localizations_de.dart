@@ -7896,6 +7896,32 @@ class AppLocalizationsDe extends AppLocalizations {
   String get mediaPlayerControlsTitle => 'Mediaplayer-Steuerung';
 
   @override
+  String get resumePlaybackTitle => 'Wiedergabe fortsetzen';
+
+  @override
+  String get resumePlaybackAskEveryTime => 'Jedes Mal nachfragen';
+
+  @override
+  String get resumePlaybackNever => 'Nie';
+
+  @override
+  String get resumePlaybackAlways => 'Immer';
+
+  @override
+  String get resumePlaybackPromptTitle => 'Wiedergabe fortsetzen?';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return 'Bei $position fortsetzen?';
+  }
+
+  @override
+  String get resumePlaybackStartOver => 'Von vorne beginnen';
+
+  @override
+  String get resumePlaybackResume => 'Fortsetzen';
+
+  @override
   String get mediaControlsResetSuccess =>
       'Mediensteuerung auf Standardwerte zurückgesetzt';
 

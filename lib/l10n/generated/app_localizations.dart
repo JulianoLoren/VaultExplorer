@@ -13063,6 +13063,54 @@ abstract class AppLocalizations {
   /// **'Media Player Controls'**
   String get mediaPlayerControlsTitle;
 
+  /// Title for the resume playback settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Resume playback'**
+  String get resumePlaybackTitle;
+
+  /// Option to prompt the user every time whether to resume playback
+  ///
+  /// In en, this message translates to:
+  /// **'Ask every time'**
+  String get resumePlaybackAskEveryTime;
+
+  /// Option to never resume playback (always start from the beginning)
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get resumePlaybackNever;
+
+  /// Option to always resume playback automatically
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get resumePlaybackAlways;
+
+  /// Title of the confirmation dialog asking if playback should resume
+  ///
+  /// In en, this message translates to:
+  /// **'Resume playback?'**
+  String get resumePlaybackPromptTitle;
+
+  /// Prompt asking user to continue playback from a specific timestamp
+  ///
+  /// In en, this message translates to:
+  /// **'Continue from {position}?'**
+  String resumePlaybackPromptMessage(String position);
+
+  /// Action button to start playback from the beginning
+  ///
+  /// In en, this message translates to:
+  /// **'Start over'**
+  String get resumePlaybackStartOver;
+
+  /// Action button to resume playback from the saved position
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get resumePlaybackResume;
+
   /// Snackbar message when media controls are reset to defaults
   ///
   /// In en, this message translates to:

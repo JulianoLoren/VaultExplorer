@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "Cadres",
   "fileSkinPresetVivid": "Éclatant",
   "fileSkinPresetTerminal": "Terminal",
-  "fileSkinPresetCustom": "Personnalisé"
+  "fileSkinPresetCustom": "Personnalisé",
+  "resumePlaybackTitle": "Reprendre la lecture",
+  "resumePlaybackAskEveryTime": "Toujours demander",
+  "resumePlaybackNever": "Jamais",
+  "resumePlaybackAlways": "Toujours",
+  "resumePlaybackPromptTitle": "Reprendre la lecture ?",
+  "resumePlaybackPromptMessage": "Reprendre à {position} ?",
+  "resumePlaybackStartOver": "Recommencer",
+  "resumePlaybackResume": "Reprendre"
 }

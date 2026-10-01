@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "إطارات",
   "fileSkinPresetVivid": "نابض بالحياة",
   "fileSkinPresetTerminal": "طرفية",
-  "fileSkinPresetCustom": "مخصص"
+  "fileSkinPresetCustom": "مخصص",
+  "resumePlaybackTitle": "استئناف التشغيل",
+  "resumePlaybackAskEveryTime": "السؤال في كل مرة",
+  "resumePlaybackNever": "أبدًا",
+  "resumePlaybackAlways": "دائمًا",
+  "resumePlaybackPromptTitle": "استئناف التشغيل؟",
+  "resumePlaybackPromptMessage": "المتابعة من {position}؟",
+  "resumePlaybackStartOver": "البدء من جديد",
+  "resumePlaybackResume": "استئناف"
 }

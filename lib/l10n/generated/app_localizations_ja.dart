@@ -7473,6 +7473,32 @@ class AppLocalizationsJa extends AppLocalizations {
   String get mediaPlayerControlsTitle => 'メディアプレーヤーの操作設定';
 
   @override
+  String get resumePlaybackTitle => '再生を再開';
+
+  @override
+  String get resumePlaybackAskEveryTime => '毎回確認';
+
+  @override
+  String get resumePlaybackNever => 'しない';
+
+  @override
+  String get resumePlaybackAlways => '常に';
+
+  @override
+  String get resumePlaybackPromptTitle => '再生を再開しますか？';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return '$position から再開しますか？';
+  }
+
+  @override
+  String get resumePlaybackStartOver => '最初から';
+
+  @override
+  String get resumePlaybackResume => '再開';
+
+  @override
   String get mediaControlsResetSuccess => 'メディア操作設定をデフォルトに戻しました';
 
   @override

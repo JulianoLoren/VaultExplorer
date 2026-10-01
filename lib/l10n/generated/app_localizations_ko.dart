@@ -7473,6 +7473,32 @@ class AppLocalizationsKo extends AppLocalizations {
   String get mediaPlayerControlsTitle => '미디어 플레이어 컨트롤';
 
   @override
+  String get resumePlaybackTitle => '재생 이어보기';
+
+  @override
+  String get resumePlaybackAskEveryTime => '매번 묻기';
+
+  @override
+  String get resumePlaybackNever => '안 함';
+
+  @override
+  String get resumePlaybackAlways => '항상';
+
+  @override
+  String get resumePlaybackPromptTitle => '이어서 재생하시겠습니까?';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return '$position부터 계속하시겠습니까?';
+  }
+
+  @override
+  String get resumePlaybackStartOver => '처음부터';
+
+  @override
+  String get resumePlaybackResume => '이어보기';
+
+  @override
   String get mediaControlsResetSuccess => '미디어 컨트롤을 기본값으로 초기화했습니다';
 
   @override

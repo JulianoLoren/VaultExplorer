@@ -7913,6 +7913,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mediaPlayerControlsTitle => 'Controles del reproductor multimedia';
 
   @override
+  String get resumePlaybackTitle => 'Reanudar reproducción';
+
+  @override
+  String get resumePlaybackAskEveryTime => 'Preguntar siempre';
+
+  @override
+  String get resumePlaybackNever => 'Nunca';
+
+  @override
+  String get resumePlaybackAlways => 'Siempre';
+
+  @override
+  String get resumePlaybackPromptTitle => '¿Reanudar reproducción?';
+
+  @override
+  String resumePlaybackPromptMessage(String position) {
+    return '¿Continuar desde $position?';
+  }
+
+  @override
+  String get resumePlaybackStartOver => 'Empezar de nuevo';
+
+  @override
+  String get resumePlaybackResume => 'Reanudar';
+
+  @override
   String get mediaControlsResetSuccess =>
       'Controles multimedia restablecidos a los valores predeterminados';
 

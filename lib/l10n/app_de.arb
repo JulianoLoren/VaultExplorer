@@ -2571,5 +2571,13 @@
   "fileSkinPresetFrames": "Rahmen",
   "fileSkinPresetVivid": "Lebhaft",
   "fileSkinPresetTerminal": "Terminal",
-  "fileSkinPresetCustom": "Benutzerdefiniert"
+  "fileSkinPresetCustom": "Benutzerdefiniert",
+  "resumePlaybackTitle": "Wiedergabe fortsetzen",
+  "resumePlaybackAskEveryTime": "Jedes Mal nachfragen",
+  "resumePlaybackNever": "Nie",
+  "resumePlaybackAlways": "Immer",
+  "resumePlaybackPromptTitle": "Wiedergabe fortsetzen?",
+  "resumePlaybackPromptMessage": "Bei {position} fortsetzen?",
+  "resumePlaybackStartOver": "Von vorne beginnen",
+  "resumePlaybackResume": "Fortsetzen"
 }
