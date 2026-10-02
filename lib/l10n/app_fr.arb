@@ -2584,5 +2584,9 @@
   "compositeArchiveCarrierRowWarning": "Archive non prise en charge : retirez-la de la sélection.",
   "videoEditorSelectedSegmentSummary": "Segment {current} sur {total} : {start} – {end} ({duration})",
   "videoEditorKeepModeDescription": "Exportez les segments sélectionnés et ignorez tout le reste.",
-  "videoEditorCutOutModeDescription": "Supprimez les segments sélectionnés et exportez le reste de la vidéo."
+  "videoEditorCutOutModeDescription": "Supprimez les segments sélectionnés et exportez le reste de la vidéo.",
+  "tapEdgesToNavigateTitle": "Toucher les bords pour naviguer",
+  "tapEdgesToNavigateSubtitle": "Touchez le bord gauche ou droit pour afficher l’élément précédent ou suivant.",
+  "loopPlaylistTitle": "Répéter la liste de lecture",
+  "loopPlaylistSubtitle": "Revenir au premier élément après le dernier pendant la navigation ou la lecture."
 }

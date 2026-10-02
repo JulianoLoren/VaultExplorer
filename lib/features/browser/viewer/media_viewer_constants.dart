@@ -10,6 +10,8 @@ class MediaViewerConstants {
 
   /// Keeps horizontal seek drags away from the OS back-gesture zones.
   static const double swipeToSeekEdgeInset = 24.0;
+  static const double tapToNavigateEdgeFraction = 0.08;
+  static const double tapToNavigateMovementTolerance = 16.0;
 
   /// Full-resolution decode headroom used by [EncryptedImageWidget] to
   /// bound `Image.memory`'s decode target (Finding F-10). Deliberately

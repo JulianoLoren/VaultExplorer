@@ -2584,5 +2584,9 @@
   "compositeArchiveCarrierRowWarning": "不支持此压缩包，请将其从所选文件中移除。",
   "videoEditorSelectedSegmentSummary": "片段 {current}/{total}：{start} – {end} ({duration})",
   "videoEditorKeepModeDescription": "导出选中的片段并舍弃其余部分。",
-  "videoEditorCutOutModeDescription": "移除选中的片段并导出剩余视频。"
+  "videoEditorCutOutModeDescription": "移除选中的片段并导出剩余视频。",
+  "tapEdgesToNavigateTitle": "点按屏幕边缘进行导航",
+  "tapEdgesToNavigateSubtitle": "点按左侧或右侧边缘以显示上一个或下一个媒体项目。",
+  "loopPlaylistTitle": "循环播放列表",
+  "loopPlaylistSubtitle": "导航或播放列表时，到达末尾后继续从第一个项目开始。"
 }

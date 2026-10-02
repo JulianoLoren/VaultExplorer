@@ -2584,5 +2584,9 @@
   "compositeArchiveCarrierRowWarning": "Непідтримуваний архів — вилучіть його з набору.",
   "videoEditorSelectedSegmentSummary": "Сегмент {current} із {total}: {start} – {end} ({duration})",
   "videoEditorKeepModeDescription": "Експортувати вибрані сегменти, відкинувши решту.",
-  "videoEditorCutOutModeDescription": "Вилучити вибрані сегменти й експортувати решту відео."
+  "videoEditorCutOutModeDescription": "Вилучити вибрані сегменти й експортувати решту відео.",
+  "tapEdgesToNavigateTitle": "Торкання країв для навігації",
+  "tapEdgesToNavigateSubtitle": "Торкніться лівого або правого краю, щоб показати попередній або наступний медіафайл.",
+  "loopPlaylistTitle": "Повторювати список відтворення",
+  "loopPlaylistSubtitle": "Після останнього елемента переходити до першого під час навігації або відтворення."
 }

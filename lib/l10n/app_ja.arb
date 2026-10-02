@@ -2584,5 +2584,9 @@
   "compositeArchiveCarrierRowWarning": "サポートされていないアーカイブです。選択から削除してください。",
   "videoEditorSelectedSegmentSummary": "セグメント {current}/{total}: {start} – {end} ({duration})",
   "videoEditorKeepModeDescription": "選択したセグメントをエクスポートし、それ以外を破棄します。",
-  "videoEditorCutOutModeDescription": "選択したセグメントを削除し、残りの映像をエクスポートします。"
+  "videoEditorCutOutModeDescription": "選択したセグメントを削除し、残りの映像をエクスポートします。",
+  "tapEdgesToNavigateTitle": "画面端をタップして移動",
+  "tapEdgesToNavigateSubtitle": "画面の左端または右端をタップして、前または次のメディアを表示します。",
+  "loopPlaylistTitle": "プレイリストをループ",
+  "loopPlaylistSubtitle": "移動中または再生中に最後の項目の後で最初の項目に戻ります。"
 }

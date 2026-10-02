@@ -8830,4 +8830,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get videoEditorCutOutModeDescription => '移除选中的片段并导出剩余视频。';
+
+  @override
+  String get tapEdgesToNavigateTitle => '点按屏幕边缘进行导航';
+
+  @override
+  String get tapEdgesToNavigateSubtitle => '点按左侧或右侧边缘以显示上一个或下一个媒体项目。';
+
+  @override
+  String get loopPlaylistTitle => '循环播放列表';
+
+  @override
+  String get loopPlaylistSubtitle => '导航或播放列表时，到达末尾后继续从第一个项目开始。';
 }

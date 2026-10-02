@@ -304,6 +304,53 @@ class MediaViewerToolbarSettingsScreen extends ConsumerWidget {
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                         ),
+                        value: mediaConfig.tapEdgesToNavigate,
+                        onChanged:
+                            controller.setMediaViewerTapEdgesToNavigate,
+                        title: Text(
+                          l10n.tapEdgesToNavigateTitle,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          l10n.tapEdgesToNavigateSubtitle,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        secondary: Icon(
+                          Icons.swap_horiz_rounded,
+                          color: cs.primary,
+                        ),
+                      ),
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        value: mediaConfig.loopPlaylist,
+                        onChanged: controller.setMediaViewerLoopPlaylist,
+                        title: Text(
+                          l10n.loopPlaylistTitle,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          l10n.loopPlaylistSubtitle,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        secondary: Icon(
+                          Icons.repeat_rounded,
+                          color: cs.primary,
+                        ),
+                      ),
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         value: mediaConfig.swipeToSeekEnabled,
                         onChanged: controller.setMediaViewerSwipeToSeekEnabled,
                         title: Text(

@@ -76,7 +76,7 @@ class MediaViewerBottomControls extends StatelessWidget {
           color: Colors.white,
           size: 26,
         ),
-        onPressed: isFirst
+        onPressed: isFirst && !toolbarConfig.loopPlaylist
             ? null
             : () => onExecuteAction(MediaViewerAction.previous),
       );
@@ -91,7 +91,7 @@ class MediaViewerBottomControls extends StatelessWidget {
           color: Colors.white,
           size: 26,
         ),
-        onPressed: isLast
+        onPressed: isLast && !toolbarConfig.loopPlaylist
             ? null
             : () => onExecuteAction(MediaViewerAction.next),
       );

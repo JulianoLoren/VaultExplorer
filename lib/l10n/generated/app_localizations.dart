@@ -15666,6 +15666,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove the selected segments and export the remaining footage.'**
   String get videoEditorCutOutModeDescription;
+
+  /// Setting label for tapping the left or right screen edge to change media items.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap edges to navigate'**
+  String get tapEdgesToNavigateTitle;
+
+  /// Explains the previous/next media navigation edge tap gesture.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the left or right edge to show the previous or next media item.'**
+  String get tapEdgesToNavigateSubtitle;
+
+  /// Setting label for wrapping playlist navigation from the last item to the first.
+  ///
+  /// In en, this message translates to:
+  /// **'Loop playlist'**
+  String get loopPlaylistTitle;
+
+  /// Explains that playlist navigation and playback advance wrap to the beginning.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue from the first item after the last when navigating or playing through the playlist.'**
+  String get loopPlaylistSubtitle;
 }
 
 class _AppLocalizationsDelegate

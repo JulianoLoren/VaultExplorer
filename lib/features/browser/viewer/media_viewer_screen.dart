@@ -135,6 +135,8 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   // out swipe-to-next-item, before the gesture arena has a chance to let
   // the PageView/ListView drag recognizer mistake the pinch for a swipe.
   final Set<int> _activeTouchPointers = {};
+  final Map<int, Offset> _loopSwipeStartPositions = {};
+  final Map<int, int> _loopSwipeStartIndices = {};
   bool _multiTouchLock = false;
   // Whether an item's InteractiveViewer currently considers itself zoomed
   // or mid-interaction (reported via onZoomChanged). Kept separate from
@@ -921,9 +923,10 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
 
   void _autoAdvanceToNext() {
     final index = _playlistController.currentIndex;
-    if (index < _playlistController.playlist.length - 1) {
+    final count = _playlistController.playlist.length;
+    if (count > 1 && (index < count - 1 || _isPlaylistLoopEnabled)) {
       _transitionTo(
-        index + 1,
+        (index + 1) % count,
         animate: true,
         duration: const Duration(milliseconds: 550),
         curve: Curves.easeInOutCubic,
@@ -933,21 +936,29 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     }
   }
 
-  void _navigateToNext() {
+  void _navigateToNext({bool animate = true}) {
     final index = _playlistController.currentIndex;
-    if (index < _playlistController.playlist.length - 1) {
+    final count = _playlistController.playlist.length;
+    if (count > 1 && (index < count - 1 || _isPlaylistLoopEnabled)) {
       HapticFeedback.lightImpact();
-      _transitionTo(index + 1, animate: true);
+      _transitionTo((index + 1) % count, animate: animate);
     }
   }
 
-  void _navigateToPrev() {
+  void _navigateToPrev({bool animate = true}) {
     final index = _playlistController.currentIndex;
-    if (index > 0) {
+    final count = _playlistController.playlist.length;
+    if (count > 1 && (index > 0 || _isPlaylistLoopEnabled)) {
       HapticFeedback.lightImpact();
-      _transitionTo(index - 1, animate: true);
+      _transitionTo((index - 1 + count) % count, animate: animate);
     }
   }
+
+  bool get _isPlaylistLoopEnabled => ref
+      .read(fileManagerToolbarSettingsProvider(null))
+      .config
+      .mediaViewerToolbarConfig
+      .loopPlaylist;
 
   void _startSlideshowTimerIfNeeded() {
     _cancelSlideshowTimer();
@@ -1193,15 +1204,37 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   void _handleTouchPointerDown(PointerDownEvent event) {
     if (event.kind != PointerDeviceKind.touch) return;
     _activeTouchPointers.add(event.pointer);
+    if (_activeTouchPointers.length == 1 &&
+        _isPlaylistLoopEnabled &&
+        !_zoomInteractionLock &&
+        !_isProgrammaticScrolling) {
+      final index = _playlistController.currentIndex;
+      if (_playlistController.playlist.length > 1 &&
+          (index == 0 || index == _playlistController.playlist.length - 1)) {
+        _loopSwipeStartPositions[event.pointer] = event.position;
+        _loopSwipeStartIndices[event.pointer] = index;
+      }
+    }
     if (_activeTouchPointers.length >= 2 && !_multiTouchLock) {
       _multiTouchLock = true;
+      _loopSwipeStartPositions.clear();
+      _loopSwipeStartIndices.clear();
       _updateSwipePhysics();
     }
   }
 
   void _handleTouchPointerUp(PointerEvent event) {
     if (event.kind != PointerDeviceKind.touch) return;
+    final start = _loopSwipeStartPositions.remove(event.pointer);
+    final startIndex = _loopSwipeStartIndices.remove(event.pointer);
     _activeTouchPointers.remove(event.pointer);
+    if (event is PointerUpEvent &&
+        start != null &&
+        startIndex != null &&
+        _activeTouchPointers.isEmpty &&
+        mounted) {
+      _maybeWrapPlaylistSwipe(start, startIndex, event.position);
+    }
     if (_activeTouchPointers.isEmpty && _multiTouchLock) {
       _multiTouchLock = false;
       // In continuous mode the zoom lock only covers an active pinch (the
@@ -1209,6 +1242,45 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
       // even if the pinch never reported its end.
       if (_scrollMode.isContinuous) _zoomInteractionLock = false;
       _updateSwipePhysics();
+    }
+  }
+
+  void _maybeWrapPlaylistSwipe(Offset start, int startIndex, Offset end) {
+    if (!_isPlaylistLoopEnabled ||
+        _zoomInteractionLock ||
+        _isProgrammaticScrolling) {
+      return;
+    }
+
+    final count = _playlistController.playlist.length;
+    if (count < 2 || _playlistController.currentIndex != startIndex) return;
+
+    final axis = _scrollMode.isContinuous ? Axis.vertical : _scrollMode.axis;
+    final axisDelta = axis == Axis.horizontal
+        ? end.dx - start.dx
+        : end.dy - start.dy;
+    final crossAxisDelta = axis == Axis.horizontal
+        ? end.dy - start.dy
+        : end.dx - start.dx;
+    final isRtl =
+        axis == Axis.horizontal &&
+        Directionality.of(context) == TextDirection.rtl;
+    final forwardDelta = axisDelta * (isRtl ? 1 : -1);
+    final viewportExtent = axis == Axis.horizontal
+        ? _viewportWidth
+        : _viewportHeight;
+    final threshold = math.max(48.0, viewportExtent * 0.12);
+    if (forwardDelta.abs() < threshold ||
+        forwardDelta.abs() <= crossAxisDelta.abs()) {
+      return;
+    }
+
+    if (startIndex == count - 1 && forwardDelta > 0) {
+      HapticFeedback.lightImpact();
+      _transitionTo(0);
+    } else if (startIndex == 0 && forwardDelta < 0) {
+      HapticFeedback.lightImpact();
+      _transitionTo(count - 1);
     }
   }
 
@@ -1909,10 +1981,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _transitionTo(index, animate: false);
   }
 
-  void _updatePlaybackMode(
-    VideoPlaybackMode mode, {
-    bool persist = true,
-  }) {
+  void _updatePlaybackMode(VideoPlaybackMode mode, {bool persist = true}) {
     if (persist) {
       _playbackModeInteractionRevision++;
       _startHideTimer();
@@ -1934,7 +2003,11 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     final settingsService = ref.read(appSettingsServiceProvider);
     _playbackModeSaveQueue = _playbackModeSaveQueue
         .catchError((Object error) {
-          VeLog.w('MediaViewer', 'Could not persist video playback mode', error);
+          VeLog.w(
+            'MediaViewer',
+            'Could not persist video playback mode',
+            error,
+          );
         })
         .then((_) async {
           final settings = await settingsService.loadSettings();
@@ -2129,6 +2202,14 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
               imageFit: _scrollMode.isContinuous ? BoxFit.contain : _imageFit,
               rotationQuarterTurns: _rotations[fileName] ?? 0,
               showUI: _showUI,
+              tapEdgesToNavigate: gestureConfig.tapEdgesToNavigate,
+              onEdgeTap: (next) {
+                if (next) {
+                  _navigateToNext();
+                } else {
+                  _navigateToPrev();
+                }
+              },
               enableZoom: !_scrollMode.isContinuous,
               pinchZoomOutEnabled: gestureConfig.pinchZoomOutEnabled,
               minZoomScale: gestureConfig.minVideoZoomScale,
@@ -2158,6 +2239,14 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
               thumbnailQuality: widget.thumbnailQuality,
               thumbnailCacheMode: widget.thumbnailCacheMode,
               showUI: _showUI,
+              tapEdgesToNavigate: gestureConfig.tapEdgesToNavigate,
+              onEdgeTap: (next) {
+                if (next) {
+                  _navigateToNext();
+                } else {
+                  _navigateToPrev();
+                }
+              },
               enableZoom: !_scrollMode.isContinuous,
               onToggleUI: _setUIVisibility,
               skipSeconds: _doubleTapSkipSeconds,

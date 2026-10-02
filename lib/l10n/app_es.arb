@@ -2584,5 +2584,9 @@
   "compositeArchiveCarrierRowWarning": "Archivo comprimido no compatible: quítalo de la selección.",
   "videoEditorSelectedSegmentSummary": "Segmento {current} de {total}: {start} – {end} ({duration})",
   "videoEditorKeepModeDescription": "Exporta los segmentos seleccionados y descarta el resto.",
-  "videoEditorCutOutModeDescription": "Elimina los segmentos seleccionados y exporta el resto del vídeo."
+  "videoEditorCutOutModeDescription": "Elimina los segmentos seleccionados y exporta el resto del vídeo.",
+  "tapEdgesToNavigateTitle": "Tocar los bordes para navegar",
+  "tapEdgesToNavigateSubtitle": "Toca el borde izquierdo o derecho para mostrar el elemento multimedia anterior o siguiente.",
+  "loopPlaylistTitle": "Repetir lista de reproducción",
+  "loopPlaylistSubtitle": "Volver al primer elemento después del último al navegar o reproducir la lista."
 }

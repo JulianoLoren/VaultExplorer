@@ -9502,4 +9502,18 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get videoEditorCutOutModeDescription =>
       'أزل المقاطع المحددة وصدّر بقية الفيديو.';
+
+  @override
+  String get tapEdgesToNavigateTitle => 'انقر على الحواف للتنقل';
+
+  @override
+  String get tapEdgesToNavigateSubtitle =>
+      'انقر على الحافة اليسرى أو اليمنى لعرض العنصر السابق أو التالي.';
+
+  @override
+  String get loopPlaylistTitle => 'تكرار قائمة التشغيل';
+
+  @override
+  String get loopPlaylistSubtitle =>
+      'انتقل إلى العنصر الأول بعد الأخير أثناء التنقل أو تشغيل القائمة.';
 }

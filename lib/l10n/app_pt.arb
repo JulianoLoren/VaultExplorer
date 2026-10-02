@@ -2584,5 +2584,9 @@
   "compositeArchiveCarrierRowWarning": "Arquivo compactado não compatível: remova-o da seleção.",
   "videoEditorSelectedSegmentSummary": "Segmento {current} de {total}: {start} – {end} ({duration})",
   "videoEditorKeepModeDescription": "Exporte os segmentos selecionados e descarte o restante.",
-  "videoEditorCutOutModeDescription": "Remova os segmentos selecionados e exporte o restante do vídeo."
+  "videoEditorCutOutModeDescription": "Remova os segmentos selecionados e exporte o restante do vídeo.",
+  "tapEdgesToNavigateTitle": "Toque nas bordas para navegar",
+  "tapEdgesToNavigateSubtitle": "Toque na borda esquerda ou direita para mostrar a mídia anterior ou seguinte.",
+  "loopPlaylistTitle": "Repetir lista de reprodução",
+  "loopPlaylistSubtitle": "Volte ao primeiro item após o último ao navegar ou reproduzir a lista."
 }

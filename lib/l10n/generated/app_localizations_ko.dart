@@ -8950,4 +8950,17 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get videoEditorCutOutModeDescription =>
       '선택한 세그먼트를 제거하고 나머지 영상을 내보냅니다.';
+
+  @override
+  String get tapEdgesToNavigateTitle => '화면 가장자리를 눌러 이동';
+
+  @override
+  String get tapEdgesToNavigateSubtitle =>
+      '왼쪽 또는 오른쪽 가장자리를 눌러 이전 또는 다음 미디어를 표시합니다.';
+
+  @override
+  String get loopPlaylistTitle => '재생목록 반복';
+
+  @override
+  String get loopPlaylistSubtitle => '이동하거나 재생할 때 마지막 항목 다음에 첫 항목으로 돌아갑니다.';
 }

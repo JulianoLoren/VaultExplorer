@@ -2584,5 +2584,9 @@
   "compositeArchiveCarrierRowWarning": "أرشيف غير مدعوم — أزله من التحديد.",
   "videoEditorSelectedSegmentSummary": "المقطع {current} من {total}: {start} – {end} ({duration})",
   "videoEditorKeepModeDescription": "صدّر المقاطع المحددة واحذف كل ما عداها.",
-  "videoEditorCutOutModeDescription": "أزل المقاطع المحددة وصدّر بقية الفيديو."
+  "videoEditorCutOutModeDescription": "أزل المقاطع المحددة وصدّر بقية الفيديو.",
+  "tapEdgesToNavigateTitle": "انقر على الحواف للتنقل",
+  "tapEdgesToNavigateSubtitle": "انقر على الحافة اليسرى أو اليمنى لعرض العنصر السابق أو التالي.",
+  "loopPlaylistTitle": "تكرار قائمة التشغيل",
+  "loopPlaylistSubtitle": "انتقل إلى العنصر الأول بعد الأخير أثناء التنقل أو تشغيل القائمة."
 }

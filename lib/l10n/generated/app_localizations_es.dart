@@ -9463,4 +9463,18 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get videoEditorCutOutModeDescription =>
       'Elimina los segmentos seleccionados y exporta el resto del vídeo.';
+
+  @override
+  String get tapEdgesToNavigateTitle => 'Tocar los bordes para navegar';
+
+  @override
+  String get tapEdgesToNavigateSubtitle =>
+      'Toca el borde izquierdo o derecho para mostrar el elemento multimedia anterior o siguiente.';
+
+  @override
+  String get loopPlaylistTitle => 'Repetir lista de reproducción';
+
+  @override
+  String get loopPlaylistSubtitle =>
+      'Volver al primer elemento después del último al navegar o reproducir la lista.';
 }

@@ -366,6 +366,20 @@ class FileManagerToolbarSettings extends _$FileManagerToolbarSettings {
     return updateMediaViewerConfig(updated);
   }
 
+  Future<void> setMediaViewerTapEdgesToNavigate(bool enabled) {
+    final updated = state.config.mediaViewerToolbarConfig.copyWith(
+      tapEdgesToNavigate: enabled,
+    );
+    return updateMediaViewerConfig(updated);
+  }
+
+  Future<void> setMediaViewerLoopPlaylist(bool enabled) {
+    final updated = state.config.mediaViewerToolbarConfig.copyWith(
+      loopPlaylist: enabled,
+    );
+    return updateMediaViewerConfig(updated);
+  }
+
   Future<void> setMediaViewerResumePlaybackMode(ResumePlaybackMode mode) {
     final updated = state.config.mediaViewerToolbarConfig.copyWith(
       resumePlaybackMode: mode,

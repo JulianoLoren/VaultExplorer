@@ -11855,5 +11855,21 @@
   "videoEditorCutOutModeDescription": "Remove the selected segments and export the remaining footage.",
   "@videoEditorCutOutModeDescription": {
     "description": "Explains that Cut Out mode removes selected video segments and keeps the rest."
+  },
+  "tapEdgesToNavigateTitle": "Tap edges to navigate",
+  "@tapEdgesToNavigateTitle": {
+    "description": "Setting label for tapping the left or right screen edge to change media items."
+  },
+  "tapEdgesToNavigateSubtitle": "Tap the left or right edge to show the previous or next media item.",
+  "@tapEdgesToNavigateSubtitle": {
+    "description": "Explains the previous/next media navigation edge tap gesture."
+  },
+  "loopPlaylistTitle": "Loop playlist",
+  "@loopPlaylistTitle": {
+    "description": "Setting label for wrapping playlist navigation from the last item to the first."
+  },
+  "loopPlaylistSubtitle": "Continue from the first item after the last when navigating or playing through the playlist.",
+  "@loopPlaylistSubtitle": {
+    "description": "Explains that playlist navigation and playback advance wrap to the beginning."
   }
 }

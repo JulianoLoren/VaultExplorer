@@ -22,6 +22,8 @@ class ImagePageItem extends StatefulWidget {
   final int rotationQuarterTurns;
   final bool showUI;
   final ValueChanged<bool> onToggleUI;
+  final bool tapEdgesToNavigate;
+  final ValueChanged<bool>? onEdgeTap;
   final ValueChanged<bool> onZoomChanged;
   final void Function(int width, int height)? onSizeKnown;
   final VoidCallback? onError;
@@ -44,6 +46,8 @@ class ImagePageItem extends StatefulWidget {
     required this.rotationQuarterTurns,
     required this.showUI,
     required this.onToggleUI,
+    this.tapEdgesToNavigate = true,
+    this.onEdgeTap,
     required this.onZoomChanged,
     this.onSizeKnown,
     this.onError,
@@ -76,6 +80,9 @@ class _ImagePageItemState extends State<ImagePageItem>
 
   // -- Edge-swipe brightness gesture --
   final Set<int> _activeTouchPointers = {};
+  final Map<int, Offset> _edgeTapStartPositions = {};
+  final Map<int, bool> _edgeTapDirections = {};
+  double _tapViewportWidth = 0;
   double _brightnessLevel = 0.5;
   bool _showBrightnessHud = false;
   Timer? _brightnessHudTimer;
@@ -92,6 +99,20 @@ class _ImagePageItemState extends State<ImagePageItem>
       (_getMatrixScale(_transformationController.value) - 1.0).abs() > 0.01;
   bool get _isZoomedIn =>
       _getMatrixScale(_transformationController.value) > 1.01;
+
+  void _handleViewportTap(TapUpDetails details, double viewportWidth) {
+    if (widget.tapEdgesToNavigate && !_isZoomed && viewportWidth > 0) {
+      final edgeWidth =
+          viewportWidth * MediaViewerConstants.tapToNavigateEdgeFraction;
+      if (details.localPosition.dx <= edgeWidth) {
+        return;
+      }
+      if (details.localPosition.dx >= viewportWidth - edgeWidth) {
+        return;
+      }
+    }
+    widget.onToggleUI(!widget.showUI);
+  }
 
   double get _effectiveMinZoomScale => widget.pinchZoomOutEnabled
       ? widget.minZoomScale.clamp(
@@ -345,13 +366,51 @@ bool _isClampingMatrix = false;
     if (event.kind != PointerDeviceKind.touch) return;
     _activeTouchPointers.add(event.pointer);
     if (_activeTouchPointers.length >= 2) {
+      _clearEdgeTapCandidates();
       _abortEdgeGestures();
+      return;
+    }
+    if (widget.tapEdgesToNavigate &&
+        !_isZoomed &&
+        widget.isActive &&
+        _tapViewportWidth > 0) {
+      final edgeWidth =
+          _tapViewportWidth * MediaViewerConstants.tapToNavigateEdgeFraction;
+      final x = event.localPosition.dx;
+      if (x <= edgeWidth) {
+        _edgeTapStartPositions[event.pointer] = event.localPosition;
+        _edgeTapDirections[event.pointer] = false;
+      } else if (x >= _tapViewportWidth - edgeWidth) {
+        _edgeTapStartPositions[event.pointer] = event.localPosition;
+        _edgeTapDirections[event.pointer] = true;
+      }
+    }
+  }
+
+  void _onGlobalPointerMove(PointerMoveEvent event) {
+    final start = _edgeTapStartPositions[event.pointer];
+    if (start == null) return;
+    final delta = event.localPosition - start;
+    final tolerance = MediaViewerConstants.tapToNavigateMovementTolerance;
+    if (delta.distanceSquared > tolerance * tolerance) {
+      _edgeTapStartPositions.remove(event.pointer);
+      _edgeTapDirections.remove(event.pointer);
     }
   }
 
   void _onGlobalPointerUp(PointerEvent event) {
     if (event.kind != PointerDeviceKind.touch) return;
     _activeTouchPointers.remove(event.pointer);
+    final next = _edgeTapDirections.remove(event.pointer);
+    _edgeTapStartPositions.remove(event.pointer);
+    if (event is PointerUpEvent && next != null && widget.isActive) {
+      widget.onEdgeTap?.call(next);
+    }
+  }
+
+  void _clearEdgeTapCandidates() {
+    _edgeTapStartPositions.clear();
+    _edgeTapDirections.clear();
   }
 
   void _abortEdgeGestures() {
@@ -509,12 +568,14 @@ bool _isClampingMatrix = false;
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: _onGlobalPointerDown,
+      onPointerMove: _onGlobalPointerMove,
       onPointerUp: _onGlobalPointerUp,
       onPointerCancel: _onGlobalPointerUp,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewportWidth = constraints.maxWidth;
           final viewportHeight = constraints.maxHeight;
+          _tapViewportWidth = viewportWidth;
 
           double? rawAr;
           if (_imageSize != null && _imageSize!.height > 0) {
@@ -607,14 +668,16 @@ bool _isClampingMatrix = false;
           final Widget coreImageWidget = !widget.enableZoom
               ? GestureDetector(
                   behavior: HitTestBehavior.translucent,
-                  onTap: () => widget.onToggleUI(!widget.showUI),
+                  onTapUp: (details) =>
+                      _handleViewportTap(details, viewportWidth),
                   child: SizedBox.expand(
                     child: imageContent,
                   ),
                 )
               : GestureDetector(
                   behavior: HitTestBehavior.translucent,
-                  onTap: () => widget.onToggleUI(!widget.showUI),
+                  onTapUp: (details) =>
+                      _handleViewportTap(details, viewportWidth),
                   onDoubleTapDown: (d) => _doubleTapDetails = d,
                   onDoubleTap: () {
                     // Strict live evaluation: reset if not at default 1.0x baseline

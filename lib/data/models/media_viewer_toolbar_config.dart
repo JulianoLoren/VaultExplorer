@@ -30,6 +30,8 @@ class MediaViewerToolbarConfig {
   final double holdToSpeedMultiplier;
   final bool swipeToSeekEnabled;
   final ResumePlaybackMode resumePlaybackMode;
+  final bool tapEdgesToNavigate;
+  final bool loopPlaylist;
 
   const MediaViewerToolbarConfig({
     this.topBarActions = const [
@@ -82,6 +84,8 @@ class MediaViewerToolbarConfig {
     this.holdToSpeedMultiplier = 2.0,
     this.swipeToSeekEnabled = false,
     this.resumePlaybackMode = ResumePlaybackMode.askEveryTime,
+    this.tapEdgesToNavigate = true,
+    this.loopPlaylist = true,
   });
 
   factory MediaViewerToolbarConfig.defaults() =>
@@ -110,6 +114,8 @@ class MediaViewerToolbarConfig {
     double? holdToSpeedMultiplier,
     bool? swipeToSeekEnabled,
     ResumePlaybackMode? resumePlaybackMode,
+    bool? tapEdgesToNavigate,
+    bool? loopPlaylist,
   }) => MediaViewerToolbarConfig(
     topBarActions: topBarActions ?? this.topBarActions,
     bottomBarActions: bottomBarActions ?? this.bottomBarActions,
@@ -140,6 +146,8 @@ class MediaViewerToolbarConfig {
     holdToSpeedMultiplier: holdToSpeedMultiplier ?? this.holdToSpeedMultiplier,
     swipeToSeekEnabled: swipeToSeekEnabled ?? this.swipeToSeekEnabled,
     resumePlaybackMode: resumePlaybackMode ?? this.resumePlaybackMode,
+    tapEdgesToNavigate: tapEdgesToNavigate ?? this.tapEdgesToNavigate,
+    loopPlaylist: loopPlaylist ?? this.loopPlaylist,
   );
 
   Map<String, dynamic> toJson() => {
@@ -167,6 +175,8 @@ class MediaViewerToolbarConfig {
     'holdToSpeedMultiplier': holdToSpeedMultiplier,
     'swipeToSeekEnabled': swipeToSeekEnabled,
     'resumePlaybackMode': resumePlaybackMode.name,
+    'tapEdgesToNavigate': tapEdgesToNavigate,
+    'loopPlaylist': loopPlaylist,
   };
 
   factory MediaViewerToolbarConfig.fromJson(Map<String, dynamic>? j) {
@@ -250,6 +260,8 @@ class MediaViewerToolbarConfig {
         (mode) => mode.name == j['resumePlaybackMode'],
         orElse: () => ResumePlaybackMode.askEveryTime,
       ),
+      tapEdgesToNavigate: j['tapEdgesToNavigate'] as bool? ?? true,
+      loopPlaylist: j['loopPlaylist'] as bool? ?? true,
     );
   }
 }
