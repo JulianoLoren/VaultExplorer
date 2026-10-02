@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vaultexplorer/core/utils/ve_log.dart';
 
 part 'app_secure_storage.g.dart';
 
@@ -24,7 +25,13 @@ class AppSecureStorage {
       await delete(key: key);
       return;
     }
-    await _channel.invokeMethod<bool>('writeSecure', {'key': key, 'value': value});
+    final ok = await _channel.invokeMethod<bool>('writeSecure', {'key': key, 'value': value});
+    // The native side answers false (not an exception) when Keystore
+    // encryption or the prefs commit fails, so a lost write used to look
+    // like a successful one.
+    if (ok != true) {
+      VeLog.w('AppSecureStorage', 'writeSecure did not persist a value (result=$ok)', ok ?? 'null');
+    }
   }
 
   Future<void> delete({required String key}) async {

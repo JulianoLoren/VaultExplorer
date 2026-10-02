@@ -1326,6 +1326,30 @@ class UnlockController extends _$UnlockController {
     }
   }
 
+  Future<void> _restoreSavedPasswordIfMissing(
+    String uri,
+    String password,
+  ) async {
+    if (params.initialUri == null || password.isEmpty) return;
+    try {
+      final repo = ref.read(containerRepositoryProvider);
+      final record = (await repo.loadAll())[uri];
+      if (record == null ||
+          record.unlockMethod == ContainerUnlockMethod.password) {
+        return;
+      }
+      final saved = await repo.getPassword(uri);
+      if (saved != null && saved.isNotEmpty) return;
+      await repo.save(record.copyWith(pendingPassword: password));
+      VeLog.i(
+        'UnlockController',
+        'Restored missing saved password for ${VeLog.censorUri(uri)} after manual unlock',
+      );
+    } catch (e) {
+      VeLog.w('UnlockController', '_restoreSavedPasswordIfMissing failed', e);
+    }
+  }
+
   Future<void> unlock({
     String? passwordText,
     String? pimText,
@@ -1402,6 +1426,7 @@ class UnlockController extends _$UnlockController {
           key: 'temp_pw_$uri',
           value: effectivePassword,
         );
+        await _restoreSavedPasswordIfMissing(uri, effectivePassword);
         final mountedContainer = MountedContainer(
           uri: uri,
           displayName: name,
@@ -1574,6 +1599,7 @@ class UnlockController extends _$UnlockController {
           key: 'temp_pw_$uri',
           value: effectivePassword,
         );
+        await _restoreSavedPasswordIfMissing(uri, effectivePassword);
         final mountedContainer = MountedContainer(
           uri: uri,
           displayName: name,
@@ -1747,6 +1773,7 @@ class UnlockController extends _$UnlockController {
         key: 'temp_pw_$uri',
         value: effectivePassword,
       );
+      await _restoreSavedPasswordIfMissing(uri, effectivePassword);
       final mountedContainer = MountedContainer(
         uri: uri,
         displayName: name,

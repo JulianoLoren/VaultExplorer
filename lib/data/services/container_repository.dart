@@ -150,7 +150,22 @@ class ContainerRepository {
         value: record.pendingPassword,
       );
     } else if (!needsPassword) {
-      await _secure.delete(key: _keystoreKey(record.uri));
+      final pwKey = _keystoreKey(record.uri);
+      // Diagnostic for the "saved password vanished after creating another
+      // vault" report: say when a save wipes an existing saved password, and
+      // whether the Keystore key had to be truncated (two long URIs sharing
+      // their first 135 chars would then share one key).
+      try {
+        if (await _secure.containsKey(key: pwKey)) {
+          VeLog.i(
+            _kLogTag,
+            'save: dropping saved password for ${VeLog.censorUri(record.uri)} '
+            '(method=${record.unlockMethod.name}, '
+            'keyTruncated=${base64Url.encode(utf8.encode(record.uri)).length > 180})',
+          );
+        }
+      } catch (_) {}
+      await _secure.delete(key: pwKey);
     }
     if (record.unlockMethod == ContainerUnlockMethod.pattern &&
         record.pendingPatternHash != null) {
