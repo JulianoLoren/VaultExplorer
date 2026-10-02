@@ -1350,6 +1350,26 @@ class UnlockController extends _$UnlockController {
     }
   }
 
+
+  Future<ContainerRecord> _keepExistingRecordOnReAdd(
+    ContainerRecord existing,
+    String password,
+  ) async {
+    if (password.isEmpty ||
+        existing.unlockMethod == ContainerUnlockMethod.password) {
+      return existing;
+    }
+    try {
+      final repo = ref.read(containerRepositoryProvider);
+      if (await repo.getPassword(existing.uri) != password) {
+        await repo.save(existing.copyWith(pendingPassword: password));
+      }
+    } catch (e) {
+      VeLog.w('UnlockController', '_keepExistingRecordOnReAdd failed', e);
+    }
+    return existing;
+  }
+
   Future<void> unlock({
     String? passwordText,
     String? pimText,
@@ -1443,7 +1463,12 @@ class UnlockController extends _$UnlockController {
         final records = await repo.loadAll();
         ContainerRecord? savedRecord = records[uri];
 
-        if (params.initialUri == null && state.remember) {
+        if (params.initialUri == null && state.remember && savedRecord != null) {
+          savedRecord = await _keepExistingRecordOnReAdd(
+            savedRecord,
+            effectivePassword,
+          );
+        } else if (params.initialUri == null && state.remember) {
           savedRecord = ContainerRecord(
             uri: uri,
             label: name,
@@ -1616,7 +1641,9 @@ class UnlockController extends _$UnlockController {
         final records = await repo.loadAll();
         ContainerRecord? record = records[uri];
 
-        if (params.initialUri == null && state.remember) {
+        if (params.initialUri == null && state.remember && record != null) {
+          record = await _keepExistingRecordOnReAdd(record, effectivePassword);
+        } else if (params.initialUri == null && state.remember) {
           final appSettings = await ref
               .read(appSettingsServiceProvider)
               .loadSettings();
@@ -1787,7 +1814,12 @@ class UnlockController extends _$UnlockController {
       );
 
       ContainerRecord? savedRecord = record;
-      if (params.initialUri == null && state.remember) {
+      if (params.initialUri == null && state.remember && savedRecord != null) {
+        savedRecord = await _keepExistingRecordOnReAdd(
+          savedRecord,
+          effectivePassword,
+        );
+      } else if (params.initialUri == null && state.remember) {
         savedRecord = ContainerRecord(
           uri: uri,
           label: name,
