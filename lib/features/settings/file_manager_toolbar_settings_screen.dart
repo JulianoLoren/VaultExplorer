@@ -10,21 +10,13 @@ import 'package:vaultexplorer/data/models/playlist_transition_effect.dart';
 import 'package:vaultexplorer/data/models/thumbnail_cache_mode.dart';
 import 'package:vaultexplorer/features/settings/file_manager_skin_screen.dart';
 import 'package:vaultexplorer/features/settings/file_manager_toolbar_settings_controller.dart';
-import 'package:vaultexplorer/core/services/disguise_mode_api.dart';
 import 'package:vaultexplorer/features/settings/app_settings_controller.dart';
 
 class FileManagerToolbarSettingsScreen extends ConsumerWidget {
   final String? containerUri;
 
-  /// Whether this screen was opened while browsing real device storage
-  /// (the Local Storage card or decoy's local explorer -- both build their
-  /// [MountedContainer] via `buildLocalStorageContainer`) rather than an
-  /// unlocked vault container. Threaded explicitly from
-  /// [SettingsMenuButton]/`container.isLocalStorage` rather than inferred
-  /// from [containerUri] being null, so this doesn't silently break if that
-  /// null-for-local-storage convention ever changes for its original
-  /// (bookmark-safety) reason. Drives the same thumbnail-cache picker
-  /// [isDecoyMode] already unlocks below -- see that field's doc.
+  /// Whether cache options should use local-storage wording instead of
+  /// referring to an encrypted container.
   final bool isLocalStorage;
   const FileManagerToolbarSettingsScreen({
     super.key,
@@ -59,10 +51,6 @@ class FileManagerToolbarSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(fileManagerToolbarSettingsProvider(containerUri));
-    // Check if currently in Decoy mode
-    final isDecoyMode = ref.watch(
-      appSettingsControllerProvider.select((s) => s.disguiseMode == DisguiseMode.decoy),
-    );
     // The app-wide fallback layout: what a folder without its own saved
     // choice opens in (or, with "Remember Per-Folder Layout" off, what
     // every folder uses). Reset explicitly here rather than as a side
@@ -71,15 +59,6 @@ class FileManagerToolbarSettingsScreen extends ConsumerWidget {
     final defaultLayoutMode = ref.watch(
       appSettingsControllerProvider.select((s) => s.settings.defaultLayoutMode),
     );
-    // Thumbnail caching has nowhere else to be configured for a
-    // local-storage browsing session (no `MountedContainer` record, so no
-    // per-container config sheet like real vaults get -- see
-    // container_config_sheet.dart) -- true for decoy's explorer already,
-    // and now also for the real app's Local Storage card. Both point at
-    // the same global `defaultThumbnailCacheMode` default and the same
-    // physical `.thumbcache` folder, so there's deliberately one shared
-    // setting rather than a separate one per entry point.
-    final showLocalStorageThumbnailSettings = isDecoyMode || isLocalStorage;
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -655,15 +634,15 @@ SectionCard(
         color: cs.primary,
       ),
     ),
-    if (showLocalStorageThumbnailSettings) ...[
+
             OptionPickerTile<ThumbnailCacheMode>(
               label: context.l10n.thumbnailCachingDefaultLabel,
               value: state.config.defaultThumbnailCacheMode,
               options: ThumbnailCacheMode.values.map((mode) {
                 return SelectOption(
                   value: mode,
-                  label: mode.getLocalizedLabel(context.l10n, isLocalStorage: true),
-                  subtitle: mode.getLocalizedDescription(context.l10n, isLocalStorage: true),
+                  label: mode.getLocalizedLabel(context.l10n, isLocalStorage: isLocalStorage),
+                  subtitle: mode.getLocalizedDescription(context.l10n, isLocalStorage: isLocalStorage),
                 );
               }).toList(),
               onChanged: (v) => ref
@@ -677,7 +656,6 @@ SectionCard(
                   .read(fileManagerToolbarSettingsProvider(containerUri).notifier)
                   .setDefaultThumbnailQuality(v),
             ),
-          ],
         ],
       ),
                       const SizedBox(height: 16),

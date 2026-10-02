@@ -200,13 +200,6 @@ class MediaViewerBottomControls extends StatelessWidget {
           return false;
         }
       }
-      // When the status chip is active on photos, it already handles delay configuration
-      if (isImage &&
-          isPlaylistMode &&
-          toolbarConfig.showStatusBadge &&
-          a == MediaViewerAction.slideshowDelay) {
-        return false;
-      }
       return a.isApplicable(
         isImage: isImage,
         isAudio: isAudio,
@@ -259,7 +252,10 @@ class MediaViewerBottomControls extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isImage && isPlaylistMode && toolbarConfig.showStatusBadge) ...[
+            if (isImage &&
+                isPlaylistMode &&
+                toolbarConfig.showStatusBadge &&
+                !pinned.contains(MediaViewerAction.slideshowDelay)) ...[
               _SlideshowStatusChip(
                 autoAdvance: autoAdvance,
                 slideshowDelaySeconds: slideshowDelaySeconds,

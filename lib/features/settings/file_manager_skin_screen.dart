@@ -382,43 +382,63 @@ class _SkinPreview extends StatelessWidget {
 /// Horizontal strip of the built-in skins. When the current skin matches none
 /// of them (individual options were changed) a "Custom" card is appended and
 /// marked as the selection.
-class _PresetPicker extends StatelessWidget {
+class _PresetPicker extends StatefulWidget {
   final FileManagerSkin skin;
   final ValueChanged<SkinPreset> onSelected;
 
   const _PresetPicker({required this.skin, required this.onSelected});
 
   @override
+  State<_PresetPicker> createState() => _PresetPickerState();
+}
+
+class _PresetPickerState extends State<_PresetPicker> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final current = skin.matchingPreset;
+    final current = widget.skin.matchingPreset;
 
     return SizedBox(
-      height: 112,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          for (final preset in SkinPreset.values)
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: _PresetCard(
-                label: preset.getLocalizedLabel(l10n),
-                skin: preset.skin,
-                selected: current == preset,
-                onTap: () => onSelected(preset),
+      height: 120,
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+
+        child: ListView(
+          controller: _scrollController,
+          padding: const EdgeInsets.only(bottom: 8),
+          scrollDirection: Axis.horizontal,
+          children: [
+            for (final preset in SkinPreset.values)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: _PresetCard(
+                  label: preset.getLocalizedLabel(l10n),
+                  skin: preset.skin,
+                  selected: current == preset,
+                  onTap: () => widget.onSelected(preset),
+                ),
               ),
-            ),
-          if (current == null)
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: _PresetCard(
-                label: l10n.fileSkinPresetCustom,
-                skin: skin,
-                selected: true,
-                onTap: null,
+            if (current == null)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: _PresetCard(
+                  label: l10n.fileSkinPresetCustom,
+                  skin: widget.skin,
+                  selected: true,
+                  onTap: null,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

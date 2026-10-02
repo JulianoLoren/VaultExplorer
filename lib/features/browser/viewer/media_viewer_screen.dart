@@ -135,6 +135,9 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   // out swipe-to-next-item, before the gesture arena has a chance to let
   // the PageView/ListView drag recognizer mistake the pinch for a swipe.
   final Set<int> _activeTouchPointers = {};
+  final Map<int, Offset> _edgeTapStartPositions = {};
+  final Map<int, bool> _edgeTapDirections = {};
+  final Map<int, bool> _edgeTapStartedDuringTransition = {};
   final Map<int, Offset> _loopSwipeStartPositions = {};
   final Map<int, int> _loopSwipeStartIndices = {};
   bool _multiTouchLock = false;
@@ -852,6 +855,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _cancelSlideshowTimer();
     _startHideTimer();
     _isProgrammaticScrolling = true;
+    _updateSwipePhysics();
 
     _playlistController.updateIndex(index);
     try {
@@ -904,21 +908,20 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
       }
     }
 
-    if (mounted && _transitionToken == token) {
-      _isProgrammaticScrolling = false;
-      _isSwiping = false;
-      _sessionController.setIsAutoAdvancing(false);
-      final currentFile = _playlistController.currentFile;
-      if (MediaViewerConstants.isImage(currentFile)) {
-        _startSlideshowTimerIfNeeded();
-      }
-      if (_showUI) {
-        _startHideTimer();
-      }
-      if (mounted) setState(() {});
-    } else {
-      _isProgrammaticScrolling = false;
+    if (!mounted || _transitionToken != token) return;
+
+    _isProgrammaticScrolling = false;
+    _updateSwipePhysics();
+    _isSwiping = false;
+    _sessionController.setIsAutoAdvancing(false);
+    final currentFile = _playlistController.currentFile;
+    if (MediaViewerConstants.isImage(currentFile)) {
+      _startSlideshowTimerIfNeeded();
     }
+    if (_showUI) {
+      _startHideTimer();
+    }
+    setState(() {});
   }
 
   void _autoAdvanceToNext() {
@@ -993,7 +996,10 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     final swipeToSeekActive =
         !_scrollMode.isContinuous && _isCurrentItemSwipeToSeekEnabled;
     final shouldLock =
-        _multiTouchLock || _zoomInteractionLock || swipeToSeekActive;
+        _multiTouchLock ||
+        _zoomInteractionLock ||
+        _isProgrammaticScrolling ||
+        swipeToSeekActive;
     final desired = shouldLock
         ? const NeverScrollableScrollPhysics()
         : const BouncingScrollPhysics();
@@ -1204,6 +1210,31 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   void _handleTouchPointerDown(PointerDownEvent event) {
     if (event.kind != PointerDeviceKind.touch) return;
     _activeTouchPointers.add(event.pointer);
+    if (_activeTouchPointers.length == 1 && !_zoomInteractionLock) {
+      final toolbarConfig = ref
+          .read(fileManagerToolbarSettingsProvider(null))
+          .config
+          .mediaViewerToolbarConfig;
+      final currentFile = _playlistController.currentFile;
+      final edgeWidth =
+          _viewportWidth * MediaViewerConstants.tapToNavigateEdgeFraction;
+      if (toolbarConfig.tapEdgesToNavigate &&
+          !MediaViewerConstants.isAudio(currentFile) &&
+          edgeWidth > 0) {
+        final x = event.localPosition.dx;
+        final bool? next = x <= edgeWidth
+            ? false
+            : x >= _viewportWidth - edgeWidth
+            ? true
+            : null;
+        if (next != null) {
+          _edgeTapStartPositions[event.pointer] = event.localPosition;
+          _edgeTapDirections[event.pointer] = next;
+          _edgeTapStartedDuringTransition[event.pointer] =
+              _isProgrammaticScrolling;
+        }
+      }
+    }
     if (_activeTouchPointers.length == 1 &&
         _isPlaylistLoopEnabled &&
         !_zoomInteractionLock &&
@@ -1217,6 +1248,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     }
     if (_activeTouchPointers.length >= 2 && !_multiTouchLock) {
       _multiTouchLock = true;
+      _clearEdgeTapCandidates();
       _loopSwipeStartPositions.clear();
       _loopSwipeStartIndices.clear();
       _updateSwipePhysics();
@@ -1225,9 +1257,29 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
 
   void _handleTouchPointerUp(PointerEvent event) {
     if (event.kind != PointerDeviceKind.touch) return;
+    final edgeStart = _edgeTapStartPositions.remove(event.pointer);
+    final edgeDirection = _edgeTapDirections.remove(event.pointer);
+    final startedDuringTransition =
+        _edgeTapStartedDuringTransition.remove(event.pointer) ?? false;
     final start = _loopSwipeStartPositions.remove(event.pointer);
     final startIndex = _loopSwipeStartIndices.remove(event.pointer);
     _activeTouchPointers.remove(event.pointer);
+    if (event is PointerUpEvent &&
+        edgeStart != null &&
+        edgeDirection != null &&
+        _activeTouchPointers.isEmpty &&
+        mounted) {
+      final tolerance = startedDuringTransition
+          ? math.max(MediaViewerConstants.tapToNavigateMovementTolerance, 48.0)
+          : MediaViewerConstants.tapToNavigateMovementTolerance;
+      if ((event.localPosition - edgeStart).distance <= tolerance) {
+        if (edgeDirection) {
+          _navigateToNext();
+        } else {
+          _navigateToPrev();
+        }
+      }
+    }
     if (event is PointerUpEvent &&
         start != null &&
         startIndex != null &&
@@ -1243,6 +1295,31 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
       if (_scrollMode.isContinuous) _zoomInteractionLock = false;
       _updateSwipePhysics();
     }
+  }
+
+  void _handleTouchPointerMove(PointerMoveEvent event) {
+    final start = _edgeTapStartPositions[event.pointer];
+    if (start == null) return;
+    final startedDuringTransition =
+        _edgeTapStartedDuringTransition[event.pointer] ?? false;
+    final tolerance = startedDuringTransition
+        ? math.max(MediaViewerConstants.tapToNavigateMovementTolerance, 48.0)
+        : MediaViewerConstants.tapToNavigateMovementTolerance;
+    if ((event.localPosition - start).distance > tolerance) {
+      _clearEdgeTapCandidate(event.pointer);
+    }
+  }
+
+  void _clearEdgeTapCandidate(int pointer) {
+    _edgeTapStartPositions.remove(pointer);
+    _edgeTapDirections.remove(pointer);
+    _edgeTapStartedDuringTransition.remove(pointer);
+  }
+
+  void _clearEdgeTapCandidates() {
+    _edgeTapStartPositions.clear();
+    _edgeTapDirections.clear();
+    _edgeTapStartedDuringTransition.clear();
   }
 
   void _maybeWrapPlaylistSwipe(Offset start, int startIndex, Offset end) {
@@ -2203,13 +2280,6 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
               rotationQuarterTurns: _rotations[fileName] ?? 0,
               showUI: _showUI,
               tapEdgesToNavigate: gestureConfig.tapEdgesToNavigate,
-              onEdgeTap: (next) {
-                if (next) {
-                  _navigateToNext();
-                } else {
-                  _navigateToPrev();
-                }
-              },
               enableZoom: !_scrollMode.isContinuous,
               pinchZoomOutEnabled: gestureConfig.pinchZoomOutEnabled,
               minZoomScale: gestureConfig.minVideoZoomScale,
@@ -2240,13 +2310,6 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
               thumbnailCacheMode: widget.thumbnailCacheMode,
               showUI: _showUI,
               tapEdgesToNavigate: gestureConfig.tapEdgesToNavigate,
-              onEdgeTap: (next) {
-                if (next) {
-                  _navigateToNext();
-                } else {
-                  _navigateToPrev();
-                }
-              },
               enableZoom: !_scrollMode.isContinuous,
               onToggleUI: _setUIVisibility,
               skipSeconds: _doubleTapSkipSeconds,
@@ -2563,6 +2626,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
                 Listener(
                   behavior: HitTestBehavior.translucent,
                   onPointerDown: _handleTouchPointerDown,
+                  onPointerMove: _handleTouchPointerMove,
                   onPointerUp: _handleTouchPointerUp,
                   onPointerCancel: _handleTouchPointerUp,
                   child: ValueListenableBuilder<ScrollPhysics>(

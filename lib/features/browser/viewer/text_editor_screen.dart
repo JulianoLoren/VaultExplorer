@@ -10,7 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
-import 'package:vaultexplorer/core/theme/app_theme.dart';
+import 'package:vaultexplorer/core/theme/file_manager_skin_scope.dart';
 import 'package:vaultexplorer/core/utils/raw_entry.dart';
 import 'package:vaultexplorer/core/widgets/common_widgets.dart';
 import 'package:vaultexplorer/data/models/mounted_container.dart';
@@ -22,10 +22,11 @@ import 'package:vaultexplorer/features/browser/viewer/text_editor_formatters.dar
 import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_accessory_key_bar.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_appearance_sheet.dart';
-import 'package:vaultexplorer/core/utils/file_type_utils.dart';
 import 'package:vaultexplorer/features/browser/controllers/file_browser_navigation_controller.dart' show PathSegment;
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_find_panel.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/markdown_image.dart';
+import 'package:vaultexplorer/features/settings/file_manager_toolbar_settings_controller.dart';
+import 'package:vaultexplorer/data/models/file_manager_skin.dart';
 import 'package:vaultexplorer/features/browser/widgets/breadcrumb_bar.dart';
 import 'package:vaultexplorer/features/browser/widgets/fast_scrollbar.dart';
 
@@ -2025,44 +2026,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     return _unsupportedBinaryExtensions.contains(fileName.substring(dot + 1).toLowerCase());
   }
 
-  (IconData, Color) _fileIconAndColor(String fileName, ColorScheme cs) {
-    final ext = fileName.contains('.') ? fileName.split('.').last : '';
-    final vaultIcon = vaultIconForExt(ext) ?? vaultIconForExt(ext.toLowerCase());
-    final vaultColor = vaultColorForExt(ext) ?? vaultColorForExt(ext.toLowerCase());
-    if (vaultIcon != null) {
-      return (vaultIcon, vaultColor ?? cs.primary);
-    }
-    if (_isImageFile(fileName)) {
-      return (Icons.image_outlined, colorForFile(fileName));
-    }
-    final lower = fileName.toLowerCase();
-    if (lower.endsWith('.md') || lower.endsWith('.markdown')) {
-      return (Icons.article_outlined, colorForFile(fileName));
-    }
-    if (lower.endsWith('.json') ||
-        lower.endsWith('.xml') ||
-        lower.endsWith('.html') ||
-        lower.endsWith('.yaml') ||
-        lower.endsWith('.yml')) {
-      return (Icons.data_object_rounded, colorForFile(fileName));
-    }
-    if (lower.endsWith('.dart') ||
-        lower.endsWith('.js') ||
-        lower.endsWith('.ts') ||
-        lower.endsWith('.py') ||
-        lower.endsWith('.c') ||
-        lower.endsWith('.cpp') ||
-        lower.endsWith('.java') ||
-        lower.endsWith('.kt') ||
-        lower.endsWith('.go') ||
-        lower.endsWith('.rs') ||
-        lower.endsWith('.sh')) {
-      return (Icons.code_rounded, cs.primary);
-    }
-    return (iconForFile(fileName), colorForFile(fileName));
-  }
-
   Widget _buildProjectDrawer(ColorScheme cs) {
+    final settingsUri = widget.container.volId < 0
+        ? null
+        : widget.container.uri;
+    final skin = ref.watch(fileManagerToolbarSettingsProvider(settingsUri)).config.skin;
     return Drawer(
       child: SafeArea(
         child: Column(
@@ -2167,8 +2135,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
                       final isCurrentActive = fullPath == _activeTab.filePath;
                       final isUnsupported = _isUnsupportedBinaryFile(entry.name);
                       final (iconData, iconColor) = entry.isDir
-                          ? (Icons.folder_rounded, cs.primary)
-                          : _fileIconAndColor(entry.name, cs);
+                          ? (skin.folderIcon, skin.folderIconColor(cs))
+                          : (skin.fileIcon(entry.name), skin.fileIconColor(cs, entry.name));
+                      final itemStyle = skin.styleFor(isDir: entry.isDir);
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 2),
@@ -2183,21 +2152,45 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
                             visualDensity: VisualDensity.compact,
                             dense: true,
                             onLongPress: () => _showDrawerItemContextMenu(entry, fullPath),
-                            leading: Icon(
-                              iconData,
-                              color: isCurrentActive
-                                  ? cs.primary
-                                  : (isUnsupported ? iconColor.withValues(alpha: 0.38) : iconColor),
-                              size: 20,
+                            leading: Container(
+                              width: 32,
+                              height: 32,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isCurrentActive
+                                    ? cs.primaryContainer
+                                    : switch (itemStyle.container) {
+                                        SkinContainerStyle.filled => entry.isDir
+                                            ? cs.secondaryContainer.withValues(alpha: 0.4)
+                                            : cs.surfaceContainerHighest,
+                                        SkinContainerStyle.outlined || SkinContainerStyle.none => Colors.transparent,
+                                      },
+                                borderRadius: BorderRadius.circular(10),
+                                border: itemStyle.container == SkinContainerStyle.outlined
+                                    ? Border.all(
+                                        color: isCurrentActive ? cs.primary : cs.outlineVariant,
+                                        width: 1.2,
+                                      )
+                                    : null,
+                              ),
+                              child: Icon(
+                                iconData,
+                                color: isCurrentActive
+                                    ? cs.primary
+                                    : (isUnsupported ? iconColor.withValues(alpha: 0.38) : iconColor),
+                                size: 20,
+                              ),
                             ),
                             title: Text(
                               entry.name,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: (isCurrentActive || isOpen) ? FontWeight.w600 : FontWeight.normal,
-                                color: isUnsupported
-                                    ? cs.onSurface.withValues(alpha: 0.45)
-                                    : (isCurrentActive ? cs.onSecondaryContainer : cs.onSurface),
+                                color: isCurrentActive
+                                    ? cs.onSecondaryContainer
+                                    : (isUnsupported
+                                        ? (itemStyle.nameColor ?? cs.onSurface).withValues(alpha: 0.45)
+                                        : itemStyle.nameColor ?? cs.onSurface),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -2587,7 +2580,8 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
                               ],
                             );
                           }
-                        : null,
+                        : (context, editingController, chunkController, notifier) =>
+                          const SizedBox(width: 8),
                   ),
                 ),
               ),
