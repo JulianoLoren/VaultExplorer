@@ -2,6 +2,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:vaultexplorer/features/browser/mixins/sort_mixin.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 
+IconData sortIconFor(SortBy sortBy) => switch (sortBy) {
+  SortBy.name => Icons.sort_by_alpha_rounded,
+  SortBy.size => Icons.data_usage_rounded,
+  SortBy.extension => Icons.category_outlined,
+  SortBy.date => Icons.schedule_rounded,
+};
+
 /// The sort field options, shared between [SortMenuButton]'s own MenuAnchor
 /// and any other cascade (e.g. the FAB toolbar's "More" menu) that wants to
 /// embed the same choices as a [SubmenuButton]'s `menuChildren`.
@@ -14,17 +21,22 @@ List<Widget> buildSortMenuItems({
 }) {
   final l10n = context.l10n;
   return [
-    for (final (field, label, icon) in [
-      (SortBy.name, l10n.sortFieldName, Icons.sort_by_alpha_rounded),
-      (SortBy.size, l10n.sortFieldSize, Icons.data_usage_rounded),
-      (SortBy.extension, l10n.sortFieldType, Icons.category_outlined),
-      (SortBy.date, l10n.sortFieldDate, Icons.schedule_rounded),
+    for (final (field, label) in [
+      (SortBy.name, l10n.sortFieldName),
+      (SortBy.size, l10n.sortFieldSize),
+      (SortBy.extension, l10n.sortFieldType),
+      (SortBy.date, l10n.sortFieldDate),
     ])
       MenuItemButton(
-        leadingIcon: Icon(icon, color: sortBy == field ? cs.primary : cs.onSurfaceVariant),
+        leadingIcon: Icon(
+          sortIconFor(field),
+          color: sortBy == field ? cs.primary : cs.onSurfaceVariant,
+        ),
         trailingIcon: sortBy == field
             ? Icon(
-                sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                sortAscending
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
                 size: 16,
                 color: cs.primary,
               )
@@ -70,7 +82,7 @@ class _SortMenuButtonState extends State<SortMenuButton> {
     final cs = Theme.of(context).colorScheme;
     return MenuAnchor(
       builder: (context, controller, child) => IconButton(
-        icon: const Icon(Icons.sort_by_alpha_rounded),
+        icon: Icon(sortIconFor(widget.sortBy)),
         tooltip: context.l10n.sortOptionsTooltip,
         onPressed: () {
           if (controller.isOpen) {

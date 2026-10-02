@@ -108,7 +108,7 @@ class FileManagerMoreMenuButton extends StatelessWidget {
           );
         case FileManagerAction.sort:
           return SubmenuButton(
-            leadingIcon: Icon(Icons.sort_by_alpha_rounded, color: cs.primary),
+            leadingIcon: Icon(sortIconFor(sortBy), color: cs.primary),
             menuChildren: buildSortMenuItems(
               context: context,
               cs: cs,
@@ -266,7 +266,7 @@ class FileManagerMoreMenuButton extends StatelessWidget {
 
       case FileManagerAction.sort:
         return menuFab(
-          icon: Icon(Icons.sort_by_alpha_rounded, color: cs.onSurface),
+          icon: Icon(sortIconFor(sortBy), color: cs.onSurface),
           tooltip: l10n.sortOptionsTooltip,
           menuChildren: buildSortMenuItems(
             context: context,
