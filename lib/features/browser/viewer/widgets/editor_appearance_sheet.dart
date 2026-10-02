@@ -163,6 +163,8 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
               notifier.setShowLineNumbers(true);
               notifier.setRelativeLineNumbers(false);
               notifier.setShowStatusBar(true);
+              notifier.setShowTabBar(true);
+              notifier.setAutoHideTabBar(true);
               notifier.setShowAccessoryBar(true);
               notifier.setShowAccessorySymbols(true);
               notifier.setShowAccessoryActions(true);
@@ -313,6 +315,36 @@ class _EditorAppearanceScreenState extends ConsumerState<EditorAppearanceScreen>
                         ],
                       ),
                     ),
+
+                    SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      value: prefs.showTabBar,
+                      onChanged: notifier.setShowTabBar,
+                      title: Text(
+                        context.l10n.textEditorShowTabBarLabel,
+                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        context.l10n.textEditorShowTabBarDescription,
+                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      secondary: Icon(Icons.tab_rounded, color: cs.primary),
+                    ),
+                    if (prefs.showTabBar)
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        value: prefs.autoHideTabBar,
+                        onChanged: notifier.setAutoHideTabBar,
+                        title: Text(
+                          context.l10n.textEditorAutoHideTabBarLabel,
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          context.l10n.textEditorAutoHideTabBarDescription,
+                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        secondary: Icon(Icons.unfold_less_rounded, color: cs.primary),
+                      ),
 
                     // Show Line Numbers Switch
                     SwitchListTile(

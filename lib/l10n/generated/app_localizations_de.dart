@@ -9463,4 +9463,25 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'Nach dem letzten Eintrag beim Navigieren oder Abspielen wieder beim ersten beginnen.';
+
+  @override
+  String get textEditorEncodingTooltip => 'Textkodierung';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'Einige Zeichen können mit dieser Kodierung nicht gespeichert werden.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'Editor-Tabs anzeigen';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'Tabs für geöffnete Dateien anzeigen oder ausblenden. Du kannst Dateien weiterhin über die Seitenleiste öffnen.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel => 'Tabs beim Scrollen ausblenden';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'Die Tab-Leiste beim Scrollen nach unten ausblenden und beim Scrollen nach oben wieder einblenden.';
 }

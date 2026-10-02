@@ -2588,5 +2588,11 @@
   "tapEdgesToNavigateTitle": "انقر على الحواف للتنقل",
   "tapEdgesToNavigateSubtitle": "انقر على الحافة اليسرى أو اليمنى لعرض العنصر السابق أو التالي.",
   "loopPlaylistTitle": "تكرار قائمة التشغيل",
-  "loopPlaylistSubtitle": "انتقل إلى العنصر الأول بعد الأخير أثناء التنقل أو تشغيل القائمة."
+  "loopPlaylistSubtitle": "انتقل إلى العنصر الأول بعد الأخير أثناء التنقل أو تشغيل القائمة.",
+  "textEditorEncodingTooltip": "ترميز النص",
+  "textEditorEncodingEncodeError": "يتعذر حفظ بعض الأحرف باستخدام هذا الترميز.",
+  "textEditorShowTabBarLabel": "إظهار علامات تبويب المحرر",
+  "textEditorShowTabBarDescription": "إظهار أو إخفاء علامات تبويب الملفات المفتوحة. يمكنك التبديل بين الملفات من الشريط الجانبي.",
+  "textEditorAutoHideTabBarLabel": "إخفاء علامات التبويب عند التمرير",
+  "textEditorAutoHideTabBarDescription": "إخفاء شريط علامات التبويب عند التمرير لأسفل، والتمرير لأعلى لإظهاره."
 }

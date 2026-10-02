@@ -2588,5 +2588,11 @@
   "tapEdgesToNavigateTitle": "Tocca i bordi per navigare",
   "tapEdgesToNavigateSubtitle": "Tocca il bordo sinistro o destro per mostrare l’elemento precedente o successivo.",
   "loopPlaylistTitle": "Ripeti playlist",
-  "loopPlaylistSubtitle": "Dopo l’ultimo elemento, torna al primo durante la navigazione o la riproduzione."
+  "loopPlaylistSubtitle": "Dopo l’ultimo elemento, torna al primo durante la navigazione o la riproduzione.",
+  "textEditorEncodingTooltip": "Codifica del testo",
+  "textEditorEncodingEncodeError": "Alcuni caratteri non possono essere salvati con questa codifica.",
+  "textEditorShowTabBarLabel": "Mostra schede dell’editor",
+  "textEditorShowTabBarDescription": "Mostra o nascondi le schede dei file aperti. Puoi comunque cambiare file dalla barra laterale.",
+  "textEditorAutoHideTabBarLabel": "Nascondi schede durante lo scorrimento",
+  "textEditorAutoHideTabBarDescription": "Nascondi la barra delle schede scorrendo verso il basso e mostrala di nuovo scorrendo verso l’alto."
 }

@@ -2588,5 +2588,11 @@
   "tapEdgesToNavigateTitle": "Toque nas bordas para navegar",
   "tapEdgesToNavigateSubtitle": "Toque na borda esquerda ou direita para mostrar a mídia anterior ou seguinte.",
   "loopPlaylistTitle": "Repetir lista de reprodução",
-  "loopPlaylistSubtitle": "Volte ao primeiro item após o último ao navegar ou reproduzir a lista."
+  "loopPlaylistSubtitle": "Volte ao primeiro item após o último ao navegar ou reproduzir a lista.",
+  "textEditorEncodingTooltip": "Codificação de texto",
+  "textEditorEncodingEncodeError": "Alguns caracteres não podem ser salvos com esta codificação.",
+  "textEditorShowTabBarLabel": "Mostrar abas do editor",
+  "textEditorShowTabBarDescription": "Mostrar ou ocultar abas dos arquivos abertos. Você também pode alternar entre arquivos pela barra lateral.",
+  "textEditorAutoHideTabBarLabel": "Ocultar abas ao rolar",
+  "textEditorAutoHideTabBarDescription": "Ocultar a barra de abas ao rolar para baixo e mostrá-la novamente ao rolar para cima."
 }

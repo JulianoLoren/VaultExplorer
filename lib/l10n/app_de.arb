@@ -2588,5 +2588,11 @@
   "tapEdgesToNavigateTitle": "Zum Navigieren auf die Ränder tippen",
   "tapEdgesToNavigateSubtitle": "Tippe auf den linken oder rechten Rand, um das vorherige oder nächste Medium anzuzeigen.",
   "loopPlaylistTitle": "Wiedergabeliste wiederholen",
-  "loopPlaylistSubtitle": "Nach dem letzten Eintrag beim Navigieren oder Abspielen wieder beim ersten beginnen."
+  "loopPlaylistSubtitle": "Nach dem letzten Eintrag beim Navigieren oder Abspielen wieder beim ersten beginnen.",
+  "textEditorEncodingTooltip": "Textkodierung",
+  "textEditorEncodingEncodeError": "Einige Zeichen können mit dieser Kodierung nicht gespeichert werden.",
+  "textEditorShowTabBarLabel": "Editor-Tabs anzeigen",
+  "textEditorShowTabBarDescription": "Tabs für geöffnete Dateien anzeigen oder ausblenden. Du kannst Dateien weiterhin über die Seitenleiste öffnen.",
+  "textEditorAutoHideTabBarLabel": "Tabs beim Scrollen ausblenden",
+  "textEditorAutoHideTabBarDescription": "Die Tab-Leiste beim Scrollen nach unten ausblenden und beim Scrollen nach oben wieder einblenden."
 }

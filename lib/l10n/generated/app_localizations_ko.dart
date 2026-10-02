@@ -8963,4 +8963,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loopPlaylistSubtitle => '이동하거나 재생할 때 마지막 항목 다음에 첫 항목으로 돌아갑니다.';
+
+  @override
+  String get textEditorEncodingTooltip => '텍스트 인코딩';
+
+  @override
+  String get textEditorEncodingEncodeError => '이 인코딩으로 저장할 수 없는 문자가 포함되어 있습니다.';
+
+  @override
+  String get textEditorShowTabBarLabel => '편집기 탭 표시';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      '열린 파일의 탭을 표시하거나 숨깁니다. 사이드바에서도 파일을 전환할 수 있습니다.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel => '스크롤할 때 탭 숨기기';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      '아래로 스크롤하면 탭 표시줄을 숨기고 위로 스크롤하면 다시 표시합니다.';
 }

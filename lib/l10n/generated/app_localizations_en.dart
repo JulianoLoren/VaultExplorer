@@ -9321,4 +9321,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'Continue from the first item after the last when navigating or playing through the playlist.';
+
+  @override
+  String get textEditorEncodingTooltip => 'Text encoding';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'Some characters cannot be saved using this encoding.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'Show editor tabs';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'Show or hide tabs for open files. You can still switch files from the sidebar.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel => 'Hide tabs on scroll';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'Hide the tab bar when scrolling down; scroll up to show it again.';
 }

@@ -48,6 +48,16 @@ class TextEditorAppearanceNotifier extends Notifier<TextEditorAppearancePrefs> {
     _service.save(state);
   }
 
+  void setShowTabBar(bool enabled) {
+    state = state.copyWith(showTabBar: enabled);
+    _service.save(state);
+  }
+
+  void setAutoHideTabBar(bool enabled) {
+    state = state.copyWith(autoHideTabBar: enabled);
+    _service.save(state);
+  }
+
   void setShowAccessoryBar(bool enabled) {
     state = state.copyWith(showAccessoryBar: enabled);
     _service.save(state);

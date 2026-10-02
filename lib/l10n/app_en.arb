@@ -11871,5 +11871,29 @@
   "loopPlaylistSubtitle": "Continue from the first item after the last when navigating or playing through the playlist.",
   "@loopPlaylistSubtitle": {
     "description": "Explains that playlist navigation and playback advance wrap to the beginning."
+  },
+  "textEditorEncodingTooltip": "Text encoding",
+  "@textEditorEncodingTooltip": {
+    "description": "Tooltip for choosing the text file encoding in the editor."
+  },
+  "textEditorEncodingEncodeError": "Some characters cannot be saved using this encoding.",
+  "@textEditorEncodingEncodeError": {
+    "description": "Shown when the selected encoding cannot represent edited text."
+  },
+  "textEditorShowTabBarLabel": "Show editor tabs",
+  "@textEditorShowTabBarLabel": {
+    "description": "Setting for showing or hiding the open-file tab row in the editor."
+  },
+  "textEditorShowTabBarDescription": "Show or hide tabs for open files. You can still switch files from the sidebar.",
+  "@textEditorShowTabBarDescription": {
+    "description": "Explains that the editor sidebar can still be used to navigate when tabs are hidden."
+  },
+  "textEditorAutoHideTabBarLabel": "Hide tabs on scroll",
+  "@textEditorAutoHideTabBarLabel": {
+    "description": "Setting for automatically hiding the editor tab row while scrolling down."
+  },
+  "textEditorAutoHideTabBarDescription": "Hide the tab bar when scrolling down; scroll up to show it again.",
+  "@textEditorAutoHideTabBarDescription": {
+    "description": "Explains how scrolling down hides the editor tabs and scrolling up reveals them."
   }
 }

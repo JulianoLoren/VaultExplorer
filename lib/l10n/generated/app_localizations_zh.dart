@@ -8842,4 +8842,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get loopPlaylistSubtitle => '导航或播放列表时，到达末尾后继续从第一个项目开始。';
+
+  @override
+  String get textEditorEncodingTooltip => '文本编码';
+
+  @override
+  String get textEditorEncodingEncodeError => '部分字符无法使用此编码保存。';
+
+  @override
+  String get textEditorShowTabBarLabel => '显示编辑器标签页';
+
+  @override
+  String get textEditorShowTabBarDescription => '显示或隐藏已打开文件的标签页。你也可以通过侧边栏切换文件。';
+
+  @override
+  String get textEditorAutoHideTabBarLabel => '滚动时隐藏标签页';
+
+  @override
+  String get textEditorAutoHideTabBarDescription => '向下滚动时隐藏标签栏，向上滚动时重新显示。';
 }

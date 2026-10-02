@@ -9459,4 +9459,26 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'Dopo l’ultimo elemento, torna al primo durante la navigazione o la riproduzione.';
+
+  @override
+  String get textEditorEncodingTooltip => 'Codifica del testo';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'Alcuni caratteri non possono essere salvati con questa codifica.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'Mostra schede dell’editor';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'Mostra o nascondi le schede dei file aperti. Puoi comunque cambiare file dalla barra laterale.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel =>
+      'Nascondi schede durante lo scorrimento';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'Nascondi la barra delle schede scorrendo verso il basso e mostrala di nuovo scorrendo verso l’alto.';
 }

@@ -9532,4 +9532,26 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'Після останнього елемента переходити до першого під час навігації або відтворення.';
+
+  @override
+  String get textEditorEncodingTooltip => 'Кодування тексту';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'Деякі символи не можна зберегти в цьому кодуванні.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'Показувати вкладки редактора';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'Показувати або приховувати вкладки відкритих файлів. Перемикатися між файлами також можна на бічній панелі.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel =>
+      'Приховувати вкладки під час прокручування';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'Приховувати панель вкладок під час прокручування вниз і показувати її знову під час прокручування вгору.';
 }

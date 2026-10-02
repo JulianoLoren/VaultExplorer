@@ -586,6 +586,7 @@ open class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        TextEncodingChannel.register(flutterEngine.dartExecutor.binaryMessenger)
         resizeExecutorPools()
         nativePlayerManager.setTextureRegistry(flutterEngine.renderer)
         vaultCameraPlugin = com.aeidolon.vaultexplorer.camera.VaultCameraPlugin(this, flutterEngine.dartExecutor.binaryMessenger, flutterEngine.renderer)

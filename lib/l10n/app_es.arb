@@ -2588,5 +2588,11 @@
   "tapEdgesToNavigateTitle": "Tocar los bordes para navegar",
   "tapEdgesToNavigateSubtitle": "Toca el borde izquierdo o derecho para mostrar el elemento multimedia anterior o siguiente.",
   "loopPlaylistTitle": "Repetir lista de reproducción",
-  "loopPlaylistSubtitle": "Volver al primer elemento después del último al navegar o reproducir la lista."
+  "loopPlaylistSubtitle": "Volver al primer elemento después del último al navegar o reproducir la lista.",
+  "textEditorEncodingTooltip": "Codificación de texto",
+  "textEditorEncodingEncodeError": "Algunos caracteres no se pueden guardar con esta codificación.",
+  "textEditorShowTabBarLabel": "Mostrar pestañas del editor",
+  "textEditorShowTabBarDescription": "Mostrar u ocultar las pestañas de los archivos abiertos. También puedes cambiar de archivo desde la barra lateral.",
+  "textEditorAutoHideTabBarLabel": "Ocultar pestañas al desplazarse",
+  "textEditorAutoHideTabBarDescription": "Ocultar la barra de pestañas al desplazarte hacia abajo y mostrarla de nuevo al desplazarte hacia arriba."
 }

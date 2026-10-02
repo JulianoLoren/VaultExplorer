@@ -15690,6 +15690,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue from the first item after the last when navigating or playing through the playlist.'**
   String get loopPlaylistSubtitle;
+
+  /// Tooltip for choosing the text file encoding in the editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Text encoding'**
+  String get textEditorEncodingTooltip;
+
+  /// Shown when the selected encoding cannot represent edited text.
+  ///
+  /// In en, this message translates to:
+  /// **'Some characters cannot be saved using this encoding.'**
+  String get textEditorEncodingEncodeError;
+
+  /// Setting for showing or hiding the open-file tab row in the editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Show editor tabs'**
+  String get textEditorShowTabBarLabel;
+
+  /// Explains that the editor sidebar can still be used to navigate when tabs are hidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Show or hide tabs for open files. You can still switch files from the sidebar.'**
+  String get textEditorShowTabBarDescription;
+
+  /// Setting for automatically hiding the editor tab row while scrolling down.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide tabs on scroll'**
+  String get textEditorAutoHideTabBarLabel;
+
+  /// Explains how scrolling down hides the editor tabs and scrolling up reveals them.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the tab bar when scrolling down; scroll up to show it again.'**
+  String get textEditorAutoHideTabBarDescription;
 }
 
 class _AppLocalizationsDelegate

@@ -9539,4 +9539,26 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'Revenir au premier élément après le dernier pendant la navigation ou la lecture.';
+
+  @override
+  String get textEditorEncodingTooltip => 'Encodage du texte';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'Certains caractères ne peuvent pas être enregistrés avec cet encodage.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'Afficher les onglets de l’éditeur';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'Afficher ou masquer les onglets des fichiers ouverts. Vous pouvez toujours changer de fichier depuis la barre latérale.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel =>
+      'Masquer les onglets au défilement';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'Masquer la barre des onglets en faisant défiler vers le bas et la réafficher en faisant défiler vers le haut.';
 }

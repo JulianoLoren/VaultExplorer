@@ -9477,4 +9477,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'Volver al primer elemento después del último al navegar o reproducir la lista.';
+
+  @override
+  String get textEditorEncodingTooltip => 'Codificación de texto';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'Algunos caracteres no se pueden guardar con esta codificación.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'Mostrar pestañas del editor';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'Mostrar u ocultar las pestañas de los archivos abiertos. También puedes cambiar de archivo desde la barra lateral.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel => 'Ocultar pestañas al desplazarse';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'Ocultar la barra de pestañas al desplazarte hacia abajo y mostrarla de nuevo al desplazarte hacia arriba.';
 }

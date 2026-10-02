@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/rendering.dart' show AxisDirection;
@@ -18,6 +17,7 @@ import 'package:vaultexplorer/data/services/text_editor_appearance_service.dart'
 import 'package:vaultexplorer/features/browser/viewer/markdown/markdown_body_view.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_appearance_provider.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_chrome.dart';
+import 'package:vaultexplorer/features/browser/viewer/editor_text_encoding.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_formatters.dart';
 import 'package:vaultexplorer/features/browser/viewer/text_editor_language.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/editor_accessory_key_bar.dart';
@@ -56,6 +56,8 @@ class EditorTab {
   String lastKnownText = '';
   Object? lastCodeLines;
   bool showMarkdownPreview;
+  EditorTextEncoding encoding = EditorTextEncoding.utf8;
+  bool encodingWasChosen = false;
   Timer? autosaveTimer;
   VoidCallback? textListener;
 
@@ -102,13 +104,15 @@ class TextEditorScreen extends ConsumerStatefulWidget {
   ConsumerState<TextEditorScreen> createState() => _TextEditorScreenState();
 }
 
-class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with WidgetsBindingObserver {
+class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final List<EditorTab> _tabs = [];
   int _activeTabIndex = 0;
 
   final ScrollController _tabScrollController = ScrollController();
   final List<GlobalKey> _tabKeys = [];
+  late final AnimationController _tabBarAnimationController;
 
   // Pinch-to-zoom state
   final Map<int, Offset> _pinchPointers = {};
@@ -144,6 +148,11 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
   @override
   void initState() {
     super.initState();
+    _tabBarAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+      value: 1,
+    )..addListener(_onTabBarAnimationTick);
     _readOnly = widget.container.readOnly;
     WidgetsBinding.instance.addObserver(this);
     _toolbarController = MobileSelectionToolbarController(
@@ -282,7 +291,12 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     if (mounted) setState(() {});
   }
 
-  Future<void> _loadFileForTab(EditorTab tab) async {
+  Future<void> _loadFileForTab(
+    EditorTab tab, {
+    EditorTextEncoding? encoding,
+    bool markDirty = false,
+  }) async {
+    final l10n = context.l10n;
     setState(() {
       tab.isLoading = true;
       tab.hasError = false;
@@ -290,15 +304,23 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     });
 
     try {
-      final bytes = await ref.read(vaultFileIoApiProvider).readWholeFile(widget.container, tab.filePath);
+      final bytes = await ref
+          .read(vaultFileIoApiProvider)
+          .readWholeFile(widget.container, tab.filePath);
       if (bytes == null) {
-        throw Exception(context.l10n.textEditorDecryptFailedMessage);
+        throw Exception(l10n.textEditorDecryptFailedMessage);
+      }
+      if (encoding != null) {
+        tab.encoding = encoding;
+        tab.encodingWasChosen = true;
+      } else if (!tab.encodingWasChosen) {
+        tab.encoding = EditorTextEncoding.detect(bytes);
       }
       String text;
       try {
-        text = utf8.decode(bytes);
+        text = await tab.encoding.decode(bytes);
       } on FormatException {
-        throw FormatException(context.l10n.textEditorInvalidTextFileMessage);
+        throw FormatException(l10n.textEditorInvalidTextFileMessage);
       }
 
       if (!mounted) return;
@@ -310,6 +332,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
       tab.lineCount = tab.codeController.lineCount;
       tab.charCount = text.length;
       tab.isLoading = false;
+      tab.isDirty = markDirty;
       if (mounted) setState(() {});
     } catch (e) {
       if (!mounted) return;
@@ -336,6 +359,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _tabBarAnimationController.dispose();
     _tabScrollController.dispose();
     for (final tab in _tabs) {
       _unbindTabController(tab);
@@ -343,6 +367,54 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     }
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onTabBarAnimationTick() {
+    if (mounted) setState(() {});
+  }
+
+  void _animateTabBar(double value) {
+    _tabBarAnimationController.animateTo(
+      value,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  bool _handleTabBarScroll(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    final appearance = ref.read(textEditorAppearanceProvider);
+    if (!appearance.showTabBar || !appearance.autoHideTabBar) return false;
+
+    final canScroll = notification.metrics.maxScrollExtent > 0;
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0.0;
+      if (canScroll && notification.metrics.pixels <= 0 && delta <= 0) {
+        _tabBarAnimationController.value = 1;
+      } else if (delta != 0) {
+        final nextValue = (_tabBarAnimationController.value - delta / 42)
+            .clamp(0.0, 1.0);
+        _tabBarAnimationController.value = nextValue;
+      }
+    } else if (notification is OverscrollNotification) {
+      final delta = notification.overscroll;
+      if (delta != 0) {
+        final nextValue = (_tabBarAnimationController.value - delta / 42)
+            .clamp(0.0, 1.0);
+        _tabBarAnimationController.value = nextValue;
+      }
+    } else if (notification is ScrollEndNotification) {
+      final double target;
+      if (canScroll && notification.metrics.pixels <= 0) {
+        target = 1;
+      } else if (_tabBarAnimationController.value > 0 &&
+          _tabBarAnimationController.value < 1) {
+        target = _tabBarAnimationController.value >= 0.5 ? 1 : 0;
+      } else {
+        return false;
+      }
+      _animateTabBar(target);
+    }
+    return false;
   }
 
   void _onTabTextChanged(EditorTab tab) {
@@ -414,8 +486,70 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     }
   }
 
+  Future<void> _showEncodingPicker(EditorTab tab) async {
+    final encodings = await EditorTextEncoding.available();
+    if (!mounted) return;
+    final encoding = await showDialog<EditorTextEncoding>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(dialogContext.l10n.textEditorEncodingTooltip),
+        children: [
+          for (final option in encodings)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(option),
+              child: Row(
+                children: [
+                  Expanded(child: Text(option.label)),
+                  if (tab.encoding.name == option.name)
+                    Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Theme.of(dialogContext).colorScheme.primary,
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (encoding != null) await _changeEncoding(tab, encoding);
+  }
+
+  Future<void> _changeEncoding(
+    EditorTab tab,
+    EditorTextEncoding encoding,
+  ) async {
+    if (tab.encoding == encoding && !tab.hasError) return;
+    if (tab.isDirty) {
+      setState(() {
+        tab.encoding = encoding;
+        tab.encodingWasChosen = true;
+      });
+      return;
+    }
+    await _loadFileForTab(tab, encoding: encoding, markDirty: true);
+  }
+
+  Future<Uint8List?> _encodeTabContent(EditorTab tab) async {
+    try {
+      return await tab.encoding.encode(tab.codeController.text);
+    } on FormatException {
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          message: context.l10n.textEditorEncodingEncodeError,
+          tone: AppBannerTone.error,
+        );
+      }
+      return null;
+    }
+  }
+
   Future<bool> _saveFile(EditorTab tab, {bool isAutosave = false}) async {
     tab.autosaveTimer?.cancel();
+
+    final encodedContent = await _encodeTabContent(tab);
+    if (encodedContent == null) return false;
 
     setState(() {
       if (isAutosave) {
@@ -429,7 +563,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
     final ok = await ref.read(vaultFileIoApiProvider).writeWholeFile(
           widget.container,
           tab.filePath,
-          Uint8List.fromList(utf8.encode(content)),
+          encodedContent,
         );
 
     if (ok) {
@@ -1105,11 +1239,12 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
       if (overwrite != true) return;
     }
 
-    final content = currentTab.codeController.text;
+    final encodedContent = await _encodeTabContent(currentTab);
+    if (encodedContent == null) return;
     final ok = await ref.read(vaultFileIoApiProvider).writeWholeFile(
           widget.container,
           newFilePath,
-          Uint8List.fromList(utf8.encode(content)),
+          encodedContent,
         );
 
     if (ok && mounted) {
@@ -1540,6 +1675,17 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
           tab.autosaveTimer = null;
         }
       }
+
+      if (previous?.showTabBar != next.showTabBar ||
+          previous?.autoHideTabBar != next.autoHideTabBar) {
+        if (!next.showTabBar) {
+          _animateTabBar(0);
+        } else if (!next.autoHideTabBar ||
+            previous?.showTabBar == false ||
+            previous?.autoHideTabBar == false) {
+          _animateTabBar(1);
+        }
+      }
     });
 
     final anyDirty = _tabs.any((t) => t.isDirty);
@@ -1601,6 +1747,27 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
           ),
           title: Text(activeTab.fileName),
           actions: [
+            if (!activeTab.isLoading && activeTab.hasError)
+              PopupMenuButton<String>(
+                tooltip: context.l10n.textEditorMoreActionsTooltip,
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (value) {
+                  if (value == 'encoding') _showEncodingPicker(activeTab);
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'encoding',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.translate_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(context.l10n.textEditorEncodingTooltip)),
+                        Text(activeTab.encoding.label),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             if (!activeTab.isLoading && !activeTab.hasError) ...[
               if (activeTab.isMarkdownFile) ...[
                 if (!activeTab.showMarkdownPreview && !_readOnly)
@@ -1666,6 +1833,9 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
                     case 'minify':
                       _runFormatter(minifyJson);
                       break;
+                    case 'encoding':
+                      _showEncodingPicker(activeTab);
+                      break;
                     case 'appearance':
                       showEditorAppearanceSheet(context);
                       break;
@@ -1724,6 +1894,17 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
                     ),
                   ),
                   const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'encoding',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.translate_rounded, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(context.l10n.textEditorEncodingTooltip)),
+                        Text(activeTab.encoding.label),
+                      ],
+                    ),
+                  ),
                   PopupMenuItem(
                     value: 'wordWrap',
                     child: Row(
@@ -1832,10 +2013,20 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
               ),
             ],
           ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(42),
-            child: _buildTabBar(cs),
-          ),
+          bottom: appearance.showTabBar || _tabBarAnimationController.value > 0
+              ? PreferredSize(
+                  preferredSize: Size.fromHeight(
+                    42 * _tabBarAnimationController.value,
+                  ),
+                  child: ClipRect(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      heightFactor: _tabBarAnimationController.value,
+                      child: _buildTabBar(cs),
+                    ),
+                  ),
+                )
+              : null,
         ),
         // Keeps the last lines clear of the gesture pill / display cutouts.
         // The Scaffold already strips the bottom inset from the body's
@@ -1843,7 +2034,10 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
         // own), so this never double-pads.
         body: SafeArea(
           top: false,
-          child: _buildBody(cs, chrome.theme.textTheme, syntaxStyle),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _handleTabBarScroll,
+            child: _buildBody(cs, chrome.theme.textTheme, syntaxStyle),
+          ),
         ),
         bottomNavigationBar: activeTab.isLoading || activeTab.hasError || !appearance.showStatusBar
             ? null
@@ -2581,7 +2775,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
                             );
                           }
                         : (context, editingController, chunkController, notifier) =>
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                   ),
                 ),
               ),
@@ -2650,7 +2844,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen> with Widget
         children: [
           Expanded(
             child: Text(
-              '$posStr${context.l10n.linesCount(activeTab.lineCount)}  |  ${context.l10n.charsCount(activeTab.charCount)}',
+              '${activeTab.encoding.label}  |  $posStr${context.l10n.linesCount(activeTab.lineCount)}  |  ${context.l10n.charsCount(activeTab.charCount)}',
               style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

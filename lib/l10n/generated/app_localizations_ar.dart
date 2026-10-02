@@ -9516,4 +9516,26 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'انتقل إلى العنصر الأول بعد الأخير أثناء التنقل أو تشغيل القائمة.';
+
+  @override
+  String get textEditorEncodingTooltip => 'ترميز النص';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'يتعذر حفظ بعض الأحرف باستخدام هذا الترميز.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'إظهار علامات تبويب المحرر';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'إظهار أو إخفاء علامات تبويب الملفات المفتوحة. يمكنك التبديل بين الملفات من الشريط الجانبي.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel =>
+      'إخفاء علامات التبويب عند التمرير';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'إخفاء شريط علامات التبويب عند التمرير لأسفل، والتمرير لأعلى لإظهاره.';
 }

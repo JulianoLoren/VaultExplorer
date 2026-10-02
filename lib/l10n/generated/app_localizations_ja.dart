@@ -8965,4 +8965,24 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get loopPlaylistSubtitle => '移動中または再生中に最後の項目の後で最初の項目に戻ります。';
+
+  @override
+  String get textEditorEncodingTooltip => 'テキストのエンコード';
+
+  @override
+  String get textEditorEncodingEncodeError => 'このエンコードでは保存できない文字が含まれています。';
+
+  @override
+  String get textEditorShowTabBarLabel => 'エディターのタブを表示';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      '開いているファイルのタブを表示または非表示にします。サイドバーからファイルを切り替えることもできます。';
+
+  @override
+  String get textEditorAutoHideTabBarLabel => 'スクロール時にタブを隠す';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      '下にスクロールするとタブバーを隠し、上にスクロールすると再表示します。';
 }

@@ -9463,4 +9463,25 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get loopPlaylistSubtitle =>
       'Volte ao primeiro item após o último ao navegar ou reproduzir a lista.';
+
+  @override
+  String get textEditorEncodingTooltip => 'Codificação de texto';
+
+  @override
+  String get textEditorEncodingEncodeError =>
+      'Alguns caracteres não podem ser salvos com esta codificação.';
+
+  @override
+  String get textEditorShowTabBarLabel => 'Mostrar abas do editor';
+
+  @override
+  String get textEditorShowTabBarDescription =>
+      'Mostrar ou ocultar abas dos arquivos abertos. Você também pode alternar entre arquivos pela barra lateral.';
+
+  @override
+  String get textEditorAutoHideTabBarLabel => 'Ocultar abas ao rolar';
+
+  @override
+  String get textEditorAutoHideTabBarDescription =>
+      'Ocultar a barra de abas ao rolar para baixo e mostrá-la novamente ao rolar para cima.';
 }
