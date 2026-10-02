@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
+import 'package:vaultexplorer/core/utils/sha256.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -115,13 +117,16 @@ String derivedKeyPathForUri(String uri) =>
     uri.startsWith('usb:') ? uri.substring('usb:'.length) : uri;
 
 class ContainerRepository {
-  ContainerRepository._(this._clearDerivedKey);
-  ContainerRepository.withCryptoApi(VaultCryptoApi cryptoApi)
-    : this._(cryptoApi.clearDerivedKey);
+  ContainerRepository._(this._clearDerivedKey, [AppSecureStorage? secure])
+      : _secure = secure ?? AppSecureStorage.instance;
+  ContainerRepository.withCryptoApi(
+    VaultCryptoApi cryptoApi, [
+    AppSecureStorage? secure,
+  ]) : this._(cryptoApi.clearDerivedKey, secure);
 
   final Future<bool> Function(String filePath, {bool removeExpiry})
   _clearDerivedKey;
-  static const _secure = AppSecureStorage.instance;
+  final AppSecureStorage _secure;
   Map<String, ContainerRecord>? _cache;
 
   static Future<File> get _dataFile async {
@@ -144,97 +149,177 @@ class ContainerRepository {
     await _ensureLoaded();
     _cache![record.uri] = record;
     final needsPassword = record.unlockMethod != ContainerUnlockMethod.password;
+    final pwKey = _keystoreKey(record.uri);
+    final legacyPwKey = _legacyKeystoreKey(record.uri);
     if (needsPassword && record.pendingPassword != null) {
-      await _secure.write(
-        key: _keystoreKey(record.uri),
-        value: record.pendingPassword,
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        pwKey,
+        legacyPwKey,
+        _legacyKeystoreKey,
+        record.pendingPassword!,
       );
     } else if (!needsPassword) {
-      final pwKey = _keystoreKey(record.uri);
       // Diagnostic for the "saved password vanished after creating another
       // vault" report: say when a save wipes an existing saved password, and
       // whether the Keystore key had to be truncated (two long URIs sharing
       // their first 135 chars would then share one key).
       try {
-        if (await _secure.containsKey(key: pwKey)) {
+        if (await _secure.containsKey(key: pwKey) ||
+            (legacyPwKey != pwKey &&
+                await _secure.containsKey(key: legacyPwKey))) {
           VeLog.i(
             _kLogTag,
             'save: dropping saved password for ${VeLog.censorUri(record.uri)} '
-            '(method=${record.unlockMethod.name}, '
-            'keyTruncated=${base64Url.encode(utf8.encode(record.uri)).length > 180})',
+            '(method=${record.unlockMethod.name})',
           );
         }
       } catch (_) {}
-      await _secure.delete(key: pwKey);
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        pwKey,
+        legacyPwKey,
+        _legacyKeystoreKey,
+      );
     }
+    final patternKey = _patternHashKey(record.uri);
+    final legacyPatternKey = _legacyPatternHashKey(record.uri);
     if (record.unlockMethod == ContainerUnlockMethod.pattern &&
         record.pendingPatternHash != null) {
-      await _secure.write(
-        key: _patternHashKey(record.uri),
-        value: record.pendingPatternHash,
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        patternKey,
+        legacyPatternKey,
+        _legacyPatternHashKey,
+        record.pendingPatternHash!,
       );
     } else if (record.unlockMethod != ContainerUnlockMethod.pattern) {
-      await _secure.delete(key: _patternHashKey(record.uri));
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        patternKey,
+        legacyPatternKey,
+        _legacyPatternHashKey,
+      );
     }
+    final pinKey = _pinHashKey(record.uri);
+    final legacyPinKey = _legacyPinHashKey(record.uri);
     if (record.unlockMethod == ContainerUnlockMethod.pin &&
         record.pendingPinHash != null) {
-      await _secure.write(
-        key: _pinHashKey(record.uri),
-        value: record.pendingPinHash,
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        pinKey,
+        legacyPinKey,
+        _legacyPinHashKey,
+        record.pendingPinHash!,
       );
     } else if (record.unlockMethod != ContainerUnlockMethod.pin) {
-      await _secure.delete(key: _pinHashKey(record.uri));
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        pinKey,
+        legacyPinKey,
+        _legacyPinHashKey,
+      );
     }
 
     // Encrypt and store Bookmark & Pinned paths securely in the Keystore
+    final bookmarkKey = _bookmarkKey(record.uri);
+    final legacyBookmarkKey = _legacyBookmarkKey(record.uri);
     if (record.bookmarkPaths.isNotEmpty) {
-      await _secure.write(
-        key: _bookmarkKey(record.uri),
-        value: jsonEncode(record.bookmarkPaths),
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        bookmarkKey,
+        legacyBookmarkKey,
+        _legacyBookmarkKey,
+        jsonEncode(record.bookmarkPaths),
       );
     } else {
-      await _secure.delete(key: _bookmarkKey(record.uri));
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        bookmarkKey,
+        legacyBookmarkKey,
+        _legacyBookmarkKey,
+      );
     }
 
+    final pinnedKey = _pinnedKey(record.uri);
+    final legacyPinnedKey = _legacyPinnedKey(record.uri);
     if (record.pinnedPaths.isNotEmpty) {
-      await _secure.write(
-        key: _pinnedKey(record.uri),
-        value: jsonEncode(record.pinnedPaths),
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        pinnedKey,
+        legacyPinnedKey,
+        _legacyPinnedKey,
+        jsonEncode(record.pinnedPaths),
       );
     } else {
-      await _secure.delete(key: _pinnedKey(record.uri));
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        pinnedKey,
+        legacyPinnedKey,
+        _legacyPinnedKey,
+      );
     }
 
     // documentProviderFolders names paths *inside* the vault; keyfiles names
     // external files used to unlock it. Both go to Keystore-backed storage,
     // same as bookmarks/pinned, instead of the clear-text containers file.
+    final docFoldersKey = _docFoldersKey(record.uri);
+    final legacyDocFoldersKey = _legacyDocFoldersKey(record.uri);
     if (record.documentProviderFolders.isNotEmpty) {
-      await _secure.write(
-        key: _docFoldersKey(record.uri),
-        value: jsonEncode(
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        docFoldersKey,
+        legacyDocFoldersKey,
+        _legacyDocFoldersKey,
+        jsonEncode(
           record.documentProviderFolders.map((f) => f.toJson()).toList(),
         ),
       );
     } else {
-      await _secure.delete(key: _docFoldersKey(record.uri));
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        docFoldersKey,
+        legacyDocFoldersKey,
+        _legacyDocFoldersKey,
+      );
     }
 
+    final keyfilesKey = _keyfilesKey(record.uri);
+    final legacyKeyfilesKey = _legacyKeyfilesKey(record.uri);
     if (record.keyfiles.isNotEmpty) {
-      await _secure.write(
-        key: _keyfilesKey(record.uri),
-        value: jsonEncode(record.keyfiles),
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        keyfilesKey,
+        legacyKeyfilesKey,
+        _legacyKeyfilesKey,
+        jsonEncode(record.keyfiles),
       );
     } else {
-      await _secure.delete(key: _keyfilesKey(record.uri));
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        keyfilesKey,
+        legacyKeyfilesKey,
+        _legacyKeyfilesKey,
+      );
     }
 
+    final compositeCarriersKey = _compositeCarriersKey(record.uri);
+    final legacyCompositeCarriersKey = _legacyCompositeCarriersKey(record.uri);
     if (record.compositeCarriers.isNotEmpty) {
-      await _secure.write(
-        key: _compositeCarriersKey(record.uri),
-        value: jsonEncode(record.compositeCarriers),
+      await _writeKeyWithLegacyCleanup(
+        record.uri,
+        compositeCarriersKey,
+        legacyCompositeCarriersKey,
+        _legacyCompositeCarriersKey,
+        jsonEncode(record.compositeCarriers),
       );
     } else {
-      await _secure.delete(key: _compositeCarriersKey(record.uri));
+      await _deleteKeyWithLegacyCleanup(
+        record.uri,
+        compositeCarriersKey,
+        legacyCompositeCarriersKey,
+        _legacyCompositeCarriersKey,
+      );
     }
 
     await _persist();
@@ -261,14 +346,54 @@ class ContainerRepository {
   Future<void> remove(String uri) async {
     await _ensureLoaded();
     _cache!.remove(uri);
-    await _secure.delete(key: _keystoreKey(uri));
-    await _secure.delete(key: _patternHashKey(uri));
-    await _secure.delete(key: _pinHashKey(uri));
-    await _secure.delete(key: _bookmarkKey(uri));
-    await _secure.delete(key: _pinnedKey(uri));
-    await _secure.delete(key: _docFoldersKey(uri));
-    await _secure.delete(key: _keyfilesKey(uri));
-    await _secure.delete(key: _compositeCarriersKey(uri));
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _keystoreKey(uri),
+      _legacyKeystoreKey(uri),
+      _legacyKeystoreKey,
+    );
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _patternHashKey(uri),
+      _legacyPatternHashKey(uri),
+      _legacyPatternHashKey,
+    );
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _pinHashKey(uri),
+      _legacyPinHashKey(uri),
+      _legacyPinHashKey,
+    );
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _bookmarkKey(uri),
+      _legacyBookmarkKey(uri),
+      _legacyBookmarkKey,
+    );
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _pinnedKey(uri),
+      _legacyPinnedKey(uri),
+      _legacyPinnedKey,
+    );
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _docFoldersKey(uri),
+      _legacyDocFoldersKey(uri),
+      _legacyDocFoldersKey,
+    );
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _keyfilesKey(uri),
+      _legacyKeyfilesKey(uri),
+      _legacyKeyfilesKey,
+    );
+    await _deleteKeyWithLegacyCleanup(
+      uri,
+      _compositeCarriersKey(uri),
+      _legacyCompositeCarriersKey(uri),
+      _legacyCompositeCarriersKey,
+    );
     try {
       await _clearDerivedKey(derivedKeyPathForUri(uri), removeExpiry: true);
     } catch (e) {
@@ -337,74 +462,231 @@ class ContainerRepository {
     String uri,
     List<DocumentProviderFolder> folders,
   ) async {
+    final key = _docFoldersKey(uri);
+    final legacyKey = _legacyDocFoldersKey(uri);
     if (folders.isNotEmpty) {
-      await _secure.write(
-        key: _docFoldersKey(uri),
-        value: jsonEncode(folders.map((f) => f.toJson()).toList()),
+      await _writeKeyWithLegacyCleanup(
+        uri,
+        key,
+        legacyKey,
+        _legacyDocFoldersKey,
+        jsonEncode(folders.map((f) => f.toJson()).toList()),
       );
     } else {
-      await _secure.delete(key: _docFoldersKey(uri));
+      await _deleteKeyWithLegacyCleanup(
+        uri,
+        key,
+        legacyKey,
+        _legacyDocFoldersKey,
+      );
     }
   }
 
-  Future<String?> getPassword(String uri) =>
-      _secure.read(key: _keystoreKey(uri));
-  Future<String?> getPatternHash(String uri) =>
-      _secure.read(key: _patternHashKey(uri));
-  Future<String?> getPinHash(String uri) => _secure.read(key: _pinHashKey(uri));
+  Future<String?> getPassword(String uri) => _readWithLegacyFallback(
+    uri,
+    _keystoreKey(uri),
+    _legacyKeystoreKey(uri),
+    _legacyKeystoreKey,
+  );
+
+  Future<String?> getPatternHash(String uri) => _readWithLegacyFallback(
+    uri,
+    _patternHashKey(uri),
+    _legacyPatternHashKey(uri),
+    _legacyPatternHashKey,
+  );
+
+  Future<String?> getPinHash(String uri) => _readWithLegacyFallback(
+    uri,
+    _pinHashKey(uri),
+    _legacyPinHashKey(uri),
+    _legacyPinHashKey,
+  );
 
   void invalidate() => _cache = null;
 
-  static String _keystoreKey(String uri) {
-    final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 180 ? encoded.substring(0, 180) : encoded;
-    return 'vc2_pw_$trimmed';
+  bool _sharesLegacyKey(
+    String uri,
+    String legacyKey,
+    String Function(String) legacyKeyExtractor, [
+    Iterable<String>? otherUris,
+  ]) {
+    final others = otherUris ??
+        (_cache?.keys.where((u) => u != uri) ?? const Iterable<String>.empty());
+    return others.any((u) => legacyKeyExtractor(u) == legacyKey);
   }
 
-  static String _patternHashKey(String uri) {
-    final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 170 ? encoded.substring(0, 170) : encoded;
-    return 'vc2_pattern_$trimmed';
+  bool _shouldDeleteLegacyKey(
+    String uri,
+    String legacyKey,
+    String Function(String) legacyKeyExtractor, [
+    Iterable<String>? otherUris,
+  ]) {
+    return !_sharesLegacyKey(uri, legacyKey, legacyKeyExtractor, otherUris);
   }
 
-  static String _pinHashKey(String uri) {
-    final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 170 ? encoded.substring(0, 170) : encoded;
-    return 'vc2_pin_hash_$trimmed';
+  Future<void> _deleteKeyWithLegacyCleanup(
+    String uri,
+    String key,
+    String legacyKey,
+    String Function(String) legacyKeyExtractor,
+  ) async {
+    await _secure.delete(key: key);
+    if (legacyKey != key &&
+        _shouldDeleteLegacyKey(uri, legacyKey, legacyKeyExtractor)) {
+      await _secure.delete(key: legacyKey);
+    }
   }
 
-  static String _bookmarkKey(String uri) {
-    final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 170 ? encoded.substring(0, 170) : encoded;
-    // Keeps the legacy 'vc2_fav_' prefix intentionally: this is an opaque
-    // Keystore key, and changing it would orphan every path already saved
-    // under it by earlier app versions.
-    return 'vc2_fav_$trimmed';
+  Future<void> _writeKeyWithLegacyCleanup(
+    String uri,
+    String key,
+    String legacyKey,
+    String Function(String) legacyKeyExtractor,
+    String value,
+  ) async {
+    await _secure.write(key: key, value: value);
+    if (legacyKey != key &&
+        _shouldDeleteLegacyKey(uri, legacyKey, legacyKeyExtractor)) {
+      await _secure.delete(key: legacyKey);
+    }
   }
 
-  static String _pinnedKey(String uri) {
-    final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 170 ? encoded.substring(0, 170) : encoded;
-    return 'vc2_pin_$trimmed';
+  Future<String?> _readWithLegacyFallback(
+    String uri,
+    String key,
+    String legacyKey,
+    String Function(String) legacyKeyExtractor,
+  ) async {
+    final value = await _secure.read(key: key);
+    if (value != null) return value;
+
+    if (key != legacyKey) {
+      final legacyValue = await _secure.read(key: legacyKey);
+      if (legacyValue != null) {
+        await _secure.write(key: key, value: legacyValue);
+        await _ensureLoaded();
+        if (_shouldDeleteLegacyKey(uri, legacyKey, legacyKeyExtractor)) {
+          await _secure.delete(key: legacyKey);
+        }
+        return legacyValue;
+      }
+    }
+    return null;
   }
 
-  static String _docFoldersKey(String uri) {
-    final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 170 ? encoded.substring(0, 170) : encoded;
-    return 'vc2_docfolders_$trimmed';
+  Future<void> _migrateLegacySecureKey(
+    String uri,
+    String key,
+    String legacyKey,
+    String Function(String) legacyKeyExtractor,
+    String value,
+    Iterable<String> otherUris,
+  ) async {
+    try {
+      await _secure.write(key: key, value: value);
+      if (_shouldDeleteLegacyKey(uri, legacyKey, legacyKeyExtractor, otherUris)) {
+        await _secure.delete(key: legacyKey);
+      }
+    } catch (e) {
+      _logSwallowed('_migrateLegacySecureKey', e);
+    }
   }
 
-  static String _keyfilesKey(String uri) {
+  static String _scopedKey(String prefix, String uri, int legacyLimit) {
     final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 170 ? encoded.substring(0, 170) : encoded;
-    return 'vc2_keyfiles_$trimmed';
+    if (encoded.length <= legacyLimit) {
+      return '$prefix$encoded';
+    }
+    final hash = sha256Hex(utf8.encode(uri));
+    final head = encoded.substring(0, math.min(50, encoded.length));
+    return '$prefix${head}_$hash';
   }
 
-  static String _compositeCarriersKey(String uri) {
+  static String _legacyScopedKey(String prefix, String uri, int legacyLimit) {
     final encoded = base64Url.encode(utf8.encode(uri));
-    final trimmed = encoded.length > 170 ? encoded.substring(0, 170) : encoded;
-    return 'vc2_composite_carriers_$trimmed';
+    final trimmed =
+        encoded.length > legacyLimit ? encoded.substring(0, legacyLimit) : encoded;
+    return '$prefix$trimmed';
   }
+
+  static String _keystoreKey(String uri) => _scopedKey('vc2_pw_', uri, 180);
+  static String _legacyKeystoreKey(String uri) =>
+      _legacyScopedKey('vc2_pw_', uri, 180);
+
+  static String _patternHashKey(String uri) =>
+      _scopedKey('vc2_pattern_', uri, 170);
+  static String _legacyPatternHashKey(String uri) =>
+      _legacyScopedKey('vc2_pattern_', uri, 170);
+
+  static String _pinHashKey(String uri) =>
+      _scopedKey('vc2_pin_hash_', uri, 170);
+  static String _legacyPinHashKey(String uri) =>
+      _legacyScopedKey('vc2_pin_hash_', uri, 170);
+
+  static String _bookmarkKey(String uri) => _scopedKey('vc2_fav_', uri, 170);
+  static String _legacyBookmarkKey(String uri) =>
+      _legacyScopedKey('vc2_fav_', uri, 170);
+
+  static String _pinnedKey(String uri) => _scopedKey('vc2_pin_', uri, 170);
+  static String _legacyPinnedKey(String uri) =>
+      _legacyScopedKey('vc2_pin_', uri, 170);
+
+  static String _docFoldersKey(String uri) =>
+      _scopedKey('vc2_docfolders_', uri, 170);
+  static String _legacyDocFoldersKey(String uri) =>
+      _legacyScopedKey('vc2_docfolders_', uri, 170);
+
+  static String _keyfilesKey(String uri) =>
+      _scopedKey('vc2_keyfiles_', uri, 170);
+  static String _legacyKeyfilesKey(String uri) =>
+      _legacyScopedKey('vc2_keyfiles_', uri, 170);
+
+  static String _compositeCarriersKey(String uri) =>
+      _scopedKey('vc2_composite_carriers_', uri, 170);
+  static String _legacyCompositeCarriersKey(String uri) =>
+      _legacyScopedKey('vc2_composite_carriers_', uri, 170);
+
+  @visibleForTesting
+  static String keystoreKey(String uri) => _keystoreKey(uri);
+  @visibleForTesting
+  static String legacyKeystoreKey(String uri) => _legacyKeystoreKey(uri);
+
+  @visibleForTesting
+  static String patternHashKey(String uri) => _patternHashKey(uri);
+  @visibleForTesting
+  static String legacyPatternHashKey(String uri) => _legacyPatternHashKey(uri);
+
+  @visibleForTesting
+  static String pinHashKey(String uri) => _pinHashKey(uri);
+  @visibleForTesting
+  static String legacyPinHashKey(String uri) => _legacyPinHashKey(uri);
+
+  @visibleForTesting
+  static String bookmarkKey(String uri) => _bookmarkKey(uri);
+  @visibleForTesting
+  static String legacyBookmarkKey(String uri) => _legacyBookmarkKey(uri);
+
+  @visibleForTesting
+  static String pinnedKey(String uri) => _pinnedKey(uri);
+  @visibleForTesting
+  static String legacyPinnedKey(String uri) => _legacyPinnedKey(uri);
+
+  @visibleForTesting
+  static String docFoldersKey(String uri) => _docFoldersKey(uri);
+  @visibleForTesting
+  static String legacyDocFoldersKey(String uri) => _legacyDocFoldersKey(uri);
+
+  @visibleForTesting
+  static String keyfilesKey(String uri) => _keyfilesKey(uri);
+  @visibleForTesting
+  static String legacyKeyfilesKey(String uri) => _legacyKeyfilesKey(uri);
+
+  @visibleForTesting
+  static String compositeCarriersKey(String uri) => _compositeCarriersKey(uri);
+  @visibleForTesting
+  static String legacyCompositeCarriersKey(String uri) =>
+      _legacyCompositeCarriersKey(uri);
 
   Future<void> _ensureLoaded() async {
     if (_cache == null) await _hydrate();
@@ -430,17 +712,69 @@ class ContainerRepository {
         );
       }
 
+      final allUris = list
+          .map((item) => (item as Map)['uri'] as String? ?? '')
+          .where((u) => u.isNotEmpty)
+          .toList();
+      final migrations = <Future<void>>[];
+
       for (final item in list) {
         final rawRecord = ContainerRecord.fromJson(
           item as Map<String, dynamic>,
         );
 
+        final otherUris = allUris.where((u) => u != rawRecord.uri);
+
+        String? readSecureWithFallback(
+          String key,
+          String legacyKey,
+          String Function(String) legacyExtractor,
+        ) {
+          final val = secureData[key];
+          if (val != null) return val;
+          if (key != legacyKey) {
+            final legacyVal = secureData[legacyKey];
+            if (legacyVal != null) {
+              migrations.add(_migrateLegacySecureKey(
+                rawRecord.uri,
+                key,
+                legacyKey,
+                legacyExtractor,
+                legacyVal,
+                otherUris,
+              ));
+              return legacyVal;
+            }
+          }
+          return null;
+        }
+
         // Read the encrypted paths back from Keystore
-        final bookmarkJson = secureData[_bookmarkKey(rawRecord.uri)];
-        final pinJson = secureData[_pinnedKey(rawRecord.uri)];
-        final docFoldersJson = secureData[_docFoldersKey(rawRecord.uri)];
-        final keyfilesJson = secureData[_keyfilesKey(rawRecord.uri)];
-        final compositeCarriersJson = secureData[_compositeCarriersKey(rawRecord.uri)];
+        final bookmarkJson = readSecureWithFallback(
+          _bookmarkKey(rawRecord.uri),
+          _legacyBookmarkKey(rawRecord.uri),
+          _legacyBookmarkKey,
+        );
+        final pinJson = readSecureWithFallback(
+          _pinnedKey(rawRecord.uri),
+          _legacyPinnedKey(rawRecord.uri),
+          _legacyPinnedKey,
+        );
+        final docFoldersJson = readSecureWithFallback(
+          _docFoldersKey(rawRecord.uri),
+          _legacyDocFoldersKey(rawRecord.uri),
+          _legacyDocFoldersKey,
+        );
+        final keyfilesJson = readSecureWithFallback(
+          _keyfilesKey(rawRecord.uri),
+          _legacyKeyfilesKey(rawRecord.uri),
+          _legacyKeyfilesKey,
+        );
+        final compositeCarriersJson = readSecureWithFallback(
+          _compositeCarriersKey(rawRecord.uri),
+          _legacyCompositeCarriersKey(rawRecord.uri),
+          _legacyCompositeCarriersKey,
+        );
 
         final bookmarkPaths = bookmarkJson != null
             ? List<String>.from(jsonDecode(bookmarkJson))
@@ -477,6 +811,14 @@ class ContainerRepository {
         );
 
         _cache![secureRecord.uri] = secureRecord;
+      }
+
+      if (migrations.isNotEmpty) {
+        try {
+          await Future.wait(migrations);
+        } catch (e) {
+          _logSwallowed('_hydrate/migrations', e);
+        }
       }
     } catch (e) {
       VeLog.e(_kLogTag, '_hydrate: Failed to read container data file', e);
