@@ -541,7 +541,7 @@ Widget _buildVaultKindSegmentedButton(
     final hasSelection = state.selectedUri != null;
     final isWide = context.screen.useWideLayout;
     final showLoadingFeedback = hasSelection &&
-        (state.loading || state.checkingContainer || state.loadingAuth);
+        (state.checkingContainer || state.loadingAuth);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
