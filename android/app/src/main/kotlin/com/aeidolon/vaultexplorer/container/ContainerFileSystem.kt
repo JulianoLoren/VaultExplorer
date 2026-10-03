@@ -2,6 +2,9 @@ package com.aeidolon.vaultexplorer.container
 
 import java.io.FileNotFoundException
 import com.aeidolon.vaultexplorer.MainActivity
+import com.aeidolon.vaultexplorer.VeLog
+import com.aeidolon.vaultexplorer.bridge.CopyProgressBridge
+import com.aeidolon.vaultexplorer.cancellation.CopyCancellation
 
 object ContainerFileSystem {
 
@@ -61,44 +64,92 @@ object ContainerFileSystem {
                 }
             }
         }
-        // At least one side is a folder-vault session. ContainerEngine.copyFile
-        // handles this case by extracting to a plaintext temp file, then
-        // writing that back in on the dest side (see the comment there) --
-        // two separate native/backend calls, not one chunked loop, so there
-        // is no per-chunk callback to hand a yield through the way the
-        // disk-image path above has.
+        // At least one side is a folder-vault session (gocryptfs / Cryptomator
+        // / CryFS). There is no native cross-container copy primitive for
+        // these, and the file's plaintext must never be written to disk, so
+        // the bytes are streamed through memory: the source is read a chunk
+        // at a time (VaultCopyInputStream) and handed straight to the
+        // destination.
         //
-        // Previously this whole two-step sequence was wrapped in the same
-        // single withWriteLock(destVolId) { withReadLock(srcVolId) { ... } }
-        // used above, held for the full extract+writeback duration with no
-        // yield point at all -- unlike writeBackFile/importStream just above,
-        // which already fork on skipsPerVolumeLock/managesOwnWriteLocking
-        // instead of always taking the outer lock. That produced the same
-        // "loading spinner until the transfer finishes" symptom the
-        // yieldContainerCopyLocks fix solved for disk images, except with no
-        // yield mechanism available to fix it the same way here -- and,
-        // because ioExecutor (MainActivity.kt) is only 4 threads shared
-        // across every handler group, a long-held copy tying up one of those
-        // 4 threads for the whole transfer could also stall unrelated
-        // volumes' operations once the pool filled up, independent of which
-        // ReentrantReadWriteLock was involved.
-        //
-        // Fix: don't take one lock spanning both steps. ContainerEngine
-        // .copyFile's extractFile()/writeBackFile() calls are unwrapped
-        // (ContainerEngine has no lock of its own -- see extractFile()
-        // above), so calling it directly here with no outer lock, then
-        // applying each half's own correct locking via the same
-        // extractFile/writeBackFile entry points this class already
-        // exposes for standalone use, gets the identical
-        // skipsPerVolumeLock/managesOwnWriteLocking-aware behavior a
-        // standalone call would get -- just composed here instead of inside
-        // ContainerEngine. Between the two calls this thread holds no
-        // ContainerFileSystem lock at all, which is safe: the temp file is
-        // this thread's own private intermediate state, not shared, so
-        // nothing needs protecting across that gap.
-        return ContainerEngine.copyFileViaBackend(srcVolId, srcPath, destVolId, destPath, opId,
-            extract = { path, dest -> extractFileLocked(srcVolId, path, dest, opId) },
-            writeBack = { path, source -> writeBackFile(destVolId, path, source, opId) })
+        // Locking: the three folder-vault backends all skip the per-volume
+        // lock and lock internally, and the disk-image side is locked per
+        // chunk by readFileChunk/writeFileChunk, so no lock is held across
+        // the whole transfer -- the "spinner until the copy finishes" and
+        // 4-thread ioExecutor starvation problems (see yieldContainerCopyLocks)
+        // that a single long-held lock would bring don't arise.
+        return copyFileStreaming(srcVolId, srcPath, destVolId, destPath, opId)
+    }
+
+    private fun copyFileStreaming(
+        srcVolId: Int, srcPath: String, destVolId: Int, destPath: String, opId: Int,
+    ): Boolean {
+        val total = getFileSize(srcVolId, srcPath)
+        if (total <= 0L) {
+            // Empty (the Dart side normally handles that before it gets here)
+            // or unreadable: nothing worth streaming, so keep the previous
+            // path. An empty file has no plaintext to leak to a temp file.
+            return ContainerEngine.copyFileViaBackend(srcVolId, srcPath, destVolId, destPath, opId,
+                extract = { path, dest -> extractFileLocked(srcVolId, path, dest, opId) },
+                writeBack = { path, source -> writeBackFile(destVolId, path, source, opId) })
+        }
+
+        val input = VaultCopyInputStream(
+            total = total,
+            readChunk = { offset, length -> readFileChunk(srcVolId, srcPath, offset, length) },
+            isCancelled = { opId > 0 && CopyCancellation.isCancelled(opId) },
+            onProgress = { bytes -> CopyProgressBridge.reportProgress(opId, bytes) },
+        )
+        val written = try {
+            input.use {
+                if (VaultBackendRegistry.get(destVolId) != null) {
+                    importStream(destVolId, destPath, it)
+                } else {
+                    writeStreamToDiskImage(destVolId, destPath, it, total)
+                }
+            }
+        } catch (e: Exception) {
+            VeLog.w("ContainerFileSystem") { "streaming copy failed: ${e.message}" }
+            false
+        }
+
+        // The destination must have consumed the whole stream: a writer that
+        // returned success after reading less than the source holds is not a
+        // successful copy.
+        if (written && input.position == total) return true
+
+        // Don't leave a truncated file under the real name. (The Dart caller
+        // clears the destination before copying, so this only ever removes
+        // what this attempt created.) It then retries with its own chunked
+        // loop, which also never touches disk.
+        try {
+            deleteFile(destVolId, destPath)
+        } catch (_: Exception) {
+        }
+        return false
+    }
+
+    /** Disk-image destinations take the file as offset-addressed chunks. */
+    private fun writeStreamToDiskImage(
+        volId: Int, path: String, input: java.io.InputStream, total: Long,
+    ): Boolean {
+        val buffer = ByteArray(VaultCopyInputStream.DEFAULT_CHUNK_BYTES)
+        try {
+            var offset = 0L
+            while (offset < total) {
+                val n = input.read(buffer, 0, minOf(buffer.size.toLong(), total - offset).toInt())
+                if (n <= 0) return false
+                val data = if (n == buffer.size) buffer else buffer.copyOf(n)
+                try {
+                    if (!writeFileChunk(volId, path, offset, data)) return false
+                } finally {
+                    if (data !== buffer) data.fill(0)
+                }
+                offset += n
+            }
+            return finishWrite(volId, path)
+        } finally {
+            buffer.fill(0)
+        }
     }
 
     /**

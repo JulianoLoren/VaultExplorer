@@ -269,6 +269,11 @@ object ContainerEngine {
      * this keeps the two call shapes symmetric rather than only reachable
      * one way).
      *
+     * NOTE: [ContainerFileSystem.copyFile] no longer routes non-empty files
+     * through here -- it streams them through memory instead
+     * ([VaultCopyInputStream]), so no plaintext reaches disk. This remains for
+     * empty/unsized files and for callers that bypass ContainerFileSystem.
+     *
      * No native cross-container stream-copy primitive exists for folder
      * vaults, so unlike the disk-image formats we can't hand this straight
      * to NativeEngine. Bridge through a single plaintext temp file instead

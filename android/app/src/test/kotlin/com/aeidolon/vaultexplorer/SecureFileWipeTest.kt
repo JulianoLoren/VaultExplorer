@@ -126,4 +126,20 @@ class SecureFileWipeTest {
         assertFalse(orphan2.exists())
         assertTrue("Non-matching file must remain", keepFile.exists())
     }
+
+    @Test
+    fun testSweepOrphanedFiles_skipsFilesAnInFlightOperationStillOwns() {
+        val inUse = File(testDir, "ve_copy_live.tmp").apply { writeText("being copied") }
+        val orphan = File(testDir, "ve_copy_crashed.tmp").apply { writeText("left by a dead process") }
+
+        val wipedCount = SecureFileWipe.sweepOrphanedFiles(
+            testDir,
+            listOf("ve_copy_"),
+            isInUse = { it.name == "ve_copy_live.tmp" },
+        )
+
+        assertEquals("Only the orphan should be wiped", 1, wipedCount)
+        assertTrue("A file a live operation owns must survive the sweep", inUse.exists())
+        assertFalse("A true orphan must still be wiped", orphan.exists())
+    }
 }

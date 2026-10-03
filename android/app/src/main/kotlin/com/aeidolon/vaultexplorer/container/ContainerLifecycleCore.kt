@@ -173,8 +173,21 @@ object ContainerLifecycleCore {
                     listOf(SplitPartInfo(uri, size))
                 }
             val isSplit = parts.size > 1
-            if (isSplit) {
-                VeLog.i(TAG) { "Auto-detected split container across ${parts.size} parts for ${censorUri(uriString)}" }
+            val singleUri = parts.firstOrNull()?.uri ?: uri
+            val rawFile = if (isSplit) null else UriToPath.getRawFile(context, singleUri)?.takeIf { it.canRead() }
+            // SAF providers often return descriptors that can be read but do
+            // not support the random-access pwrite() calls made by the native
+            // block layer. Route cloud/document-backed single files through
+            // the same proxy as split containers; SplitFuseCallback can stage
+            // an unsupported provider locally and upload the updated image on
+            // fsync/release. Genuine local files keep the direct-fd fast path.
+            val useSafProxy = isSplit || rawFile == null
+            if (useSafProxy) {
+                if (isSplit) {
+                    VeLog.i(TAG) { "Auto-detected split container across ${parts.size} parts for ${censorUri(uriString)}" }
+                } else {
+                    VeLog.i(TAG) { "Using SAF proxy for single document container ${censorUri(uriString)}" }
+                }
                 val fuseCallback = SplitFuseCallback(
                     context = context,
                     parts = parts,
@@ -189,32 +202,15 @@ object ContainerLifecycleCore {
                         fuseHandler,
                     )
                 } catch (e: Exception) {
-                    VeLog.e(TAG, e) { "Failed to open proxy file descriptor for split container: ${e.message}" }
+                    VeLog.e(TAG, e) { "Failed to open proxy file descriptor for SAF container: ${e.message}" }
                     throw e
                 }
                 pfd = proxyPfd
             } else {
-                val singleUri = parts.firstOrNull()?.uri ?: uri
-                val rawFile = UriToPath.getRawFile(context, singleUri)
-                pfd = if (rawFile != null && rawFile.canRead()) {
-                    ParcelFileDescriptor.open(
-                        rawFile,
-                        if (readOnly) ParcelFileDescriptor.MODE_READ_ONLY else ParcelFileDescriptor.MODE_READ_WRITE,
-                    )
-                } else {
-                    val mode = if (readOnly) "r" else "rw"
-                    try {
-                        context.contentResolver.openFileDescriptor(singleUri, mode)
-                    } catch (e: Exception) {
-                        if (mode == "rw") {
-                            VeLog.w(TAG) { "Failed to open $singleUri in rw mode (${e.message}), falling back to read-only" }
-                            context.contentResolver.openFileDescriptor(singleUri, "r")
-                        } else {
-                            VeLog.e(TAG, e) { "Failed to open file descriptor for $singleUri in mode $mode" }
-                            throw e
-                        }
-                    }
-                }
+                pfd = ParcelFileDescriptor.open(
+                    requireNotNull(rawFile),
+                    if (readOnly) ParcelFileDescriptor.MODE_READ_ONLY else ParcelFileDescriptor.MODE_READ_WRITE,
+                )
             }
 
             if (pfd == null) {

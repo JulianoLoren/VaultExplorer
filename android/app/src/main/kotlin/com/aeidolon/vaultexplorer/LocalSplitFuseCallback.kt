@@ -291,6 +291,20 @@ internal fun looksLikeRwModeUnsupported(e: Throwable): Boolean {
     return msg.contains("unsupported mode") || (msg.contains("mode") && msg.contains("rw"))
 }
 
+private fun looksLikeRandomAccessWriteUnsupported(e: Throwable): Boolean {
+    if (e is UnsupportedOperationException) return true
+    if (e is ErrnoException && e.errno in setOf(
+            OsConstants.ESPIPE,
+            OsConstants.EINVAL,
+            OsConstants.ENOSYS,
+            OsConstants.EOPNOTSUPP,
+        )
+    ) return true
+    val message = e.message?.lowercase() ?: return false
+    return message.contains("illegal seek") || message.contains("not seekable") ||
+        message.contains("operation not supported") || message.contains("random access unsupported")
+}
+
 class SplitFuseCallback(
     private val context: Context,
     private val parts: List<SplitPartInfo>,
@@ -621,10 +635,19 @@ class SplitFuseCallback(
             val fd = pfd.fileDescriptor
             var writtenInPart = 0
             while (writtenInPart < len) {
-                val n = android.system.Os.pwrite(
-                    fd, data, inOffset + writtenInPart, len - writtenInPart,
-                    offsetInPart + writtenInPart
-                )
+                val n = try {
+                    android.system.Os.pwrite(
+                        fd, data, inOffset + writtenInPart, len - writtenInPart,
+                        offsetInPart + writtenInPart
+                    )
+                } catch (e: Exception) {
+                    if (looksLikeRandomAccessWriteUnsupported(e)) {
+                        throw SafRwUnsupportedException(
+                            "part $index: provider does not support random-access writes", e
+                        )
+                    }
+                    throw e
+                }
                 if (n <= 0) fail("write failed on part $index (written=$n)")
                 writtenInPart += n
             }
@@ -757,7 +780,8 @@ class SplitFuseCallback(
         return local
     }
 
-    private fun flushDirtyMirrors() {
+    private fun flushDirtyMirrors(): Boolean {
+        var allFlushed = true
         for (i in parts.indices) {
             val mirror = mirrorFiles[i] ?: continue
             if (!mirrorDirty[i]) continue
@@ -768,8 +792,10 @@ class SplitFuseCallback(
                 // Leave it marked dirty so the next fsync/release retries
                 // rather than silently losing the pending write.
                 VeLog.e("SplitFuseCallback") { "failed to flush mirror for part $i: ${e.message}" }
+                allFlushed = false
             }
         }
+        return allFlushed
     }
 
     private fun uploadMirror(index: Int, mirror: File) {
@@ -798,12 +824,14 @@ class SplitFuseCallback(
         // -- they still need an explicit upload to actually reach the
         // remote document, unlike a genuine SAF rw fd whose sync() does
         // that for us.
-        flushDirtyMirrors()
+        if (!flushDirtyMirrors()) {
+            fail("failed to upload cloud-backed container changes")
+        }
     }
 
     @Synchronized
     override fun onRelease() {
-        flushDirtyMirrors()
+        val mirrorsFlushed = flushDirtyMirrors()
         for (raf in openRafs) {
             try { raf?.close() } catch (_: Exception) {}
         }
@@ -819,7 +847,16 @@ class SplitFuseCallback(
         partStreams.fill(null)
         partStreamPos.fill(0L)
         partPreadUnsupported.fill(false)
-        mirrorDir?.let { dir -> try { dir.deleteRecursively() } catch (_: Exception) {} }
+        if (mirrorsFlushed) {
+            mirrorDir?.let { dir -> try { dir.deleteRecursively() } catch (_: Exception) {} }
+        } else {
+            // Keep the last encrypted container image available for manual
+            // recovery if the cloud provider was offline or rejected the
+            // upload through onRelease. Never discard dirty staged bytes.
+            VeLog.e("SplitFuseCallback") {
+                "preserving unsynced cloud container mirror at ${mirrorDir?.absolutePath}"
+            }
+        }
         mirrorFiles.fill(null)
         mirrorDirty.fill(false)
         mirrorDir = null
