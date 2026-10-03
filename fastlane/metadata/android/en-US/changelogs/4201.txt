@@ -1,0 +1,4 @@
+• Optimized app startup time
+• Fixed issue writing to file containers in cloud storage
+• Improved loading feedback on the unlock screen for slow storage
+• Minor UI refinements
