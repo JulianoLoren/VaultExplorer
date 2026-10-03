@@ -11,6 +11,7 @@ import 'package:vaultexplorer/core/api/quick_capture_api.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 import 'package:vaultexplorer/data/services/app_settings_service.dart';
+import 'package:vaultexplorer/features/lock/lock_gate_screen.dart';
 import 'package:vaultexplorer/features/share_import/share_destination_sheet.dart';
 import 'package:vaultexplorer/features/tools/models/tool_models.dart';
 import 'camera_vault_service.dart';
@@ -529,8 +530,28 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen>
     }
   }
 
+  /// Quick Capture opens without the app lock gate. If this launch skipped
+  /// it, the person has to pass it before choosing a destination or writing
+  /// anything; once passed it isn't asked again for this capture session.
+  Future<bool> _ensureAppUnlockedForSave() async {
+    final launch = ref.read(pendingQuickCaptureLaunchProvider);
+    if (!launch.appUnlockRequired) return true;
+    final unlocked = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const LockGateScreen(popOnSuccess: true),
+      ),
+    );
+    if (unlocked != true) return false;
+    launch.markAppUnlocked();
+    return true;
+  }
+
   Future<void> _commitAllMediaToVault(List<CapturedMediaItem> mediaToSave) async {
     if (mediaToSave.isEmpty) return;
+
+    if (!await _ensureAppUnlockedForSave() || !mounted) return;
 
     final destination = await Navigator.push<CryptoDestination>(
       context,

@@ -13,10 +13,21 @@ typedef QuickCaptureSettingsSnapshot = ({bool tileEnabled});
 ///
 /// A plain mutable holder rather than provider state on purpose: the value is
 /// written once before any widget reads it and consumed exactly once.
+///
+/// Quick Capture deliberately opens the camera without the app lock gate (a
+/// seamless capture is the point of the shortcut); the gate is enforced when
+/// the person saves instead.
 class PendingQuickCaptureLaunch {
   bool _pending = false;
+  bool _appUnlockRequired = false;
 
-  void markPending() => _pending = true;
+  /// [appUnlockRequired] is true when this launch skipped the app lock gate
+  /// (a master password is set) and so still owes one before anything is
+  /// saved. See [QuickCaptureScreen]'s save path.
+  void markPending({required bool appUnlockRequired}) {
+    _pending = true;
+    _appUnlockRequired = appUnlockRequired;
+  }
 
   /// Returns whether a request was waiting, and clears it.
   bool take() {
@@ -24,6 +35,12 @@ class PendingQuickCaptureLaunch {
     _pending = false;
     return was;
   }
+
+  /// True while this launch bypassed the app lock gate and the person hasn't
+  /// passed it since. Deliberately not cleared by [take].
+  bool get appUnlockRequired => _appUnlockRequired;
+
+  void markAppUnlocked() => _appUnlockRequired = false;
 }
 
 final pendingQuickCaptureLaunchProvider = Provider<PendingQuickCaptureLaunch>(

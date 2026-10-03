@@ -14,6 +14,7 @@ import 'package:vaultexplorer/core/utils/ve_log.dart';
 import 'package:vaultexplorer/data/services/session_lock_controller.dart';
 import 'package:vaultexplorer/features/dashboard/vault_dashboard_controller.dart';
 import 'package:vaultexplorer/features/decoy/decoy_archive_explorer_screen.dart';
+import 'package:vaultexplorer/app/main_shell.dart';
 import 'package:vaultexplorer/features/lock/lock_gate_screen.dart';
 
 String appVersion = '0.0.0';
@@ -106,6 +107,7 @@ class _DisguiseModeGate extends ConsumerStatefulWidget {
 
 class _DisguiseModeGateState extends ConsumerState<_DisguiseModeGate> {
   DisguiseMode? _mode;
+  bool _quickCaptureLaunch = false;
 
   @override
   void initState() {
@@ -128,7 +130,13 @@ class _DisguiseModeGateState extends ConsumerState<_DisguiseModeGate> {
     // there matches what already happened (it was never acted on, and
     // VaultQuickCaptureActivity.onDestroy clears whatever was left).
     if (quickCapturePending && mode != DisguiseMode.decoy) {
-      ref.read(pendingQuickCaptureLaunchProvider).markPending();
+      // Skip the app lock gate for this launch: the capture screen opens
+      // immediately and asks for the unlock when something is saved.
+      ref.read(pendingQuickCaptureLaunchProvider).markPending(
+        appUnlockRequired:
+            settings.useMasterPassword && settings.masterPasswordHash != null,
+      );
+      _quickCaptureLaunch = true;
     }
     appLocaleNotifier.value = (settings.languageCode != null && settings.languageCode!.isNotEmpty)
         ? Locale(settings.languageCode!)
@@ -155,9 +163,8 @@ class _DisguiseModeGateState extends ConsumerState<_DisguiseModeGate> {
     if (mode == null) {
       return Scaffold(backgroundColor: Theme.of(context).colorScheme.surface);
     }
-    return mode == DisguiseMode.decoy
-        ? const DecoyArchiveExplorerScreen()
-        : const LockGateScreen();
+    if (mode == DisguiseMode.decoy) return const DecoyArchiveExplorerScreen();
+    return _quickCaptureLaunch ? const MainShell() : const LockGateScreen();
   }
 }
 
