@@ -608,6 +608,7 @@ class ThumbnailCacheService {
     }
     _memoryCache.clear();
     _latestKeyByFile.clear();
+    _sizeCache.clear();
   }
 
   /// Clears the .thumbcache directory inside the mounted volume by direct channel invocations.
@@ -1007,6 +1008,7 @@ class ThumbnailCacheService {
     _memoryCache.removeWhere((key) => key.startsWith('${container.volId}:'));
     _latestKeyByFile.removeWhere(
         (prefix, _) => prefix.startsWith('${container.volId}:'));
+    _sizeCache.removeWhere((key, _) => key.startsWith('${container.volId}:'));
   }
 
   static Future<void> clearAllAppCache() async {
@@ -1022,6 +1024,7 @@ class ThumbnailCacheService {
     }
     _memoryCache.clear();
     _latestKeyByFile.clear();
+    _sizeCache.clear();
   }
 
   /// Invalidates every tier of the thumbnail cache for one specific

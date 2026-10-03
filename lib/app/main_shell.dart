@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:vaultexplorer/core/api/quick_capture_api.dart';
 import 'package:vaultexplorer/core/api/vault_engine_types.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
@@ -11,6 +12,7 @@ import 'package:vaultexplorer/data/models/mounted_container.dart';
 import 'package:vaultexplorer/features/browser/file_browser_screen.dart';
 import 'package:vaultexplorer/features/dashboard/vault_dashboard_screen.dart';
 import 'package:vaultexplorer/features/dashboard/widgets/app_navigation_drawer.dart';
+import 'package:vaultexplorer/features/settings/app_settings_controller.dart';
 import 'package:vaultexplorer/features/settings/app_settings_screen.dart';
 import 'package:vaultexplorer/features/share_import/share_import_flow.dart';
 import 'package:vaultexplorer/features/camera/quick_capture_screen.dart';
@@ -57,9 +59,34 @@ class _MainShellState extends ConsumerState<MainShell> {
   // QuickCaptureScreen route to push.
   bool _handlingQuickCapture = false;
 
+  // True only when this shell was created because Quick Capture launched the
+  // app and the startup gate already pulled that request (see
+  // PendingQuickCaptureLaunch). That launch lives in its own task and ends
+  // with SystemNavigator.pop() (see _onQuickCaptureRequested), so the
+  // dashboard, Tools and Settings tabs would be built, laid out and then
+  // thrown away without ever being seen -- build() paints a plain black
+  // frame instead while the capture screen opens on top.
+  bool _quickCaptureColdStart = false;
+
+  // Tabs are built the first time they're opened and then kept alive.
+  // IndexedStack builds every child up front, which on cold start meant
+  // constructing the whole Tools hub and the Settings screen (and whatever
+  // providers they watch) before the user could see the dashboard.
+  final Set<int> _builtTabs = {0};
+
   @override
   void initState() {
     super.initState();
+    _quickCaptureColdStart =
+        ref.read(pendingQuickCaptureLaunchProvider).take();
+    if (!_quickCaptureColdStart) {
+      // The Settings tab used to be the thing that created -- and so started
+      // loading -- this keepAlive controller on the first frame. The
+      // dashboard, file browser and authenticator registry later read its
+      // `.settings` and expect it already loaded, so creating it here keeps
+      // that timing now that the tab itself is built lazily.
+      ref.read(appSettingsControllerProvider);
+    }
     final policy = _secureScreenPolicy; // Eagerly evaluate while mounted
     ref.read(appSettingsServiceProvider).loadSettings().then((settings) {
       policy.apply(
@@ -69,6 +96,10 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (_quickCaptureColdStart) {
+        _onQuickCaptureRequested();
+        return;
+      }
       _checkPendingShareOnStart();
       _checkPendingQuickCaptureOnStart();
     });
@@ -194,7 +225,10 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   void _onTabTap(int newIndex) {
     if (_index != newIndex) {
-      setState(() => _index = newIndex);
+      setState(() {
+        _index = newIndex;
+        _builtTabs.add(newIndex);
+      });
       if (newIndex == 0) {
         _dashboardKey.currentState?.reloadDashboard();
       }
@@ -221,6 +255,10 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (_quickCaptureColdStart) {
+      return const Scaffold(backgroundColor: Colors.black);
+    }
+
     final cs = Theme.of(context).colorScheme;
 
     final destinations = _destinations(context);
@@ -234,8 +272,17 @@ class _MainShellState extends ConsumerState<MainShell> {
           mountedNotifier: _mountedNotifier,
           onNavigateTab: _onTabTap,
         ),
-        ToolsScreen(mountedContainers: _mountedNotifier, onNavigateTab: _onTabTap),
-        const AppSettingsScreen(),
+        if (_builtTabs.contains(1))
+          ToolsScreen(
+            mountedContainers: _mountedNotifier,
+            onNavigateTab: _onTabTap,
+          )
+        else
+          const SizedBox.shrink(),
+        if (_builtTabs.contains(2))
+          const AppSettingsScreen()
+        else
+          const SizedBox.shrink(),
       ],
     );
 

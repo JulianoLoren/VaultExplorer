@@ -3,6 +3,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vaultexplorer/core/api/quick_capture_api.dart';
 import 'package:vaultexplorer/core/extensions/l10n_extension.dart';
 import 'package:vaultexplorer/data/services/app_settings_service.dart';
 import 'package:vaultexplorer/data/services/secure_screen_policy.dart';
@@ -113,10 +114,22 @@ class _DisguiseModeGateState extends ConsumerState<_DisguiseModeGate> {
   }
 
   Future<void> _resolveMode() async {
-    final mode = await disguiseModeApi.getMode();
+    // None of these depends on another's result, so they no longer queue up
+    // behind one another (this screen is blank until all of them finish).
+    // loadSettings() and checkPendingQuickCaptureRequest() swallow their own
+    // errors; getMode() propagating is unchanged from before.
+    final (mode, settings, quickCapturePending) = await (
+      disguiseModeApi.getMode(),
+      ref.read(appSettingsServiceProvider).loadSettings(),
+      ref.read(quickCaptureApiProvider).checkPendingQuickCaptureRequest(),
+    ).wait;
     if (mounted) applyDisguiseModeTaskSwitcherLabel(mode, context.l10n);
-
-    final settings = await ref.read(appSettingsServiceProvider).loadSettings();
+    // The decoy identity never shows Quick Capture; dropping the request
+    // there matches what already happened (it was never acted on, and
+    // VaultQuickCaptureActivity.onDestroy clears whatever was left).
+    if (quickCapturePending && mode != DisguiseMode.decoy) {
+      ref.read(pendingQuickCaptureLaunchProvider).markPending();
+    }
     appLocaleNotifier.value = (settings.languageCode != null && settings.languageCode!.isNotEmpty)
         ? Locale(settings.languageCode!)
         : null;

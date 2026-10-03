@@ -1185,12 +1185,14 @@ class _FileBrowserScreenState extends ConsumerState<FileBrowserScreen>
     _navNotifier.setLoading(true);
     _pinsBookmarksNotifier.load(widget.container);
     try {
-      final appSettings = await ref
-          .read(appSettingsServiceProvider)
-          .loadSettings();
-      final records = await ref.read(containerRepositoryProvider).loadAll();
+      // Independent of one another, so they run together instead of each
+      // waiting for the previous one's secure-storage round trip.
+      final (appSettings, records, toolbarConfig) = await (
+        ref.read(appSettingsServiceProvider).loadSettings(),
+        ref.read(containerRepositoryProvider).loadAll(),
+        _toolbarSvc.load(),
+      ).wait;
       final record = records[widget.container.uri];
-      final toolbarConfig = await _toolbarSvc.load();
       if (mounted) {
         setState(() {
           _appSettings = appSettings;

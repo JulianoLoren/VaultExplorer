@@ -73,8 +73,20 @@ class FileManagerToolbarService {
     return config;
   }
 
-  Future<FileManagerToolbarConfig> load() async {
-    if (_cache != null) return _cache!;
+  /// The first read, while it is still running. The file browser asks for
+  /// the config from two places at the same moment on open; sharing one read
+  /// means one decrypt instead of two.
+  Future<FileManagerToolbarConfig>? _loading;
+
+  Future<FileManagerToolbarConfig> load() {
+    final cached = _cache;
+    if (cached != null) return Future.value(cached);
+    return _loading ??= _readFromStorage().whenComplete(() {
+      _loading = null;
+    });
+  }
+
+  Future<FileManagerToolbarConfig> _readFromStorage() async {
     try {
       final blob = await _secure.read(key: _kToolbarConfigBlob);
       if (blob != null) {

@@ -135,8 +135,7 @@ class ContainerRepository {
   }
 
   Future<Map<String, ContainerRecord>> loadAll() async {
-    if (_cache != null) return Map.unmodifiable(_cache!);
-    await _hydrate();
+    await _ensureLoaded();
     return Map.unmodifiable(_cache!);
   }
 
@@ -688,8 +687,22 @@ class ContainerRepository {
   static String legacyCompositeCarriersKey(String uri) =>
       _legacyCompositeCarriersKey(uri);
 
+  /// The hydrate currently running, if any. _hydrate() installs an empty
+  /// `_cache` before it has read anything, so without this a second caller
+  /// arriving mid-hydrate (the file browser's init fires two overlapping
+  /// loadAll() calls) saw `_cache != null`, skipped the wait, and got back an
+  /// empty or partly filled map; callers that didn't skip it hydrated a
+  /// second time in parallel.
+  Future<void>? _hydrateInFlight;
+
   Future<void> _ensureLoaded() async {
-    if (_cache == null) await _hydrate();
+    final inFlight = _hydrateInFlight;
+    if (inFlight != null) return inFlight;
+    if (_cache == null) {
+      await (_hydrateInFlight = _hydrate().whenComplete(() {
+        _hydrateInFlight = null;
+      }));
+    }
   }
 
   Future<void> _hydrate() async {

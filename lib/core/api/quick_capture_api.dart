@@ -1,8 +1,34 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vaultexplorer/core/api/vault_engine_types.dart';
 import 'package:vaultexplorer/data/services/vault_engine/channel_methods.dart';
 
 typedef QuickCaptureSettingsSnapshot = ({bool tileEnabled});
+
+/// A Quick Capture request that was already pulled from native at cold start,
+/// handed from the startup gate (which asks in parallel with its other
+/// launch-time calls) to [MainShell], so the shell can open the capture
+/// screen on its very first frame instead of building the whole dashboard
+/// first and only then discovering why it was launched.
+///
+/// A plain mutable holder rather than provider state on purpose: the value is
+/// written once before any widget reads it and consumed exactly once.
+class PendingQuickCaptureLaunch {
+  bool _pending = false;
+
+  void markPending() => _pending = true;
+
+  /// Returns whether a request was waiting, and clears it.
+  bool take() {
+    final was = _pending;
+    _pending = false;
+    return was;
+  }
+}
+
+final pendingQuickCaptureLaunchProvider = Provider<PendingQuickCaptureLaunch>(
+  (ref) => PendingQuickCaptureLaunch(),
+);
 
 typedef ScratchpadSession = ({String sessionToken, String scratchpadPath});
 
