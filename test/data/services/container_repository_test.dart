@@ -59,6 +59,17 @@ class _MemorySecureStorage extends AppSecureStorage {
   Future<Map<String, String>> readAll() async => Map.of(data);
 
   @override
+  Future<Map<String, String>> readAllWithPrefixes(
+    List<String> prefixes, {
+    List<String> excludePrefixes = const [],
+  }) async => {
+    for (final e in data.entries)
+      if (prefixes.any(e.key.startsWith) &&
+          !excludePrefixes.any(e.key.startsWith))
+        e.key: e.value,
+  };
+
+  @override
   Future<bool> containsKey({required String key}) async =>
       data.containsKey(key);
 }

@@ -472,6 +472,43 @@ class AppSettingsService {
   /// FileManagerToolbarService) toolbar config.
   static const _kSettingsBlob = 'app_settings_blob_v1';
 
+  /// In-memory copy of the *raw decrypted* settings blob (never the parsed
+  /// [AppSettings] -- callers freely mutate the object they get back, so each
+  /// [loadSettings] call still builds its own fresh instance from this
+  /// string). [loadSettings] has dozens of call sites, several of them on
+  /// every cold start and on every file open, and each used to cost a
+  /// platform-channel hop plus a Keystore decrypt.
+  ///
+  /// Only the blob is cached. The master-password hash/salt and the pattern
+  /// and PIN hashes keep being read from secure storage every time. The blob
+  /// itself is documented above as non-secret app configuration.
+  static String? _cachedBlob;
+
+  /// Bumped by every [invalidateCache] so a read that was already in flight
+  /// when a write happened can't store its (now stale) result afterwards.
+  static int _cacheGeneration = 0;
+
+  /// Drops the cached blob. Called around every write in this class, and by
+  /// the app bootstrap when native code wipes secure storage (panic purge),
+  /// which this class can't observe on its own.
+  static void invalidateCache() {
+    _cachedBlob = null;
+    _cacheGeneration++;
+  }
+
+  Future<String?> _readSettingsBlob() async {
+    final cached = _cachedBlob;
+    if (cached != null) return cached;
+    final generation = _cacheGeneration;
+    final blob = await _secure.read(key: _kSettingsBlob);
+    // A null read is never cached, so first-run/legacy-migration and
+    // post-wipe states are always re-checked against real storage.
+    if (blob != null && generation == _cacheGeneration) {
+      _cachedBlob = blob;
+    }
+    return blob;
+  }
+
   /// Where [AppSettings] lived before the switch to [_kSettingsBlob] above.
   /// Consulted only by [_migrateLegacySettings], once per install, to move
   /// an existing user's settings into the encrypted store; deleted once
@@ -494,6 +531,7 @@ class AppSettingsService {
       key: _kSettingsBlob,
       value: jsonEncode(settings.toJson()),
     );
+    invalidateCache();
     try {
       await legacy.delete();
     } catch (_) {
@@ -508,7 +546,7 @@ class AppSettingsService {
   Future<AppSettings> loadSettings() async {
     AppSettings settings;
     try {
-      final blob = await _secure.read(key: _kSettingsBlob);
+      final blob = await _readSettingsBlob();
       if (blob != null) {
         settings =
             AppSettings.fromJson(jsonDecode(blob) as Map<String, dynamic>);
@@ -543,6 +581,11 @@ class AppSettingsService {
   }
 
   Future<void> saveSettings(AppSettings settings) async {
+    // Invalidate on both sides of the write: before, so nothing reads the old
+    // blob from cache while the write is in flight; after, so a read that
+    // began before the write finished can't have repopulated the cache with
+    // the old value (see _cacheGeneration).
+    invalidateCache();
     try {
       await _secure.write(
         key: _kSettingsBlob,
@@ -552,6 +595,8 @@ class AppSettingsService {
       // Same reasoning as FileManagerToolbarService.save(): the caller's
       // in-memory settings object already reflects the change for this
       // session; a failed write only risks it not surviving a restart.
+    } finally {
+      invalidateCache();
     }
   }
 

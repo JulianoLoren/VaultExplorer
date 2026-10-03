@@ -188,6 +188,37 @@ class ThumbnailCacheService {
   static const int _memoryMaxBytes = 24 * 1024 * 1024;
   static final _memoryCache = ByteBudgetCache(_memoryMaxBytes);
 
+  /// File prefix (`volId:mountedAt:filePath|`) -> the most recently stored full
+  /// key for that file. [getFromMemory] and [getWithSizeFromMemory] use it to
+  /// find "any resident thumbnail for this file, whatever quality it was
+  /// stored under". That used to be a linear scan over every key in
+  /// [_memoryCache] on each exact-key miss -- i.e. for every tile that had no
+  /// thumbnail yet, on every rebuild of the grid.
+  ///
+  /// Entries are verified against [_memoryCache] when read, so eviction needs
+  /// no hook here; [_pruneKeyIndex] bounds how many dead entries accumulate.
+  static final Map<String, String> _latestKeyByFile = {};
+
+  static String _filePrefix(MountedContainer container, String filePath) =>
+      '${container.volId}:${container.mountedAt.millisecondsSinceEpoch}:'
+      '$filePath|';
+
+  static String? _findResidentKeyForFile(
+    MountedContainer container,
+    String filePath,
+  ) {
+    final prefix = _filePrefix(container, filePath);
+    final key = _latestKeyByFile[prefix];
+    if (key == null) return null;
+    if (_memoryCache.containsKey(key)) return key;
+    _latestKeyByFile.remove(prefix);
+    return null;
+  }
+
+  static void _pruneKeyIndex() {
+    _latestKeyByFile.removeWhere((_, key) => !_memoryCache.containsKey(key));
+  }
+
   static void resizeMemoryBudget(int newMaxBytes) =>
       _memoryCache.resize(newMaxBytes);
 
@@ -341,13 +372,8 @@ class ThumbnailCacheService {
 
     // Prefix search: Find ANY resident thumbnail in RAM for this file,
     // regardless of what quality key Masonry view stored it under.
-    final prefix =
-        '${container.volId}:${container.mountedAt.millisecondsSinceEpoch}:$filePath|';
-    final matchedKey = _memoryCache.keys.firstWhere(
-      (k) => k.startsWith(prefix),
-      orElse: () => '',
-    );
-    if (matchedKey.isNotEmpty) {
+    final matchedKey = _findResidentKeyForFile(container, filePath);
+    if (matchedKey != null) {
       final alt = _memoryCache[matchedKey];
       if (alt != null) {
         if (_looksLikeValidImage(alt)) return alt;
@@ -389,13 +415,8 @@ class ThumbnailCacheService {
 
     // Prefix search: find ANY resident thumbnail in RAM for this file,
     // regardless of what quality key it was stored under (see [getFromMemory]).
-    final prefix =
-        '${container.volId}:${container.mountedAt.millisecondsSinceEpoch}:$filePath|';
-    final matchedKey = _memoryCache.keys.firstWhere(
-      (k) => k.startsWith(prefix),
-      orElse: () => '',
-    );
-    if (matchedKey.isNotEmpty) {
+    final matchedKey = _findResidentKeyForFile(container, filePath);
+    if (matchedKey != null) {
       final alt = _memoryCache[matchedKey];
       if (alt != null) {
         if (_looksLikeValidImage(alt)) {
@@ -432,6 +453,11 @@ class ThumbnailCacheService {
     }
     final key = _memKey(container, filePath, quality);
     _memoryCache[key] = data;
+    _latestKeyByFile[_filePrefix(container, filePath)] = key;
+    if (_latestKeyByFile.length > 2048 &&
+        _latestKeyByFile.length > _memoryCache.length * 4) {
+      _pruneKeyIndex();
+    }
 
     if (width != null && height != null && width > 0 && height > 0) {
       _sizeCache[key] = (width, height);
@@ -581,6 +607,7 @@ class ThumbnailCacheService {
       // taking up cache space rather than causing incorrect behavior.
     }
     _memoryCache.clear();
+    _latestKeyByFile.clear();
   }
 
   /// Clears the .thumbcache directory inside the mounted volume by direct channel invocations.
@@ -978,6 +1005,8 @@ class ThumbnailCacheService {
     // blanket clear — other containers may still be mounted with warm,
     // still-valid entries of their own.
     _memoryCache.removeWhere((key) => key.startsWith('${container.volId}:'));
+    _latestKeyByFile.removeWhere(
+        (prefix, _) => prefix.startsWith('${container.volId}:'));
   }
 
   static Future<void> clearAllAppCache() async {
@@ -992,6 +1021,7 @@ class ThumbnailCacheService {
       // a later cache-eviction pass rather than causing wrong data to show.
     }
     _memoryCache.clear();
+    _latestKeyByFile.clear();
   }
 
   /// Invalidates every tier of the thumbnail cache for one specific
@@ -1028,6 +1058,7 @@ class ThumbnailCacheService {
         '${container.volId}:${container.mountedAt.millisecondsSinceEpoch}:$filePath|';
     _memoryCache.removeWhere((key) => key.startsWith(prefix));
     _sizeCache.removeWhere((key, _) => key.startsWith(prefix));
+    _latestKeyByFile.remove(prefix);
 
     for (final quality in qualities) {
       try {

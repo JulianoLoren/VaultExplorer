@@ -703,7 +703,21 @@ class ContainerRepository {
       // delays or errors on cold start do not wipe out valid container records from disk.
       Map<String, String> secureData = const {};
       try {
-        secureData = await _secure.readAll();
+        // Only the per-container metadata keys below are needed here. Asking
+        // for just those means the remembered-password (`vc2_pw_`) and
+        // pattern/PIN-hash entries are never decrypted or handed to Dart on
+        // cold start. `vc2_pin_` (pinned paths) is also a string prefix of
+        // `vc2_pin_hash_`, so that one is excluded explicitly.
+        secureData = await _secure.readAllWithPrefixes(
+          const [
+            'vc2_fav_',
+            'vc2_pin_',
+            'vc2_docfolders_',
+            'vc2_keyfiles_',
+            'vc2_composite_carriers_',
+          ],
+          excludePrefixes: const ['vc2_pin_hash_'],
+        );
       } catch (e) {
         VeLog.w(
           _kLogTag,

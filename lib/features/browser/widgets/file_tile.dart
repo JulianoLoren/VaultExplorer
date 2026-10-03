@@ -238,6 +238,7 @@ class FileTile extends StatelessWidget {
       detailColumns: detailColumns,
       longFileNameMode: longFileNameMode,
       trailing: trailingWidget,
+      hasTrailingSlot: showItemActionsMenu && !entry.isPlaceholder,
       isSelectionMode: isSelectionMode,
       isSelected: isSelected,
       onTap: onTap,

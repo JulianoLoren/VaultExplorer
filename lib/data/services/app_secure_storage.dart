@@ -47,6 +47,23 @@ class AppSecureStorage {
     return result ?? <String, String>{};
   }
 
+  /// Like [readAll], but the native side only decrypts entries whose key
+  /// starts with one of [prefixes] and none of [excludePrefixes]. Entries a
+  /// caller never asked for are not decrypted at all -- one Keystore
+  /// operation saved per skipped entry, and, for callers that only need
+  /// non-secret metadata, remembered passwords and PIN/pattern hashes never
+  /// cross into Dart.
+  Future<Map<String, String>> readAllWithPrefixes(
+    List<String> prefixes, {
+    List<String> excludePrefixes = const [],
+  }) async {
+    final result = await _channel.invokeMapMethod<String, String>(
+      'readAllSecure',
+      {'prefixes': prefixes, 'excludePrefixes': excludePrefixes},
+    );
+    return result ?? <String, String>{};
+  }
+
   Future<bool> containsKey({required String key}) async {
     final result = await _channel.invokeMethod<bool>('containsKeySecure', {'key': key});
     return result ?? false;

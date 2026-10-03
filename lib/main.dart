@@ -9,7 +9,9 @@ import 'package:vaultexplorer/core/providers/vault_engine_providers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // Not awaited: the platform message is queued ahead of runApp either way,
+  // and waiting for its reply only delayed the first frame.
+  unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
 
   final appContainer = ProviderContainer();
   appContainer.read(vaultEngineEventsProvider);

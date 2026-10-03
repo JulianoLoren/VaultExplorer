@@ -290,12 +290,25 @@ object ContainerEngine {
      * the extract half of the copy until that entry point gets the same
      * treatment.
      */
+    /**
+     * Plaintext intermediates of copies that are running right now. Lets the
+     * startup orphan sweep (see MainActivity.onCreate) delete `ve_copy_*`
+     * files left by a crashed or killed process without touching one a live
+     * copy is still using.
+     */
+    private val activeCopyTempFiles: MutableSet<String> =
+        java.util.concurrent.ConcurrentHashMap.newKeySet()
+
+    fun isActiveCopyTempFile(file: java.io.File): Boolean =
+        activeCopyTempFiles.contains(file.absolutePath)
+
     fun copyFileViaBackend(
         srcVolId: Int, srcPath: String, destVolId: Int, destPath: String, opId: Int = 0,
         extract: (path: String, destinationPath: String) -> Boolean,
         writeBack: (path: String, sourcePath: String) -> Boolean,
     ): Boolean {
         val tempFile = java.io.File.createTempFile("ve_copy_", ".tmp")
+        activeCopyTempFiles.add(tempFile.absolutePath)
         return try {
             val t0 = System.currentTimeMillis()
             val extracted = extract(srcPath, tempFile.absolutePath)
@@ -332,6 +345,7 @@ object ContainerEngine {
             written
         } finally {
             if (tempFile.exists()) SecureFileWipe.secureDeleteFile(tempFile)
+            activeCopyTempFiles.remove(tempFile.absolutePath)
         }
     }
 

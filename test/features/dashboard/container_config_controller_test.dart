@@ -445,6 +445,17 @@ class _FakeAppSecureStorage extends AppSecureStorage {
   Future<Map<String, String>> readAll() async => Map.unmodifiable(_storage);
 
   @override
+  Future<Map<String, String>> readAllWithPrefixes(
+    List<String> prefixes, {
+    List<String> excludePrefixes = const [],
+  }) async => {
+    for (final e in _storage.entries)
+      if (prefixes.any(e.key.startsWith) &&
+          !excludePrefixes.any(e.key.startsWith))
+        e.key: e.value,
+  };
+
+  @override
   Future<bool> containsKey({required String key}) async => _storage.containsKey(key);
 }
 

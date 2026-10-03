@@ -224,11 +224,20 @@ object SecureFileWipe {
      * startup, off the main thread, to recover plaintext temp files left
      * behind by a process death (crash, force-stop, OOM kill) that skipped
      * the normal cleanup path. Returns how many files were wiped.
+     *
+     * [isInUse] lets a caller exempt files that a live operation in this same
+     * process still owns. The sweep runs from every Activity's onCreate, not
+     * just at process start, so without it a Quick Capture or share launch
+     * during a long copy would wipe that copy's temp file out from under it.
      */
-    fun sweepOrphanedFiles(cacheDir: File?, prefixes: List<String>): Int {
+    fun sweepOrphanedFiles(
+        cacheDir: File?,
+        prefixes: List<String>,
+        isInUse: (File) -> Boolean = { false },
+    ): Int {
         val dir = cacheDir ?: return 0
         val orphans = dir.listFiles { f ->
-            f.isFile && prefixes.any { prefix -> f.name.startsWith(prefix) }
+            f.isFile && prefixes.any { prefix -> f.name.startsWith(prefix) } && !isInUse(f)
         } ?: return 0
         var wiped = 0
         for (file in orphans) {

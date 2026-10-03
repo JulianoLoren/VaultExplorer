@@ -37,6 +37,12 @@ void configurePlatformIntegrations(ProviderContainer container) {
     cryptoApi: container.read(vaultCryptoApiProvider),
     hashApi: container.read(vaultHashApiProvider),
   );
+  // A panic wipe clears secure storage natively, behind AppSettingsService's
+  // back; without this its in-memory settings-blob cache would keep serving
+  // the pre-wipe settings for the rest of the process.
+  container
+      .read(vaultEngineEventsProvider)
+      .addPanicCredentialsPurgedListener(AppSettingsService.invalidateCache);
   PlatformDispatcher.instance.onError = (error, stack) {
     final errStr = error.toString();
     if (errStr.contains('Cannot add event after closing')) {

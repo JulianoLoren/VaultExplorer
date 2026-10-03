@@ -62,6 +62,7 @@ class FileRowShell extends StatelessWidget {
   /// [FileNameLabel].
   final LongFileNameDisplayMode longFileNameMode;
   final Widget? trailing;
+  final bool hasTrailingSlot;
   final bool isSelected;
   final bool isSelectionMode;
   final VoidCallback onTap;
@@ -91,6 +92,7 @@ class FileRowShell extends StatelessWidget {
     this.detailColumns = const [FileDetailColumn.date, FileDetailColumn.size],
     this.longFileNameMode = LongFileNameDisplayMode.ellipsizeEnd,
     this.trailing,
+    this.hasTrailingSlot = false,
     required this.isSelected,
     this.isSelectionMode = false,
     required this.onTap,
@@ -293,8 +295,17 @@ class FileRowShell extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final availableWidth = constraints.maxWidth;
+              // When there is no overflow button, a selection indicator can
+              // use the last detail column's space instead of adding a new
+              // trailing slot and pushing every column to the left.
+              final canUseLastColumnForSelection =
+                  !isCompact && !isDetailed && detailColumns.isNotEmpty;
               final trailingWidth =
-                  (isSelectionMode || effectiveTrailing != null) ? 36.0 : 0.0;
+                  (hasTrailingSlot ||
+                      effectiveTrailing != null ||
+                      (isSelectionMode && !canUseLastColumnForSelection))
+                  ? 36.0
+                  : 0.0;
               const leadingSpacing = 10.0;
 
               // Width detail columns need
@@ -321,6 +332,12 @@ class FileRowShell extends StatelessWidget {
               // OR when zoom/font size makes side-by-side columns unable to fit.
               final effectiveDetailed = isDetailed ||
                   (!isCompact && !canFitColumns && detailColumns.isNotEmpty);
+              final selectionInLastColumn =
+                  isSelectionMode &&
+                  !hasTrailingSlot &&
+                  !isCompact &&
+                  !effectiveDetailed &&
+                  detailColumns.isNotEmpty;
 
               return Row(
                 children: [
@@ -411,10 +428,19 @@ class FileRowShell extends StatelessWidget {
                       detailColumns.isNotEmpty) ...[
                     for (int i = 0; i < detailColumns.length; i++) ...[
                       const SizedBox(width: 8),
-                      _buildColumnWidget(detailColumns[i], context),
+                      if (selectionInLastColumn &&
+                          i == detailColumns.length - 1)
+                        SizedBox(
+                          width: _columnWidth(detailColumns[i], context),
+                          child: Center(
+                            child: TileSelectionIndicator(selected: isSelected),
+                          ),
+                        )
+                      else
+                        _buildColumnWidget(detailColumns[i], context),
                     ],
                   ],
-                  if (isSelectionMode) ...[
+                  if (isSelectionMode && !selectionInLastColumn) ...[
                     const SizedBox(width: 4),
                     SizedBox(
                       width: 32,
