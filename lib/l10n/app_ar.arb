@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "كلمة مرور غير صحيحة أو حاوية غير صالحة",
   "genericUnknownError": "خطأ غير معروف",
   "decryptingLabel": "جارٍ فك التشفير…",
+  "loadingContainerFromStorage": "جارٍ تحميل الحاوية من وحدة التخزين… قد يستغرق ذلك بعض الوقت إذا كانت كبيرة أو محفوظة في السحابة.",
   "luksKeyslotProgress": "جارِ تجربة فتحة المفتاح {attempted} من {total}…",
   "luksKeyslotProgressUnknown": "جارِ تجربة فتحة مفتاح…",
   "bitlockerCredentialProgress": "جارٍ التحقق من بيانات الاعتماد {attempted} من {total}…",

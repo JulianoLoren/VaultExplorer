@@ -1442,6 +1442,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get decryptingLabel => '正在解密…';
 
   @override
+  String get loadingContainerFromStorage => '正在从存储中加载容器… 大型容器或云端文件可能需要一些时间。';
+
+  @override
   String luksKeyslotProgress(int attempted, int total) {
     return '正在尝试密钥槽 $attempted/$total…';
   }

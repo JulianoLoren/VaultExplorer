@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "Mot de passe incorrect ou conteneur invalide",
   "genericUnknownError": "Erreur inconnue",
   "decryptingLabel": "Déchiffrement…",
+  "loadingContainerFromStorage": "Chargement du conteneur depuis le stockage… Les conteneurs volumineux ou stockés dans le cloud peuvent prendre un moment.",
   "luksKeyslotProgress": "Essai de l'emplacement de clé {attempted} sur {total}…",
   "luksKeyslotProgressUnknown": "Essai d'un emplacement de clé…",
   "bitlockerCredentialProgress": "Vérification de l'identifiant {attempted} sur {total}…",

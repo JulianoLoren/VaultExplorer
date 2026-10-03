@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "Senha incorreta ou contêiner inválido",
   "genericUnknownError": "Erro desconhecido",
   "decryptingLabel": "Descriptografando…",
+  "loadingContainerFromStorage": "Carregando o contêiner do armazenamento… Contêineres grandes ou salvos na nuvem podem demorar um pouco.",
   "luksKeyslotProgress": "Tentando slot de chave {attempted} de {total}…",
   "luksKeyslotProgressUnknown": "Tentando slot de chave…",
   "bitlockerCredentialProgress": "Verificando credencial {attempted} de {total}…",

@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "Неправильний пароль або пошкоджений контейнер",
   "genericUnknownError": "Невідома помилка",
   "decryptingLabel": "Розшифрування…",
+  "loadingContainerFromStorage": "Завантаження контейнера зі сховища… Великі контейнери або файли в хмарі можуть завантажуватися довше.",
   "luksKeyslotProgress": "Перевірка ключового слота {attempted} з {total}…",
   "luksKeyslotProgressUnknown": "Перевірка ключового слота…",
   "bitlockerCredentialProgress": "Перевірка облікових даних {attempted} з {total}…",

@@ -1535,6 +1535,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get decryptingLabel => 'Decifratura…';
 
   @override
+  String get loadingContainerFromStorage =>
+      'Caricamento del contenitore dallo spazio di archiviazione… I contenitori grandi o salvati sul cloud possono richiedere un po\' di tempo.';
+
+  @override
   String luksKeyslotProgress(int attempted, int total) {
     return 'Tentativo dello slot chiave $attempted di $total…';
   }

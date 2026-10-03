@@ -1461,6 +1461,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get decryptingLabel => '復号中…';
 
   @override
+  String get loadingContainerFromStorage =>
+      'ストレージからコンテナを読み込み中… 大容量のファイルやクラウド上のファイルは時間がかかる場合があります。';
+
+  @override
   String luksKeyslotProgress(int attempted, int total) {
     return 'キースロット $attempted/$total を試しています…';
   }

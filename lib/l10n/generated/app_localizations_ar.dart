@@ -1565,6 +1565,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get decryptingLabel => 'جارٍ فك التشفير…';
 
   @override
+  String get loadingContainerFromStorage =>
+      'جارٍ تحميل الحاوية من وحدة التخزين… قد يستغرق ذلك بعض الوقت إذا كانت كبيرة أو محفوظة في السحابة.';
+
+  @override
   String luksKeyslotProgress(int attempted, int total) {
     return 'جارِ تجربة فتحة المفتاح $attempted من $total…';
   }

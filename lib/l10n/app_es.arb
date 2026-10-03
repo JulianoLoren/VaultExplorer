@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "Contraseña incorrecta o contenedor no válido",
   "genericUnknownError": "Error desconocido",
   "decryptingLabel": "Descifrando…",
+  "loadingContainerFromStorage": "Cargando el contenedor desde el almacenamiento… Los contenedores grandes o guardados en la nube pueden tardar un poco.",
   "luksKeyslotProgress": "Probando ranura de clave {attempted} de {total}…",
   "luksKeyslotProgressUnknown": "Probando ranura de clave…",
   "bitlockerCredentialProgress": "Verificando credencial {attempted} de {total}…",

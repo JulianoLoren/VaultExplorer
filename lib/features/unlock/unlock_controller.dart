@@ -74,6 +74,7 @@ class UnlockState {
   final String? selectedName;
   final String containerFormat;
   final bool loading;
+  final bool checkingContainer;
   final bool remember;
   final bool readOnly;
   final bool hasAllStorageAccess;
@@ -164,6 +165,7 @@ class UnlockState {
     this.selectedName,
     this.containerFormat = 'container',
     this.loading = false,
+    this.checkingContainer = false,
     this.remember = false,
     this.readOnly = false,
     this.hasAllStorageAccess = false,
@@ -205,6 +207,7 @@ class UnlockState {
     bool clearSelectedName = false,
     String? containerFormat,
     bool? loading,
+    bool? checkingContainer,
     bool? remember,
     bool? readOnly,
     bool? hasAllStorageAccess,
@@ -248,6 +251,7 @@ class UnlockState {
         : (selectedName ?? this.selectedName),
     containerFormat: containerFormat ?? this.containerFormat,
     loading: loading ?? this.loading,
+    checkingContainer: checkingContainer ?? this.checkingContainer,
     remember: remember ?? this.remember,
     readOnly: readOnly ?? this.readOnly,
     hasAllStorageAccess: hasAllStorageAccess ?? this.hasAllStorageAccess,
@@ -403,16 +407,27 @@ class UnlockController extends _$UnlockController {
   }
 
   Future<void> _probeContainerFormat(String uri) async {
-    final format = await ref
-        .read(vaultLifecycleApiProvider)
-        .probeContainerFormat(uri);
     if (ref.mounted && state.selectedUri == uri) {
-      final isPlain = format == 'plain';
-      final resolvedFormat = format != 'unknown' ? format : state.containerFormat;
-      state = state._copy(
-        containerFormat: resolvedFormat,
-        isPlainDiskImage: isPlain,
-      );
+      state = state._copy(checkingContainer: true);
+    }
+    try {
+      final format = await ref
+          .read(vaultLifecycleApiProvider)
+          .probeContainerFormat(uri);
+      if (ref.mounted && state.selectedUri == uri) {
+        final isPlain = format == 'plain';
+        final resolvedFormat = format != 'unknown' ? format : state.containerFormat;
+        state = state._copy(
+          containerFormat: resolvedFormat,
+          isPlainDiskImage: isPlain,
+        );
+      }
+    } catch (e) {
+      VeLog.w('UnlockController', 'Container format probe failed', e);
+    } finally {
+      if (ref.mounted && state.selectedUri == uri) {
+        state = state._copy(checkingContainer: false);
+      }
     }
   }
 
@@ -768,67 +783,89 @@ class UnlockController extends _$UnlockController {
         return;
       }
 
-      // Check if this carrier belongs to a known composite container record
-      final records = await ref.read(containerRepositoryProvider).loadAll();
-      if (!ref.mounted) return;
-      ContainerRecord? matchedCompositeRecord;
-      for (final r in records.values) {
-        if (r.isCompositeSource &&
-            r.compositeCarriers.any((c) => c['uri'] == single.uri)) {
-          matchedCompositeRecord = r;
-          break;
-        }
-      }
-
-      if (matchedCompositeRecord != null) {
-        final carriers = matchedCompositeRecord.compositeCarriers
-            .map((c) => (
-                  uri: c['uri'] ?? '',
-                  displayName: c['name'] ?? '',
-                ))
-            .where((c) => c.uri.isNotEmpty)
-            .toList();
-        setCompositeCarriers(carriers, name: matchedCompositeRecord.label);
-        state = state._copy(
-          selectedUri: matchedCompositeRecord.uri,
-          selectedName: matchedCompositeRecord.label,
-        );
-        await _initUnlockMethod(matchedCompositeRecord.uri);
-        return;
-      }
-
-      // Check if this single file is an unremembered composite carrier
-      final compositeApi = ref.read(vaultCompositeApiProvider);
-      final profile =
-          await compositeApi.profileCarriers(carrierUris: [single.uri]);
-      if (!ref.mounted) return;
-      final carrierBudget =
-          (profile != null && profile.carriers.isNotEmpty)
-              ? profile.carriers.first
-              : null;
-
-      if (carrierBudget != null &&
-          carrierBudget.detectedFormat == 'composite_carrier') {
-        setCompositeCarriers(
-          [single],
-          knownProfiles: {single.uri: carrierBudget},
-        );
-        return;
-      }
-
+      // Publish the selected file before probing it. Carrier profiling below
+      // can need to read from a remote SAF provider, and otherwise the page
+      // stays looking unchanged for the full download/check.
       state = state._copy(
         selectedUri: single.uri,
         selectedName: single.displayName,
         containerFormat: 'container',
         clearCompositeCarrierUris: true,
         clearError: true,
-        isPlainDiskImage:
-            false, // re-checked below; don't carry over a stale true
+        checkingContainer: true,
+        isPlainDiskImage: false,
       );
-      lifecycle.warmContainer(single.uri);
-      unawaited(_probeContainerFormat(single.uri));
+
+      try {
+        // Check if this carrier belongs to a known composite container record
+        final records = await ref.read(containerRepositoryProvider).loadAll();
+        if (!ref.mounted) return;
+        ContainerRecord? matchedCompositeRecord;
+        for (final r in records.values) {
+          if (r.isCompositeSource &&
+              r.compositeCarriers.any((c) => c['uri'] == single.uri)) {
+            matchedCompositeRecord = r;
+            break;
+          }
+        }
+
+        if (matchedCompositeRecord != null) {
+          final carriers = matchedCompositeRecord.compositeCarriers
+              .map((c) => (
+                    uri: c['uri'] ?? '',
+                    displayName: c['name'] ?? '',
+                  ))
+              .where((c) => c.uri.isNotEmpty)
+              .toList();
+          setCompositeCarriers(carriers, name: matchedCompositeRecord.label);
+          state = state._copy(
+            selectedUri: matchedCompositeRecord.uri,
+            selectedName: matchedCompositeRecord.label,
+          );
+          await _initUnlockMethod(matchedCompositeRecord.uri);
+          return;
+        }
+
+        // Check if this single file is an unremembered composite carrier
+        final compositeApi = ref.read(vaultCompositeApiProvider);
+        final profile =
+            await compositeApi.profileCarriers(carrierUris: [single.uri]);
+        if (!ref.mounted) return;
+        final carrierBudget =
+            (profile != null && profile.carriers.isNotEmpty)
+                ? profile.carriers.first
+                : null;
+
+        if (carrierBudget != null &&
+            carrierBudget.detectedFormat == 'composite_carrier') {
+          setCompositeCarriers(
+            [single],
+            knownProfiles: {single.uri: carrierBudget},
+          );
+          return;
+        }
+
+        state = state._copy(
+          selectedUri: single.uri,
+          selectedName: single.displayName,
+          containerFormat: 'container',
+          clearCompositeCarrierUris: true,
+          clearError: true,
+          isPlainDiskImage:
+              false, // re-checked below; don't carry over a stale true
+        );
+        lifecycle.warmContainer(single.uri);
+        await _probeContainerFormat(single.uri);
+      } finally {
+        if (ref.mounted) state = state._copy(checkingContainer: false);
+      }
     } catch (e) {
-      state = state._copy(error: l10n.filePickerFailed(e.toString()));
+      if (ref.mounted) {
+        state = state._copy(
+          checkingContainer: false,
+          error: l10n.filePickerFailed(e.toString()),
+        );
+      }
     }
   }
 

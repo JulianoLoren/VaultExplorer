@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "密码错误或容器无效",
   "genericUnknownError": "未知错误",
   "decryptingLabel": "正在解密…",
+  "loadingContainerFromStorage": "正在从存储中加载容器… 大型容器或云端文件可能需要一些时间。",
   "luksKeyslotProgress": "正在尝试密钥槽 {attempted}/{total}…",
   "luksKeyslotProgressUnknown": "正在尝试密钥槽…",
   "bitlockerCredentialProgress": "正在验证凭据 {attempted}/{total}…",

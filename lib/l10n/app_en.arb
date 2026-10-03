@@ -2013,6 +2013,10 @@
   "@decryptingLabel": {
     "description": "Generic progress label while decrypting"
   },
+  "loadingContainerFromStorage": "Loading container from storage… Large or cloud-stored containers can take a while.",
+  "@loadingContainerFromStorage": {
+    "description": "Status shown while a selected container is being checked or unlocked, especially when it is stored remotely"
+  },
   "luksKeyslotProgress": "Trying keyslot {attempted} of {total}…",
   "@luksKeyslotProgress": {
     "description": "Progress label while trying successive LUKS keyslots",

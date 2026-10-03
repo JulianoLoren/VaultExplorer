@@ -252,6 +252,9 @@ class _UnlockSheetState extends ConsumerState<UnlockSheet> with WidgetsBindingOb
     final textTheme = context.typography;
     final wideLayout = context.screen.useWideLayout;
     final credState = _getCredentialState(state);
+    final isBusy = state.loading ||
+        state.checkingContainer ||
+        (state.selectedUri != null && state.loadingAuth);
 
     return PopScope(
       canPop: !state.loading,
@@ -284,7 +287,7 @@ class _UnlockSheetState extends ConsumerState<UnlockSheet> with WidgetsBindingOb
               : null,
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(4),
-            child: state.loading
+            child: isBusy
                 ? LinearProgressIndicator(
                     color: cs.primary,
                     backgroundColor: cs.primaryContainer,
@@ -382,7 +385,7 @@ class _UnlockSheetState extends ConsumerState<UnlockSheet> with WidgetsBindingOb
        // ( Container File )
         Expanded(
           child: InkWell(
-            onTap: state.loading
+            onTap: state.loading || state.checkingContainer
                 ? null
                 : () {
                     _resetInputFields();
@@ -434,7 +437,7 @@ class _UnlockSheetState extends ConsumerState<UnlockSheet> with WidgetsBindingOb
         // ( Folder Vault )
         Expanded(
           child: InkWell(
-            onTap: state.loading
+            onTap: state.loading || state.checkingContainer
                 ? null
                 : () {
                     _resetInputFields();
@@ -519,7 +522,7 @@ Widget _buildVaultKindSegmentedButton(
         ),
       ],
       selected: {state.isFolderVault ? 'directory_vault' : 'container'},
-      onSelectionChanged: state.loading
+      onSelectionChanged: state.loading || state.checkingContainer
           ? null
           : (sel) {
               _resetInputFields();
@@ -529,7 +532,7 @@ Widget _buildVaultKindSegmentedButton(
   );
 }
 
- Widget _buildPickerCard(
+  Widget _buildPickerCard(
     BuildContext context,
     UnlockState state,
     ColorScheme cs,
@@ -537,6 +540,8 @@ Widget _buildVaultKindSegmentedButton(
   ) {
     final hasSelection = state.selectedUri != null;
     final isWide = context.screen.useWideLayout;
+    final showLoadingFeedback = hasSelection &&
+        (state.loading || state.checkingContainer || state.loadingAuth);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -598,7 +603,7 @@ Widget _buildVaultKindSegmentedButton(
                   ? IconButton(
                       icon: const Icon(Icons.close_rounded, size: 20),
                       tooltip: context.l10n.clearAllButton,
-                      onPressed: state.loading
+                      onPressed: state.loading || state.checkingContainer
                           ? null
                           : () {
                               _resetInputFields();
@@ -608,12 +613,44 @@ Widget _buildVaultKindSegmentedButton(
                   : (widget.initialUri == null && widget.initialCompositeCarriers == null
                       ? Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant)
                       : null),
-           onTap: state.loading || widget.initialUri != null || widget.initialCompositeCarriers != null
+           onTap: state.loading || state.checkingContainer || widget.initialUri != null || widget.initialCompositeCarriers != null
                   ? null
                   : () => _suppressLock(() async => ref.read(unlockControllerProvider(_params).notifier).pickFile(context.l10n)),
             ),
           ],
         ),
+        if (showLoadingFeedback) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    color: cs.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    context.l10n.loadingContainerFromStorage,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         if (state.isComposite &&
             state.compositeCarrierCount > 0 &&
             widget.initialUri == null) ...[
@@ -1024,7 +1061,7 @@ case _UnlockCredentialState.password:
         final isKnownLuks = _isKnownLuks(state);
         final hasDirectOptions = _hasDirectOptions(state);
         final hasSelection = state.selectedUri != null;
-        final canConfigure = hasSelection && !state.loading;
+        final canConfigure = hasSelection && !state.loading && !state.checkingContainer;
 
          final isPlain = state.isPlainDiskImage || state.containerFormat == 'plain';
 
@@ -1377,7 +1414,7 @@ List<Widget> _buildAdvancedOptionsSection(
     TextTheme textTheme,
   ) {
     if (credState != _UnlockCredentialState.password) return const [];
-    final isButtonEnabled = state.selectedUri != null;
+    final isButtonEnabled = state.selectedUri != null && !state.checkingContainer;
 
     return [
       if (state.error != null) ...[
@@ -1406,7 +1443,9 @@ List<Widget> _buildAdvancedOptionsSection(
         ),
       ],
       FilledButton(
-        onPressed: state.loading ? null : (isButtonEnabled ? _onUnlock : null),
+        onPressed: state.loading || state.checkingContainer
+            ? null
+            : (isButtonEnabled ? _onUnlock : null),
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(50),
           shape: const StadiumBorder(),

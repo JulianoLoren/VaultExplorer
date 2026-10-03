@@ -1458,6 +1458,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get decryptingLabel => '복호화 중…';
 
   @override
+  String get loadingContainerFromStorage =>
+      '저장소에서 컨테이너를 불러오는 중… 용량이 크거나 클라우드에 저장된 경우 시간이 걸릴 수 있습니다.';
+
+  @override
   String luksKeyslotProgress(int attempted, int total) {
     return '키 슬롯 $attempted/$total 시도 중…';
   }

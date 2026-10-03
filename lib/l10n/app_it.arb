@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "Password errata o contenitore non valido",
   "genericUnknownError": "Errore sconosciuto",
   "decryptingLabel": "Decifratura…",
+  "loadingContainerFromStorage": "Caricamento del contenitore dallo spazio di archiviazione… I contenitori grandi o salvati sul cloud possono richiedere un po' di tempo.",
   "luksKeyslotProgress": "Tentativo dello slot chiave {attempted} di {total}…",
   "luksKeyslotProgressUnknown": "Tentativo dello slot chiave…",
   "bitlockerCredentialProgress": "Verifica della credenziale {attempted} di {total}…",

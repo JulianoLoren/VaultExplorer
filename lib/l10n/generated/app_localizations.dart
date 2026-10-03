@@ -2580,6 +2580,12 @@ abstract class AppLocalizations {
   /// **'Decrypting…'**
   String get decryptingLabel;
 
+  /// Status shown while a selected container is being checked or unlocked, especially when it is stored remotely
+  ///
+  /// In en, this message translates to:
+  /// **'Loading container from storage… Large or cloud-stored containers can take a while.'**
+  String get loadingContainerFromStorage;
+
   /// Progress label while trying successive LUKS keyslots
   ///
   /// In en, this message translates to:

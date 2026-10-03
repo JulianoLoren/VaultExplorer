@@ -409,6 +409,7 @@
   "incorrectPasswordOrInvalidContainer": "パスワードが違うか、無効なコンテナです",
   "genericUnknownError": "不明なエラー",
   "decryptingLabel": "復号中…",
+  "loadingContainerFromStorage": "ストレージからコンテナを読み込み中… 大容量のファイルやクラウド上のファイルは時間がかかる場合があります。",
   "luksKeyslotProgress": "キースロット {attempted}/{total} を試しています…",
   "luksKeyslotProgressUnknown": "キースロットを試しています…",
   "bitlockerCredentialProgress": "認証情報 {attempted}/{total} を確認しています…",
