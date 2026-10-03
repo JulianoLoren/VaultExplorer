@@ -1,0 +1,5 @@
+• Added edge-tap navigation for previous/next playlist items
+• Added option to loop playlists continuously
+• Added configurable thumbnail caching for local storage
+• Fixed credential storage collisions using unique path hashing
+• Minor UI refinements across various pages
