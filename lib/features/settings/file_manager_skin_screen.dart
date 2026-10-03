@@ -396,6 +396,24 @@ class _PresetPickerState extends State<_PresetPicker> {
   final ScrollController _scrollController = ScrollController();
 
   @override
+  void didUpdateWidget(covariant _PresetPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final wasPreset = oldWidget.skin.matchingPreset != null;
+    final isCustom = widget.skin.matchingPreset == null;
+    if (wasPreset && isCustom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
@@ -414,7 +432,7 @@ class _PresetPickerState extends State<_PresetPicker> {
 
         child: ListView(
           controller: _scrollController,
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 16),
           scrollDirection: Axis.horizontal,
           children: [
             for (final preset in SkinPreset.values)

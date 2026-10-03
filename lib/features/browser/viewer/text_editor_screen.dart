@@ -1900,8 +1900,7 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
                       children: [
                         const Icon(Icons.translate_rounded, size: 20),
                         const SizedBox(width: 12),
-                        Expanded(child: Text(context.l10n.textEditorEncodingTooltip)),
-                        Text(activeTab.encoding.label),
+                        Expanded(child: Text(context.l10n.textEditorEncodingTooltip))
                       ],
                     ),
                   ),
