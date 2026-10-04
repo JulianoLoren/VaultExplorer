@@ -1020,6 +1020,11 @@ class MirrorSyncCoordinator(
     /** Polls (about 1.5 s at most) until the real document reports
      *  [expected] bytes. False means it never did. */
     private fun awaitRealLength(uri: Uri, expected: Long): Boolean {
+        // Fast path for file:// URIs (local storage, unit tests under Robolectric)
+        if (uri.scheme == "file") {
+            val file = uri.path?.let { File(it) }
+            return file != null && file.exists() && file.length() == expected
+        }
         for (wait in longArrayOf(0L, 150L, 350L, 500L, 500L)) {
             if (wait > 0L) Thread.sleep(wait)
             val length = try {
@@ -1034,6 +1039,10 @@ class MirrorSyncCoordinator(
                 }
             } catch (e: Exception) {
                 VeLog.w("MirrorTrace", e) { "awaitRealLength: failed to query $uri" }
+                null
+            } ?: try {
+                context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
+            } catch (_: Exception) {
                 null
             }
             if (length == expected) return true
