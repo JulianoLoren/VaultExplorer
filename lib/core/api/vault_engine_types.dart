@@ -126,39 +126,6 @@ typedef IncomingShareItem = ({
 
 typedef IncomingShareRequest = ({List<IncomingShareItem> items});
 
-/// One ACTION_VIEW/ACTION_EDIT document sent to a built-in viewer. [uri] is
-/// kept opaque and passed back to Android's ContentResolver so provider grants
-/// continue to control access to the original document.
-typedef ExternalFileOpenRequest = ({
-  String id,
-  String uri,
-  String displayName,
-  String? mimeType,
-  String viewer,
-  bool canWrite,
-});
-
-ExternalFileOpenRequest? externalFileOpenRequestFromWire(
-  Map<Object?, Object?> map,
-) {
-  final id = map['id'] as String?;
-  final uri = map['uri'] as String?;
-  if (id == null || id.isEmpty || uri == null || uri.isEmpty) return null;
-  final viewer = map['viewer'];
-  if (viewer is! String ||
-      (viewer != 'editor' && viewer != 'media' && viewer != 'pdf')) {
-    return null;
-  }
-  return (
-    id: id,
-    uri: uri,
-    displayName: map['displayName'] as String? ?? uri.split('/').last,
-    mimeType: map['mimeType'] as String?,
-    viewer: viewer,
-    canWrite: map['canWrite'] as bool? ?? false,
-  );
-}
-
 /// Shared by [VaultEngineEvents]'s `onIncomingShareRequest` push handler and
 /// `VaultFileIoApi.checkPendingShareRequest`'s pull -- both receive the same
 /// `{"uri", "displayName", "sizeBytes", "mimeType"}` wire shape from

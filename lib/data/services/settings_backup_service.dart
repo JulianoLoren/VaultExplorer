@@ -42,9 +42,6 @@ class ImportedSettingsBundle {
   final bool? panicKitEnabled;
   final bool? panicKitEnforcement;
   final bool? shareTargetEnabled;
-  final bool? openWithEditorEnabled;
-  final bool? openWithMediaEnabled;
-  final bool? openWithPdfEnabled;
 
   const ImportedSettingsBundle({
     required this.appSettings,
@@ -54,9 +51,6 @@ class ImportedSettingsBundle {
     this.panicKitEnabled,
     this.panicKitEnforcement,
     this.shareTargetEnabled,
-    this.openWithEditorEnabled,
-    this.openWithMediaEnabled,
-    this.openWithPdfEnabled,
   });
 }
 
@@ -122,11 +116,6 @@ class SettingsBackupService {
     final panicSettings = await _panicApi.getPanicSettings();
     final panicKit = await _panicApi.getPanicKitStatus();
     final shareTarget = await _lifecycleApi.isShareTargetEnabled();
-    final openWithEditor = await _lifecycleApi.isOpenWithHandlerEnabled(
-      'editor',
-    );
-    final openWithMedia = await _lifecycleApi.isOpenWithHandlerEnabled('media');
-    final openWithPdf = await _lifecycleApi.isOpenWithHandlerEnabled('pdf');
 
     // See the class doc above: these three maps are per-container path
     // data (containerUri:dirPath keys), not app-wide preferences, so they
@@ -151,9 +140,6 @@ class SettingsBackupService {
       'panicKitEnabled': panicKit.responderEnabled,
       'panicKitEnforcement': panicKit.pairingEnforcementEnabled,
       'shareTargetEnabled': shareTarget,
-      'openWithEditorEnabled': openWithEditor,
-      'openWithMediaEnabled': openWithMedia,
-      'openWithPdfEnabled': openWithPdf,
     };
     return const JsonEncoder.withIndent('  ').convert(bundle);
   }
@@ -209,9 +195,6 @@ class SettingsBackupService {
       panicKitEnabled: decoded['panicKitEnabled'] as bool?,
       panicKitEnforcement: decoded['panicKitEnforcement'] as bool?,
       shareTargetEnabled: decoded['shareTargetEnabled'] as bool?,
-      openWithEditorEnabled: decoded['openWithEditorEnabled'] as bool?,
-      openWithMediaEnabled: decoded['openWithMediaEnabled'] as bool?,
-      openWithPdfEnabled: decoded['openWithPdfEnabled'] as bool?,
     );
   }
 
@@ -236,24 +219,6 @@ class SettingsBackupService {
     }
     if (bundle.shareTargetEnabled != null) {
       await _lifecycleApi.setShareTargetEnabled(bundle.shareTargetEnabled!);
-    }
-    if (bundle.openWithEditorEnabled != null) {
-      await _lifecycleApi.setOpenWithHandlerEnabled(
-        'editor',
-        bundle.openWithEditorEnabled!,
-      );
-    }
-    if (bundle.openWithMediaEnabled != null) {
-      await _lifecycleApi.setOpenWithHandlerEnabled(
-        'media',
-        bundle.openWithMediaEnabled!,
-      );
-    }
-    if (bundle.openWithPdfEnabled != null) {
-      await _lifecycleApi.setOpenWithHandlerEnabled(
-        'pdf',
-        bundle.openWithPdfEnabled!,
-      );
     }
   }
 }

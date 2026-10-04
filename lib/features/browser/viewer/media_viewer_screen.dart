@@ -86,10 +86,6 @@ class MediaViewerScreen extends ConsumerStatefulWidget {
   /// export, bookmark, and playlist actions must not be available.
   final bool isArchivePreview;
 
-  /// A single document handed in by another app. It has no browsable parent
-  /// folder through this viewer, so folder actions and sibling scans are off.
-  final bool isExternalOpen;
-
   const MediaViewerScreen({
     super.key,
     required this.container,
@@ -105,10 +101,9 @@ class MediaViewerScreen extends ConsumerStatefulWidget {
     this.onCurrentFileChanged,
     this.onFileDeleted,
     this.isArchivePreview = false,
-    this.isExternalOpen = false,
   });
 
-  bool get _isPreviewOnly => isArchivePreview || isExternalOpen;
+  bool get _isPreviewOnly => isArchivePreview;
 
   @override
   ConsumerState<MediaViewerScreen> createState() => _MediaViewerScreenState();
@@ -471,9 +466,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
           // branch instead reads this as a real, absolute path straight
           // off disk, so it needs the full path rather than one relative
           // to the container root.
-          filePath: widget.container.isExternalDocument
-              ? widget.container.uri
-              : widget.container.isLocalStorage
+          filePath: widget.container.isLocalStorage
               ? p.join(widget.container.uri, file)
               : file,
           isLocalStorage: widget.container.isLocalStorage,
@@ -495,9 +488,11 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     final appSettings = await ref
         .read(appSettingsServiceProvider)
         .loadSettings();
-    final records = await ref.read(containerRepositoryProvider).loadAll();
-    final bookmarkPaths = records[widget.container.uri]?.bookmarkPaths;
-    final pinnedPaths = records[widget.container.uri]?.pinnedPaths;
+    final containerRecord = (await ref
+        .read(containerRepositoryProvider)
+        .loadAll())[widget.container.uri];
+    final bookmarkPaths = containerRecord?.bookmarkPaths;
+    final pinnedPaths = containerRecord?.pinnedPaths;
     if (mounted) {
       _sessionController.setEnableCarousel(config.showMediaCarousel);
       if (!config.showMediaCarousel) {

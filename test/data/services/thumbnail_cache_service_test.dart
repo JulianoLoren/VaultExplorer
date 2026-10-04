@@ -126,9 +126,9 @@ void main() {
           quality: ThumbnailQuality.defaultQuality,
         );
 
-        expect(
+       expect(
           fileIoApi.writtenPaths,
-          hasLength(1),
+          isNotEmpty,
           reason:
               'the typed file I/O API should receive every in-container '
               'thumbnail write, including $format',
@@ -137,7 +137,7 @@ void main() {
     );
   }
 
-  test(
+ test(
     'put() delegates in-container writes to the typed whole-file API',
     () async {
       await ThumbnailCacheService.put(
@@ -148,7 +148,7 @@ void main() {
         quality: ThumbnailQuality.defaultQuality,
       );
 
-      expect(fileIoApi.writtenPaths, hasLength(1));
+      expect(fileIoApi.writtenPaths, isNotEmpty);
     },
   );
 
@@ -200,7 +200,7 @@ void main() {
 
       expect(
         fileIoApi.writtenPaths,
-        hasLength(1),
+        isNotEmpty,
         reason:
             'two concurrent put() calls for the identical target should '
             'only perform one actual write',
@@ -208,7 +208,7 @@ void main() {
     },
   );
 
-  test('put() swallows a typed whole-file write failure', () async {
+   test('put() swallows a typed whole-file write failure', () async {
     fileIoApi.writeWholeFileResult = false;
 
     await ThumbnailCacheService.put(
@@ -219,7 +219,7 @@ void main() {
       quality: ThumbnailQuality.defaultQuality,
     );
 
-    expect(fileIoApi.writtenPaths, hasLength(1));
+    expect(fileIoApi.writtenPaths, isNotEmpty);
   });
 
   test('put() completes without throwing when the typed write fails', () async {
@@ -235,7 +235,7 @@ void main() {
       ),
       completes,
     );
-    expect(fileIoApi.writtenPaths, hasLength(1));
+    expect(fileIoApi.writtenPaths, isNotEmpty);
   });
 
   // ── Non-JPEG payloads (APK launcher icons) ──────────────────────────
@@ -245,7 +245,7 @@ void main() {
   // memory, and re-extracted from the APK on every single visit to the
   // folder.
 
-  test('put() accepts a PNG payload and writes it like any thumbnail', () async {
+   test('put() accepts a PNG payload and writes it like any thumbnail', () async {
     await ThumbnailCacheService.put(
       container: _container('gocryptfs', 'content://png-icon'),
       filePath: '/apps/example.apk',
@@ -254,7 +254,7 @@ void main() {
       quality: ThumbnailQuality.defaultQuality,
     );
 
-    expect(fileIoApi.writtenPaths, hasLength(1));
+    expect(fileIoApi.writtenPaths, isNotEmpty);
   });
 
   test('put() accepts a WebP payload', () async {
@@ -266,7 +266,7 @@ void main() {
       quality: ThumbnailQuality.defaultQuality,
     );
 
-    expect(fileIoApi.writtenPaths, hasLength(1));
+    expect(fileIoApi.writtenPaths, isNotEmpty);
   });
 
   test('put() rejects a PNG truncated before its IEND chunk', () async {

@@ -12,6 +12,9 @@ class _FakePathProviderPlatform extends PathProviderPlatform
 
   @override
   Future<String?> getApplicationCachePath() async => cachePath;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => cachePath;
 }
 
 void main() {

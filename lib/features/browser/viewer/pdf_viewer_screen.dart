@@ -19,14 +19,6 @@ class PdfViewerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final fileName = filePath.split('/').last;
 
-    if (container.isExternalDocument) {
-      return PdfViewerRouter(
-        localUri: container.uri,
-        title: container.displayName,
-        isLocked: false,
-      );
-    }
-
     if (container.isLocalStorage) {
       final future = container.isSafStorage
           ? ref

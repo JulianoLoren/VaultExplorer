@@ -12063,60 +12063,6 @@ abstract class AppLocalizations {
   /// **'Couldn\'t update Share Sheet Integration.'**
   String get shareSheetIntegrationUpdateErrorMessage;
 
-  /// Settings section header for built-in viewers exposed to other Android apps
-  ///
-  /// In en, this message translates to:
-  /// **'Open with other apps'**
-  String get openWithOtherAppsHeader;
-
-  /// Subtitle for the external Open with settings section
-  ///
-  /// In en, this message translates to:
-  /// **'Choose which built-in viewers other apps can use for files they open.'**
-  String get openWithOtherAppsSubtitle;
-
-  /// Settings switch title for handling external text documents
-  ///
-  /// In en, this message translates to:
-  /// **'Text Editor'**
-  String get openWithTextEditorTitle;
-
-  /// Settings switch subtitle for external text document handling
-  ///
-  /// In en, this message translates to:
-  /// **'Let other apps open text and code files in VaultExplorer\'s editor.'**
-  String get openWithTextEditorSubtitle;
-
-  /// Settings switch title for handling external image, audio, and video files
-  ///
-  /// In en, this message translates to:
-  /// **'Media Player'**
-  String get openWithMediaPlayerTitle;
-
-  /// Settings switch subtitle for external media handling
-  ///
-  /// In en, this message translates to:
-  /// **'Let other apps open image, audio, and video files in VaultExplorer.'**
-  String get openWithMediaPlayerSubtitle;
-
-  /// Settings switch title for handling external PDF files
-  ///
-  /// In en, this message translates to:
-  /// **'PDF Viewer'**
-  String get openWithPdfViewerTitle;
-
-  /// Settings switch subtitle for external PDF handling
-  ///
-  /// In en, this message translates to:
-  /// **'Let other apps open PDF files in VaultExplorer.'**
-  String get openWithPdfViewerSubtitle;
-
-  /// Snackbar error shown when enabling or disabling an external Open with handler fails
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t update the Open with integration.'**
-  String get openWithIntegrationUpdateError;
-
   /// Settings switch title for automatically re-locking a vault after importing shared files
   ///
   /// In en, this message translates to:

@@ -1451,24 +1451,6 @@ class StorageServicesSettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _toggleOpenWithHandler(
-    BuildContext context,
-    WidgetRef ref,
-    String viewer,
-    bool enabled,
-  ) async {
-    final ok = await ref
-        .read(appSettingsControllerProvider.notifier)
-        .setOpenWithHandlerEnabled(viewer, enabled);
-    if (!ok && context.mounted) {
-      showAppSnackBar(
-        context,
-        message: context.l10n.openWithIntegrationUpdateError,
-        tone: AppBannerTone.warning,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appSettingsControllerProvider);
@@ -1544,78 +1526,6 @@ class StorageServicesSettingsScreen extends ConsumerWidget {
                             (s) => s.copyWith(keepVaultsRunningInBackground: v),
                           );
                     },
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                    child: Text(
-                      context.l10n.openWithOtherAppsHeader,
-                      style: textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Text(
-                      context.l10n.openWithOtherAppsSubtitle,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    title: Text(
-                      context.l10n.openWithTextEditorTitle,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      context.l10n.openWithTextEditorSubtitle,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                    value: state.openWithEditorEnabled,
-                    onChanged: (v) =>
-                        _toggleOpenWithHandler(context, ref, 'editor', v),
-                  ),
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    title: Text(
-                      context.l10n.openWithMediaPlayerTitle,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      context.l10n.openWithMediaPlayerSubtitle,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                    value: state.openWithMediaEnabled,
-                    onChanged: (v) =>
-                        _toggleOpenWithHandler(context, ref, 'media', v),
-                  ),
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    title: Text(
-                      context.l10n.openWithPdfViewerTitle,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      context.l10n.openWithPdfViewerSubtitle,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                    value: state.openWithPdfEnabled,
-                    onChanged: (v) =>
-                        _toggleOpenWithHandler(context, ref, 'pdf', v),
                   ),
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2313,22 +2223,6 @@ class AdvancedSettingsScreen extends ConsumerWidget {
             .read(appSettingsControllerProvider.notifier)
             .setShareTargetEnabled(bundle.shareTargetEnabled!);
       }
-      if (bundle.openWithEditorEnabled != null) {
-        await ref
-            .read(appSettingsControllerProvider.notifier)
-            .setOpenWithHandlerEnabled('editor', bundle.openWithEditorEnabled!);
-      }
-      if (bundle.openWithMediaEnabled != null) {
-        await ref
-            .read(appSettingsControllerProvider.notifier)
-            .setOpenWithHandlerEnabled('media', bundle.openWithMediaEnabled!);
-      }
-      if (bundle.openWithPdfEnabled != null) {
-        await ref
-            .read(appSettingsControllerProvider.notifier)
-            .setOpenWithHandlerEnabled('pdf', bundle.openWithPdfEnabled!);
-      }
-
       VeLog.enabled = bundle.appSettings.debugLoggingEnabled;
       appThemeModeNotifier.value = bundle.appSettings.themeMode;
       appUseDynamicColorNotifier.value = bundle.appSettings.useDynamicColor;

@@ -159,24 +159,7 @@ class VaultFileIoApi {
   // Only non-vault external storages (volId < 0) with a content:// URI are SAF.
   bool _isSaf(MountedContainer container) => container.isSafStorage;
 
-  Future<int> _externalDocumentSize(MountedContainer container) async {
-    try {
-      return await _channel.invokeMethod<int>(
-            ChannelMethods.getExternalFileSize,
-            {'uri': container.uri},
-          ) ??
-          -1;
-    } catch (e) {
-      logSwallowed('getExternalFileSize', e);
-      return -1;
-    }
-  }
-
   Future<int> getFileSize(MountedContainer container, String fileName) async {
-    if (container.isExternalDocument) {
-      if (fileName != container.displayName) return -1;
-      return _externalDocumentSize(container);
-    }
     if (_isSaf(container)) {
       final res = await _channel.invokeMethod<int>(
         ChannelMethods.safGetFileSize,
@@ -248,18 +231,6 @@ class VaultFileIoApi {
     int offset,
     int length,
   ) async {
-    if (container.isExternalDocument) {
-      if (fileName != container.displayName) return null;
-      try {
-        return await _channel.invokeMethod<Uint8List>(
-          ChannelMethods.readExternalFileChunk,
-          {'uri': container.uri, 'offset': offset, 'length': length},
-        );
-      } catch (e) {
-        logSwallowed('readExternalFileChunk', e);
-        return null;
-      }
-    }
     if (_isSaf(container)) {
       return _channel.invokeMethod<Uint8List>(ChannelMethods.safReadFileChunk, {
         'treeUri': container.uri,
@@ -341,7 +312,6 @@ class VaultFileIoApi {
     int targetSize = 180,
     int quality = 70,
   }) async {
-    if (container.isExternalDocument) return null;
     try {
       final Uint8List? bytes = await _channel
           .invokeMethod<Uint8List>('getImageThumbnail', {
@@ -368,7 +338,6 @@ class VaultFileIoApi {
     int targetSize = 180,
     int quality = 70,
   }) async {
-    if (container.isExternalDocument) return null;
     try {
       final result = await _channel
           .invokeMethod(ChannelMethods.getImageThumbnailWithSize, {
@@ -682,19 +651,6 @@ class VaultFileIoApi {
     int offset,
     Uint8List data,
   ) async {
-    if (container.isExternalDocument) {
-      if (fileName != container.displayName) return false;
-      try {
-        return await _channel.invokeMethod<bool>(
-              ChannelMethods.writeExternalFileChunk,
-              {'uri': container.uri, 'offset': offset, 'data': data},
-            ) ??
-            false;
-      } catch (e) {
-        logSwallowed('writeExternalFileChunk', e);
-        return false;
-      }
-    }
     if (_isSaf(container)) {
       final res = await _channel
           .invokeMethod<bool>(ChannelMethods.safWriteFileChunk, {
@@ -794,9 +750,6 @@ class VaultFileIoApi {
     MountedContainer container,
     String fileName,
   ) async {
-    if (container.isExternalDocument) {
-      return writeFileChunk(container, fileName, 0, Uint8List(0));
-    }
     if (_isSaf(container)) {
       final res = await _channel.invokeMethod<bool>(
         ChannelMethods.safCreateFile,
@@ -839,21 +792,6 @@ class VaultFileIoApi {
     String fileName,
     Uint8List bytes,
   ) async {
-    if (container.isExternalDocument) {
-      var offset = 0;
-      do {
-        final remaining = bytes.length - offset;
-        final len = remaining > _wholeFileChunkSize
-            ? _wholeFileChunkSize
-            : remaining;
-        final chunk = Uint8List.sublistView(bytes, offset, offset + len);
-        if (!await writeFileChunk(container, fileName, offset, chunk)) {
-          return false;
-        }
-        offset += len;
-      } while (offset < bytes.length);
-      return true;
-    }
     final tmpPath = '$fileName.tmp';
     await deleteFile(container, tmpPath);
 
@@ -908,7 +846,6 @@ class VaultFileIoApi {
     String filePath,
   ) async {
     if (!_isSaf(container)) return null;
-    if (container.isExternalDocument) return container.uri;
     return _channel.invokeMethod<String>(ChannelMethods.safGetDocumentUri, {
       'treeUri': container.uri,
       'filePath': filePath,
@@ -1204,7 +1141,6 @@ class VaultFileIoApi {
     int quality = 60,
     int targetSize = 180,
   }) async {
-    if (container.isExternalDocument) return null;
     try {
       final Uint8List? bytes = await _channel
           .invokeMethod<Uint8List>(ChannelMethods.getVideoThumbnail, {
@@ -1227,7 +1163,6 @@ class VaultFileIoApi {
     int quality = 60,
     int targetSize = 180,
   }) async {
-    if (container.isExternalDocument) return null;
     try {
       final result = await _channel
           .invokeMethod(ChannelMethods.getVideoThumbnailWithSize, {

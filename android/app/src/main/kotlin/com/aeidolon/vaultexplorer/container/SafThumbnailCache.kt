@@ -69,9 +69,17 @@ object SafThumbnailCache {
             val containerUri = ContainerSessionRegistry.activeSessions[volId]?.uri ?: return null
             val appCacheKey = readAppCacheKey(context) ?: return null
 
-            val dirName = md5Hex(containerUri)
+ val dirName = md5Hex(containerUri)
             val fileName = md5Hex(virtualPath)
-            val file = File(File(File(context.cacheDir, "thumbs"), dirName), fileName)
+
+            // Look in filesDir (app-support storage) first, then fallback to cacheDir
+            var file = File(File(File(context.filesDir, "thumbs"), dirName), fileName)
+            if (!file.isFile) {
+                // Check default quality qualified key: virtualPath|180|80
+                val qualifiedDefaultName = md5Hex("$virtualPath|180|80")
+                val qualifiedFile = File(File(File(context.filesDir, "thumbs"), dirName), qualifiedDefaultName)
+                file = if (qualifiedFile.isFile) qualifiedFile else File(File(File(context.cacheDir, "thumbs"), dirName), fileName)
+            }
             if (!file.isFile) return null
 
             val raw = file.readBytes()

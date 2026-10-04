@@ -145,7 +145,6 @@ class DisguiseModeHandlers(
     fun updateActivityIdentity() {
         val decoyActive = isAliasEnabled(ALIAS_DECOY) && !isAliasEnabled(ALIAS_VAULT)
         syncShareTargetIdentity(decoyActive)
-        ExternalFileOpenHandlers.syncIdentity(activity, decoyActive)
         val label = if (decoyActive) activity.getString(R.string.decoy_app_name) else activity.getString(R.string.app_name)
         val iconRes = if (decoyActive) R.mipmap.ic_launcher_zip else R.mipmap.ic_launcher
         activity.title = label

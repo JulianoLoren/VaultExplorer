@@ -240,15 +240,6 @@ class VaultEngineEvents {
     void Function(IncomingShareRequest request) listener,
   ) => _incomingShareRequestRegistry.remove(listener);
 
-  final ListenerRegistry<ExternalFileOpenRequest> _externalFileOpenRegistry =
-      ListenerRegistry<ExternalFileOpenRequest>();
-  void addExternalFileOpenRequestListener(
-    void Function(ExternalFileOpenRequest request) listener,
-  ) => _externalFileOpenRegistry.add(listener);
-  void removeExternalFileOpenRequestListener(
-    void Function(ExternalFileOpenRequest request) listener,
-  ) => _externalFileOpenRegistry.remove(listener);
-
   final Map<int, int> _activeBatchCounts = {};
   final Set<int> _lockPending = {};
 
@@ -320,10 +311,6 @@ class VaultEngineEvents {
         if (items.isNotEmpty) {
           _incomingShareRequestRegistry.notify((items: items));
         }
-      } else if (call.method == 'onExternalFileOpenRequest') {
-        final args = call.arguments as Map<Object?, Object?>;
-        final request = externalFileOpenRequestFromWire(args);
-        if (request != null) _externalFileOpenRegistry.notify(request);
       } else if (call.method == 'onVaultAutomationUnlocked') {
         final args = call.arguments as Map<Object?, Object?>;
         final volId = args['volId'] as int?;

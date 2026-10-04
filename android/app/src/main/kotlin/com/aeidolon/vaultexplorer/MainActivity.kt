@@ -63,7 +63,6 @@ import com.aeidolon.vaultexplorer.handlers.VaultUnlockHandlers
 import com.aeidolon.vaultexplorer.handlers.VideoEditHandlers
 import com.aeidolon.vaultexplorer.handlers.LocalFileHandlers
 import com.aeidolon.vaultexplorer.handlers.ShareIntentHandlers
-import com.aeidolon.vaultexplorer.handlers.ExternalFileOpenHandlers
 import com.aeidolon.vaultexplorer.handlers.PanicSettingsHandlers
 import com.aeidolon.vaultexplorer.handlers.QuickCaptureSettingsHandlers
 import com.aeidolon.vaultexplorer.bridge.QuickCaptureBridge
@@ -274,13 +273,6 @@ private object ChannelMethods {
     // Android Share Sheet integration (see ShareIntentHandlers).
     const val SET_SHARE_TARGET_ENABLED = "setShareTargetEnabled"
     const val IS_SHARE_TARGET_ENABLED = "isShareTargetEnabled"
-    const val SET_OPEN_WITH_HANDLER_ENABLED = "setOpenWithHandlerEnabled"
-    const val IS_OPEN_WITH_HANDLER_ENABLED = "isOpenWithHandlerEnabled"
-    const val CHECK_PENDING_EXTERNAL_FILE_OPEN = "checkPendingExternalFileOpen"
-    const val ACKNOWLEDGE_EXTERNAL_FILE_OPEN = "acknowledgeExternalFileOpen"
-    const val GET_EXTERNAL_FILE_SIZE = "getExternalFileSize"
-    const val READ_EXTERNAL_FILE_CHUNK = "readExternalFileChunk"
-    const val WRITE_EXTERNAL_FILE_CHUNK = "writeExternalFileChunk"
     const val CHECK_PENDING_SHARE_REQUEST = "checkPendingShareRequest"
     const val CANCEL_PENDING_SHARE_REQUEST = "cancelPendingShareRequest"
     const val RETURN_TO_SHARING_APP = "returnToSharingApp"
@@ -368,7 +360,6 @@ open class MainActivity : FlutterFragmentActivity() {
     private val systemHandlers = SystemPermissionHandlers(this)
     private val localFileHandlers = LocalFileHandlers(this, ioExecutor)
     private val shareIntentHandlers = ShareIntentHandlers(this, ioExecutor)
-    private val externalFileOpenHandlers = ExternalFileOpenHandlers(this, ioExecutor)
     private val backgroundServiceHandlers = BackgroundServiceHandlers(this)
     private val cameraRecordingServiceHandlers = CameraRecordingServiceHandlers(this)
     private val folderDocumentProviderHandlers = FolderDocumentProviderHandlers(this)
@@ -390,7 +381,6 @@ open class MainActivity : FlutterFragmentActivity() {
         setTheme(R.style.NormalTheme)
         super.onCreate(savedInstanceState)
         disguiseModeHandlers.updateActivityIdentity()
-        externalFileOpenHandlers.handleIncomingIntent(intent)
         if (this is VaultShareActivity) {
             shareIntentHandlers.handleIncomingIntent(intent)
         }
@@ -454,7 +444,6 @@ open class MainActivity : FlutterFragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         disguiseModeHandlers.updateActivityIdentity()
-        externalFileOpenHandlers.handleIncomingIntent(intent)
         if (this is VaultShareActivity) {
             shareIntentHandlers.handleIncomingIntent(intent)
         }
@@ -768,7 +757,6 @@ open class MainActivity : FlutterFragmentActivity() {
 
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         methodChannel = channel
-        ExternalFileOpenHandlers.channel = channel
         UnlockProgressBridge.channel = channel
         ImportProgressBridge.channel = channel
         ExportProgressBridge.channel = channel
@@ -1234,13 +1222,6 @@ open class MainActivity : FlutterFragmentActivity() {
                 ChannelMethods.UNLOCK_COMPOSITE_CONTAINER -> compositeHandlers.handleUnlockCompositeContainer(call, result)
                 ChannelMethods.SET_SHARE_TARGET_ENABLED -> shareIntentHandlers.handleSetShareTargetEnabled(call, result)
                 ChannelMethods.IS_SHARE_TARGET_ENABLED -> shareIntentHandlers.handleIsShareTargetEnabled(call, result)
-                ChannelMethods.SET_OPEN_WITH_HANDLER_ENABLED -> externalFileOpenHandlers.handleSetEnabled(call, result)
-                ChannelMethods.IS_OPEN_WITH_HANDLER_ENABLED -> externalFileOpenHandlers.handleIsEnabled(call, result)
-                ChannelMethods.CHECK_PENDING_EXTERNAL_FILE_OPEN -> externalFileOpenHandlers.handleCheckPending(call, result)
-                ChannelMethods.ACKNOWLEDGE_EXTERNAL_FILE_OPEN -> externalFileOpenHandlers.handleAcknowledge(call, result)
-                ChannelMethods.GET_EXTERNAL_FILE_SIZE -> externalFileOpenHandlers.handleGetExternalFileSize(call, result)
-                ChannelMethods.READ_EXTERNAL_FILE_CHUNK -> externalFileOpenHandlers.handleReadExternalFileChunk(call, result)
-                ChannelMethods.WRITE_EXTERNAL_FILE_CHUNK -> externalFileOpenHandlers.handleWriteExternalFileChunk(call, result)
                 ChannelMethods.CHECK_PENDING_SHARE_REQUEST -> shareIntentHandlers.handleCheckPendingShareRequest(call, result)
                 ChannelMethods.CANCEL_PENDING_SHARE_REQUEST -> shareIntentHandlers.handleCancelPendingShareRequest(call, result)
                 ChannelMethods.CHECK_PENDING_QUICK_CAPTURE_REQUEST ->

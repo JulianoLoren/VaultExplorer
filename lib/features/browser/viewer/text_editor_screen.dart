@@ -682,7 +682,6 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
   }
 
   void _openFileInTab(String filePath) {
-    if (widget.container.isExternalDocument) return;
     if (ref.read(textEditorAppearanceProvider).showTabBar) {
       // A short file may not produce scroll notifications, so it cannot
       // reveal a tab bar that was hidden while viewing a longer file.
@@ -828,7 +827,6 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
   }
 
   Future<void> _createNewFileTab() async {
-    if (widget.container.isExternalDocument) return;
     final parentDir = _projectDirPath;
     final controller = TextEditingController.fromValue(
       const TextEditingValue(
@@ -1192,7 +1190,6 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
   }
 
   Future<void> _showSaveAsDialog() async {
-    if (widget.container.isExternalDocument) return;
     final currentTab = _activeTab;
     final lastSlash = currentTab.filePath.lastIndexOf('/');
     final parentDir = lastSlash >= 0
@@ -1849,25 +1846,14 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
             },
             child: Scaffold(
               key: _scaffoldKey,
-              drawer: widget.container.isExternalDocument
-                  ? null
-                  : _buildProjectDrawer(cs),
+              drawer: _buildProjectDrawer(cs),
               appBar: AppBar(
                 systemOverlayStyle: chrome.overlayStyle,
-                leading: widget.container.isExternalDocument
-                    ? IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).backButtonTooltip,
-                        onPressed: () => Navigator.of(context).maybePop(),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.menu_rounded),
-                        tooltip: context.l10n.textEditorProjectFilesTitle,
-                        onPressed: () =>
-                            _scaffoldKey.currentState?.openDrawer(),
-                      ),
+                leading: IconButton(
+                  icon: const Icon(Icons.menu_rounded),
+                  tooltip: context.l10n.textEditorProjectFilesTitle,
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
                 title: Text(activeTab.fileName),
                 actions: [
                   if (!activeTab.isLoading && activeTab.hasError)
@@ -1996,17 +1982,16 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
                             ],
                           ),
                         ),
-                        if (!widget.container.isExternalDocument)
-                          PopupMenuItem(
-                            value: 'saveAs',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.save_as_rounded, size: 20),
-                                const SizedBox(width: 12),
-                                Text(context.l10n.textEditorSaveAsMenuItem),
-                              ],
-                            ),
+                        PopupMenuItem(
+                          value: 'saveAs',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.save_as_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Text(context.l10n.textEditorSaveAsMenuItem),
+                            ],
                           ),
+                        ),
                         PopupMenuItem(
                           value: 'revert',
                           enabled:
@@ -2192,10 +2177,8 @@ class _TextEditorScreenState extends ConsumerState<TextEditorScreen>
                     ),
                   ],
                 ],
-                bottom:
-                    !widget.container.isExternalDocument &&
-                        (appearance.showTabBar ||
-                            _tabBarAnimationController.value > 0)
+                bottom: (appearance.showTabBar ||
+                        _tabBarAnimationController.value > 0)
                     ? PreferredSize(
                         preferredSize: Size.fromHeight(
                           42 * _tabBarAnimationController.value,

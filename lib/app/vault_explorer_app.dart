@@ -18,7 +18,9 @@ import 'package:vaultexplorer/app/main_shell.dart';
 import 'package:vaultexplorer/features/lock/lock_gate_screen.dart';
 
 String appVersion = '0.0.0';
-final ValueNotifier<ThemeMode> appThemeModeNotifier = ValueNotifier(ThemeMode.system);
+final ValueNotifier<ThemeMode> appThemeModeNotifier = ValueNotifier(
+  ThemeMode.system,
+);
 final ValueNotifier<bool> appUseDynamicColorNotifier = ValueNotifier(false);
 final ValueNotifier<bool> appUsePureBlackNotifier = ValueNotifier(false);
 final ValueNotifier<Locale?> appLocaleNotifier = ValueNotifier(null);
@@ -40,7 +42,9 @@ class VaultExplorerApp extends StatelessWidget {
                   valueListenable: appUseDynamicColorNotifier,
                   builder: (context, useDynamicColor, child) {
                     final useDynamic =
-                        useDynamicColor && lightDynamic != null && darkDynamic != null;
+                        useDynamicColor &&
+                        lightDynamic != null &&
+                        darkDynamic != null;
                     return ValueListenableBuilder<bool>(
                       valueListenable: appUsePureBlackNotifier,
                       builder: (context, usePureBlack, child) {
@@ -61,22 +65,31 @@ class VaultExplorerApp extends StatelessWidget {
                             ...GlobalMaterialLocalizations.delegates,
                           ],
                           supportedLocales: AppLocalizations.supportedLocales,
-                         localeResolutionCallback: (deviceLocale, supportedLocales) {
-                            for (final supported in supportedLocales) {
-                              if (supported.languageCode == deviceLocale?.languageCode) {
-                                return supported;
-                              }
-                            }
-                            return const Locale('en');
-                          },
+                          localeResolutionCallback:
+                              (deviceLocale, supportedLocales) {
+                                for (final supported in supportedLocales) {
+                                  if (supported.languageCode ==
+                                      deviceLocale?.languageCode) {
+                                    return supported;
+                                  }
+                                }
+                                return const Locale('en');
+                              },
                           builder: (context, child) {
                             return Consumer(
                               builder: (context, ref, _) {
                                 return Listener(
                                   behavior: HitTestBehavior.translucent,
                                   onPointerDown: (_) {
-                                    ref.read(sessionLockControllerProvider).scheduleAutoLock();
-                                    ref.read(vaultDashboardControllerProvider.notifier).resetAllAutoCloseTimers();
+                                    ref
+                                        .read(sessionLockControllerProvider)
+                                        .scheduleAutoLock();
+                                    ref
+                                        .read(
+                                          vaultDashboardControllerProvider
+                                              .notifier,
+                                        )
+                                        .resetAllAutoCloseTimers();
                                   },
                                   child: child ?? const SizedBox.shrink(),
                                 );
@@ -132,13 +145,17 @@ class _DisguiseModeGateState extends ConsumerState<_DisguiseModeGate> {
     if (quickCapturePending && mode != DisguiseMode.decoy) {
       // Skip the app lock gate for this launch: the capture screen opens
       // immediately and asks for the unlock when something is saved.
-      ref.read(pendingQuickCaptureLaunchProvider).markPending(
-        appUnlockRequired:
-            settings.useMasterPassword && settings.masterPasswordHash != null,
-      );
+      ref
+          .read(pendingQuickCaptureLaunchProvider)
+          .markPending(
+            appUnlockRequired:
+                settings.useMasterPassword &&
+                settings.masterPasswordHash != null,
+          );
       _quickCaptureLaunch = true;
     }
-    appLocaleNotifier.value = (settings.languageCode != null && settings.languageCode!.isNotEmpty)
+    appLocaleNotifier.value =
+        (settings.languageCode != null && settings.languageCode!.isNotEmpty)
         ? Locale(settings.languageCode!)
         : null;
     appThemeModeNotifier.value = settings.themeMode;
@@ -147,7 +164,11 @@ class _DisguiseModeGateState extends ConsumerState<_DisguiseModeGate> {
 
     final secureScreenPolicy = ref.read(secureScreenPolicyProvider);
     VeLog.enabled = settings.debugLoggingEnabled;
-    unawaited(ref.read(vaultFileIoApiProvider).setDebugLogging(settings.debugLoggingEnabled));
+    unawaited(
+      ref
+          .read(vaultFileIoApiProvider)
+          .setDebugLogging(settings.debugLoggingEnabled),
+    );
     if (mode == DisguiseMode.decoy) {
       await secureScreenPolicy.disableForDecoy();
     } else {
@@ -168,11 +189,16 @@ class _DisguiseModeGateState extends ConsumerState<_DisguiseModeGate> {
   }
 }
 
-void applyDisguiseModeTaskSwitcherLabel(DisguiseMode mode, AppLocalizations l10n) {
+void applyDisguiseModeTaskSwitcherLabel(
+  DisguiseMode mode,
+  AppLocalizations l10n,
+) {
   unawaited(
     SystemChrome.setApplicationSwitcherDescription(
       ApplicationSwitcherDescription(
-        label: mode == DisguiseMode.decoy ? l10n.appNameZipExplorer : l10n.appNameVaultExplorer,
+        label: mode == DisguiseMode.decoy
+            ? l10n.appNameZipExplorer
+            : l10n.appNameVaultExplorer,
         primaryColor: 0x00000000,
       ),
     ).catchError((_) {

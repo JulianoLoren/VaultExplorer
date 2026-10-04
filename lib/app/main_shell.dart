@@ -17,7 +17,6 @@ import 'package:vaultexplorer/features/dashboard/widgets/app_navigation_drawer.d
 import 'package:vaultexplorer/features/settings/app_settings_controller.dart';
 import 'package:vaultexplorer/features/settings/app_settings_screen.dart';
 import 'package:vaultexplorer/features/share_import/share_import_flow.dart';
-import 'package:vaultexplorer/features/external_file_open/external_file_open_flow.dart';
 import 'package:vaultexplorer/features/camera/quick_capture_screen.dart';
 import 'package:vaultexplorer/features/tools/tools_screen.dart';
 
@@ -52,7 +51,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   int _shareSeq = 0;
   Route<dynamic>? _activeShareRoute;
   IncomingShareRequest? _lastHandledShareRequest;
-  final Set<String> _handledExternalOpenRequestIds = {};
   final DateTime _shellCreatedAt = DateTime.now();
 
   // Same narrow cold-start race as the share request above, but Quick
@@ -101,12 +99,8 @@ class _MainShellState extends ConsumerState<MainShell> {
       }
       _checkPendingShareOnStart();
       _checkPendingQuickCaptureOnStart();
-      _checkPendingExternalFileOpen();
     });
     _vaultEngineEvents.addIncomingShareRequestListener(_onIncomingShareRequest);
-    _vaultEngineEvents.addExternalFileOpenRequestListener(
-      _onExternalFileOpenRequest,
-    );
     _vaultEngineEvents.addQuickCaptureRequestedListener(
       _onQuickCaptureRequested,
     );
@@ -201,18 +195,6 @@ class _MainShellState extends ConsumerState<MainShell> {
     _onQuickCaptureRequested();
   }
 
-  Future<void> _checkPendingExternalFileOpen() async {
-    final request = await ref
-        .read(vaultLifecycleApiProvider)
-        .checkPendingExternalFileOpen();
-    if (request != null && mounted) _onExternalFileOpenRequest(request);
-  }
-
-  void _onExternalFileOpenRequest(ExternalFileOpenRequest request) {
-    if (!mounted || !_handledExternalOpenRequestIds.add(request.id)) return;
-    unawaited(presentExternalFileOpen(context, ref, request));
-  }
-
   void _onQuickCaptureRequested() {
     if (!mounted || _handlingQuickCapture) return;
     setState(() => _handlingQuickCapture = true);
@@ -232,9 +214,6 @@ class _MainShellState extends ConsumerState<MainShell> {
     _mountedNotifier.dispose();
     _vaultEngineEvents.removeIncomingShareRequestListener(
       _onIncomingShareRequest,
-    );
-    _vaultEngineEvents.removeExternalFileOpenRequestListener(
-      _onExternalFileOpenRequest,
     );
     _vaultEngineEvents.removeQuickCaptureRequestedListener(
       _onQuickCaptureRequested,

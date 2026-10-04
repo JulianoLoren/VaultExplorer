@@ -6923,38 +6923,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '공유 시트 통합을 업데이트할 수 없습니다.';
 
   @override
-  String get openWithOtherAppsHeader => 'Open with other apps';
-
-  @override
-  String get openWithOtherAppsSubtitle =>
-      'Choose which built-in viewers other apps can use for files they open.';
-
-  @override
-  String get openWithTextEditorTitle => 'Text Editor';
-
-  @override
-  String get openWithTextEditorSubtitle =>
-      'Let other apps open text and code files in VaultExplorer\'s editor.';
-
-  @override
-  String get openWithMediaPlayerTitle => 'Media Player';
-
-  @override
-  String get openWithMediaPlayerSubtitle =>
-      'Let other apps open image, audio, and video files in VaultExplorer.';
-
-  @override
-  String get openWithPdfViewerTitle => 'PDF Viewer';
-
-  @override
-  String get openWithPdfViewerSubtitle =>
-      'Let other apps open PDF files in VaultExplorer.';
-
-  @override
-  String get openWithIntegrationUpdateError =>
-      'Couldn\'t update the Open with integration.';
-
-  @override
   String get autoLockOnShareImportTitle => '공유 파일 가져온 후 자동 잠금';
 
   @override

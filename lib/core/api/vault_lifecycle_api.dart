@@ -265,50 +265,6 @@ class VaultLifecycleApi {
     });
   }
 
-  Future<bool> isOpenWithHandlerEnabled(String viewer) async {
-    try {
-      return await _channel.invokeMethod<bool>(
-            ChannelMethods.isOpenWithHandlerEnabled,
-            {'viewer': viewer},
-          ) ??
-          false;
-    } catch (e) {
-      logSwallowed('isOpenWithHandlerEnabled', e);
-      return false;
-    }
-  }
-
-  Future<void> setOpenWithHandlerEnabled(String viewer, bool enabled) async {
-    await _channel.invokeMethod<void>(
-      ChannelMethods.setOpenWithHandlerEnabled,
-      {'viewer': viewer, 'enabled': enabled},
-    );
-  }
-
-  Future<ExternalFileOpenRequest?> checkPendingExternalFileOpen() async {
-    try {
-      final result = await _channel.invokeMethod<Map<Object?, Object?>>(
-        ChannelMethods.checkPendingExternalFileOpen,
-      );
-      if (result == null) return null;
-      return externalFileOpenRequestFromWire(result);
-    } catch (e) {
-      logSwallowed('checkPendingExternalFileOpen', e);
-      return null;
-    }
-  }
-
-  Future<void> acknowledgeExternalFileOpen(String id) async {
-    try {
-      await _channel.invokeMethod<void>(
-        ChannelMethods.acknowledgeExternalFileOpen,
-        {'id': id},
-      );
-    } catch (e) {
-      logSwallowed('acknowledgeExternalFileOpen', e, expected: true);
-    }
-  }
-
   /// Android API level (`Build.VERSION.SDK_INT`) of the running device.
   ///
   /// Used to hide settings that don't apply on older Android versions
