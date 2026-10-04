@@ -1,0 +1,3 @@
+• Improved SAF & cloud storage reliability with upload retries and size checks.
+• Safe locking: active transfers complete before vaults lock to prevent corruption, with clear alerts.
+• Thumbnails are now bundled into pack files for faster sync and stored in app-private storage to prevent cleaner wipes (clearable in vault settings).
