@@ -555,18 +555,31 @@ class ContainerDocumentsProvider : DocumentsProvider() {
         val storageManager = context?.getSystemService(Context.STORAGE_SERVICE) as? StorageManager
             ?: throw FileNotFoundException("Could not obtain StorageManager")
 
+        val ioLease = ContainerDocumentIoRegistry.acquireHandle(volId)
+            ?: throw FileNotFoundException("Container is being locked; retry after the lock completes")
+        val currentSession = try {
+            ContainerFileSystem.requireSession(volId)
+        } catch (e: Exception) {
+            ioLease.close()
+            throw FileNotFoundException("Container is no longer mounted")
+        }
+        if (isWrite && currentSession.readOnly) {
+            ioLease.close()
+            throw FileNotFoundException("Container is mounted read-only")
+        }
+
         val handlerThread = HandlerThread(
             "vc_proxy_${volId}_${System.nanoTime()}"
         ).apply { start() }
         val handler = Handler(handlerThread.looper)
 
-        val callback = ContainerProxyCallback(context, volId, session, fatPath, isWrite, handlerThread)
-
         return try {
+            val callback = ContainerProxyCallback(context, volId, currentSession, fatPath, isWrite, handlerThread, ioLease)
             val parcelMode = ParcelFileDescriptor.parseMode(mode ?: "r")
             storageManager.openProxyFileDescriptor(parcelMode, callback, handler)
         } catch (e: Exception) {
             VeLog.e(TAG, e) { "openProxyFileDescriptor failed for $fatPath: ${e.message}" }
+            ioLease.close()
             handlerThread.quitSafely()
             throw FileNotFoundException("Failed to open proxy file descriptor: ${e.message}")
         }

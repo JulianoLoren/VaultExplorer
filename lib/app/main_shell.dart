@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,16 +17,14 @@ import 'package:vaultexplorer/features/dashboard/widgets/app_navigation_drawer.d
 import 'package:vaultexplorer/features/settings/app_settings_controller.dart';
 import 'package:vaultexplorer/features/settings/app_settings_screen.dart';
 import 'package:vaultexplorer/features/share_import/share_import_flow.dart';
+import 'package:vaultexplorer/features/external_file_open/external_file_open_flow.dart';
 import 'package:vaultexplorer/features/camera/quick_capture_screen.dart';
 import 'package:vaultexplorer/features/tools/tools_screen.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   final bool hideDashboardUntilShareHandled;
 
-  const MainShell({
-    super.key,
-    this.hideDashboardUntilShareHandled = false,
-  });
+  const MainShell({super.key, this.hideDashboardUntilShareHandled = false});
 
   @override
   ConsumerState<MainShell> createState() => _MainShellState();
@@ -33,8 +33,9 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
   int _index = 0;
   late bool _hideDashboard = widget.hideDashboardUntilShareHandled;
-  final ValueNotifier<List<MountedContainer>> _mountedNotifier =
-      ValueNotifier(const []);
+  final ValueNotifier<List<MountedContainer>> _mountedNotifier = ValueNotifier(
+    const [],
+  );
   final GlobalKey<VaultDashboardState> _dashboardKey =
       GlobalKey<VaultDashboardState>();
 
@@ -51,6 +52,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   int _shareSeq = 0;
   Route<dynamic>? _activeShareRoute;
   IncomingShareRequest? _lastHandledShareRequest;
+  final Set<String> _handledExternalOpenRequestIds = {};
   final DateTime _shellCreatedAt = DateTime.now();
 
   // Same narrow cold-start race as the share request above, but Quick
@@ -77,8 +79,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   @override
   void initState() {
     super.initState();
-    _quickCaptureColdStart =
-        ref.read(pendingQuickCaptureLaunchProvider).take();
+    _quickCaptureColdStart = ref.read(pendingQuickCaptureLaunchProvider).take();
     if (!_quickCaptureColdStart) {
       // The Settings tab used to be the thing that created -- and so started
       // loading -- this keepAlive controller on the first frame. The
@@ -89,9 +90,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     }
     final policy = _secureScreenPolicy; // Eagerly evaluate while mounted
     ref.read(appSettingsServiceProvider).loadSettings().then((settings) {
-      policy.apply(
-        preference: settings.blockScreenshots,
-      );
+      policy.apply(preference: settings.blockScreenshots);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -102,9 +101,15 @@ class _MainShellState extends ConsumerState<MainShell> {
       }
       _checkPendingShareOnStart();
       _checkPendingQuickCaptureOnStart();
+      _checkPendingExternalFileOpen();
     });
     _vaultEngineEvents.addIncomingShareRequestListener(_onIncomingShareRequest);
-    _vaultEngineEvents.addQuickCaptureRequestedListener(_onQuickCaptureRequested);
+    _vaultEngineEvents.addExternalFileOpenRequestListener(
+      _onExternalFileOpenRequest,
+    );
+    _vaultEngineEvents.addQuickCaptureRequestedListener(
+      _onQuickCaptureRequested,
+    );
   }
 
   Future<void> _checkPendingShareOnStart() async {
@@ -140,7 +145,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     }
     // Startup safety window: two incoming share triggers within 2 seconds
     // of shell creation represent the duplicate push/pull cold start race.
-    if (DateTime.now().difference(_shellCreatedAt) < const Duration(seconds: 2)) {
+    if (DateTime.now().difference(_shellCreatedAt) <
+        const Duration(seconds: 2)) {
       return true;
     }
     return false;
@@ -195,25 +201,44 @@ class _MainShellState extends ConsumerState<MainShell> {
     _onQuickCaptureRequested();
   }
 
+  Future<void> _checkPendingExternalFileOpen() async {
+    final request = await ref
+        .read(vaultLifecycleApiProvider)
+        .checkPendingExternalFileOpen();
+    if (request != null && mounted) _onExternalFileOpenRequest(request);
+  }
+
+  void _onExternalFileOpenRequest(ExternalFileOpenRequest request) {
+    if (!mounted || !_handledExternalOpenRequestIds.add(request.id)) return;
+    unawaited(presentExternalFileOpen(context, ref, request));
+  }
+
   void _onQuickCaptureRequested() {
     if (!mounted || _handlingQuickCapture) return;
     setState(() => _handlingQuickCapture = true);
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const QuickCaptureScreen()))
         .whenComplete(() {
-      if (!mounted) return;
-      _handlingQuickCapture = false;
-      // When QuickCaptureScreen finishes (saved, cancelled via X, or backed out),
-      // cleanly finish and remove the isolated QuickCaptureActivity task window.
-      SystemNavigator.pop();
-    });
+          if (!mounted) return;
+          _handlingQuickCapture = false;
+          // When QuickCaptureScreen finishes (saved, cancelled via X, or backed out),
+          // cleanly finish and remove the isolated QuickCaptureActivity task window.
+          SystemNavigator.pop();
+        });
   }
 
   @override
   void dispose() {
     _mountedNotifier.dispose();
-    _vaultEngineEvents.removeIncomingShareRequestListener(_onIncomingShareRequest);
-    _vaultEngineEvents.removeQuickCaptureRequestedListener(_onQuickCaptureRequested);
+    _vaultEngineEvents.removeIncomingShareRequestListener(
+      _onIncomingShareRequest,
+    );
+    _vaultEngineEvents.removeExternalFileOpenRequestListener(
+      _onExternalFileOpenRequest,
+    );
+    _vaultEngineEvents.removeQuickCaptureRequestedListener(
+      _onQuickCaptureRequested,
+    );
     disguiseModeApi.getMode().then((mode) {
       if (mode == DisguiseMode.decoy) {
         // Safe: calling the cached service directly without using `ref`
@@ -236,22 +261,22 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   List<_NavDestination> _destinations(BuildContext context) => [
-        _NavDestination(
-          icon: Icons.lock_outline_rounded,
-          selectedIcon: Icons.lock_rounded,
-          label: context.l10n.navBarVaultsLabel,
-        ),
-        _NavDestination(
-          icon: Icons.build_outlined,
-          selectedIcon: Icons.build_rounded,
-          label: context.l10n.navBarToolsLabel,
-        ),
-        _NavDestination(
-          icon: Icons.settings_outlined,
-          selectedIcon: Icons.settings_rounded,
-          label: context.l10n.settingsTooltip,
-        ),
-      ];
+    _NavDestination(
+      icon: Icons.lock_outline_rounded,
+      selectedIcon: Icons.lock_rounded,
+      label: context.l10n.navBarVaultsLabel,
+    ),
+    _NavDestination(
+      icon: Icons.build_outlined,
+      selectedIcon: Icons.build_rounded,
+      label: context.l10n.navBarToolsLabel,
+    ),
+    _NavDestination(
+      icon: Icons.settings_outlined,
+      selectedIcon: Icons.settings_rounded,
+      label: context.l10n.settingsTooltip,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +314,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     Widget buildDrawer({int? currentVolId}) {
       return AppNavigationDrawer(
         currentVolId: currentVolId,
-        primaryLocalContainer: _dashboardKey.currentState?.localStorageContainer,
+        primaryLocalContainer:
+            _dashboardKey.currentState?.localStorageContainer,
         selectedTabIndex: _index,
         onSelectTab: _onTabTap,
         onSelectContainer: (container) {
@@ -319,7 +345,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       );
     }
 
-     final Widget scaffold = Scaffold(
+    final Widget scaffold = Scaffold(
       drawerEdgeDragWidth: double.maxFinite,
       drawerEnableOpenDragGesture: _index != 0,
       drawer: isHidden ? null : buildDrawer(),
@@ -333,10 +359,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         ? Stack(
             children: [
               Offstage(child: scaffold),
-              const ColoredBox(
-                color: Colors.black,
-                child: SizedBox.expand(),
-              ),
+              const ColoredBox(color: Colors.black, child: SizedBox.expand()),
             ],
           )
         : scaffold;
@@ -385,8 +408,13 @@ class _NavRail extends StatelessWidget {
       labelType: NavigationRailLabelType.all,
       useIndicator: true,
       indicatorColor: cs.secondaryContainer,
-      indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      selectedIconTheme: IconThemeData(color: cs.onSecondaryContainer, size: 22),
+      indicatorShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      selectedIconTheme: IconThemeData(
+        color: cs.onSecondaryContainer,
+        size: 22,
+      ),
       unselectedIconTheme: IconThemeData(color: cs.onSurfaceVariant, size: 22),
       selectedLabelTextStyle: textTheme.labelSmall?.copyWith(
         color: cs.onSecondaryContainer,
@@ -442,12 +470,19 @@ class _MainBottomBarItem extends StatelessWidget {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: selected ? cs.secondaryContainer : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(selected ? selectedIcon : icon, color: color, size: 22),
+                child: Icon(
+                  selected ? selectedIcon : icon,
+                  color: color,
+                  size: 22,
+                ),
               ),
               const SizedBox(height: 3),
               Padding(
@@ -459,9 +494,9 @@ class _MainBottomBarItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: color,
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                      ),
+                    color: color,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
                 ),
               ),
             ],

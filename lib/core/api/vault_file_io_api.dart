@@ -36,12 +36,13 @@ class VaultFileIoApi {
     String? mimeType,
   }) async {
     if (_isSaf(container)) {
-      final result = await _channel.invokeMethod<bool>(ChannelMethods.safOpenWithApp, {
-        'treeUri': container.uri,
-        'filePath': fileName,
-        'packageName': packageName,
-        'mimeType': mimeType,
-      });
+      final result = await _channel
+          .invokeMethod<bool>(ChannelMethods.safOpenWithApp, {
+            'treeUri': container.uri,
+            'filePath': fileName,
+            'packageName': packageName,
+            'mimeType': mimeType,
+          });
       return result ?? false;
     }
     final result = await _channel
@@ -99,19 +100,16 @@ class VaultFileIoApi {
   ) async {
     if (fileNames.isEmpty) return false;
     if (_isSaf(container)) {
-      final result = await _channel.invokeMethod<bool>(ChannelMethods.safShareFiles, {
-        'treeUri': container.uri,
-        'filePaths': fileNames,
-      });
+      final result = await _channel.invokeMethod<bool>(
+        ChannelMethods.safShareFiles,
+        {'treeUri': container.uri, 'filePaths': fileNames},
+      );
       return result ?? false;
     }
-    final result = await _channel.invokeMethod<bool>(
-      ChannelMethods.shareFile,
-      {
-        'filePath': container.uri,
-        'fileNames': fileNames,
-      },
-    );
+    final result = await _channel.invokeMethod<bool>(ChannelMethods.shareFile, {
+      'filePath': container.uri,
+      'fileNames': fileNames,
+    });
     return result ?? false;
   }
 
@@ -124,15 +122,13 @@ class VaultFileIoApi {
     if (container.isLocalStorage) {
       return _local.decryptFile(container.uri, fileName, destPath);
     }
-    final result = await _channel.invokeMethod<bool>(
-      ChannelMethods.decryptFile,
-      {
-        'filePath': container.uri,
-        'fileName': fileName,
-        'destPath': destPath,
-        'opId': opId,
-      },
-    );
+    final result = await _channel
+        .invokeMethod<bool>(ChannelMethods.decryptFile, {
+          'filePath': container.uri,
+          'fileName': fileName,
+          'destPath': destPath,
+          'opId': opId,
+        });
     return result ?? false;
   }
 
@@ -161,14 +157,31 @@ class VaultFileIoApi {
 
   // A vault always has volId >= 0 and must ALWAYS route to the C++ engine.
   // Only non-vault external storages (volId < 0) with a content:// URI are SAF.
- bool _isSaf(MountedContainer container) => container.isSafStorage;
+  bool _isSaf(MountedContainer container) => container.isSafStorage;
+
+  Future<int> _externalDocumentSize(MountedContainer container) async {
+    try {
+      return await _channel.invokeMethod<int>(
+            ChannelMethods.getExternalFileSize,
+            {'uri': container.uri},
+          ) ??
+          -1;
+    } catch (e) {
+      logSwallowed('getExternalFileSize', e);
+      return -1;
+    }
+  }
 
   Future<int> getFileSize(MountedContainer container, String fileName) async {
+    if (container.isExternalDocument) {
+      if (fileName != container.displayName) return -1;
+      return _externalDocumentSize(container);
+    }
     if (_isSaf(container)) {
-      final res = await _channel.invokeMethod<int>(ChannelMethods.safGetFileSize, {
-        'treeUri': container.uri,
-        'filePath': fileName,
-      });
+      final res = await _channel.invokeMethod<int>(
+        ChannelMethods.safGetFileSize,
+        {'treeUri': container.uri, 'filePath': fileName},
+      );
       return res ?? -1;
     }
     if (container.isLocalStorage) {
@@ -235,8 +248,20 @@ class VaultFileIoApi {
     int offset,
     int length,
   ) async {
+    if (container.isExternalDocument) {
+      if (fileName != container.displayName) return null;
+      try {
+        return await _channel.invokeMethod<Uint8List>(
+          ChannelMethods.readExternalFileChunk,
+          {'uri': container.uri, 'offset': offset, 'length': length},
+        );
+      } catch (e) {
+        logSwallowed('readExternalFileChunk', e);
+        return null;
+      }
+    }
     if (_isSaf(container)) {
-     return _channel.invokeMethod<Uint8List>(ChannelMethods.safReadFileChunk, {
+      return _channel.invokeMethod<Uint8List>(ChannelMethods.safReadFileChunk, {
         'treeUri': container.uri,
         'filePath': fileName,
         'offset': offset,
@@ -256,7 +281,7 @@ class VaultFileIoApi {
     return result;
   }
 
-   Future<Uint8List?> readMediaFileChunk(
+  Future<Uint8List?> readMediaFileChunk(
     MountedContainer container,
     String fileName,
     int offset,
@@ -276,7 +301,12 @@ class VaultFileIoApi {
         final toRead = (endOffset - curOffset > maxChunk)
             ? maxChunk
             : endOffset - curOffset;
-        final chunk = await readFileChunk(container, fileName, curOffset, toRead);
+        final chunk = await readFileChunk(
+          container,
+          fileName,
+          curOffset,
+          toRead,
+        );
         if (chunk == null || chunk.isEmpty) break;
         builder.add(chunk);
         curOffset += chunk.length;
@@ -311,6 +341,7 @@ class VaultFileIoApi {
     int targetSize = 180,
     int quality = 70,
   }) async {
+    if (container.isExternalDocument) return null;
     try {
       final Uint8List? bytes = await _channel
           .invokeMethod<Uint8List>('getImageThumbnail', {
@@ -337,6 +368,7 @@ class VaultFileIoApi {
     int targetSize = 180,
     int quality = 70,
   }) async {
+    if (container.isExternalDocument) return null;
     try {
       final result = await _channel
           .invokeMethod(ChannelMethods.getImageThumbnailWithSize, {
@@ -407,21 +439,22 @@ class VaultFileIoApi {
     int maxBytes = 0,
   }) async {
     try {
-      return await _channel.invokeMethod<Uint8List>(ChannelMethods.encodeImage, {
-        'rgba': rgba,
-        'width': width,
-        'height': height,
-        'format': format,
-        'quality': quality,
-        'maxBytes': maxBytes,
-      });
+      return await _channel
+          .invokeMethod<Uint8List>(ChannelMethods.encodeImage, {
+            'rgba': rgba,
+            'width': width,
+            'height': height,
+            'format': format,
+            'quality': quality,
+            'maxBytes': maxBytes,
+          });
     } catch (e) {
       logSwallowed('encodeImage', e);
       return null;
     }
   }
 
- Future<List<String>?> listDirectory(
+  Future<List<String>?> listDirectory(
     MountedContainer container,
     String dirPath, {
     bool refresh = false,
@@ -438,7 +471,10 @@ class VaultFileIoApi {
           ChannelMethods.safListDirectory,
           {'treeUri': container.uri, 'dirPath': dirPath, 'refresh': refresh},
         );
-        VeLog.d('VaultFileIoApi', 'safListDirectory response item count: ${(rawList as List?)?.length}');
+        VeLog.d(
+          'VaultFileIoApi',
+          'safListDirectory response item count: ${(rawList as List?)?.length}',
+        );
         if (rawList == null) return const [];
         final items = (rawList as List).map((it) {
           final m = it as Map;
@@ -460,11 +496,7 @@ class VaultFileIoApi {
       }
     }
     if (container.isLocalStorage) {
-      return _local.listDirectory(
-        container.uri,
-        dirPath,
-        refresh: refresh,
-      );
+      return _local.listDirectory(container.uri, dirPath, refresh: refresh);
     }
     final result = await _channel.invokeMethod<List<Object?>>(
       ChannelMethods.listDirectory,
@@ -480,12 +512,17 @@ class VaultFileIoApi {
     if (_isSaf(container)) {
       final segments = dirPath.split('/').where((s) => s.isNotEmpty).toList();
       final dirName = segments.isEmpty ? 'New Folder' : segments.last;
-      final parentPath = segments.length > 1 ? segments.sublist(0, segments.length - 1).join('/') : '';
-       final res = await _channel.invokeMethod<bool>(ChannelMethods.safCreateDirectory, {
-        'treeUri': container.uri,
-        'parentPath': parentPath,
-        'dirName': dirName,
-      });
+      final parentPath = segments.length > 1
+          ? segments.sublist(0, segments.length - 1).join('/')
+          : '';
+      final res = await _channel.invokeMethod<bool>(
+        ChannelMethods.safCreateDirectory,
+        {
+          'treeUri': container.uri,
+          'parentPath': parentPath,
+          'dirName': dirName,
+        },
+      );
       return res ?? false;
     }
     if (container.isLocalStorage) {
@@ -498,18 +535,17 @@ class VaultFileIoApi {
     return result ?? false;
   }
 
- Future<bool> renameFile(
+  Future<bool> renameFile(
     MountedContainer container,
     String oldPath,
     String newPath,
   ) async {
     if (_isSaf(container)) {
       final newName = newPath.contains('/') ? newPath.split('/').last : newPath;
-       final res = await _channel.invokeMethod<bool>(ChannelMethods.safRenameFile, {
-        'treeUri': container.uri,
-        'filePath': oldPath,
-        'newName': newName,
-      });
+      final res = await _channel.invokeMethod<bool>(
+        ChannelMethods.safRenameFile,
+        {'treeUri': container.uri, 'filePath': oldPath, 'newName': newName},
+      );
       return res ?? false;
     }
     if (container.isLocalStorage) {
@@ -572,12 +608,17 @@ class VaultFileIoApi {
       // file in chunks instead.
       final other = src.isSafStorage ? dest : src;
       if (!other.isLocalStorage) return false;
-      final res = await _channel.invokeMethod<bool>(ChannelMethods.safCopyFile, {
-        'srcTreeUri': src.isSafStorage ? src.uri : null,
-        'srcPath': src.isSafStorage ? srcPath : _local.resolve(src.uri, srcPath),
-        'destTreeUri': dest.isSafStorage ? dest.uri : null,
-        'destPath': dest.isSafStorage ? destPath : _local.resolve(dest.uri, destPath),
-      });
+      final res = await _channel
+          .invokeMethod<bool>(ChannelMethods.safCopyFile, {
+            'srcTreeUri': src.isSafStorage ? src.uri : null,
+            'srcPath': src.isSafStorage
+                ? srcPath
+                : _local.resolve(src.uri, srcPath),
+            'destTreeUri': dest.isSafStorage ? dest.uri : null,
+            'destPath': dest.isSafStorage
+                ? destPath
+                : _local.resolve(dest.uri, destPath),
+          });
       return res ?? false;
     }
     if (src.isLocalStorage) {
@@ -641,13 +682,27 @@ class VaultFileIoApi {
     int offset,
     Uint8List data,
   ) async {
+    if (container.isExternalDocument) {
+      if (fileName != container.displayName) return false;
+      try {
+        return await _channel.invokeMethod<bool>(
+              ChannelMethods.writeExternalFileChunk,
+              {'uri': container.uri, 'offset': offset, 'data': data},
+            ) ??
+            false;
+      } catch (e) {
+        logSwallowed('writeExternalFileChunk', e);
+        return false;
+      }
+    }
     if (_isSaf(container)) {
-      final res = await _channel.invokeMethod<bool>(ChannelMethods.safWriteFileChunk, {
-        'treeUri': container.uri,
-        'filePath': fileName,
-        'offset': offset,
-        'data': data,
-      });
+      final res = await _channel
+          .invokeMethod<bool>(ChannelMethods.safWriteFileChunk, {
+            'treeUri': container.uri,
+            'filePath': fileName,
+            'offset': offset,
+            'data': data,
+          });
       return res ?? false;
     }
     if (container.isLocalStorage) {
@@ -681,10 +736,10 @@ class VaultFileIoApi {
 
   Future<bool> deleteFile(MountedContainer container, String fileName) async {
     if (_isSaf(container)) {
-      final res = await _channel.invokeMethod<bool>(ChannelMethods.safDeleteFile, {
-        'treeUri': container.uri,
-        'filePath': fileName,
-      });
+      final res = await _channel.invokeMethod<bool>(
+        ChannelMethods.safDeleteFile,
+        {'treeUri': container.uri, 'filePath': fileName},
+      );
       return res ?? false;
     }
     if (container.isLocalStorage) {
@@ -725,27 +780,28 @@ class VaultFileIoApi {
     if (container.isLocalStorage) {
       return _local.writeBackFile(container.uri, fileName, sourcePath);
     }
-    final result = await _channel.invokeMethod<bool>(
-      ChannelMethods.writeBackFile,
-      {
-        'filePath': container.uri,
-        'fileName': fileName,
-        'sourcePath': sourcePath,
-        'opId': opId,
-      },
-    );
+    final result = await _channel
+        .invokeMethod<bool>(ChannelMethods.writeBackFile, {
+          'filePath': container.uri,
+          'fileName': fileName,
+          'sourcePath': sourcePath,
+          'opId': opId,
+        });
     return result ?? false;
   }
 
-   Future<bool> createEmptyFile(
+  Future<bool> createEmptyFile(
     MountedContainer container,
     String fileName,
   ) async {
+    if (container.isExternalDocument) {
+      return writeFileChunk(container, fileName, 0, Uint8List(0));
+    }
     if (_isSaf(container)) {
-      final res = await _channel.invokeMethod<bool>(ChannelMethods.safCreateFile, {
-        'treeUri': container.uri,
-        'filePath': fileName,
-      });
+      final res = await _channel.invokeMethod<bool>(
+        ChannelMethods.safCreateFile,
+        {'treeUri': container.uri, 'filePath': fileName},
+      );
       return res ?? false;
     }
     final ok = await writeFileChunk(container, fileName, 0, Uint8List(0));
@@ -783,6 +839,21 @@ class VaultFileIoApi {
     String fileName,
     Uint8List bytes,
   ) async {
+    if (container.isExternalDocument) {
+      var offset = 0;
+      do {
+        final remaining = bytes.length - offset;
+        final len = remaining > _wholeFileChunkSize
+            ? _wholeFileChunkSize
+            : remaining;
+        final chunk = Uint8List.sublistView(bytes, offset, offset + len);
+        if (!await writeFileChunk(container, fileName, offset, chunk)) {
+          return false;
+        }
+        offset += len;
+      } while (offset < bytes.length);
+      return true;
+    }
     final tmpPath = '$fileName.tmp';
     await deleteFile(container, tmpPath);
 
@@ -832,8 +903,12 @@ class VaultFileIoApi {
     return result?.cast<int>();
   }
 
-  Future<String?> getSafDocumentUri(MountedContainer container, String filePath) async {
+  Future<String?> getSafDocumentUri(
+    MountedContainer container,
+    String filePath,
+  ) async {
     if (!_isSaf(container)) return null;
+    if (container.isExternalDocument) return container.uri;
     return _channel.invokeMethod<String>(ChannelMethods.safGetDocumentUri, {
       'treeUri': container.uri,
       'filePath': filePath,
@@ -1084,9 +1159,7 @@ class VaultFileIoApi {
   /// whether this succeeds.
   Future<void> returnToSharingApp() async {
     try {
-      await _channel.invokeMethod<void>(
-        ChannelMethods.returnToSharingApp,
-      );
+      await _channel.invokeMethod<void>(ChannelMethods.returnToSharingApp);
     } catch (e) {
       logSwallowed('returnToSharingApp', e, expected: true);
     }
@@ -1131,6 +1204,7 @@ class VaultFileIoApi {
     int quality = 60,
     int targetSize = 180,
   }) async {
+    if (container.isExternalDocument) return null;
     try {
       final Uint8List? bytes = await _channel
           .invokeMethod<Uint8List>(ChannelMethods.getVideoThumbnail, {
@@ -1153,6 +1227,7 @@ class VaultFileIoApi {
     int quality = 60,
     int targetSize = 180,
   }) async {
+    if (container.isExternalDocument) return null;
     try {
       final result = await _channel
           .invokeMethod(ChannelMethods.getVideoThumbnailWithSize, {

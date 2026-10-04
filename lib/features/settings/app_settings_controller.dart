@@ -25,6 +25,9 @@ class AppSettingsViewState {
   final bool exportBusy;
   final bool importBusy;
   final bool shareTargetEnabled;
+  final bool openWithEditorEnabled;
+  final bool openWithMediaEnabled;
+  final bool openWithPdfEnabled;
 
   bool get backupBusy => exportBusy || importBusy;
 
@@ -41,6 +44,9 @@ class AppSettingsViewState {
     this.exportBusy = false,
     this.importBusy = false,
     this.shareTargetEnabled = false,
+    this.openWithEditorEnabled = false,
+    this.openWithMediaEnabled = false,
+    this.openWithPdfEnabled = false,
   });
 
   AppSettingsViewState _copy({
@@ -57,6 +63,9 @@ class AppSettingsViewState {
     bool? exportBusy,
     bool? importBusy,
     bool? shareTargetEnabled,
+    bool? openWithEditorEnabled,
+    bool? openWithMediaEnabled,
+    bool? openWithPdfEnabled,
   }) => AppSettingsViewState(
     settings: settings ?? this.settings,
     loading: loading ?? this.loading,
@@ -70,6 +79,9 @@ class AppSettingsViewState {
     exportBusy: exportBusy ?? this.exportBusy,
     importBusy: importBusy ?? this.importBusy,
     shareTargetEnabled: shareTargetEnabled ?? this.shareTargetEnabled,
+    openWithEditorEnabled: openWithEditorEnabled ?? this.openWithEditorEnabled,
+    openWithMediaEnabled: openWithMediaEnabled ?? this.openWithMediaEnabled,
+    openWithPdfEnabled: openWithPdfEnabled ?? this.openWithPdfEnabled,
   );
 }
 
@@ -150,6 +162,13 @@ class AppSettingsController extends _$AppSettingsController {
     }
     if (!ref.mounted) return;
 
+    final openWithStates = await Future.wait([
+      lifecycle.isOpenWithHandlerEnabled('editor'),
+      lifecycle.isOpenWithHandlerEnabled('media'),
+      lifecycle.isOpenWithHandlerEnabled('pdf'),
+    ]);
+    if (!ref.mounted) return;
+
     state = state._copy(
       settings: s,
       biometricAvailable: bioAvail,
@@ -157,6 +176,9 @@ class AppSettingsController extends _$AppSettingsController {
       androidSdkInt: sdkInt,
       disguiseMode: disguiseMode,
       shareTargetEnabled: shareTargetEnabled,
+      openWithEditorEnabled: openWithStates[0],
+      openWithMediaEnabled: openWithStates[1],
+      openWithPdfEnabled: openWithStates[2],
       loading: false,
     );
   }
@@ -263,7 +285,8 @@ class AppSettingsController extends _$AppSettingsController {
       await service.clearMasterPattern(state.settings);
     }
     if (!ref.mounted) return;
-    if (keep != MasterUnlockMethod.pin && state.settings.masterPinHash != null) {
+    if (keep != MasterUnlockMethod.pin &&
+        state.settings.masterPinHash != null) {
       await service.clearMasterPin(state.settings);
     }
   }
@@ -354,6 +377,25 @@ class AppSettingsController extends _$AppSettingsController {
       final actual = await lifecycle.isShareTargetEnabled();
       if (!ref.mounted) return false;
       state = state._copy(shareTargetEnabled: actual);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> setOpenWithHandlerEnabled(String viewer, bool enable) async {
+    try {
+      final lifecycle = ref.read(vaultLifecycleApiProvider);
+      await lifecycle.setOpenWithHandlerEnabled(viewer, enable);
+      if (!ref.mounted) return false;
+      final actual = await lifecycle.isOpenWithHandlerEnabled(viewer);
+      if (!ref.mounted) return false;
+      state = switch (viewer) {
+        'editor' => state._copy(openWithEditorEnabled: actual),
+        'media' => state._copy(openWithMediaEnabled: actual),
+        'pdf' => state._copy(openWithPdfEnabled: actual),
+        _ => state,
+      };
       return true;
     } catch (_) {
       return false;

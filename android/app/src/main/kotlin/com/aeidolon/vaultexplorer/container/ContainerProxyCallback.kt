@@ -30,7 +30,8 @@ class ContainerProxyCallback(
     private val session: ContainerSession,
     private val fatPath: String,
     private val isWrite: Boolean,
-    private val handlerThread: HandlerThread
+    private val handlerThread: HandlerThread,
+    private val ioLease: ContainerDocumentIoRegistry.HandleLease,
 ) : ProxyFileDescriptorCallback() {
 
     companion object {
@@ -74,9 +75,10 @@ class ContainerProxyCallback(
     private fun flushWriteCache() {
         if (writeCache != null && writeCacheLength > 0) {
             val chunk = if (writeCacheLength == writeCacheCapacity) writeCache else writeCache.copyOf(writeCacheLength)
-            ContainerFileSystem.withWriteLock(volId) {
+            val written = ContainerFileSystem.withWriteLock(volId) {
                 ContainerFileSystem.writeFileChunk(volId, fatPath, writeCacheOffset, chunk)
             }
+            if (!written) throw ErrnoException("flushWriteCache", OsConstants.EIO)
 
             val endOffset = writeCacheOffset + writeCacheLength
             if (endOffset > fileSizeCached) fileSizeCached = endOffset
@@ -159,6 +161,15 @@ class ContainerProxyCallback(
     }
 
     override fun onRelease() {
+        try {
+            releaseProxySession()
+        } finally {
+            ioLease.close()
+            handlerThread.quitSafely()
+        }
+    }
+
+    private fun releaseProxySession() {
         VeLog.d(TAG) { "ContainerProxyCallback releasing for $fatPath (hasChanges=$hasChanges)" }
         try {
             flushWriteCache()
@@ -168,9 +179,10 @@ class ContainerProxyCallback(
 
         if (isWrite) {
             try {
-                ContainerFileSystem.withWriteLock(volId) {
+                val finished = ContainerFileSystem.withWriteLock(volId) {
                     ContainerEngine.finishWrite(fatPath, volId)
                 }
+                if (!finished) throw ErrnoException("finishWrite", OsConstants.EIO)
             } catch (e: Exception) {
                 VeLog.e(TAG, e) { "Error finishing write on release for $fatPath" }
             }
@@ -207,7 +219,5 @@ class ContainerProxyCallback(
         } catch (e: Exception) {
             VeLog.w(TAG, e) { "Error notifying change on release for $fatPath" }
         }
-
-        handlerThread.quitSafely()
     }
 }

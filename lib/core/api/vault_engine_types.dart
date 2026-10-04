@@ -42,10 +42,10 @@ enum CarrierTier {
   const CarrierTier(this.id, this.label);
 
   static CarrierTier fromId(int id) => switch (id) {
-        0 => CarrierTier.high,
-        1 => CarrierTier.medium,
-        _ => CarrierTier.low,
-      };
+    0 => CarrierTier.high,
+    1 => CarrierTier.medium,
+    _ => CarrierTier.low,
+  };
 }
 
 typedef CarrierBudget = ({
@@ -70,7 +70,9 @@ typedef CapacityProfile = ({
 int compositeUsableCapacityBytes(int allocatableBytes) {
   final volumeBytes = (allocatableBytes ~/ 4096) * 4096;
   const headerRegionsBytes = 2 * 128 * 1024;
-  return volumeBytes > headerRegionsBytes ? volumeBytes - headerRegionsBytes : 0;
+  return volumeBytes > headerRegionsBytes
+      ? volumeBytes - headerRegionsBytes
+      : 0;
 }
 
 /// Export-side counterpart to [ImportProgress] -- see ExportProgressBridge.kt.
@@ -123,6 +125,39 @@ typedef IncomingShareItem = ({
 });
 
 typedef IncomingShareRequest = ({List<IncomingShareItem> items});
+
+/// One ACTION_VIEW/ACTION_EDIT document sent to a built-in viewer. [uri] is
+/// kept opaque and passed back to Android's ContentResolver so provider grants
+/// continue to control access to the original document.
+typedef ExternalFileOpenRequest = ({
+  String id,
+  String uri,
+  String displayName,
+  String? mimeType,
+  String viewer,
+  bool canWrite,
+});
+
+ExternalFileOpenRequest? externalFileOpenRequestFromWire(
+  Map<Object?, Object?> map,
+) {
+  final id = map['id'] as String?;
+  final uri = map['uri'] as String?;
+  if (id == null || id.isEmpty || uri == null || uri.isEmpty) return null;
+  final viewer = map['viewer'];
+  if (viewer is! String ||
+      (viewer != 'editor' && viewer != 'media' && viewer != 'pdf')) {
+    return null;
+  }
+  return (
+    id: id,
+    uri: uri,
+    displayName: map['displayName'] as String? ?? uri.split('/').last,
+    mimeType: map['mimeType'] as String?,
+    viewer: viewer,
+    canWrite: map['canWrite'] as bool? ?? false,
+  );
+}
 
 /// Shared by [VaultEngineEvents]'s `onIncomingShareRequest` push handler and
 /// `VaultFileIoApi.checkPendingShareRequest`'s pull -- both receive the same

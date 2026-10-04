@@ -268,8 +268,8 @@ class VaultDashboardState extends ConsumerState<VaultDashboard> with WidgetsBind
         continue;
       }
       try {
-        await lifecycle.lockContainer(c.uri);
-        controller.onContainerLocked(c.volId);
+        final locked = await lifecycle.lockContainer(c.uri);
+        if (locked) controller.onContainerLocked(c.volId);
       } finally {
         controller.releaseLockGuard(c.volId);
       }
@@ -307,8 +307,8 @@ class VaultDashboardState extends ConsumerState<VaultDashboard> with WidgetsBind
         continue;
       }
       try {
-        await lifecycle.lockContainer(c.uri);
-        controller.onContainerLocked(c.volId);
+        final locked = await lifecycle.lockContainer(c.uri);
+        if (locked) controller.onContainerLocked(c.volId);
       } finally {
         controller.releaseLockGuard(c.volId);
       }
@@ -348,8 +348,8 @@ class VaultDashboardState extends ConsumerState<VaultDashboard> with WidgetsBind
         continue;
       }
       try {
-        await lifecycle.lockContainer(c.uri);
-        controller.onContainerLocked(c.volId);
+        final locked = await lifecycle.lockContainer(c.uri);
+        if (locked) controller.onContainerLocked(c.volId);
       } finally {
         controller.releaseLockGuard(c.volId);
       }

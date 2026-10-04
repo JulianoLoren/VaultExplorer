@@ -6844,6 +6844,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareSheetIntegrationUpdateErrorMessage => '无法更新分享菜单集成设置。';
 
   @override
+  String get openWithOtherAppsHeader => 'Open with other apps';
+
+  @override
+  String get openWithOtherAppsSubtitle =>
+      'Choose which built-in viewers other apps can use for files they open.';
+
+  @override
+  String get openWithTextEditorTitle => 'Text Editor';
+
+  @override
+  String get openWithTextEditorSubtitle =>
+      'Let other apps open text and code files in VaultExplorer\'s editor.';
+
+  @override
+  String get openWithMediaPlayerTitle => 'Media Player';
+
+  @override
+  String get openWithMediaPlayerSubtitle =>
+      'Let other apps open image, audio, and video files in VaultExplorer.';
+
+  @override
+  String get openWithPdfViewerTitle => 'PDF Viewer';
+
+  @override
+  String get openWithPdfViewerSubtitle =>
+      'Let other apps open PDF files in VaultExplorer.';
+
+  @override
+  String get openWithIntegrationUpdateError =>
+      'Couldn\'t update the Open with integration.';
+
+  @override
   String get autoLockOnShareImportTitle => '分享导入后自动锁定';
 
   @override
@@ -8863,4 +8895,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get textEditorAutoHideTabBarDescription => '向下滚动时隐藏标签栏，向上滚动时重新显示。';
+
+  @override
+  String get lockWaitingForOperationsMessage => '正在等待当前操作完成后再锁定…';
 }

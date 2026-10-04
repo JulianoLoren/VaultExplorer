@@ -86,6 +86,10 @@ class MediaViewerScreen extends ConsumerStatefulWidget {
   /// export, bookmark, and playlist actions must not be available.
   final bool isArchivePreview;
 
+  /// A single document handed in by another app. It has no browsable parent
+  /// folder through this viewer, so folder actions and sibling scans are off.
+  final bool isExternalOpen;
+
   const MediaViewerScreen({
     super.key,
     required this.container,
@@ -101,7 +105,10 @@ class MediaViewerScreen extends ConsumerStatefulWidget {
     this.onCurrentFileChanged,
     this.onFileDeleted,
     this.isArchivePreview = false,
+    this.isExternalOpen = false,
   });
+
+  bool get _isPreviewOnly => isArchivePreview || isExternalOpen;
 
   @override
   ConsumerState<MediaViewerScreen> createState() => _MediaViewerScreenState();
@@ -212,7 +219,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     Duration position, {
     Duration? duration,
   }) async {
-    if (widget.isArchivePreview) return;
+    if (widget._isPreviewOnly) return;
     try {
       final key = await _resumePositionKey(fileName);
       if (position <= const Duration(seconds: 3) ||
@@ -253,7 +260,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     _resumeFlowStarted = true;
     final config = await ref.read(fileManagerToolbarServiceProvider).load();
     final mode = config.mediaViewerToolbarConfig.resumePlaybackMode;
-    final savedPosition = widget.isArchivePreview
+    final savedPosition = widget._isPreviewOnly
         ? null
         : await _readResumePosition(fileName);
     if (!mounted ||
@@ -354,7 +361,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   MediaViewerToolbarConfig _effectiveToolbarConfig(
     MediaViewerToolbarConfig config,
   ) {
-    if (!widget.isArchivePreview) return config;
+    if (!widget._isPreviewOnly) return config;
     List<MediaViewerAction> filter(List<MediaViewerAction> actions) =>
         actions.where(_archivePreviewActions.contains).toList();
     return config.copyWith(
@@ -464,7 +471,9 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
           // branch instead reads this as a real, absolute path straight
           // off disk, so it needs the full path rather than one relative
           // to the container root.
-          filePath: widget.container.isLocalStorage
+          filePath: widget.container.isExternalDocument
+              ? widget.container.uri
+              : widget.container.isLocalStorage
               ? p.join(widget.container.uri, file)
               : file,
           isLocalStorage: widget.container.isLocalStorage,
@@ -1919,7 +1928,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   }
 
   void _executeMediaAction(MediaViewerAction action) {
-    if (widget.isArchivePreview && !_archivePreviewActions.contains(action)) {
+    if (widget._isPreviewOnly && !_archivePreviewActions.contains(action)) {
       return;
     }
     _startHideTimer();
@@ -2257,7 +2266,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
     final fileName = _playlistController.playlist[index];
     final contentUriString = _contentUriFor(fileName);
     final prefetchedBytes = _prefetchedBytesFor(fileName);
-    if (!widget.isArchivePreview && prefetchedBytes == null) {
+    if (!widget._isPreviewOnly && prefetchedBytes == null) {
       unawaited(_prefetchController.prefetchThumbnail(fileName));
     }
     final isImg = MediaViewerConstants.isImage(fileName);

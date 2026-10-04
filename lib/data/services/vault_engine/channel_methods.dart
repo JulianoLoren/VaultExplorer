@@ -225,6 +225,15 @@ abstract final class ChannelMethods {
   static const returnToSharingApp = 'returnToSharingApp';
   static const prepareShareImport = 'prepareShareImport';
 
+  // Android Open With targets and external-document streaming.
+  static const setOpenWithHandlerEnabled = 'setOpenWithHandlerEnabled';
+  static const isOpenWithHandlerEnabled = 'isOpenWithHandlerEnabled';
+  static const checkPendingExternalFileOpen = 'checkPendingExternalFileOpen';
+  static const acknowledgeExternalFileOpen = 'acknowledgeExternalFileOpen';
+  static const getExternalFileSize = 'getExternalFileSize';
+  static const readExternalFileChunk = 'readExternalFileChunk';
+  static const writeExternalFileChunk = 'writeExternalFileChunk';
+
   // Quick Capture: Quick Settings tile / pinned shortcut integration
   // (see QuickCaptureSettingsHandlers.kt, QuickCaptureBridge.kt,
   // lib/core/api/quick_capture_api.dart). Names match MainActivity.kt's

@@ -7169,6 +7169,38 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t update Share Sheet Integration.';
 
   @override
+  String get openWithOtherAppsHeader => 'Open with other apps';
+
+  @override
+  String get openWithOtherAppsSubtitle =>
+      'Choose which built-in viewers other apps can use for files they open.';
+
+  @override
+  String get openWithTextEditorTitle => 'Text Editor';
+
+  @override
+  String get openWithTextEditorSubtitle =>
+      'Let other apps open text and code files in VaultExplorer\'s editor.';
+
+  @override
+  String get openWithMediaPlayerTitle => 'Media Player';
+
+  @override
+  String get openWithMediaPlayerSubtitle =>
+      'Let other apps open image, audio, and video files in VaultExplorer.';
+
+  @override
+  String get openWithPdfViewerTitle => 'PDF Viewer';
+
+  @override
+  String get openWithPdfViewerSubtitle =>
+      'Let other apps open PDF files in VaultExplorer.';
+
+  @override
+  String get openWithIntegrationUpdateError =>
+      'Couldn\'t update the Open with integration.';
+
+  @override
   String get autoLockOnShareImportTitle => 'Auto-Lock After Share Import';
 
   @override
@@ -9346,4 +9378,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get textEditorAutoHideTabBarDescription =>
       'Hide the tab bar when scrolling down; scroll up to show it again.';
+
+  @override
+  String get lockWaitingForOperationsMessage =>
+      'Waiting for current operations to finish before locking…';
 }

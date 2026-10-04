@@ -161,6 +161,112 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity-alias>
+        <activity-alias
+            android:name=".OpenTextEditorAlias"
+            android:targetActivity=".MainActivity"
+            android:label="@string/open_with_text_editor"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="application/javascript" />
+                <data android:mimeType="application/yaml" />
+                <data android:mimeType="application/x-yaml" />
+                <data android:mimeType="application/x-sh" />
+                <data android:mimeType="application/sql" />
+                <data android:mimeType="application/rtf" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".OpenTextEditorDecoyAlias"
+            android:targetActivity=".MainActivity"
+            android:label="@string/decoy_open_with_text_editor"
+            android:icon="@mipmap/ic_launcher_zip"
+            android:roundIcon="@mipmap/ic_launcher_zip"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="application/javascript" />
+                <data android:mimeType="application/yaml" />
+                <data android:mimeType="application/x-yaml" />
+                <data android:mimeType="application/x-sh" />
+                <data android:mimeType="application/sql" />
+                <data android:mimeType="application/rtf" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".OpenMediaPlayerAlias"
+            android:targetActivity=".MainActivity"
+            android:label="@string/open_with_media_player"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".OpenMediaPlayerDecoyAlias"
+            android:targetActivity=".MainActivity"
+            android:label="@string/decoy_open_with_media_player"
+            android:icon="@mipmap/ic_launcher_zip"
+            android:roundIcon="@mipmap/ic_launcher_zip"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".OpenPdfViewerAlias"
+            android:targetActivity=".MainActivity"
+            android:label="@string/open_with_pdf_viewer"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".OpenPdfViewerDecoyAlias"
+            android:targetActivity=".MainActivity"
+            android:label="@string/decoy_open_with_pdf_viewer"
+            android:icon="@mipmap/ic_launcher_zip"
+            android:roundIcon="@mipmap/ic_launcher_zip"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity-alias>
            <provider
             android:name="com.aeidolon.vaultexplorer.container.ContainerDocumentsProvider"
             android:authorities="com.aeidolon.vaultexplorer.documents"

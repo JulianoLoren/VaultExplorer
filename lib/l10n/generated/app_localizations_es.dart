@@ -7294,6 +7294,38 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo actualizar la integración con el menú Compartir.';
 
   @override
+  String get openWithOtherAppsHeader => 'Open with other apps';
+
+  @override
+  String get openWithOtherAppsSubtitle =>
+      'Choose which built-in viewers other apps can use for files they open.';
+
+  @override
+  String get openWithTextEditorTitle => 'Text Editor';
+
+  @override
+  String get openWithTextEditorSubtitle =>
+      'Let other apps open text and code files in VaultExplorer\'s editor.';
+
+  @override
+  String get openWithMediaPlayerTitle => 'Media Player';
+
+  @override
+  String get openWithMediaPlayerSubtitle =>
+      'Let other apps open image, audio, and video files in VaultExplorer.';
+
+  @override
+  String get openWithPdfViewerTitle => 'PDF Viewer';
+
+  @override
+  String get openWithPdfViewerSubtitle =>
+      'Let other apps open PDF files in VaultExplorer.';
+
+  @override
+  String get openWithIntegrationUpdateError =>
+      'Couldn\'t update the Open with integration.';
+
+  @override
   String get autoLockOnShareImportTitle => 'Bloqueo automático tras importar';
 
   @override
@@ -9502,4 +9534,8 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get textEditorAutoHideTabBarDescription =>
       'Ocultar la barra de pestañas al desplazarte hacia abajo y mostrarla de nuevo al desplazarte hacia arriba.';
+
+  @override
+  String get lockWaitingForOperationsMessage =>
+      'Esperando a que terminen las operaciones en curso antes de bloquear…';
 }

@@ -96,19 +96,15 @@ class VaultDashboardController extends _$VaultDashboardController {
   Timer? _undoTimer;
   Future<void>? _loadAllFuture;
 
-  static final Set<int> _activeBatches = {};
-  static final Set<int> _lockPending = {};
-
   bool acquireLockGuard(int volId) {
-    if (_activeBatches.contains(volId) || _lockPending.contains(volId)) {
-      return false;
-    }
-    _lockPending.add(volId);
-    return true;
+    // Use the same batch/lock state as the file-operation service and the
+    // per-container lock button. A separate controller-local set used to
+    // miss active transfers and let auto/global locks interrupt them.
+    return ref.read(vaultEngineEventsProvider).acquireLockGuard(volId);
   }
 
   void releaseLockGuard(int volId) {
-    _lockPending.remove(volId);
+    ref.read(vaultEngineEventsProvider).releaseLockGuard(volId);
   }
 
   late final void Function(int) _onUsbDetachedListener;
@@ -320,11 +316,10 @@ class VaultDashboardController extends _$VaultDashboardController {
       return;
     }
     try {
-      await ref
+      final locked = await ref
           .read(vaultLifecycleApiProvider)
           .lockContainer(container.uri);
-      if (!ref.mounted) return;
-      onContainerLocked(container.volId);
+      if (locked && ref.mounted) onContainerLocked(container.volId);
     } catch (e) {
       VeLog.e(_kLogTag, 'Auto-close lock failed for volId=${container.volId}', e);
     } finally {
@@ -446,16 +441,17 @@ class VaultDashboardController extends _$VaultDashboardController {
     final idx = state.mounted.indexWhere((c) => c.volId == volId);
     if (idx == -1) return;
     final container = state.mounted[idx];
+    var locked = false;
     if (acquireLockGuard(volId)) {
       try {
-        await ref.read(vaultLifecycleApiProvider).lockContainer(container.uri);
+        locked = await ref.read(vaultLifecycleApiProvider).lockContainer(container.uri);
       } catch (e) {
         VeLog.e(_kLogTag, 'Hidden-volume-protection lock failed for volId=$volId', e);
       } finally {
         releaseLockGuard(volId);
       }
     }
-    onContainerLocked(volId);
+    if (locked) onContainerLocked(volId);
   }
 
   void onUsbContainerReconnected(

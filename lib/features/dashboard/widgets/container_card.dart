@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -398,6 +400,8 @@ class _LockButton extends ConsumerStatefulWidget {
 
 class _LockButtonState extends ConsumerState<_LockButton> {
   bool _loading = false;
+  Timer? _lockWaitNoticeTimer;
+
   Future<void> _lock() async {
     final volId = widget.container.volId;
     VeLog.i(_kLogTag, '_lock: user tapped lock button for volId=$volId');
@@ -415,10 +419,33 @@ class _LockButtonState extends ConsumerState<_LockButton> {
       return;
     }
     setState(() => _loading = true);
+    // The native lifecycle call waits for active container reads/writes to
+    // release their locks before it can unmount the volume. Explain a
+    // spinner that lasts long enough to indicate that wait, while keeping
+    // quick locks free of an unnecessary snackbar.
+    _lockWaitNoticeTimer?.cancel();
+    _lockWaitNoticeTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted || !_loading) return;
+      showAppSnackBar(
+        context,
+        message: context.l10n.lockWaitingForOperationsMessage,
+        tone: AppBannerTone.info,
+      );
+    });
     try {
-      await ref
+      final locked = await ref
           .read(vaultLifecycleApiProvider)
           .lockContainer(widget.container.uri);
+      if (!locked) {
+        if (mounted) {
+          showAppSnackBar(
+            context,
+            message: context.l10n.operationInProgressWaitMessage,
+            tone: AppBannerTone.warning,
+          );
+        }
+        return;
+      }
       VeLog.i(_kLogTag, '_lock: native lockContainer succeeded for volId=$volId, notifying controller');
       widget.onLocked(volId);
     } catch (e) {
@@ -431,9 +458,17 @@ class _LockButtonState extends ConsumerState<_LockButton> {
         );
       }
     } finally {
+      _lockWaitNoticeTimer?.cancel();
+      _lockWaitNoticeTimer = null;
       events.releaseLockGuard(volId);
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _lockWaitNoticeTimer?.cancel();
+    super.dispose();
   }
 
   @override

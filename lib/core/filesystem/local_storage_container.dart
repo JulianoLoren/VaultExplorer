@@ -40,9 +40,28 @@ MountedContainer buildExternalStorageContainer({
   );
 }
 
+MountedContainer buildExternalDocumentContainer({
+  required String uri,
+  required String displayName,
+  required bool canWrite,
+}) {
+  return MountedContainer(
+    uri: uri,
+    displayName: displayName,
+    volId: kExternalStorageBaseVolId,
+    rootFiles: const [],
+    mountedAt: DateTime.now(),
+    totalSpace: 0,
+    freeSpace: 0,
+    containerFormat: 'external_document',
+    readOnly: !canWrite,
+  );
+}
+
 /// Any negative volId is local/external phone storage rather than a native vault
 extension LocalStorageContainerX on MountedContainer {
   bool get isLocalStorage => volId < 0;
+  bool get isExternalDocument => containerFormat == 'external_document';
   bool get isPrimaryLocalStorage => volId == kDecoyLocalVolId;
   bool get isExternalStorage => volId <= kExternalStorageBaseVolId;
   bool get isSafStorage => volId < 0 && uri.startsWith('content://');

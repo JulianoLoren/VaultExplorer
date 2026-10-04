@@ -9253,6 +9253,42 @@
   "@shareSheetIntegrationUpdateErrorMessage": {
     "description": "Snackbar error shown when toggling share sheet integration fails"
   },
+  "openWithOtherAppsHeader": "Open with other apps",
+  "@openWithOtherAppsHeader": {
+    "description": "Settings section header for built-in viewers exposed to other Android apps"
+  },
+  "openWithOtherAppsSubtitle": "Choose which built-in viewers other apps can use for files they open.",
+  "@openWithOtherAppsSubtitle": {
+    "description": "Subtitle for the external Open with settings section"
+  },
+  "openWithTextEditorTitle": "Text Editor",
+  "@openWithTextEditorTitle": {
+    "description": "Settings switch title for handling external text documents"
+  },
+  "openWithTextEditorSubtitle": "Let other apps open text and code files in VaultExplorer's editor.",
+  "@openWithTextEditorSubtitle": {
+    "description": "Settings switch subtitle for external text document handling"
+  },
+  "openWithMediaPlayerTitle": "Media Player",
+  "@openWithMediaPlayerTitle": {
+    "description": "Settings switch title for handling external image, audio, and video files"
+  },
+  "openWithMediaPlayerSubtitle": "Let other apps open image, audio, and video files in VaultExplorer.",
+  "@openWithMediaPlayerSubtitle": {
+    "description": "Settings switch subtitle for external media handling"
+  },
+  "openWithPdfViewerTitle": "PDF Viewer",
+  "@openWithPdfViewerTitle": {
+    "description": "Settings switch title for handling external PDF files"
+  },
+  "openWithPdfViewerSubtitle": "Let other apps open PDF files in VaultExplorer.",
+  "@openWithPdfViewerSubtitle": {
+    "description": "Settings switch subtitle for external PDF handling"
+  },
+  "openWithIntegrationUpdateError": "Couldn't update the Open with integration.",
+  "@openWithIntegrationUpdateError": {
+    "description": "Snackbar error shown when enabling or disabling an external Open with handler fails"
+  },
   "autoLockOnShareImportTitle": "Auto-Lock After Share Import",
   "@autoLockOnShareImportTitle": {
     "description": "Settings switch title for automatically re-locking a vault after importing shared files"
@@ -11899,5 +11935,9 @@
   "textEditorAutoHideTabBarDescription": "Hide the tab bar when scrolling down; scroll up to show it again.",
   "@textEditorAutoHideTabBarDescription": {
     "description": "Explains how scrolling down hides the editor tabs and scrolling up reveals them."
+  },
+  "lockWaitingForOperationsMessage": "Waiting for current operations to finish before locking…",
+  "@lockWaitingForOperationsMessage": {
+    "description": "Snackbar shown when locking a container takes longer because active operations must finish first"
   }
 }

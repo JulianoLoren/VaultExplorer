@@ -72,6 +72,18 @@ class FileOperationService extends ChangeNotifier {
   final VaultFileIoApi _fileIoApi;
   final VaultLifecycleApi _lifecycleApi;
 
+  void _beginBatches(Iterable<int> volIds) {
+    for (final volId in volIds.toSet()) {
+      _engineEvents.beginBatch(volId);
+    }
+  }
+
+  void _endBatches(Iterable<int> volIds) {
+    for (final volId in volIds.toSet()) {
+      _engineEvents.endBatch(volId);
+    }
+  }
+
   Future<void> _cancelNativeOperation(
     int operationId,
     bool isImport,
@@ -278,7 +290,7 @@ class FileOperationService extends ChangeNotifier {
     _bindOperationListener(op);
     notifyListeners();
     _syncNotificationProgress();
-    _runImport(op, performImport);
+    _runImport(op, dest, performImport);
     return op;
   }
 
@@ -305,7 +317,7 @@ class FileOperationService extends ChangeNotifier {
     _bindOperationListener(op);
     notifyListeners();
     _syncNotificationProgress();
-    _runExport(op, performExport);
+    _runExport(op, source, performExport);
     return op;
   }
 
@@ -713,6 +725,11 @@ class FileOperationService extends ChangeNotifier {
     }
 
     _engineEvents.addSplitJoinProgressListener(onProgress);
+    final guardedVolIds = <int>{
+      if (!source.isLocalStorage) source.volId,
+      if (!dest.isLocalStorage) dest.volId,
+    };
+    _beginBatches(guardedVolIds);
 
     try {
       final destVaultPath = destDirPath.isEmpty
@@ -807,6 +824,7 @@ class FileOperationService extends ChangeNotifier {
       }
     } finally {
       _engineEvents.removeSplitJoinProgressListener(onProgress);
+      _endBatches(guardedVolIds);
       await _fileIoApi.clearCopyState(op.id);
       _unbindOperationListener(op);
       notifyListeners();
@@ -842,6 +860,11 @@ class FileOperationService extends ChangeNotifier {
     }
 
     _engineEvents.addSplitJoinProgressListener(onProgress);
+    final guardedVolIds = <int>{
+      if (!source.isLocalStorage) source.volId,
+      if (!dest.isLocalStorage) dest.volId,
+    };
+    _beginBatches(guardedVolIds);
 
     try {
       final int count;
@@ -893,6 +916,7 @@ class FileOperationService extends ChangeNotifier {
       }
     } finally {
       _engineEvents.removeSplitJoinProgressListener(onProgress);
+      _endBatches(guardedVolIds);
       await _fileIoApi.clearCopyState(op.id);
       _unbindOperationListener(op);
       notifyListeners();
@@ -904,6 +928,7 @@ class FileOperationService extends ChangeNotifier {
 
   Future<void> _runImport(
     FileOperation op,
+    MountedContainer dest,
     Future<int> Function(int opId) performImport,
   ) async {
     op._setStatus(FileOperationStatus.running);
@@ -921,6 +946,8 @@ class FileOperationService extends ChangeNotifier {
     }
 
     _engineEvents.addImportProgressListener(onProgress);
+    final guardedVolIds = dest.isLocalStorage ? <int>{} : <int>{dest.volId};
+    _beginBatches(guardedVolIds);
     try {
       final count = await performImport(op.id);
       if (count > 0) {
@@ -961,6 +988,7 @@ class FileOperationService extends ChangeNotifier {
       op._setStatus(FileOperationStatus.failed);
     } finally {
       _engineEvents.removeImportProgressListener(onProgress);
+      _endBatches(guardedVolIds);
       _unbindOperationListener(op);
       notifyListeners();
       _syncNotificationProgress();
@@ -971,6 +999,7 @@ class FileOperationService extends ChangeNotifier {
 
   Future<void> _runExport(
     FileOperation op,
+    MountedContainer source,
     Future<int> Function(int opId) performExport,
   ) async {
     op._setStatus(FileOperationStatus.running);
@@ -988,6 +1017,8 @@ class FileOperationService extends ChangeNotifier {
     }
 
     _engineEvents.addExportProgressListener(onProgress);
+    final guardedVolIds = source.isLocalStorage ? <int>{} : <int>{source.volId};
+    _beginBatches(guardedVolIds);
     try {
       final count = await performExport(op.id);
       if (count > 0) {
@@ -1023,6 +1054,7 @@ class FileOperationService extends ChangeNotifier {
       op._setStatus(FileOperationStatus.failed);
     } finally {
       _engineEvents.removeExportProgressListener(onProgress);
+      _endBatches(guardedVolIds);
       _unbindOperationListener(op);
       notifyListeners();
       _syncNotificationProgress();
@@ -1045,9 +1077,15 @@ class FileOperationService extends ChangeNotifier {
     }
 
     _engineEvents.addCopyProgressListener(onCopyProgress);
-    _engineEvents.beginBatch(dest.volId);
-    await _fileIoApi.beginBatchWrite(dest);
+    final guardedVolIds = <int>{
+      if (!src.isLocalStorage) src.volId,
+      if (!dest.isLocalStorage) dest.volId,
+    };
+    _beginBatches(guardedVolIds);
+    var nativeBatchStarted = false;
     try {
+      await _fileIoApi.beginBatchWrite(dest);
+      nativeBatchStarted = true;
       op._setActivity(op.l10n.fileOpResolvingConflicts);
       final existingRaw =
           await _fileIoApi.listDirectory(dest, op.destDirPath) ?? [];
@@ -1336,12 +1374,18 @@ class FileOperationService extends ChangeNotifier {
       op._setStatus(FileOperationStatus.failed);
     } finally {
       _engineEvents.removeCopyProgressListener(onCopyProgress);
-      await _fileIoApi.clearCopyState(op.id);
-      await _fileIoApi.endBatchWrite(dest);
-      _engineEvents.endBatch(dest.volId);
-      _unbindOperationListener(op);
-      notifyListeners();
-      _syncNotificationProgress();
+      try {
+        await _fileIoApi.clearCopyState(op.id);
+      } finally {
+        try {
+          if (nativeBatchStarted) await _fileIoApi.endBatchWrite(dest);
+        } finally {
+          _endBatches(guardedVolIds);
+          _unbindOperationListener(op);
+          notifyListeners();
+          _syncNotificationProgress();
+        }
+      }
     }
   }
 
@@ -1354,6 +1398,11 @@ class FileOperationService extends ChangeNotifier {
     ConflictPlan conflictPlan,
   ) async {
     op._setStatus(FileOperationStatus.running);
+    final guardedVolIds = <int>{
+      if (!source.isLocalStorage) source.volId,
+      if (!dest.isLocalStorage) dest.volId,
+    };
+    _beginBatches(guardedVolIds);
     try {
       op._setActivity(op.l10n.fileOpResolvingConflicts);
       final destDirAbs = _resolveLocal(dest.uri, op.destDirPath);
@@ -1497,6 +1546,7 @@ class FileOperationService extends ChangeNotifier {
       op._setError(e.toString());
       op._setStatus(FileOperationStatus.failed);
     } finally {
+      _endBatches(guardedVolIds);
       _unbindOperationListener(op);
       notifyListeners();
       _syncNotificationProgress();
@@ -1562,9 +1612,12 @@ class FileOperationService extends ChangeNotifier {
     op._setStatus(FileOperationStatus.running);
     op._setActivity(op.l10n.fileOpDeleting);
 
-    _engineEvents.beginBatch(container.volId);
-    await _fileIoApi.beginBatchDelete(container);
+    final guardedVolIds = <int>{container.volId};
+    _beginBatches(guardedVolIds);
+    var nativeBatchStarted = false;
     try {
+      await _fileIoApi.beginBatchDelete(container);
+      nativeBatchStarted = true;
       for (int i = 0; i < op.items.length; i++) {
         if (op.cancelRequested) {
           op._recordItemResult(i, FileItemResult.skipped);
@@ -1602,11 +1655,14 @@ class FileOperationService extends ChangeNotifier {
       op._setError(e.toString());
       op._setStatus(FileOperationStatus.failed);
     } finally {
-      await _fileIoApi.endBatchDelete(container);
-      _engineEvents.endBatch(container.volId);
-      _unbindOperationListener(op);
-      notifyListeners();
-      _syncNotificationProgress();
+      try {
+        if (nativeBatchStarted) await _fileIoApi.endBatchDelete(container);
+      } finally {
+        _endBatches(guardedVolIds);
+        _unbindOperationListener(op);
+        notifyListeners();
+        _syncNotificationProgress();
+      }
     }
   }
 

@@ -46,9 +46,8 @@ class VaultEngineEvents {
       ListenerRegistry<int>();
   void addUsbContainerDetachedListener(void Function(int volId) listener) =>
       _usbContainerDetachedRegistry.add(listener);
-  void removeUsbContainerDetachedListener(
-    void Function(int volId) listener,
-  ) => _usbContainerDetachedRegistry.remove(listener);
+  void removeUsbContainerDetachedListener(void Function(int volId) listener) =>
+      _usbContainerDetachedRegistry.remove(listener);
 
   final ListenerRegistry<int> _hiddenVolumeProtectionTriggeredRegistry =
       ListenerRegistry<int>();
@@ -75,7 +74,8 @@ class VaultEngineEvents {
     void Function(MountedContainer container) listener,
   ) => _vaultAutomationUnlockedRegistry.remove(listener);
 
-  final ListenerRegistry<int> _containerLockedRegistry = ListenerRegistry<int>();
+  final ListenerRegistry<int> _containerLockedRegistry =
+      ListenerRegistry<int>();
   void addContainerLockedListener(void Function(int volId) listener) =>
       _containerLockedRegistry.add(listener);
   void removeContainerLockedListener(void Function(int volId) listener) =>
@@ -204,9 +204,8 @@ class VaultEngineEvents {
 
   final ListenerRegistry<CopyProgress> _copyProgressRegistry =
       ListenerRegistry<CopyProgress>();
-  void addCopyProgressListener(
-    void Function(CopyProgress progress) listener,
-  ) => _copyProgressRegistry.add(listener);
+  void addCopyProgressListener(void Function(CopyProgress progress) listener) =>
+      _copyProgressRegistry.add(listener);
   void removeCopyProgressListener(
     void Function(CopyProgress progress) listener,
   ) => _copyProgressRegistry.remove(listener);
@@ -220,9 +219,8 @@ class VaultEngineEvents {
 
   final ListenerRegistry<HashProgress> _hashProgressRegistry =
       ListenerRegistry<HashProgress>();
-  void addHashProgressListener(
-    void Function(HashProgress progress) listener,
-  ) => _hashProgressRegistry.add(listener);
+  void addHashProgressListener(void Function(HashProgress progress) listener) =>
+      _hashProgressRegistry.add(listener);
   void removeHashProgressListener(
     void Function(HashProgress progress) listener,
   ) => _hashProgressRegistry.remove(listener);
@@ -242,15 +240,36 @@ class VaultEngineEvents {
     void Function(IncomingShareRequest request) listener,
   ) => _incomingShareRequestRegistry.remove(listener);
 
-  final Set<int> _activeBatches = {};
+  final ListenerRegistry<ExternalFileOpenRequest> _externalFileOpenRegistry =
+      ListenerRegistry<ExternalFileOpenRequest>();
+  void addExternalFileOpenRequestListener(
+    void Function(ExternalFileOpenRequest request) listener,
+  ) => _externalFileOpenRegistry.add(listener);
+  void removeExternalFileOpenRequestListener(
+    void Function(ExternalFileOpenRequest request) listener,
+  ) => _externalFileOpenRegistry.remove(listener);
+
+  final Map<int, int> _activeBatchCounts = {};
   final Set<int> _lockPending = {};
 
-  void beginBatch(int volId) => _activeBatches.add(volId);
-  void endBatch(int volId) => _activeBatches.remove(volId);
-  bool hasActiveBatch(int volId) => _activeBatches.contains(volId);
+  void beginBatch(int volId) {
+    _activeBatchCounts.update(volId, (count) => count + 1, ifAbsent: () => 1);
+  }
+
+  void endBatch(int volId) {
+    final count = _activeBatchCounts[volId];
+    if (count == null) return;
+    if (count <= 1) {
+      _activeBatchCounts.remove(volId);
+    } else {
+      _activeBatchCounts[volId] = count - 1;
+    }
+  }
+
+  bool hasActiveBatch(int volId) => _activeBatchCounts.containsKey(volId);
 
   bool acquireLockGuard(int volId) {
-    if (_activeBatches.contains(volId) || _lockPending.contains(volId)) {
+    if (hasActiveBatch(volId) || _lockPending.contains(volId)) {
       return false;
     }
     _lockPending.add(volId);
@@ -284,7 +303,10 @@ class VaultEngineEvents {
       } else if (call.method == 'onVaultForceLocked') {
         final args = call.arguments as Map<Object?, Object?>;
         final volId = args['volId'] as int?;
-        VeLog.i(_kLogTag, 'native onVaultForceLocked received for volId=$volId');
+        VeLog.i(
+          _kLogTag,
+          'native onVaultForceLocked received for volId=$volId',
+        );
         if (volId != null) {
           _vaultForceLockedRegistry.notify(volId);
         }
@@ -298,6 +320,10 @@ class VaultEngineEvents {
         if (items.isNotEmpty) {
           _incomingShareRequestRegistry.notify((items: items));
         }
+      } else if (call.method == 'onExternalFileOpenRequest') {
+        final args = call.arguments as Map<Object?, Object?>;
+        final request = externalFileOpenRequestFromWire(args);
+        if (request != null) _externalFileOpenRegistry.notify(request);
       } else if (call.method == 'onVaultAutomationUnlocked') {
         final args = call.arguments as Map<Object?, Object?>;
         final volId = args['volId'] as int?;
@@ -312,7 +338,8 @@ class VaultEngineEvents {
               mountedAt: DateTime.now(),
               totalSpace: 0,
               freeSpace: 0,
-              containerFormat: args['containerFormat'] as String? ?? 'veracrypt',
+              containerFormat:
+                  args['containerFormat'] as String? ?? 'veracrypt',
               readOnly: args['readOnly'] as bool? ?? false,
             ),
           );

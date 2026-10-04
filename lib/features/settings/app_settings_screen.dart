@@ -45,7 +45,14 @@ const _kAndroidSdkS = 31;
 /// The settings hubs shown in the persistent sidebar on wide/landscape
 /// layouts. Order and membership mirror the hub tiles used in the narrow,
 /// single-column layout.
-enum _SettingsSection { security, storage, fileHandling, appearance, advanced, about }
+enum _SettingsSection {
+  security,
+  storage,
+  fileHandling,
+  appearance,
+  advanced,
+  about,
+}
 
 class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
     with WidgetsBindingObserver {
@@ -73,7 +80,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
     }
   }
 
-   Widget _buildHubTile({
+  Widget _buildHubTile({
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -110,7 +117,9 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                style: textTheme.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
               ),
             )
           : null,
@@ -142,7 +151,8 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               subtitle: context.l10n.settingsHubSecuritySubtitle,
               selected: _selectedSection == _SettingsSection.security,
               showChevron: false,
-              onTap: () => setState(() => _selectedSection = _SettingsSection.security),
+              onTap: () =>
+                  setState(() => _selectedSection = _SettingsSection.security),
             ),
             _buildHubTile(
               icon: Icons.settings_input_composite_rounded,
@@ -151,7 +161,8 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               subtitle: context.l10n.settingsHubStorageSubtitle,
               selected: _selectedSection == _SettingsSection.storage,
               showChevron: false,
-              onTap: () => setState(() => _selectedSection = _SettingsSection.storage),
+              onTap: () =>
+                  setState(() => _selectedSection = _SettingsSection.storage),
             ),
             _buildHubTile(
               icon: Icons.folder_copy_rounded,
@@ -160,7 +171,9 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               subtitle: context.l10n.settingsHubFileHandlingSubtitle,
               selected: _selectedSection == _SettingsSection.fileHandling,
               showChevron: false,
-              onTap: () => setState(() => _selectedSection = _SettingsSection.fileHandling),
+              onTap: () => setState(
+                () => _selectedSection = _SettingsSection.fileHandling,
+              ),
             ),
             _buildHubTile(
               icon: Icons.palette_rounded,
@@ -169,16 +182,20 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               subtitle: context.l10n.settingsHubAppearanceSubtitle,
               selected: _selectedSection == _SettingsSection.appearance,
               showChevron: false,
-              onTap: () => setState(() => _selectedSection = _SettingsSection.appearance),
+              onTap: () => setState(
+                () => _selectedSection = _SettingsSection.appearance,
+              ),
             ),
             _buildHubTile(
               icon: Icons.terminal_rounded,
               iconColor: Colors.teal,
-              title: '${context.l10n.sectionBackupRestore} & ${context.l10n.sectionDebug}',
+              title:
+                  '${context.l10n.sectionBackupRestore} & ${context.l10n.sectionDebug}',
               subtitle: context.l10n.settingsHubAdvancedSubtitle,
               selected: _selectedSection == _SettingsSection.advanced,
               showChevron: false,
-              onTap: () => setState(() => _selectedSection = _SettingsSection.advanced),
+              onTap: () =>
+                  setState(() => _selectedSection = _SettingsSection.advanced),
             ),
           ],
         ),
@@ -192,7 +209,8 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
               subtitle: context.l10n.versionInfoSubtitle(appVersion),
               selected: _selectedSection == _SettingsSection.about,
               showChevron: false,
-              onTap: () => setState(() => _selectedSection = _SettingsSection.about),
+              onTap: () =>
+                  setState(() => _selectedSection = _SettingsSection.about),
             ),
           ],
         ),
@@ -211,11 +229,21 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
       key: ValueKey(_selectedSection),
       onGenerateRoute: (_) => MaterialPageRoute(
         builder: (_) => switch (_selectedSection) {
-          _SettingsSection.security => const SecuritySettingsScreen(embedded: true),
-          _SettingsSection.storage => const StorageServicesSettingsScreen(embedded: true),
-          _SettingsSection.fileHandling => const FileHandlingSettingsScreen(embedded: true),
-          _SettingsSection.appearance => const AppearanceSettingsScreen(embedded: true),
-          _SettingsSection.advanced => const AdvancedSettingsScreen(embedded: true),
+          _SettingsSection.security => const SecuritySettingsScreen(
+            embedded: true,
+          ),
+          _SettingsSection.storage => const StorageServicesSettingsScreen(
+            embedded: true,
+          ),
+          _SettingsSection.fileHandling => const FileHandlingSettingsScreen(
+            embedded: true,
+          ),
+          _SettingsSection.appearance => const AppearanceSettingsScreen(
+            embedded: true,
+          ),
+          _SettingsSection.advanced => const AdvancedSettingsScreen(
+            embedded: true,
+          ),
           _SettingsSection.about => const AboutScreen(embedded: true),
         },
       ),
@@ -263,10 +291,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
 
   /// The narrow-layout hub list: unchanged from before the sidebar was
   /// added -- tapping a hub pushes its screen as a full-screen route.
-  Widget _buildNarrowHubList(
-    ColorScheme cs,
-    TextTheme textTheme,
-  ) {
+  Widget _buildNarrowHubList(ColorScheme cs, TextTheme textTheme) {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -328,7 +353,8 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                 _buildHubTile(
                   icon: Icons.terminal_rounded,
                   iconColor: Colors.teal,
-                  title: '${context.l10n.sectionBackupRestore} & ${context.l10n.sectionDebug}',
+                  title:
+                      '${context.l10n.sectionBackupRestore} & ${context.l10n.sectionDebug}',
                   subtitle: context.l10n.settingsHubAdvancedSubtitle,
                   onTap: () => Navigator.push(
                     context,
@@ -346,24 +372,35 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
             SectionCard(
               children: [
                 ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: cs.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.info_outline_rounded, color: cs.primary, size: 22),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      color: cs.primary,
+                      size: 22,
+                    ),
                   ),
                   title: Text(
                     context.l10n.aboutAppTitle,
-                    style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   subtitle: Text(
                     context.l10n.versionInfoSubtitle(appVersion),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
                   ),
                   trailing: Icon(
                     Icons.chevron_right_rounded,
@@ -371,9 +408,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen>
                   ),
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const AboutScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const AboutScreen()),
                   ),
                 ),
               ],
@@ -425,7 +460,9 @@ class _SecuritySettingsScreenState
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (ctx) => const QuickPasswordGeneratorSheet(),
     );
@@ -445,23 +482,31 @@ class _SecuritySettingsScreenState
     final pw = _pwCtrl.text;
     final confirm = _pwConfirmCtrl.text;
     if (pw.isEmpty) {
-      ref.read(appSettingsControllerProvider.notifier).setPwError(context.l10n.passwordCannotBeEmpty);
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setPwError(context.l10n.passwordCannotBeEmpty);
       return;
     }
     if (pw.length < 4) {
-      ref.read(appSettingsControllerProvider.notifier).setPwError(context.l10n.atLeast4CharsRequired);
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setPwError(context.l10n.atLeast4CharsRequired);
       return;
     }
     if (pw != confirm) {
-      ref.read(appSettingsControllerProvider.notifier).setPwError(context.l10n.passwordsDoNotMatch);
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setPwError(context.l10n.passwordsDoNotMatch);
       return;
     }
 
-    final isDuress = await ref.read(duressSettingsServiceProvider).verifyPassword(pw);
+    final isDuress = await ref
+        .read(duressSettingsServiceProvider)
+        .verifyPassword(pw);
     if (isDuress) {
-      ref.read(appSettingsControllerProvider.notifier).setPwError(
-        context.l10n.masterMatchesDuressPasswordError,
-      );
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setPwError(context.l10n.masterMatchesDuressPasswordError);
       return;
     }
 
@@ -513,7 +558,8 @@ class _SecuritySettingsScreenState
 
     if (method == MasterUnlockMethod.pattern) {
       final configured =
-          ref.read(appSettingsControllerProvider).settings.masterPatternHash != null;
+          ref.read(appSettingsControllerProvider).settings.masterPatternHash !=
+          null;
       if (configured) {
         await controller.setMasterUnlockMethod(method);
         _recentlyCreatedMasterPassword = false;
@@ -525,7 +571,8 @@ class _SecuritySettingsScreenState
 
     if (method == MasterUnlockMethod.pin) {
       final configured =
-          ref.read(appSettingsControllerProvider).settings.masterPinHash != null;
+          ref.read(appSettingsControllerProvider).settings.masterPinHash !=
+          null;
       if (configured) {
         await controller.setMasterUnlockMethod(method);
         _recentlyCreatedMasterPassword = false;
@@ -539,7 +586,9 @@ class _SecuritySettingsScreenState
     _recentlyCreatedMasterPassword = false;
   }
 
-  Future<bool> _verifyCurrentUnlockCredential(AppSettingsViewState state) async {
+  Future<bool> _verifyCurrentUnlockCredential(
+    AppSettingsViewState state,
+  ) async {
     switch (state.settings.masterUnlockMethod) {
       case MasterUnlockMethod.password:
         return _verifyCurrentMasterPassword(
@@ -580,7 +629,9 @@ class _SecuritySettingsScreenState
   }
 
   Future<void> _setupMasterPattern() async {
-    final duressPatternHash = await ref.read(duressSettingsServiceProvider).getPatternHash();
+    final duressPatternHash = await ref
+        .read(duressSettingsServiceProvider)
+        .getPatternHash();
     if (!mounted) return;
     final hash = await showModalBottomSheet<String>(
       context: context,
@@ -591,13 +642,17 @@ class _SecuritySettingsScreenState
       ),
     );
     if (hash != null && mounted) {
-      await ref.read(appSettingsControllerProvider.notifier).saveMasterPattern(hash);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .saveMasterPattern(hash);
       _recentlyCreatedMasterPassword = false;
     }
   }
 
   Future<void> _setupMasterPin() async {
-    final duressPinHash = await ref.read(duressSettingsServiceProvider).getPinHash();
+    final duressPinHash = await ref
+        .read(duressSettingsServiceProvider)
+        .getPinHash();
     if (!mounted) return;
     final hash = await showModalBottomSheet<String>(
       context: context,
@@ -608,21 +663,26 @@ class _SecuritySettingsScreenState
       ),
     );
     if (hash != null && mounted) {
-      await ref.read(appSettingsControllerProvider.notifier).saveMasterPin(hash);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .saveMasterPin(hash);
       _recentlyCreatedMasterPassword = false;
     }
   }
 
-  Future<void> _toggleMasterPassword(AppSettingsViewState state, bool enabled) async {
+  Future<void> _toggleMasterPassword(
+    AppSettingsViewState state,
+    bool enabled,
+  ) async {
     if (!enabled) {
       _recentlyCreatedMasterPassword = false;
       if (state.settings.masterPasswordHash == null) {
         _pwCtrl.clear();
         _pwConfirmCtrl.clear();
         ref.read(appSettingsControllerProvider.notifier).setShowPwFields(false);
-        ref.read(appSettingsControllerProvider.notifier).updateSettings(
-              (s) => s.copyWith(useMasterPassword: false),
-            );
+        ref
+            .read(appSettingsControllerProvider.notifier)
+            .updateSettings((s) => s.copyWith(useMasterPassword: false));
         return;
       }
       final verified = await _verifyCurrentMasterPassword(state);
@@ -634,7 +694,9 @@ class _SecuritySettingsScreenState
       }
       _pwCtrl.clear();
       _pwConfirmCtrl.clear();
-      await ref.read(appSettingsControllerProvider.notifier).clearMasterPassword();
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .clearMasterPassword();
     } else {
       ref
           .read(appSettingsControllerProvider.notifier)
@@ -662,7 +724,10 @@ class _SecuritySettingsScreenState
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(message ?? context.l10n.confirmRemoveMasterPasswordMessage),
+                    Text(
+                      message ??
+                          context.l10n.confirmRemoveMasterPasswordMessage,
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: ctrl,
@@ -693,7 +758,9 @@ class _SecuritySettingsScreenState
                           Navigator.pop(dialogContext, true);
                         }
                       } else {
-                        setDialogState(() => errorMsg = context.l10n.incorrectPassword);
+                        setDialogState(
+                          () => errorMsg = context.l10n.incorrectPassword,
+                        );
                       }
                     },
                     child: Text(context.l10n.continueButton),
@@ -709,20 +776,28 @@ class _SecuritySettingsScreenState
   Future<void> _setDiscreteMode(bool enable) async {
     final confirmed = await showAppConfirmDialog(
       context,
-      title: enable ? context.l10n.enableDiscreteModeTitle : context.l10n.disableDiscreteModeTitle,
-      message: enable ? context.l10n.enableDiscreteModeMessage : context.l10n.disableDiscreteModeMessage,
+      title: enable
+          ? context.l10n.enableDiscreteModeTitle
+          : context.l10n.disableDiscreteModeTitle,
+      message: enable
+          ? context.l10n.enableDiscreteModeMessage
+          : context.l10n.disableDiscreteModeMessage,
       confirmLabel: enable ? context.l10n.enable : context.l10n.disable,
     );
     if (!confirmed || !context.mounted) return;
 
     final targetMode = enable ? DisguiseMode.decoy : DisguiseMode.vault;
-    final ok = await ref.read(appSettingsControllerProvider.notifier).setDiscreteMode(enable);
+    final ok = await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDiscreteMode(enable);
 
     if (ok && context.mounted) {
       applyDisguiseModeTaskSwitcherLabel(targetMode, context.l10n);
       showAppSnackBar(
         context,
-        message: enable ? context.l10n.discreteModeEnabledSnack : context.l10n.discreteModeDisabledSnack,
+        message: enable
+            ? context.l10n.discreteModeEnabledSnack
+            : context.l10n.discreteModeDisabledSnack,
       );
       await Future<void>.delayed(const Duration(milliseconds: 1500));
       SystemNavigator.pop();
@@ -742,433 +817,569 @@ class _SecuritySettingsScreenState
     final textTheme = Theme.of(context).textTheme;
 
     final body = SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: [
-                // 1. App Authentication
-                SectionHeader(context.l10n.masterPasswordTitle),
-                SectionCard(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SwitchListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                          title: Text(
-                            context.l10n.masterPasswordTitle,
-                            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            state.settings.useMasterPassword &&
-                                    state.settings.masterPasswordHash != null
-                                ? context.l10n.masterPasswordActiveSubtitle
-                                : context.l10n.masterPasswordInactiveSubtitle,
-                            style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                          ),
-                          value: state.settings.useMasterPassword,
-                          onChanged: (v) => _toggleMasterPassword(state, v),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            children: [
+              // 1. App Authentication
+              SectionHeader(context.l10n.masterPasswordTitle),
+              SectionCard(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
                         ),
-                        if (state.settings.useMasterPassword &&
-                            state.showPwFields &&
-                            state.settings.masterPasswordHash == null) ...[
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: AutofillGroup(
-                              child: Column(
-                                children: [
-                                  TextField(
-                                    controller: _pwCtrl,
-                                    obscureText: _obscurePw,
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: cs.surfaceContainerHighest,
-                                      labelText: context.l10n.masterPasswordFieldLabel,
-                                      suffixIcon: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(Icons.auto_awesome_rounded, size: 20, color: cs.primary),
-                                            tooltip: context.l10n.generateStrongPasswordTooltip,
-                                            onPressed: _openPasswordGenerator,
+                        title: Text(
+                          context.l10n.masterPasswordTitle,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          state.settings.useMasterPassword &&
+                                  state.settings.masterPasswordHash != null
+                              ? context.l10n.masterPasswordActiveSubtitle
+                              : context.l10n.masterPasswordInactiveSubtitle,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        value: state.settings.useMasterPassword,
+                        onChanged: (v) => _toggleMasterPassword(state, v),
+                      ),
+                      if (state.settings.useMasterPassword &&
+                          state.showPwFields &&
+                          state.settings.masterPasswordHash == null) ...[
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: AutofillGroup(
+                            child: Column(
+                              children: [
+                                TextField(
+                                  controller: _pwCtrl,
+                                  obscureText: _obscurePw,
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: cs.surfaceContainerHighest,
+                                    labelText:
+                                        context.l10n.masterPasswordFieldLabel,
+                                    suffixIcon: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.auto_awesome_rounded,
+                                            size: 20,
+                                            color: cs.primary,
                                           ),
-                                          PasswordVisibilityToggle(
-                                            obscured: _obscurePw,
-                                            onToggle: () => setState(() => _obscurePw = !_obscurePw),
+                                          tooltip: context
+                                              .l10n
+                                              .generateStrongPasswordTooltip,
+                                          onPressed: _openPasswordGenerator,
+                                        ),
+                                        PasswordVisibilityToggle(
+                                          obscured: _obscurePw,
+                                          onToggle: () => setState(
+                                            () => _obscurePw = !_obscurePw,
                                           ),
-                                        ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextField(
+                                  controller: _pwConfirmCtrl,
+                                  obscureText: _obscureConfirm,
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: cs.surfaceContainerHighest,
+                                    labelText:
+                                        context.l10n.confirmPasswordLabel,
+                                    suffixIcon: PasswordVisibilityToggle(
+                                      obscured: _obscureConfirm,
+                                      onToggle: () => setState(
+                                        () =>
+                                            _obscureConfirm = !_obscureConfirm,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  TextField(
-                                    controller: _pwConfirmCtrl,
-                                    obscureText: _obscureConfirm,
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: cs.surfaceContainerHighest,
-                                      labelText: context.l10n.confirmPasswordLabel,
-                                      suffixIcon: PasswordVisibilityToggle(
-                                        obscured: _obscureConfirm,
-                                        onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                                ),
+                                if (state.pwError != null) ...[
+                                  const SizedBox(height: 10),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      state.pwError!,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: cs.error,
                                       ),
                                     ),
                                   ),
-                                  if (state.pwError != null) ...[
-                                    const SizedBox(height: 10),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        state.pwError!,
-                                        style: textTheme.bodySmall?.copyWith(color: cs.error),
+                                ],
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: state.saving
+                                            ? null
+                                            : () {
+                                                _pwCtrl.clear();
+                                                _pwConfirmCtrl.clear();
+                                                ref
+                                                    .read(
+                                                      appSettingsControllerProvider
+                                                          .notifier,
+                                                    )
+                                                    .setShowPwFields(false);
+                                                ref
+                                                    .read(
+                                                      appSettingsControllerProvider
+                                                          .notifier,
+                                                    )
+                                                    .updateSettings(
+                                                      (s) => s.copyWith(
+                                                        useMasterPassword:
+                                                            false,
+                                                      ),
+                                                    );
+                                              },
+                                        child: Text(context.l10n.cancel),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: FilledButton(
+                                        onPressed: state.saving
+                                            ? null
+                                            : _confirmPassword,
+                                        child: state.saving
+                                            ? const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : Text(context.l10n.setPassword),
                                       ),
                                     ),
                                   ],
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: state.saving
-                                              ? null
-                                              : () {
-                                                  _pwCtrl.clear();
-                                                  _pwConfirmCtrl.clear();
-                                                  ref.read(appSettingsControllerProvider.notifier).setShowPwFields(false);
-                                                  ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                                                        (s) => s.copyWith(useMasterPassword: false),
-                                                      );
-                                                },
-                                          child: Text(context.l10n.cancel),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: FilledButton(
-                                          onPressed: state.saving ? null : _confirmPassword,
-                                          child: state.saving
-                                              ? const SizedBox(
-                                                  width: 16,
-                                                  height: 16,
-                                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                                )
-                                              : Text(context.l10n.setPassword),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ],
-                    ),
-                    if (state.settings.useMasterPassword &&
-                        state.settings.masterPasswordHash != null &&
-                        !state.showPwFields)
-                      OptionPickerTile<MasterUnlockMethod>(
-                        label: context.l10n.unlockCredentialsLabel,
-                        value: state.settings.masterUnlockMethod,
-                        subtitle: state.settings.masterUnlockMethod.getLocalizedSubtitle(context.l10n),
-                        options: MasterUnlockMethod.values
-                            .where(
-                              (m) =>
-                                  m != MasterUnlockMethod.biometrics ||
-                                  state.biometricAvailable ||
-                                  state.settings.masterUnlockMethod == m,
-                            )
-                            .map((m) {
-                          final isUnavailableBio = m == MasterUnlockMethod.biometrics && !state.biometricAvailable;
-                          return SelectOption(
-                            value: m,
-                            label: isUnavailableBio
-                                ? '${m.getLocalizedLabel(context.l10n)} ${context.l10n.unavailableSuffixLabel}'
-                                : m.getLocalizedLabel(context.l10n),
-                            subtitle: m.getLocalizedSubtitle(context.l10n),
-                          );
-                        }).toList(),
-                        onChanged: _selectMasterUnlockMethod,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 2. App Lock Behavior -- independent of vault auto-lock
-                // below: only controls how often the lock gate is re-shown,
-                // never whether mounted containers get unmounted.
-                if (state.settings.useMasterPassword &&
-                    state.settings.masterPasswordHash != null &&
-                    !state.showPwFields) ...[
-                  SectionHeader(context.l10n.appLockBehaviorTitle),
-                  SectionCard(
-                    children: [
-                      OptionPickerTile<int>(
-                        label: context.l10n.autoLockTimeoutLabel,
-                        value: state.settings.appLockScreenLockOnly
-                            ? kScreenLockOnlyAutoLockDuration
-                            : state.settings.appLockAfterMins,
-                        options: autoLockDurationOptions(
-                          context,
-                          zeroOption: SelectOption(value: 0, label: context.l10n.immediately),
-                          screenLockOnlyOption: SelectOption(
-                            value: kScreenLockOnlyAutoLockDuration,
-                            label: context.l10n.screenLockOnlyAutoLockOption,
-                            subtitle: context.l10n.screenLockOnlyAutoLockOptionSubtitle,
-                          ),
-                          currentMinutes: state.settings.appLockScreenLockOnly
-                              ? kScreenLockOnlyAutoLockDuration
-                              : state.settings.appLockAfterMins,
-                        ),
-                        onChanged: (v) {
-                          if (v == kCustomAutoLockDuration) {
-                            pickCustomAutoLockDuration(
-                              context,
-                              currentMinutes: state.settings.appLockAfterMins,
-                              onPicked: (mins) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                                    (s) => s.copyWith(appLockAfterMins: mins, appLockScreenLockOnly: false),
-                                  ),
-                            );
-                          } else if (v == kScreenLockOnlyAutoLockDuration) {
-                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                                  (s) => s.copyWith(appLockAfterMins: 0, appLockScreenLockOnly: true),
-                                );
-                          } else {
-                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                                  (s) => s.copyWith(appLockAfterMins: v, appLockScreenLockOnly: false),
-                                );
-                          }
-                        },
-                      ),
-                      // "Screen Lock Only" already means "lock on screen
-                      // off", so this toggle would be redundant (and
-                      // turning it off would contradict the mode) -- hide
-                      // it while that's selected. Its stored value is kept
-                      // for when another option is picked again.
-                      if (!state.settings.appLockScreenLockOnly)
-                        SwitchListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                          title: Text(
-                            context.l10n.lockAppOnScreenOffTitle,
-                            style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            context.l10n.lockAppOnScreenOffSubtitle,
-                            style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                          ),
-                          value: state.settings.lockAppOnScreenLock,
-                          onChanged: (v) => ref
-                              .read(appSettingsControllerProvider.notifier)
-                              .updateSettings((s) => s.copyWith(lockAppOnScreenLock: v)),
-                        ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  if (state.settings.useMasterPassword &&
+                      state.settings.masterPasswordHash != null &&
+                      !state.showPwFields)
+                    OptionPickerTile<MasterUnlockMethod>(
+                      label: context.l10n.unlockCredentialsLabel,
+                      value: state.settings.masterUnlockMethod,
+                      subtitle: state.settings.masterUnlockMethod
+                          .getLocalizedSubtitle(context.l10n),
+                      options: MasterUnlockMethod.values
+                          .where(
+                            (m) =>
+                                m != MasterUnlockMethod.biometrics ||
+                                state.biometricAvailable ||
+                                state.settings.masterUnlockMethod == m,
+                          )
+                          .map((m) {
+                            final isUnavailableBio =
+                                m == MasterUnlockMethod.biometrics &&
+                                !state.biometricAvailable;
+                            return SelectOption(
+                              value: m,
+                              label: isUnavailableBio
+                                  ? '${m.getLocalizedLabel(context.l10n)} ${context.l10n.unavailableSuffixLabel}'
+                                  : m.getLocalizedLabel(context.l10n),
+                              subtitle: m.getLocalizedSubtitle(context.l10n),
+                            );
+                          })
+                          .toList(),
+                      onChanged: _selectMasterUnlockMethod,
+                    ),
                 ],
+              ),
+              const SizedBox(height: 16),
 
-                // 3. Auto-Lock & Screen Privacy (vault containers)
-                SectionHeader(context.l10n.autoLockContainersTitle),
+              // 2. App Lock Behavior -- independent of vault auto-lock
+              // below: only controls how often the lock gate is re-shown,
+              // never whether mounted containers get unmounted.
+              if (state.settings.useMasterPassword &&
+                  state.settings.masterPasswordHash != null &&
+                  !state.showPwFields) ...[
+                SectionHeader(context.l10n.appLockBehaviorTitle),
                 SectionCard(
                   children: [
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.autoLockContainersTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.autoLockContainersSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.lockContainersOnScreenLock,
-                      onChanged: (v) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                            (s) => s.copyWith(
-                              lockContainersOnScreenLock: v,
-                              autoLockMins: v && s.autoLockMins == 0 ? 5 : (!v ? 0 : s.autoLockMins),
-                              autoLockScreenLockOnly: !v ? false : s.autoLockScreenLockOnly,
-                            ),
-                          ),
-                    ),
-                    if (state.settings.lockContainersOnScreenLock)
-                      OptionPickerTile<int>(
-                        label: context.l10n.autoLockTimeoutLabel,
-                        value: state.settings.autoLockScreenLockOnly
-                            ? kScreenLockOnlyAutoLockDuration
-                            : state.settings.autoLockMins,
-                        options: autoLockDurationOptions(
-                          context,
-                          zeroOption: SelectOption(value: 0, label: context.l10n.immediately),
-                          screenLockOnlyOption: SelectOption(
-                            value: kScreenLockOnlyAutoLockDuration,
-                            label: context.l10n.screenLockOnlyAutoLockOption,
-                            subtitle: context.l10n.screenLockOnlyAutoLockOptionSubtitle,
-                          ),
-                          currentMinutes: state.settings.autoLockScreenLockOnly
-                              ? kScreenLockOnlyAutoLockDuration
-                              : state.settings.autoLockMins,
+                    OptionPickerTile<int>(
+                      label: context.l10n.autoLockTimeoutLabel,
+                      value: state.settings.appLockScreenLockOnly
+                          ? kScreenLockOnlyAutoLockDuration
+                          : state.settings.appLockAfterMins,
+                      options: autoLockDurationOptions(
+                        context,
+                        zeroOption: SelectOption(
+                          value: 0,
+                          label: context.l10n.immediately,
                         ),
-                        onChanged: (v) {
-                          if (v == kCustomAutoLockDuration) {
-                            pickCustomAutoLockDuration(
-                              context,
-                              currentMinutes: state.settings.autoLockMins,
-                              onPicked: (mins) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                                    (s) => s.copyWith(autoLockMins: mins, autoLockScreenLockOnly: false),
+                        screenLockOnlyOption: SelectOption(
+                          value: kScreenLockOnlyAutoLockDuration,
+                          label: context.l10n.screenLockOnlyAutoLockOption,
+                          subtitle:
+                              context.l10n.screenLockOnlyAutoLockOptionSubtitle,
+                        ),
+                        currentMinutes: state.settings.appLockScreenLockOnly
+                            ? kScreenLockOnlyAutoLockDuration
+                            : state.settings.appLockAfterMins,
+                      ),
+                      onChanged: (v) {
+                        if (v == kCustomAutoLockDuration) {
+                          pickCustomAutoLockDuration(
+                            context,
+                            currentMinutes: state.settings.appLockAfterMins,
+                            onPicked: (mins) => ref
+                                .read(appSettingsControllerProvider.notifier)
+                                .updateSettings(
+                                  (s) => s.copyWith(
+                                    appLockAfterMins: mins,
+                                    appLockScreenLockOnly: false,
                                   ),
-                            );
-                          } else if (v == kScreenLockOnlyAutoLockDuration) {
-                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                                  (s) => s.copyWith(autoLockMins: 0, autoLockScreenLockOnly: true),
-                                );
-                          } else {
-                            ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                                  (s) => s.copyWith(autoLockMins: v, autoLockScreenLockOnly: false),
-                                );
-                          }
-                        },
-                      ),
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.blockScreenshotsTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.blockScreenshotsSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.blockScreenshots,
-                      onChanged: (v) async {
-                        await ref.read(secureScreenPolicyProvider).apply(preference: v);
-                        await ref
-                            .read(appSettingsControllerProvider.notifier)
-                            .updateSettings((s) => s.copyWith(blockScreenshots: v));
+                                ),
+                          );
+                        } else if (v == kScreenLockOnlyAutoLockDuration) {
+                          ref
+                              .read(appSettingsControllerProvider.notifier)
+                              .updateSettings(
+                                (s) => s.copyWith(
+                                  appLockAfterMins: 0,
+                                  appLockScreenLockOnly: true,
+                                ),
+                              );
+                        } else {
+                          ref
+                              .read(appSettingsControllerProvider.notifier)
+                              .updateSettings(
+                                (s) => s.copyWith(
+                                  appLockAfterMins: v,
+                                  appLockScreenLockOnly: false,
+                                ),
+                              );
+                        }
                       },
                     ),
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.cacheDerivedKeysTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.cacheDerivedKeysSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.defaultDerivedKeyCacheEnabled,
-                      onChanged: (v) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                            (s) => s.copyWith(defaultDerivedKeyCacheEnabled: v),
+                    // "Screen Lock Only" already means "lock on screen
+                    // off", so this toggle would be redundant (and
+                    // turning it off would contradict the mode) -- hide
+                    // it while that's selected. Its stored value is kept
+                    // for when another option is picked again.
+                    if (!state.settings.appLockScreenLockOnly)
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        title: Text(
+                          context.l10n.lockAppOnScreenOffTitle,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
                           ),
-                    ),
+                        ),
+                        subtitle: Text(
+                          context.l10n.lockAppOnScreenOffSubtitle,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        value: state.settings.lockAppOnScreenLock,
+                        onChanged: (v) => ref
+                            .read(appSettingsControllerProvider.notifier)
+                            .updateSettings(
+                              (s) => s.copyWith(lockAppOnScreenLock: v),
+                            ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // 3a. Mask Mode (disguise the app's identity)
-                SectionHeader(context.l10n.sectionMaskMode),
-                SectionCard(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.discreteModeTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        state.disguiseMode == DisguiseMode.decoy
-                            ? context.l10n.discreteModeActiveSubtitle
-                            : context.l10n.discreteModeInactiveSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.disguiseMode == DisguiseMode.decoy,
-                      onChanged: _setDiscreteMode,
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // 3b. Emergency Panic & Duress (its own concept: wipe/duress
-                // triggers, separate from disguising the app's identity)
-                SectionHeader(context.l10n.emergencyPanicTitle),
-                SectionCard(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.warning_amber_rounded, color: cs.error),
-                      title: Text(
-                        context.l10n.emergencyPanicTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.emergencyPanicSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const EmergencySettingsScreen()),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-            // 3c. Quick Capture (a productivity shortcut, not a stealth
-                // or emergency feature -- its own section)
-                SectionHeader(context.l10n.quickCaptureSettingsTitle),
-                SectionCard(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.bolt_rounded, color: cs.primary),
-                      title: Text(
-                        context.l10n.quickCaptureSettingsTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.quickCaptureSettingsSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const QuickCaptureSettingsScreen()),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // 3d. Authenticator (TOTP 2FA)
-                SectionHeader(context.l10n.authenticatorSettingsTitle),
-                SectionCard(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.authenticatorEnableTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.authenticatorEnableSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.enableAuthenticator,
-                      onChanged: (v) => ref
-                          .read(appSettingsControllerProvider.notifier)
-                          .updateSettings((s) => s.copyWith(enableAuthenticator: v)),
-                    ),
-                  ],
-                ),
               ],
-            ),
+
+              // 3. Auto-Lock & Screen Privacy (vault containers)
+              SectionHeader(context.l10n.autoLockContainersTitle),
+              SectionCard(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.autoLockContainersTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.autoLockContainersSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.lockContainersOnScreenLock,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(
+                            lockContainersOnScreenLock: v,
+                            autoLockMins: v && s.autoLockMins == 0
+                                ? 5
+                                : (!v ? 0 : s.autoLockMins),
+                            autoLockScreenLockOnly: !v
+                                ? false
+                                : s.autoLockScreenLockOnly,
+                          ),
+                        ),
+                  ),
+                  if (state.settings.lockContainersOnScreenLock)
+                    OptionPickerTile<int>(
+                      label: context.l10n.autoLockTimeoutLabel,
+                      value: state.settings.autoLockScreenLockOnly
+                          ? kScreenLockOnlyAutoLockDuration
+                          : state.settings.autoLockMins,
+                      options: autoLockDurationOptions(
+                        context,
+                        zeroOption: SelectOption(
+                          value: 0,
+                          label: context.l10n.immediately,
+                        ),
+                        screenLockOnlyOption: SelectOption(
+                          value: kScreenLockOnlyAutoLockDuration,
+                          label: context.l10n.screenLockOnlyAutoLockOption,
+                          subtitle:
+                              context.l10n.screenLockOnlyAutoLockOptionSubtitle,
+                        ),
+                        currentMinutes: state.settings.autoLockScreenLockOnly
+                            ? kScreenLockOnlyAutoLockDuration
+                            : state.settings.autoLockMins,
+                      ),
+                      onChanged: (v) {
+                        if (v == kCustomAutoLockDuration) {
+                          pickCustomAutoLockDuration(
+                            context,
+                            currentMinutes: state.settings.autoLockMins,
+                            onPicked: (mins) => ref
+                                .read(appSettingsControllerProvider.notifier)
+                                .updateSettings(
+                                  (s) => s.copyWith(
+                                    autoLockMins: mins,
+                                    autoLockScreenLockOnly: false,
+                                  ),
+                                ),
+                          );
+                        } else if (v == kScreenLockOnlyAutoLockDuration) {
+                          ref
+                              .read(appSettingsControllerProvider.notifier)
+                              .updateSettings(
+                                (s) => s.copyWith(
+                                  autoLockMins: 0,
+                                  autoLockScreenLockOnly: true,
+                                ),
+                              );
+                        } else {
+                          ref
+                              .read(appSettingsControllerProvider.notifier)
+                              .updateSettings(
+                                (s) => s.copyWith(
+                                  autoLockMins: v,
+                                  autoLockScreenLockOnly: false,
+                                ),
+                              );
+                        }
+                      },
+                    ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.blockScreenshotsTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.blockScreenshotsSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.blockScreenshots,
+                    onChanged: (v) async {
+                      await ref
+                          .read(secureScreenPolicyProvider)
+                          .apply(preference: v);
+                      await ref
+                          .read(appSettingsControllerProvider.notifier)
+                          .updateSettings(
+                            (s) => s.copyWith(blockScreenshots: v),
+                          );
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.cacheDerivedKeysTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.cacheDerivedKeysSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.defaultDerivedKeyCacheEnabled,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(defaultDerivedKeyCacheEnabled: v),
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // 3a. Mask Mode (disguise the app's identity)
+              SectionHeader(context.l10n.sectionMaskMode),
+              SectionCard(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.discreteModeTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      state.disguiseMode == DisguiseMode.decoy
+                          ? context.l10n.discreteModeActiveSubtitle
+                          : context.l10n.discreteModeInactiveSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.disguiseMode == DisguiseMode.decoy,
+                    onChanged: _setDiscreteMode,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 3b. Emergency Panic & Duress (its own concept: wipe/duress
+              // triggers, separate from disguising the app's identity)
+              SectionHeader(context.l10n.emergencyPanicTitle),
+              SectionCard(
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.warning_amber_rounded, color: cs.error),
+                    title: Text(
+                      context.l10n.emergencyPanicTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.emergencyPanicSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EmergencySettingsScreen(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 3c. Quick Capture (a productivity shortcut, not a stealth
+              // or emergency feature -- its own section)
+              SectionHeader(context.l10n.quickCaptureSettingsTitle),
+              SectionCard(
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.bolt_rounded, color: cs.primary),
+                    title: Text(
+                      context.l10n.quickCaptureSettingsTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.quickCaptureSettingsSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const QuickCaptureSettingsScreen(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 3d. Authenticator (TOTP 2FA)
+              SectionHeader(context.l10n.authenticatorSettingsTitle),
+              SectionCard(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.authenticatorEnableTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.authenticatorEnableSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.enableAuthenticator,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(enableAuthenticator: v),
+                        ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
 
     if (widget.embedded) {
       return Scaffold(body: body);
@@ -1214,10 +1425,14 @@ class StorageServicesSettingsScreen extends ConsumerWidget {
         message: isLegacy
             ? context.l10n.enableStoragePermissionLegacyMessage
             : context.l10n.enableFastStorageAccessMessage,
-        confirmLabel: isLegacy ? context.l10n.continueButton : context.l10n.openSettings,
+        confirmLabel: isLegacy
+            ? context.l10n.continueButton
+            : context.l10n.openSettings,
       );
       if (grant && context.mounted) {
-        await ref.read(appSettingsControllerProvider.notifier).requestStoragePermission();
+        await ref
+            .read(appSettingsControllerProvider.notifier)
+            .requestStoragePermission();
       }
     } else {
       final revoke = await showAppConfirmDialog(
@@ -1229,8 +1444,28 @@ class StorageServicesSettingsScreen extends ConsumerWidget {
         confirmLabel: context.l10n.openSettings,
       );
       if (revoke && context.mounted) {
-        await ref.read(appSettingsControllerProvider.notifier).requestStoragePermission(openSettings: true);
+        await ref
+            .read(appSettingsControllerProvider.notifier)
+            .requestStoragePermission(openSettings: true);
       }
+    }
+  }
+
+  Future<void> _toggleOpenWithHandler(
+    BuildContext context,
+    WidgetRef ref,
+    String viewer,
+    bool enabled,
+  ) async {
+    final ok = await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setOpenWithHandlerEnabled(viewer, enabled);
+    if (!ok && context.mounted) {
+      showAppSnackBar(
+        context,
+        message: context.l10n.openWithIntegrationUpdateError,
+        tone: AppBannerTone.warning,
+      );
     }
   }
 
@@ -1247,111 +1482,220 @@ class StorageServicesSettingsScreen extends ConsumerWidget {
           constraints: const BoxConstraints(maxWidth: 800),
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: [
-                SectionCard(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.fastStorageAccessTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            children: [
+              SectionCard(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.fastStorageAccessTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      subtitle: Text(
-                        state.hasAllStorageAccess
-                            ? context.l10n.fastStorageAccessGrantedSubtitle
-                            : context.l10n.fastStorageAccessNotGrantedSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.hasAllStorageAccess,
-                      onChanged: (v) => _toggleStoragePermission(context, ref, state, v),
                     ),
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.keepVaultsRunningInBackgroundTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    subtitle: Text(
+                      state.hasAllStorageAccess
+                          ? context.l10n.fastStorageAccessGrantedSubtitle
+                          : context.l10n.fastStorageAccessNotGrantedSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
                       ),
-                      subtitle: Text(
-                        context.l10n.keepVaultsRunningInBackgroundSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.keepVaultsRunningInBackground,
-                      onChanged: (v) async {
-                        if (v) {
-                          final granted = await ref.read(vaultLifecycleApiProvider).requestNotificationPermission();
-                          if (!granted && context.mounted) {
-                            showAppSnackBar(
-                              context,
-                              message: context.l10n.notificationPermissionDeniedMessage,
-                              tone: AppBannerTone.warning,
-                            );
-                          }
-                        }
-                        await ref.read(vaultLifecycleApiProvider).syncBackgroundService(enabled: v);
-                        await ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                              (s) => s.copyWith(keepVaultsRunningInBackground: v),
-                            );
-                      },
                     ),
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.androidFileProviderTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    value: state.hasAllStorageAccess,
+                    onChanged: (v) =>
+                        _toggleStoragePermission(context, ref, state, v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.keepVaultsRunningInBackgroundTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      subtitle: Text(
-                        context.l10n.androidFileProviderSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.defaultDocumentProvider,
-                      onChanged: (v) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                            (s) => s.copyWith(defaultDocumentProvider: v),
-                          ),
                     ),
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.shareSheetIntegrationTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    subtitle: Text(
+                      context.l10n.keepVaultsRunningInBackgroundSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
                       ),
-                      subtitle: Text(
-                        context.l10n.shareSheetIntegrationSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.shareTargetEnabled,
-                      onChanged: (v) async {
-                        final ok = await ref.read(appSettingsControllerProvider.notifier).setShareTargetEnabled(v);
-                        if (!ok && context.mounted) {
+                    ),
+                    value: state.settings.keepVaultsRunningInBackground,
+                    onChanged: (v) async {
+                      if (v) {
+                        final granted = await ref
+                            .read(vaultLifecycleApiProvider)
+                            .requestNotificationPermission();
+                        if (!granted && context.mounted) {
                           showAppSnackBar(
                             context,
-                            message: context.l10n.shareSheetIntegrationUpdateErrorMessage,
+                            message: context
+                                .l10n
+                                .notificationPermissionDeniedMessage,
                             tone: AppBannerTone.warning,
                           );
                         }
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.autoLockOnShareImportTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.autoLockOnShareImportSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.autoLockOnShareImport,
-                      onChanged: (v) => ref
+                      }
+                      await ref
+                          .read(vaultLifecycleApiProvider)
+                          .syncBackgroundService(enabled: v);
+                      await ref
                           .read(appSettingsControllerProvider.notifier)
-                          .updateSettings((s) => s.copyWith(autoLockOnShareImport: v)),
+                          .updateSettings(
+                            (s) => s.copyWith(keepVaultsRunningInBackground: v),
+                          );
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    child: Text(
+                      context.l10n.openWithOtherAppsHeader,
+                      style: textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      context.l10n.openWithOtherAppsSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.openWithTextEditorTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.openWithTextEditorSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.openWithEditorEnabled,
+                    onChanged: (v) =>
+                        _toggleOpenWithHandler(context, ref, 'editor', v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.openWithMediaPlayerTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.openWithMediaPlayerSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.openWithMediaEnabled,
+                    onChanged: (v) =>
+                        _toggleOpenWithHandler(context, ref, 'media', v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.openWithPdfViewerTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.openWithPdfViewerSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.openWithPdfEnabled,
+                    onChanged: (v) =>
+                        _toggleOpenWithHandler(context, ref, 'pdf', v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.androidFileProviderTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.androidFileProviderSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.defaultDocumentProvider,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(defaultDocumentProvider: v),
+                        ),
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.shareSheetIntegrationTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.shareSheetIntegrationSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.shareTargetEnabled,
+                    onChanged: (v) async {
+                      final ok = await ref
+                          .read(appSettingsControllerProvider.notifier)
+                          .setShareTargetEnabled(v);
+                      if (!ok && context.mounted) {
+                        showAppSnackBar(
+                          context,
+                          message: context
+                              .l10n
+                              .shareSheetIntegrationUpdateErrorMessage,
+                          tone: AppBannerTone.warning,
+                        );
+                      }
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.autoLockOnShareImportTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.autoLockOnShareImportSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.autoLockOnShareImport,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(autoLockOnShareImport: v),
+                        ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
 
     if (embedded) {
       return Scaffold(body: body);
@@ -1402,164 +1746,200 @@ class FileHandlingSettingsScreen extends ConsumerWidget {
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: [
-                SectionCard(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.autoOpenOnUnlockTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            children: [
+              SectionCard(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.autoOpenOnUnlockTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      subtitle: Text(
-                        state.settings.autoOpenOnUnlock
-                            ? context.l10n.autoOpenOnUnlockActiveSubtitle
-                            : context.l10n.autoOpenOnUnlockInactiveSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
+                    subtitle: Text(
+                      state.settings.autoOpenOnUnlock
+                          ? context.l10n.autoOpenOnUnlockActiveSubtitle
+                          : context.l10n.autoOpenOnUnlockInactiveSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
                       ),
-                      value: state.settings.autoOpenOnUnlock,
-                      onChanged: (v) => ref
-                          .read(appSettingsControllerProvider.notifier)
-                          .updateSettings((s) => s.copyWith(autoOpenOnUnlock: v)),
                     ),
-                    OptionPickerTile<DeleteAfterImportMode>(
-                      label: context.l10n.deleteAfterImportLabel,
-                      value: state.settings.deleteAfterImportMode,
-                      subtitle: state.settings.deleteAfterImportMode.getLocalizedLabel(context.l10n),
-                      options: DeleteAfterImportMode.values.map((mode) {
-                        return SelectOption(
-                          value: mode,
-                          label: mode.getLocalizedLabel(context.l10n),
-                          subtitle: mode.getLocalizedSubtitle(context.l10n),
-                        );
-                      }).toList(),
-                      onChanged: (v) => ref
-                          .read(appSettingsControllerProvider.notifier)
-                          .updateSettings((s) => s.copyWith(deleteAfterImportMode: v)),
-                    ),
-                    OptionPickerTile<ThumbnailCacheMode>(
-                      label: context.l10n.thumbnailCachingDefaultLabel,
-                      value: fmSettingsState.config.defaultThumbnailCacheMode,
-                      options: ThumbnailCacheMode.values.map((mode) {
-                        return SelectOption(
-                          value: mode,
-                          label: mode.getLocalizedLabel(context.l10n),
-                          subtitle: mode.getLocalizedDescription(context.l10n),
-                        );
-                      }).toList(),
-                      onChanged: (v) => ref
-                          .read(fileManagerToolbarSettingsProvider(null).notifier)
-                          .setDefaultThumbnailCacheMode(v),
-                    ),
-                    ThumbnailQualityTile(
-                      label: context.l10n.thumbnailQualityDefaultLabel,
-                      value: fmSettingsState.config.defaultThumbnailQuality,
-                      onChanged: (v) => ref
-                          .read(fileManagerToolbarSettingsProvider(null).notifier)
-                          .setDefaultThumbnailQuality(v),
-                    ),
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.enableJsHtmlTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    value: state.settings.autoOpenOnUnlock,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings((s) => s.copyWith(autoOpenOnUnlock: v)),
+                  ),
+                  OptionPickerTile<DeleteAfterImportMode>(
+                    label: context.l10n.deleteAfterImportLabel,
+                    value: state.settings.deleteAfterImportMode,
+                    subtitle: state.settings.deleteAfterImportMode
+                        .getLocalizedLabel(context.l10n),
+                    options: DeleteAfterImportMode.values.map((mode) {
+                      return SelectOption(
+                        value: mode,
+                        label: mode.getLocalizedLabel(context.l10n),
+                        subtitle: mode.getLocalizedSubtitle(context.l10n),
+                      );
+                    }).toList(),
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(deleteAfterImportMode: v),
+                        ),
+                  ),
+                  OptionPickerTile<ThumbnailCacheMode>(
+                    label: context.l10n.thumbnailCachingDefaultLabel,
+                    value: fmSettingsState.config.defaultThumbnailCacheMode,
+                    options: ThumbnailCacheMode.values.map((mode) {
+                      return SelectOption(
+                        value: mode,
+                        label: mode.getLocalizedLabel(context.l10n),
+                        subtitle: mode.getLocalizedDescription(context.l10n),
+                      );
+                    }).toList(),
+                    onChanged: (v) => ref
+                        .read(fileManagerToolbarSettingsProvider(null).notifier)
+                        .setDefaultThumbnailCacheMode(v),
+                  ),
+                  ThumbnailQualityTile(
+                    label: context.l10n.thumbnailQualityDefaultLabel,
+                    value: fmSettingsState.config.defaultThumbnailQuality,
+                    onChanged: (v) => ref
+                        .read(fileManagerToolbarSettingsProvider(null).notifier)
+                        .setDefaultThumbnailQuality(v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.enableJsHtmlTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      subtitle: Text(
-                        state.settings.htmlEnableJavaScript
-                            ? context.l10n.jsEnabledSubtitle
-                            : context.l10n.jsDisabledSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.htmlEnableJavaScript,
-                      onChanged: (v) => ref
-                          .read(appSettingsControllerProvider.notifier)
-                          .updateSettings((s) => s.copyWith(htmlEnableJavaScript: v)),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                          child: Text(
-                            context.l10n.fileAssociationsHeader,
-                            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    subtitle: Text(
+                      state.settings.htmlEnableJavaScript
+                          ? context.l10n.jsEnabledSubtitle
+                          : context.l10n.jsDisabledSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.htmlEnableJavaScript,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(htmlEnableJavaScript: v),
+                        ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                        child: Text(
+                          context.l10n.fileAssociationsHeader,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (state.settings.extensionPreferences.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                            child: Text(
-                              context.l10n.noFileAssociationsYet,
-                              style: textTheme.bodySmall?.copyWith(
-                                color: cs.onSurfaceVariant,
-                                height: 1.3,
-                              ),
-                            ),
-                          )
-                        else ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-                            child: Text(
-                              context.l10n.defaultActionsHeader,
-                              style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                      if (state.settings.extensionPreferences.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                          child: Text(
+                            context.l10n.noFileAssociationsYet,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                              height: 1.3,
                             ),
                           ),
-                          ...state.settings.extensionPreferences.entries.map((entry) {
-                            return ListTile(
-                              dense: true,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                              title: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: cs.primaryContainer.withValues(alpha: 0.3),
-                                      borderRadius: BorderRadius.circular(6),
+                        )
+                      else ...[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                          child: Text(
+                            context.l10n.defaultActionsHeader,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        ...state.settings.extensionPreferences.entries.map((
+                          entry,
+                        ) {
+                          return ListTile(
+                            dense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                            title: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: cs.primaryContainer.withValues(
+                                      alpha: 0.3,
                                     ),
-                                    child: Text(
-                                      '.${entry.key.toUpperCase()}',
-                                      style: textTheme.labelMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: cs.primary,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '.${entry.key.toUpperCase()}',
+                                    style: textTheme.labelMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: cs.primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _labelForAssociation(context, entry.value),
+                                    style: textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.delete_outline_rounded,
+                                color: cs.error,
+                                size: 20,
+                              ),
+                              tooltip: context.l10n.removeAssociationTooltip,
+                              onPressed: () {
+                                final newPrefs = Map<String, String>.from(
+                                  state.settings.extensionPreferences,
+                                )..remove(entry.key);
+                                ref
+                                    .read(
+                                      appSettingsControllerProvider.notifier,
+                                    )
+                                    .updateSettings(
+                                      (s) => s.copyWith(
+                                        extensionPreferences: newPrefs,
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      _labelForAssociation(context, entry.value),
-                                      style: textTheme.bodyMedium,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: IconButton(
-                                icon: Icon(Icons.delete_outline_rounded, color: cs.error, size: 20),
-                                tooltip: context.l10n.removeAssociationTooltip,
-                                onPressed: () {
-                                  final newPrefs = Map<String, String>.from(
-                                    state.settings.extensionPreferences,
-                                  )..remove(entry.key);
-                                  ref
-                                      .read(appSettingsControllerProvider.notifier)
-                                      .updateSettings((s) => s.copyWith(extensionPreferences: newPrefs));
-                                },
-                              ),
-                            );
-                          }),
-                        ],
+                                    );
+                              },
+                            ),
+                          );
+                        }),
                       ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
 
     if (embedded) {
       return Scaffold(body: body);
@@ -1606,7 +1986,9 @@ class AppearanceSettingsScreen extends ConsumerWidget {
     final code = locale.countryCode != null && locale.countryCode!.isNotEmpty
         ? '${locale.languageCode}_${locale.countryCode}'
         : locale.languageCode;
-    return nativeNames[code] ?? nativeNames[locale.languageCode] ?? code.toUpperCase();
+    return nativeNames[code] ??
+        nativeNames[locale.languageCode] ??
+        code.toUpperCase();
   }
 
   @override
@@ -1616,7 +1998,8 @@ class AppearanceSettingsScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     // Fix language resolution: sanitize null / empty / 'system'
-    final currentLang = (state.settings.languageCode == null ||
+    final currentLang =
+        (state.settings.languageCode == null ||
             state.settings.languageCode!.trim().isEmpty ||
             state.settings.languageCode == 'system')
         ? 'system'
@@ -1627,136 +2010,180 @@ class AppearanceSettingsScreen extends ConsumerWidget {
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: [
-                // Theme & Styling
-                SectionHeader(context.l10n.appThemeLabel),
-                SectionCard(
-                  children: [
-                    OptionPickerTile<ThemeMode>(
-                      label: context.l10n.appThemeLabel,
-                      value: state.settings.themeMode,
-                      options: [
-                        SelectOption(value: ThemeMode.system, label: context.l10n.systemDefault),
-                        SelectOption(value: ThemeMode.light, label: context.l10n.lightTheme),
-                        SelectOption(value: ThemeMode.dark, label: context.l10n.darkTheme),
-                      ],
-                      onChanged: (v) {
-                        appThemeModeNotifier.value = v;
-                        ref.read(appSettingsControllerProvider.notifier).updateSettings((s) => s.copyWith(themeMode: v));
-                      },
-                    ),
-                    if (state.androidSdkInt >= _kAndroidSdkS)
-                      SwitchListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        title: Text(
-                          context.l10n.useMaterialYouTitle,
-                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Text(
-                          context.l10n.useMaterialYouSubtitle,
-                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                        value: state.settings.useDynamicColor,
-                        onChanged: (v) {
-                          appUseDynamicColorNotifier.value = v;
-                          ref
-                              .read(appSettingsControllerProvider.notifier)
-                              .updateSettings((s) => s.copyWith(useDynamicColor: v));
-                        },
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            children: [
+              // Theme & Styling
+              SectionHeader(context.l10n.appThemeLabel),
+              SectionCard(
+                children: [
+                  OptionPickerTile<ThemeMode>(
+                    label: context.l10n.appThemeLabel,
+                    value: state.settings.themeMode,
+                    options: [
+                      SelectOption(
+                        value: ThemeMode.system,
+                        label: context.l10n.systemDefault,
                       ),
+                      SelectOption(
+                        value: ThemeMode.light,
+                        label: context.l10n.lightTheme,
+                      ),
+                      SelectOption(
+                        value: ThemeMode.dark,
+                        label: context.l10n.darkTheme,
+                      ),
+                    ],
+                    onChanged: (v) {
+                      appThemeModeNotifier.value = v;
+                      ref
+                          .read(appSettingsControllerProvider.notifier)
+                          .updateSettings((s) => s.copyWith(themeMode: v));
+                    },
+                  ),
+                  if (state.androidSdkInt >= _kAndroidSdkS)
                     SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                      ),
                       title: Text(
-                        context.l10n.pureBlackThemeTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                        context.l10n.useMaterialYouTitle,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       subtitle: Text(
-                        context.l10n.pureBlackThemeSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        context.l10n.useMaterialYouSubtitle,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
-                      value: state.settings.useOledBlackTheme,
+                      value: state.settings.useDynamicColor,
                       onChanged: (v) {
-                        appUsePureBlackNotifier.value = v;
+                        appUseDynamicColorNotifier.value = v;
                         ref
                             .read(appSettingsControllerProvider.notifier)
-                            .updateSettings((s) => s.copyWith(useOledBlackTheme: v));
-                      },
-                    ),
-                    // Language Selection (Bug Fixed)
-                    OptionPickerTile<String>(
-                      label: context.l10n.languageLabel,
-                      value: (state.settings.languageCode != null &&
-                              state.settings.languageCode!.isNotEmpty)
-                          ? state.settings.languageCode!
-                          : 'system',
-                      options: [
-                        SelectOption(value: 'system', label: context.l10n.systemDefault),
-                        ...AppLocalizations.supportedLocales
-                            .map((locale) => locale.languageCode)
-                            .toSet()
-                            .map((code) {
-                          final locale = AppLocalizations.supportedLocales
-                              .firstWhere((l) => l.languageCode == code);
-                          return SelectOption(
-                            value: code,
-                            label: _getNativeLanguageName(locale),
-                          );
-                        }),
-                      ],
-                      onChanged: (v) {
-                        final isSystem = v == 'system' || v.trim().isEmpty;
-                        final code = isSystem ? null : v;
-                        appLocaleNotifier.value = code != null ? Locale(code) : null;
-                        ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                              (s) => s.copyWith(
-                                languageCode: code,
-                                clearLanguageCode: isSystem,
-                              ),
+                            .updateSettings(
+                              (s) => s.copyWith(useDynamicColor: v),
                             );
                       },
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Dashboard Layout & Cards (Unified here)
-                SectionHeader(context.l10n.navBarVaultsLabel),
-                SectionCard(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.showStorageLocationsTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.pureBlackThemeTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      subtitle: Text(
-                        context.l10n.showStorageLocationsSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.showStorageLocationsInDrawer,
-                      onChanged: (v) => ref.read(appSettingsControllerProvider.notifier).updateSettings(
-                            (s) => s.copyWith(showStorageLocationsInDrawer: v),
-                          ),
                     ),
-                    OptionPickerTile<ContainerSortMode>(
-                      label: context.l10n.sortContainersByLabel,
-                      value: state.settings.containerSortMode,
-                      options: ContainerSortMode.values.map((mode) {
-                        return SelectOption(value: mode, label: mode.getLocalizedLabel(context.l10n));
-                      }).toList(),
-                      onChanged: (v) => ref
+                    subtitle: Text(
+                      context.l10n.pureBlackThemeSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.useOledBlackTheme,
+                    onChanged: (v) {
+                      appUsePureBlackNotifier.value = v;
+                      ref
                           .read(appSettingsControllerProvider.notifier)
-                          .updateSettings((s) => s.copyWith(containerSortMode: v)),
+                          .updateSettings(
+                            (s) => s.copyWith(useOledBlackTheme: v),
+                          );
+                    },
+                  ),
+                  // Language Selection (Bug Fixed)
+                  OptionPickerTile<String>(
+                    label: context.l10n.languageLabel,
+                    value:
+                        (state.settings.languageCode != null &&
+                            state.settings.languageCode!.isNotEmpty)
+                        ? state.settings.languageCode!
+                        : 'system',
+                    options: [
+                      SelectOption(
+                        value: 'system',
+                        label: context.l10n.systemDefault,
+                      ),
+                      ...AppLocalizations.supportedLocales
+                          .map((locale) => locale.languageCode)
+                          .toSet()
+                          .map((code) {
+                            final locale = AppLocalizations.supportedLocales
+                                .firstWhere((l) => l.languageCode == code);
+                            return SelectOption(
+                              value: code,
+                              label: _getNativeLanguageName(locale),
+                            );
+                          }),
+                    ],
+                    onChanged: (v) {
+                      final isSystem = v == 'system' || v.trim().isEmpty;
+                      final code = isSystem ? null : v;
+                      appLocaleNotifier.value = code != null
+                          ? Locale(code)
+                          : null;
+                      ref
+                          .read(appSettingsControllerProvider.notifier)
+                          .updateSettings(
+                            (s) => s.copyWith(
+                              languageCode: code,
+                              clearLanguageCode: isSystem,
+                            ),
+                          );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Dashboard Layout & Cards (Unified here)
+              SectionHeader(context.l10n.navBarVaultsLabel),
+              SectionCard(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.showStorageLocationsTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                    subtitle: Text(
+                      context.l10n.showStorageLocationsSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.showStorageLocationsInDrawer,
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(showStorageLocationsInDrawer: v),
+                        ),
+                  ),
+                  OptionPickerTile<ContainerSortMode>(
+                    label: context.l10n.sortContainersByLabel,
+                    value: state.settings.containerSortMode,
+                    options: ContainerSortMode.values.map((mode) {
+                      return SelectOption(
+                        value: mode,
+                        label: mode.getLocalizedLabel(context.l10n),
+                      );
+                    }).toList(),
+                    onChanged: (v) => ref
+                        .read(appSettingsControllerProvider.notifier)
+                        .updateSettings(
+                          (s) => s.copyWith(containerSortMode: v),
+                        ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
 
     if (embedded) {
       return Scaffold(body: body);
@@ -1786,13 +2213,19 @@ class AdvancedSettingsScreen extends ConsumerWidget {
 
   const AdvancedSettingsScreen({super.key, this.embedded = false});
 
-  Future<void> _exportSettings(BuildContext context, WidgetRef ref, AppSettingsViewState state) async {
+  Future<void> _exportSettings(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettingsViewState state,
+  ) async {
     if (state.backupBusy) return;
     ref.read(appSettingsControllerProvider.notifier).setExportBusy(true);
     try {
-      final ok = await ref.read(sessionLockControllerProvider).withLockSuppression(
-        () => ref.read(settingsBackupServiceProvider).exportToFile(),
-      );
+      final ok = await ref
+          .read(sessionLockControllerProvider)
+          .withLockSuppression(
+            () => ref.read(settingsBackupServiceProvider).exportToFile(),
+          );
       if (!context.mounted) return;
       if (ok) {
         showAppSnackBar(
@@ -1816,14 +2249,20 @@ class AdvancedSettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _importSettings(BuildContext context, WidgetRef ref, AppSettingsViewState state) async {
+  Future<void> _importSettings(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettingsViewState state,
+  ) async {
     if (state.backupBusy) return;
     ref.read(appSettingsControllerProvider.notifier).setImportBusy(true);
     ImportedSettingsBundle? bundle;
     try {
-      bundle = await ref.read(sessionLockControllerProvider).withLockSuppression(
-        () => ref.read(settingsBackupServiceProvider).pickAndParseFile(),
-      );
+      bundle = await ref
+          .read(sessionLockControllerProvider)
+          .withLockSuppression(
+            () => ref.read(settingsBackupServiceProvider).pickAndParseFile(),
+          );
     } on InvalidSettingsBackupException {
       if (context.mounted) {
         showAppSnackBar(
@@ -1874,6 +2313,21 @@ class AdvancedSettingsScreen extends ConsumerWidget {
             .read(appSettingsControllerProvider.notifier)
             .setShareTargetEnabled(bundle.shareTargetEnabled!);
       }
+      if (bundle.openWithEditorEnabled != null) {
+        await ref
+            .read(appSettingsControllerProvider.notifier)
+            .setOpenWithHandlerEnabled('editor', bundle.openWithEditorEnabled!);
+      }
+      if (bundle.openWithMediaEnabled != null) {
+        await ref
+            .read(appSettingsControllerProvider.notifier)
+            .setOpenWithHandlerEnabled('media', bundle.openWithMediaEnabled!);
+      }
+      if (bundle.openWithPdfEnabled != null) {
+        await ref
+            .read(appSettingsControllerProvider.notifier)
+            .setOpenWithHandlerEnabled('pdf', bundle.openWithPdfEnabled!);
+      }
 
       VeLog.enabled = bundle.appSettings.debugLoggingEnabled;
       appThemeModeNotifier.value = bundle.appSettings.themeMode;
@@ -1913,105 +2367,123 @@ class AdvancedSettingsScreen extends ConsumerWidget {
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              children: [
-                // Backup & Restore
-                SectionHeader(context.l10n.sectionBackupRestore),
-                SectionCard(
-                  children: [
-                    ListTile(
-                      title: Text(
-                        context.l10n.exportSettingsTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            children: [
+              // Backup & Restore
+              SectionHeader(context.l10n.sectionBackupRestore),
+              SectionCard(
+                children: [
+                  ListTile(
+                    title: Text(
+                      context.l10n.exportSettingsTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      subtitle: Text(
-                        context.l10n.exportSettingsSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      trailing: state.exportBusy
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation(cs.primary),
-                              ),
-                            )
-                          : null,
-                      enabled: !state.backupBusy,
-                      onTap: () => _exportSettings(context, ref, state),
                     ),
-                    ListTile(
-                      title: Text(
-                        context.l10n.importSettingsTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    subtitle: Text(
+                      context.l10n.exportSettingsSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
                       ),
-                      subtitle: Text(
-                        context.l10n.importSettingsSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      trailing: state.importBusy
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation(cs.primary),
-                              ),
-                            )
-                          : null,
-                      enabled: !state.backupBusy,
-                      onTap: () => _importSettings(context, ref, state),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                    trailing: state.exportBusy
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation(cs.primary),
+                            ),
+                          )
+                        : null,
+                    enabled: !state.backupBusy,
+                    onTap: () => _exportSettings(context, ref, state),
+                  ),
+                  ListTile(
+                    title: Text(
+                      context.l10n.importSettingsTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.importSettingsSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    trailing: state.importBusy
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation(cs.primary),
+                            ),
+                          )
+                        : null,
+                    enabled: !state.backupBusy,
+                    onTap: () => _importSettings(context, ref, state),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-                // Debug & Diagnostics
-                SectionHeader(context.l10n.sectionDebug),
-                SectionCard(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(
-                        context.l10n.debugLoggingTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.debugLoggingSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      value: state.settings.debugLoggingEnabled,
-                      onChanged: (val) {
-                        VeLog.enabled = val;
-                        ref
-                            .read(appSettingsControllerProvider.notifier)
-                            .updateSettings((s) => s.copyWith(debugLoggingEnabled: val));
-                      },
-                    ),
-                    ListTile(
-                      title: Text(
-                        context.l10n.logcatTitle,
-                        style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        context.l10n.logcatSubtitle,
-                        style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LogcatScreen()),
+              // Debug & Diagnostics
+              SectionHeader(context.l10n.sectionDebug),
+              SectionCard(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      context.l10n.debugLoggingTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                    subtitle: Text(
+                      context.l10n.debugLoggingSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    value: state.settings.debugLoggingEnabled,
+                    onChanged: (val) {
+                      VeLog.enabled = val;
+                      ref
+                          .read(appSettingsControllerProvider.notifier)
+                          .updateSettings(
+                            (s) => s.copyWith(debugLoggingEnabled: val),
+                          );
+                    },
+                  ),
+                  ListTile(
+                    title: Text(
+                      context.l10n.logcatTitle,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.l10n.logcatSubtitle,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LogcatScreen()),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
 
     if (embedded) {
       return Scaffold(body: body);

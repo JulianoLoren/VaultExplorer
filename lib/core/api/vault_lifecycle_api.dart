@@ -52,27 +52,30 @@ class VaultLifecycleApi {
     try {
       final result = await _channel
           .invokeMapMethod<String, Object?>(ChannelMethods.createContainer, {
-        'displayName': displayName,
-        'sizeBytes': sizeBytes,
-        'password': password,
-        'pim': pim,
-        'fileSystem': fileSystem,
-        'containerFormat': containerFormat,
-        'cipherId': cipherId,
-        'hashId': hashId,
-        'keyfilePaths': keyfilePaths,
-        'quickFormat': quickFormat,
-        'createHiddenVolume': createHiddenVolume,
-        'hiddenPassword': hiddenPassword,
-        'hiddenFileSystem': hiddenFileSystem,
-        'hiddenSizeBytes': hiddenSizeBytes,
-        'hiddenKeyfilePaths': hiddenKeyfilePaths ?? [],
-        'hiddenPim': hiddenPim,
-        'hiddenCipherId': hiddenCipherId,
-        'hiddenHashId': hiddenHashId,
-      });
+            'displayName': displayName,
+            'sizeBytes': sizeBytes,
+            'password': password,
+            'pim': pim,
+            'fileSystem': fileSystem,
+            'containerFormat': containerFormat,
+            'cipherId': cipherId,
+            'hashId': hashId,
+            'keyfilePaths': keyfilePaths,
+            'quickFormat': quickFormat,
+            'createHiddenVolume': createHiddenVolume,
+            'hiddenPassword': hiddenPassword,
+            'hiddenFileSystem': hiddenFileSystem,
+            'hiddenSizeBytes': hiddenSizeBytes,
+            'hiddenKeyfilePaths': hiddenKeyfilePaths ?? [],
+            'hiddenPim': hiddenPim,
+            'hiddenCipherId': hiddenCipherId,
+            'hiddenHashId': hiddenHashId,
+          });
       final success = result?['success'] as bool? ?? false;
-      return (success: success, uri: success ? (result?['uri'] as String?) : null);
+      return (
+        success: success,
+        uri: success ? (result?['uri'] as String?) : null,
+      );
     } on PlatformException catch (e) {
       // Most native failures here are swallowed below (the caller only
       // needs a bool). INSUFFICIENT_SPACE is the one exception: it carries
@@ -99,7 +102,7 @@ class VaultLifecycleApi {
   /// same defaults those primitives already ship with, rather than a
   /// null/crash path.
   Future<({String tier, int cores, int memoryClassMb, bool isLowRamDevice})>
-      getDeviceCapabilityProfile() async {
+  getDeviceCapabilityProfile() async {
     try {
       final result = await _channel.invokeMapMethod<String, Object?>(
         ChannelMethods.getDeviceCapabilityProfile,
@@ -112,7 +115,12 @@ class VaultLifecycleApi {
       );
     } catch (e) {
       logSwallowed('getDeviceCapabilityProfile', e);
-      return (tier: 'MEDIUM', cores: 4, memoryClassMb: 128, isLowRamDevice: false);
+      return (
+        tier: 'MEDIUM',
+        cores: 4,
+        memoryClassMb: 128,
+        isLowRamDevice: false,
+      );
     }
   }
 
@@ -257,6 +265,50 @@ class VaultLifecycleApi {
     });
   }
 
+  Future<bool> isOpenWithHandlerEnabled(String viewer) async {
+    try {
+      return await _channel.invokeMethod<bool>(
+            ChannelMethods.isOpenWithHandlerEnabled,
+            {'viewer': viewer},
+          ) ??
+          false;
+    } catch (e) {
+      logSwallowed('isOpenWithHandlerEnabled', e);
+      return false;
+    }
+  }
+
+  Future<void> setOpenWithHandlerEnabled(String viewer, bool enabled) async {
+    await _channel.invokeMethod<void>(
+      ChannelMethods.setOpenWithHandlerEnabled,
+      {'viewer': viewer, 'enabled': enabled},
+    );
+  }
+
+  Future<ExternalFileOpenRequest?> checkPendingExternalFileOpen() async {
+    try {
+      final result = await _channel.invokeMethod<Map<Object?, Object?>>(
+        ChannelMethods.checkPendingExternalFileOpen,
+      );
+      if (result == null) return null;
+      return externalFileOpenRequestFromWire(result);
+    } catch (e) {
+      logSwallowed('checkPendingExternalFileOpen', e);
+      return null;
+    }
+  }
+
+  Future<void> acknowledgeExternalFileOpen(String id) async {
+    try {
+      await _channel.invokeMethod<void>(
+        ChannelMethods.acknowledgeExternalFileOpen,
+        {'id': id},
+      );
+    } catch (e) {
+      logSwallowed('acknowledgeExternalFileOpen', e, expected: true);
+    }
+  }
+
   /// Android API level (`Build.VERSION.SDK_INT`) of the running device.
   ///
   /// Used to hide settings that don't apply on older Android versions
@@ -313,26 +365,26 @@ class VaultLifecycleApi {
     try {
       final success = await _channel
           .invokeMethod<bool>(ChannelMethods.createUsbContainer, {
-        'deviceName': deviceName,
-        'sizeBytes': sizeBytes,
-        'password': password,
-        'pim': pim,
-        'fileSystem': fileSystem,
-        'containerFormat': containerFormat,
-        'cipherId': cipherId,
-        'hashId': hashId,
-        'keyfilePaths': keyfilePaths,
-        'partitionScheme': partitionScheme,
-        'quickFormat': quickFormat,
-        'createHiddenVolume': createHiddenVolume,
-        'hiddenPassword': hiddenPassword,
-        'hiddenFileSystem': hiddenFileSystem,
-        'hiddenSizeBytes': hiddenSizeBytes,
-        'hiddenKeyfilePaths': hiddenKeyfilePaths ?? [],
-        'hiddenPim': hiddenPim,
-        'hiddenCipherId': hiddenCipherId,
-        'hiddenHashId': hiddenHashId,
-      });
+            'deviceName': deviceName,
+            'sizeBytes': sizeBytes,
+            'password': password,
+            'pim': pim,
+            'fileSystem': fileSystem,
+            'containerFormat': containerFormat,
+            'cipherId': cipherId,
+            'hashId': hashId,
+            'keyfilePaths': keyfilePaths,
+            'partitionScheme': partitionScheme,
+            'quickFormat': quickFormat,
+            'createHiddenVolume': createHiddenVolume,
+            'hiddenPassword': hiddenPassword,
+            'hiddenFileSystem': hiddenFileSystem,
+            'hiddenSizeBytes': hiddenSizeBytes,
+            'hiddenKeyfilePaths': hiddenKeyfilePaths ?? [],
+            'hiddenPim': hiddenPim,
+            'hiddenCipherId': hiddenCipherId,
+            'hiddenHashId': hiddenHashId,
+          });
       return success ?? false;
     } catch (e) {
       logSwallowed('createUsbContainer', e);
@@ -354,16 +406,16 @@ class VaultLifecycleApi {
     try {
       final success = await _channel
           .invokeMethod<bool>(ChannelMethods.changeContainerPassword, {
-        'uri': uri,
-        'oldPassword': oldPassword,
-        'newPassword': newPassword,
-        'oldPim': oldPim,
-        'newPim': newPim,
-        'cipherId': cipherId,
-        'hashId': hashId,
-        'oldKeyfilePaths': oldKeyfilePaths ?? [],
-        'newKeyfilePaths': newKeyfilePaths ?? [],
-      });
+            'uri': uri,
+            'oldPassword': oldPassword,
+            'newPassword': newPassword,
+            'oldPim': oldPim,
+            'newPim': newPim,
+            'cipherId': cipherId,
+            'hashId': hashId,
+            'oldKeyfilePaths': oldKeyfilePaths ?? [],
+            'newKeyfilePaths': newKeyfilePaths ?? [],
+          });
       return success ?? false;
     } catch (e) {
       logSwallowed('changeContainerPassword', e);
@@ -388,12 +440,12 @@ class VaultLifecycleApi {
   }) async {
     final success = await _channel
         .invokeMethod<bool>(ChannelMethods.changeLuksContainerPassword, {
-      'uri': uri,
-      'oldPassword': oldPassword,
-      'newPassword': newPassword,
-      'oldKeyfilePaths': oldKeyfilePaths ?? [],
-      'newKeyfilePaths': newKeyfilePaths ?? [],
-    });
+          'uri': uri,
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+          'oldKeyfilePaths': oldKeyfilePaths ?? [],
+          'newKeyfilePaths': newKeyfilePaths ?? [],
+        });
     return success ?? false;
   }
 
@@ -438,7 +490,8 @@ class VaultLifecycleApi {
   /// particular -- pass [treeUri] along too, letting the native side fall
   /// back to a SAF write when the raw path isn't actually writable. See
   /// `SplitJoinHandlers.kt`'s `resolveDestFolder` doc comment.
-  Future<({String? path, String displayName, String? treeUri})?> pickExtractFolder() async {
+  Future<({String? path, String displayName, String? treeUri})?>
+  pickExtractFolder() async {
     final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
       ChannelMethods.pickExtractFolder,
     );
@@ -457,10 +510,12 @@ class VaultLifecycleApi {
     if (raw == null) return [];
     return raw
         .cast<Map<Object?, Object?>>()
-        .map((m) => (
-              uri: m['uri'] as String,
-              displayName: m['displayName'] as String,
-            ))
+        .map(
+          (m) => (
+            uri: m['uri'] as String,
+            displayName: m['displayName'] as String,
+          ),
+        )
         .toList();
   }
 
@@ -495,16 +550,23 @@ class VaultLifecycleApi {
     if (raw == null) return [];
     return raw
         .cast<Map<Object?, Object?>>()
-        .map((m) => (
-              uri: m['uri'] as String,
-              displayName: m['displayName'] as String,
-            ))
+        .map(
+          (m) => (
+            uri: m['uri'] as String,
+            displayName: m['displayName'] as String,
+          ),
+        )
         .toList();
   }
 
-  Future<({String uri, String displayName, bool looksLikeVault, String? format})?> pickCryptomatorVault() async {
+  Future<
+    ({String uri, String displayName, bool looksLikeVault, String? format})?
+  >
+  pickCryptomatorVault() async {
     try {
-      final res = await _channel.invokeMapMethod<String, dynamic>(ChannelMethods.pickCryptomatorVault);
+      final res = await _channel.invokeMapMethod<String, dynamic>(
+        ChannelMethods.pickCryptomatorVault,
+      );
       if (res == null) return null;
       return (
         uri: res['uri'] as String,
@@ -518,7 +580,16 @@ class VaultLifecycleApi {
     }
   }
 
-  Future<({int volId, List<String> files, int matchedCipherId, int matchedHashId, String containerFormat})?> unlockCryptomatorVault(
+  Future<
+    ({
+      int volId,
+      List<String> files,
+      int matchedCipherId,
+      int matchedHashId,
+      String containerFormat,
+    })?
+  >
+  unlockCryptomatorVault(
     String filePath,
     String password, {
     String? displayName,
@@ -526,19 +597,21 @@ class VaultLifecycleApi {
     List<String> autoMountFolders = const [],
     bool readOnly = false,
   }) async {
-    final raw = await _channel
-        .invokeMethod<Map<Object?, Object?>>(ChannelMethods.unlockCryptomatorVault, {
-          'filePath': filePath,
-          'password': password,
-          'displayName': displayName,
-          'documentProvider': documentProvider,
-          'autoMountFolders': autoMountFolders,
-          'readOnly': readOnly,
-        });
+    final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
+      ChannelMethods.unlockCryptomatorVault,
+      {
+        'filePath': filePath,
+        'password': password,
+        'displayName': displayName,
+        'documentProvider': documentProvider,
+        'autoMountFolders': autoMountFolders,
+        'readOnly': readOnly,
+      },
+    );
     if (raw == null) return null;
-    
+
     final files = (raw['files'] as List<Object?>).cast<String>();
-    
+
     return (
       volId: raw['volId'] as int,
       files: files,
@@ -574,14 +647,23 @@ class VaultLifecycleApi {
   ) async {
     final success = await _channel.invokeMethod<bool>(
       ChannelMethods.changeCryptomatorVaultPassword,
-      {'filePath': folderUri, 'oldPassword': oldPassword, 'newPassword': newPassword},
+      {
+        'filePath': folderUri,
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      },
     );
     return success ?? false;
   }
 
-  Future<({String uri, String displayName, bool looksLikeVault, String? format})?> pickGocryptfsVault() async {
+  Future<
+    ({String uri, String displayName, bool looksLikeVault, String? format})?
+  >
+  pickGocryptfsVault() async {
     try {
-      final res = await _channel.invokeMapMethod<String, dynamic>(ChannelMethods.pickGocryptfsVault);
+      final res = await _channel.invokeMapMethod<String, dynamic>(
+        ChannelMethods.pickGocryptfsVault,
+      );
       if (res == null) return null;
       return (
         uri: res['uri'] as String,
@@ -608,7 +690,16 @@ class VaultLifecycleApi {
     }
   }
 
-  Future<({int volId, List<String> files, int matchedCipherId, int matchedHashId, String containerFormat})?> unlockGocryptfsVault(
+  Future<
+    ({
+      int volId,
+      List<String> files,
+      int matchedCipherId,
+      int matchedHashId,
+      String containerFormat,
+    })?
+  >
+  unlockGocryptfsVault(
     String filePath,
     String password, {
     String? displayName,
@@ -616,19 +707,21 @@ class VaultLifecycleApi {
     List<String> autoMountFolders = const [],
     bool readOnly = false,
   }) async {
-    final raw = await _channel
-        .invokeMethod<Map<Object?, Object?>>(ChannelMethods.unlockGocryptfsVault, {
-          'filePath': filePath,
-          'password': password,
-          'displayName': displayName,
-          'documentProvider': documentProvider,
-          'autoMountFolders': autoMountFolders,
-          'readOnly': readOnly,
-        });
+    final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
+      ChannelMethods.unlockGocryptfsVault,
+      {
+        'filePath': filePath,
+        'password': password,
+        'displayName': displayName,
+        'documentProvider': documentProvider,
+        'autoMountFolders': autoMountFolders,
+        'readOnly': readOnly,
+      },
+    );
     if (raw == null) return null;
-    
+
     final files = (raw['files'] as List<Object?>).cast<String>();
-    
+
     return (
       volId: raw['volId'] as int,
       files: files,
@@ -669,14 +762,23 @@ class VaultLifecycleApi {
   ) async {
     final success = await _channel.invokeMethod<bool>(
       ChannelMethods.changeGocryptfsVaultPassword,
-      {'filePath': folderUri, 'oldPassword': oldPassword, 'newPassword': newPassword},
+      {
+        'filePath': folderUri,
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      },
     );
     return success ?? false;
   }
 
-  Future<({String uri, String displayName, bool looksLikeVault, String? format})?> pickCryfsVault() async {
+  Future<
+    ({String uri, String displayName, bool looksLikeVault, String? format})?
+  >
+  pickCryfsVault() async {
     try {
-      final res = await _channel.invokeMapMethod<String, dynamic>(ChannelMethods.pickCryfsVault);
+      final res = await _channel.invokeMapMethod<String, dynamic>(
+        ChannelMethods.pickCryfsVault,
+      );
       if (res == null) return null;
       return (
         uri: res['uri'] as String,
@@ -703,7 +805,16 @@ class VaultLifecycleApi {
     }
   }
 
-  Future<({int volId, List<String> files, int matchedCipherId, int matchedHashId, String containerFormat})?> unlockCryfsVault(
+  Future<
+    ({
+      int volId,
+      List<String> files,
+      int matchedCipherId,
+      int matchedHashId,
+      String containerFormat,
+    })?
+  >
+  unlockCryfsVault(
     String filePath,
     String password, {
     String? displayName,
@@ -725,9 +836,9 @@ class VaultLifecycleApi {
           'cacheDerivedKey': cacheDerivedKey,
         });
     if (raw == null) return null;
-    
+
     final files = (raw['files'] as List<Object?>).cast<String>();
-    
+
     return (
       volId: raw['volId'] as int,
       files: files,
@@ -751,15 +862,13 @@ class VaultLifecycleApi {
     int blockSize = 32 * 1024,
   }) async {
     try {
-      final success = await _channel.invokeMethod<bool>(
-        ChannelMethods.createCryfsVault,
-        {
-          'filePath': folderUri,
-          'password': password,
-          'cipher': cipher,
-          'blockSize': blockSize,
-        },
-      );
+      final success = await _channel
+          .invokeMethod<bool>(ChannelMethods.createCryfsVault, {
+            'filePath': folderUri,
+            'password': password,
+            'cipher': cipher,
+            'blockSize': blockSize,
+          });
       return success ?? false;
     } catch (e) {
       logSwallowed('createCryfsVault', e);
@@ -777,7 +886,11 @@ class VaultLifecycleApi {
   ) async {
     final success = await _channel.invokeMethod<bool>(
       ChannelMethods.changeCryfsVaultPassword,
-      {'filePath': folderUri, 'oldPassword': oldPassword, 'newPassword': newPassword},
+      {
+        'filePath': folderUri,
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      },
     );
     return success ?? false;
   }
@@ -788,10 +901,7 @@ class VaultLifecycleApi {
   /// engine is mounted (Cryptomator, gocryptfs, or CryFS) and is a
   /// documented no-op for VeraCrypt/LUKS/BitLocker, so it's safe to call
   /// unconditionally after any writeFileChunk() sequence completes.
-  Future<bool> finishWrite(
-    MountedContainer container,
-    String fileName,
-  ) async {
+  Future<bool> finishWrite(MountedContainer container, String fileName) async {
     try {
       final success = await _channel.invokeMethod<bool>(
         ChannelMethods.finishWrite,
@@ -806,7 +916,9 @@ class VaultLifecycleApi {
 
   Future<void> cancelUnlock(int volId) async {
     try {
-      await _channel.invokeMethod(ChannelMethods.cancelUnlock, {'volId': volId});
+      await _channel.invokeMethod(ChannelMethods.cancelUnlock, {
+        'volId': volId,
+      });
     } catch (e) {
       logSwallowed('cancelUnlock', e, expected: true);
     }
@@ -844,7 +956,16 @@ class VaultLifecycleApi {
     }
   }
 
-  Future<({int volId, List<String> files, int matchedCipherId, int matchedHashId, String containerFormat})?> unlockContainer(
+  Future<
+    ({
+      int volId,
+      List<String> files,
+      int matchedCipherId,
+      int matchedHashId,
+      String containerFormat,
+    })?
+  >
+  unlockContainer(
     String filePath,
     String password,
     int pim, {
@@ -864,32 +985,34 @@ class VaultLifecycleApi {
     int? hiddenVolumeHashId,
     List<String>? hiddenVolumeKeyfilePaths,
   }) async {
-    final raw = await _channel
-        .invokeMethod<Map<Object?, Object?>>(ChannelMethods.unlockContainer, {
-          'filePath': filePath,
-          'password': password,
-          'pim': pim,
-          'displayName': displayName,
-          'documentProvider': documentProvider,
-          'autoMountFolders': autoMountFolders,
-          'cipherId': cipherId ?? 255,
-          'hashId': hashId ?? 255,
-          if (preservedKey != null) 'preservedKey': base64Encode(preservedKey),
-          'cacheDerivedKey': cacheDerivedKey,
-          if (keyfilePaths != null && keyfilePaths.isNotEmpty)
-            'keyfilePaths': keyfilePaths,
-          'readOnly': readOnly,
-          'protectHiddenVolume': protectHiddenVolume,
-          if (protectHiddenVolume) ...{
-            'hiddenVolumePassword': hiddenVolumePassword ?? '',
-            'hiddenVolumePim': hiddenVolumePim,
-            'hiddenVolumeCipherId': hiddenVolumeCipherId ?? 255,
-            'hiddenVolumeHashId': hiddenVolumeHashId ?? 255,
-            if (hiddenVolumeKeyfilePaths != null &&
-                hiddenVolumeKeyfilePaths.isNotEmpty)
-              'hiddenVolumeKeyfilePaths': hiddenVolumeKeyfilePaths,
-          },
-        });
+    final raw = await _channel.invokeMethod<Map<Object?, Object?>>(
+      ChannelMethods.unlockContainer,
+      {
+        'filePath': filePath,
+        'password': password,
+        'pim': pim,
+        'displayName': displayName,
+        'documentProvider': documentProvider,
+        'autoMountFolders': autoMountFolders,
+        'cipherId': cipherId ?? 255,
+        'hashId': hashId ?? 255,
+        if (preservedKey != null) 'preservedKey': base64Encode(preservedKey),
+        'cacheDerivedKey': cacheDerivedKey,
+        if (keyfilePaths != null && keyfilePaths.isNotEmpty)
+          'keyfilePaths': keyfilePaths,
+        'readOnly': readOnly,
+        'protectHiddenVolume': protectHiddenVolume,
+        if (protectHiddenVolume) ...{
+          'hiddenVolumePassword': hiddenVolumePassword ?? '',
+          'hiddenVolumePim': hiddenVolumePim,
+          'hiddenVolumeCipherId': hiddenVolumeCipherId ?? 255,
+          'hiddenVolumeHashId': hiddenVolumeHashId ?? 255,
+          if (hiddenVolumeKeyfilePaths != null &&
+              hiddenVolumeKeyfilePaths.isNotEmpty)
+            'hiddenVolumeKeyfilePaths': hiddenVolumeKeyfilePaths,
+        },
+      },
+    );
 
     if (raw == null) return null;
 
@@ -1015,11 +1138,13 @@ class VaultLifecycleApi {
 
     return raw
         .cast<Map<Object?, Object?>>()
-        .map((m) => UsbDeviceInfo(
-              deviceName: m['deviceName'] as String,
-              productName: m['productName'] as String,
-              hasPermission: m['hasPermission'] as bool,
-            ))
+        .map(
+          (m) => UsbDeviceInfo(
+            deviceName: m['deviceName'] as String,
+            productName: m['productName'] as String,
+            hasPermission: m['hasPermission'] as bool,
+          ),
+        )
         .toList();
   }
 
@@ -1035,7 +1160,16 @@ class VaultLifecycleApi {
     }
   }
 
-  Future<({int volId, List<String> files, int matchedCipherId, int matchedHashId, String containerFormat})?> unlockUsbContainer(
+  Future<
+    ({
+      int volId,
+      List<String> files,
+      int matchedCipherId,
+      int matchedHashId,
+      String containerFormat,
+    })?
+  >
+  unlockUsbContainer(
     String deviceName,
     String password,
     int pim, {
@@ -1107,7 +1241,8 @@ class VaultLifecycleApi {
     // under it -- see ActiveRecordingRegistry for why this is the one
     // place that check belongs, rather than in every individual caller.
     // ignore: deprecated_member_use_from_same_package
-    final activeRecordings = _activeRecordings ?? ActiveRecordingRegistry.instance;
+    final activeRecordings =
+        _activeRecordings ?? ActiveRecordingRegistry.instance;
     await activeRecordings.stopIfActive(filePath);
     // Same idea for auto-sync: cancel it and let it clean up its temp files
     // and commit its ledger while the container is still mounted. Never
@@ -1127,10 +1262,9 @@ class VaultLifecycleApi {
   /// BackgroundServiceHandlers.kt.
   Future<void> syncBackgroundService({required bool enabled}) async {
     try {
-      await _channel.invokeMethod(
-        ChannelMethods.syncBackgroundService,
-        {'enabled': enabled},
-      );
+      await _channel.invokeMethod(ChannelMethods.syncBackgroundService, {
+        'enabled': enabled,
+      });
     } catch (e) {
       logSwallowed('syncBackgroundService', e);
     }
@@ -1140,10 +1274,9 @@ class VaultLifecycleApi {
   /// in the app. A null or empty code means use the device language.
   Future<void> setNotificationLocale(String? languageCode) async {
     try {
-      await _channel.invokeMethod(
-        ChannelMethods.setNotificationLocale,
-        {'languageCode': languageCode},
-      );
+      await _channel.invokeMethod(ChannelMethods.setNotificationLocale, {
+        'languageCode': languageCode,
+      });
     } catch (e) {
       logSwallowed('setNotificationLocale', e);
     }
@@ -1158,17 +1291,15 @@ class VaultLifecycleApi {
     bool indeterminate = false,
   }) async {
     try {
-      await _channel.invokeMethod(
-        ChannelMethods.updateBackgroundServiceProgress,
-        {
-          'hasActive': hasActive,
-          'title': ?title,
-          'text': ?text,
-          'progress': ?progress,
-          'max': max,
-          'indeterminate': indeterminate,
-        },
-      );
+      await _channel
+          .invokeMethod(ChannelMethods.updateBackgroundServiceProgress, {
+            'hasActive': hasActive,
+            'title': ?title,
+            'text': ?text,
+            'progress': ?progress,
+            'max': max,
+            'indeterminate': indeterminate,
+          });
     } catch (e) {
       logSwallowed('updateBackgroundServiceProgress', e);
     }

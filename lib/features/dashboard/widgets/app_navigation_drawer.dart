@@ -164,10 +164,22 @@ class AppNavigationDrawer extends ConsumerWidget {
   }
 
   Future<void> _lockSingleVault(BuildContext context, WidgetRef ref, MountedContainer container) async {
+    final controller = ref.read(vaultDashboardControllerProvider.notifier);
+    if (!controller.acquireLockGuard(container.volId)) {
+      if (context.mounted) {
+        showAppSnackBar(
+          context,
+          message: context.l10n.operationInProgressWaitMessage,
+          tone: AppBannerTone.warning,
+        );
+      }
+      return;
+    }
     try {
-      await ref.read(vaultLifecycleApiProvider).lockContainer(container.uri);
+      final locked = await ref.read(vaultLifecycleApiProvider).lockContainer(container.uri);
+      if (!locked) throw StateError('Container lock did not complete');
       VeLog.i('AppNavigationDrawer', '_lockSingleVault: native lockContainer succeeded for volId=${container.volId}');
-      ref.read(vaultDashboardControllerProvider.notifier).onContainerLocked(container.volId);
+      controller.onContainerLocked(container.volId);
     } catch (e) {
       VeLog.e('AppNavigationDrawer', '_lockSingleVault: native lockContainer threw for volId=${container.volId}', e);
       if (context.mounted) {
@@ -177,6 +189,8 @@ class AppNavigationDrawer extends ConsumerWidget {
           tone: AppBannerTone.warning,
         );
       }
+    } finally {
+      controller.releaseLockGuard(container.volId);
     }
   }
 
@@ -304,7 +318,7 @@ class AppNavigationDrawer extends ConsumerWidget {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      onPressed: () {
+                                      onPressed: () async {
                                         // Only close the drawer if the vault currently being
                                         // browsed is one of the ones about to be locked -- that
                                         // screen will pop itself in response, and closing the
@@ -315,12 +329,47 @@ class AppNavigationDrawer extends ConsumerWidget {
                                         // the list can simply refresh to show them as locked.
                                         final willLeaveCurrentScreen = currentVolId != null &&
                                             dashboardState.mounted.any((c) => c.volId == currentVolId);
-                                        if (willLeaveCurrentScreen) {
+                                        final controller = ref.read(vaultDashboardControllerProvider.notifier);
+                                        final currentVaultGuardAcquired = willLeaveCurrentScreen &&
+                                            controller.acquireLockGuard(currentVolId!);
+                                        if (currentVaultGuardAcquired) {
                                           Navigator.pop(context);
                                         }
-                                        for (final c in dashboardState.mounted) {
-                                          ref.read(vaultLifecycleApiProvider).lockContainer(c.uri);
-                                          ref.read(vaultDashboardControllerProvider.notifier).onContainerLocked(c.volId);
+                                        var currentVaultGuardHeld = currentVaultGuardAcquired;
+                                        var skippedBusyVault = false;
+                                        try {
+                                          for (final c in dashboardState.mounted) {
+                                            final guardAlreadyHeld = c.volId == currentVolId &&
+                                                currentVaultGuardHeld;
+                                            if (!guardAlreadyHeld && !controller.acquireLockGuard(c.volId)) {
+                                              skippedBusyVault = true;
+                                              continue;
+                                            }
+                                            try {
+                                              final locked = await ref.read(vaultLifecycleApiProvider).lockContainer(c.uri);
+                                              if (locked) {
+                                                controller.onContainerLocked(c.volId);
+                                              } else {
+                                                skippedBusyVault = true;
+                                              }
+                                            } catch (_) {
+                                              skippedBusyVault = true;
+                                            } finally {
+                                              controller.releaseLockGuard(c.volId);
+                                              if (guardAlreadyHeld) currentVaultGuardHeld = false;
+                                            }
+                                          }
+                                        } finally {
+                                          if (currentVaultGuardHeld) {
+                                            controller.releaseLockGuard(currentVolId!);
+                                          }
+                                        }
+                                        if (skippedBusyVault && context.mounted) {
+                                          showAppSnackBar(
+                                            context,
+                                            message: context.l10n.operationInProgressWaitMessage,
+                                            tone: AppBannerTone.warning,
+                                          );
                                         }
                                       },
                                     ),

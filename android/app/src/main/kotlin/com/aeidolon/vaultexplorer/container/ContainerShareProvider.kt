@@ -173,20 +173,29 @@ class ContainerShareProvider : ContentProvider() {
 
         val doc = DocumentId.parse(docIdOf(uri), "share document")
         val volId = doc.volId
-        val session = ContainerFileSystem.requireSession(volId)
         val fatPath = doc.fatPath
 
         val storageManager = context?.getSystemService(Context.STORAGE_SERVICE) as? StorageManager
             ?: throw FileNotFoundException("Could not obtain StorageManager")
 
+        val ioLease = ContainerDocumentIoRegistry.acquireHandle(volId)
+            ?: throw FileNotFoundException("Container is being locked; retry after the lock completes")
+        val currentSession = try {
+            ContainerFileSystem.requireSession(volId)
+        } catch (e: Exception) {
+            ioLease.close()
+            throw FileNotFoundException("Container is no longer mounted")
+        }
+
         val handlerThread = HandlerThread("vc_share_proxy_${volId}_${System.nanoTime()}").apply { start() }
         val handler = Handler(handlerThread.looper)
-        val callback = ContainerProxyCallback(context, volId, session, fatPath, isWrite = false, handlerThread)
 
         return try {
+            val callback = ContainerProxyCallback(context, volId, currentSession, fatPath, isWrite = false, handlerThread, ioLease)
             storageManager.openProxyFileDescriptor(parcelMode, callback, handler)
         } catch (e: Exception) {
             VeLog.e(TAG, e) { "openProxyFileDescriptor failed for $fatPath: ${e.message}" }
+            ioLease.close()
             handlerThread.quitSafely()
             throw FileNotFoundException("Failed to open proxy file descriptor: ${e.message}")
         }

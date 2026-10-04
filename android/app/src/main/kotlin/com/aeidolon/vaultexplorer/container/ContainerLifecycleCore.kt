@@ -112,7 +112,17 @@ object ContainerLifecycleCore {
     fun lockContainer(context: Context, uriString: String): Boolean {
         val volId = ContainerSessionRegistry.getVolumeIdByUri(uriString) ?: return false
         val session = ContainerSessionRegistry.activeSessions[volId]
+        val lockPermit = ContainerDocumentIoRegistry.beginLock(volId) ?: run {
+            VeLog.w(TAG) { "lockContainer already pending for volId=$volId" }
+            return false
+        }
         return try {
+            if (lockPermit.handlesAtStart > 0) {
+                VeLog.i(TAG) {
+                    "lockContainer waiting for ${lockPermit.handlesAtStart} open document operation(s) on volId=$volId"
+                }
+            }
+            lockPermit.awaitHandlesClosed()
             com.aeidolon.vaultexplorer.pdf.PdfRendererRegistry.closeAllForVolume(volId)
             com.aeidolon.vaultexplorer.pdf.VaultPdfSessionRegistry.revokeAllForVolume(volId)
             ContainerSessionRegistry.locks[volId].writeLock().withLock {
@@ -133,6 +143,8 @@ object ContainerLifecycleCore {
         } catch (e: Exception) {
             VeLog.e(TAG, e) { "lockContainer failed for ${censorUri(uriString)} (volId=$volId)" }
             false
+        } finally {
+            lockPermit.close()
         }
     }
 
