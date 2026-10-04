@@ -195,9 +195,12 @@ class VaultDashboardController extends _$VaultDashboardController {
       final appSettingsService = ref.read(appSettingsServiceProvider);
       final containerRepository = ref.read(containerRepositoryProvider);
 
-      final settings = await appSettingsService.loadSettings();
-      if (!ref.mounted) return;
-      final records = await containerRepository.loadAll();
+      // Independent secure-storage reads, so they overlap instead of the
+      // second waiting on the first.
+      final (settings, records) = await (
+        appSettingsService.loadSettings(),
+        containerRepository.loadAll(),
+      ).wait;
       if (!ref.mounted) return;
       final savedOrder = await containerRepository.loadOrder();
       if (!ref.mounted) return;

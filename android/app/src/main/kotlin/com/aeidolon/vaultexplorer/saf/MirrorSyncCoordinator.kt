@@ -2,6 +2,7 @@ package com.aeidolon.vaultexplorer.saf
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.aeidolon.vaultexplorer.VeLog
 import java.io.File
@@ -677,6 +678,42 @@ class MirrorSyncCoordinator(
         return bytesCopied
     }
 
+    /**
+     * Copies a complete local mirror to a SAF document and verifies that the
+     * provider reports the full byte length after closing the output stream.
+     * Some cloud providers acknowledge a write while leaving the document
+     * empty or partially uploaded, so success from copyTo() alone is not a
+     * sufficient commit signal. The mirror remains authoritative if all
+     * attempts fail; the caller can then leave the write pending for retry.
+     */
+    private fun copyAndVerify(mirrored: File, targetUri: Uri): Long {
+        var lastFailure: Exception? = null
+        repeat(3) { index ->
+            val attempt = index + 1
+            try {
+                val expectedLength = mirrored.length()
+                val bytesCopied = copyDirectTruncating(mirrored, targetUri)
+                if (bytesCopied != expectedLength || mirrored.length() != expectedLength) {
+                    throw MirrorPushException(
+                        "copyAndVerify: local mirror changed or copied incompletely for $targetUri " +
+                            "(expected=$expectedLength, copied=$bytesCopied, current=${mirrored.length()})",
+                    )
+                }
+                if (awaitRealLength(targetUri, expectedLength)) return bytesCopied
+                throw MirrorPushException(
+                    "copyAndVerify: provider did not report $expectedLength bytes for $targetUri after upload",
+                )
+            } catch (e: Exception) {
+                lastFailure = e
+                VeLog.w("MirrorTrace", e) {
+                    "copyAndVerify: attempt $attempt/3 failed for $targetUri"
+                }
+                if (attempt < 3) Thread.sleep(250L * attempt)
+            }
+        }
+        throw MirrorPushException("copyAndVerify: failed to upload and verify $targetUri after 3 attempts", lastFailure)
+    }
+
     fun pushFileWrite(mirrored: File, realParent: DocumentFile?, existingRealDoc: DocumentFile?, displayName: String, mimeType: String) {
         // Defensive re-stat with a short retry -- but only when
         // existingRealDoc is non-null, i.e. this push is expected to carry
@@ -802,6 +839,12 @@ class MirrorSyncCoordinator(
                         mirrored.inputStream().use { input ->
                             stagingTmp.outputStream().use { out -> bytesCopied = input.copyTo(out, COPY_BUFFER_SIZE) }
                         }
+                        if (bytesCopied != observedLength || stagingTmp.length() != observedLength || mirrored.length() != observedLength) {
+                            throw MirrorPushException(
+                                "pushFileWrite: staged copy of $displayName changed or was incomplete " +
+                                    "(expected=$observedLength, copied=$bytesCopied, staged=${stagingTmp.length()}, source=${mirrored.length()})",
+                            )
+                        }
                         if (!stagingTmp.renameTo(rawTarget)) {
                             rawTarget.delete()
                             if (!stagingTmp.renameTo(rawTarget)) {
@@ -827,11 +870,13 @@ class MirrorSyncCoordinator(
                     val authority = target.uri.authority.orEmpty()
                     var replace = overwritesContent && authority in unreliableOverwriteAuthorities
                     if (!replace) {
-                        bytesCopied = copyDirectTruncating(mirrored, target.uri)
-                        if (overwritesContent && bytesCopied > 0L && !awaitRealLength(target.uri, bytesCopied)) {
+                        try {
+                            bytesCopied = copyAndVerify(mirrored, target.uri)
+                        } catch (e: MirrorPushException) {
+                            if (!overwritesContent) throw e
                             VeLog.w("MirrorTrace") {
-                                "pushFileWrite: in-place overwrite of ${target.uri} did not take effect -- " +
-                                    "replacing documents on $authority from now on"
+                                "pushFileWrite: in-place overwrite of ${target.uri} could not be verified -- " +
+                                    "replacing documents on $authority from now on (${e.message})"
                             }
                             unreliableOverwriteAuthorities.add(authority)
                             replace = true
@@ -841,7 +886,7 @@ class MirrorSyncCoordinator(
                         val created = replaceRealDocument(mirrored, target, realParent, displayName, mimeType)
                         freshlyCreatedTarget = created
                         target = created
-                        bytesCopied = copyDirectTruncating(mirrored, created.uri)
+                        bytesCopied = copyAndVerify(mirrored, created.uri)
                     }
                 }
             } else {
@@ -854,7 +899,7 @@ class MirrorSyncCoordinator(
                 // avoid does not apply here. An empty new file needs no
                 // write at all: opening it just to write 0 bytes changes
                 // nothing.
-                if (observedLength > 0L) bytesCopied = copyDirectTruncating(mirrored, target.uri)
+                if (observedLength > 0L) bytesCopied = copyAndVerify(mirrored, target.uri)
             }
             // Propagate the mirror's intended lastModified timestamp to the real SAF target
             // so the real file doesn't get stuck with the current time of the push operation.
@@ -977,7 +1022,20 @@ class MirrorSyncCoordinator(
     private fun awaitRealLength(uri: Uri, expected: Long): Boolean {
         for (wait in longArrayOf(0L, 150L, 350L, 500L, 500L)) {
             if (wait > 0L) Thread.sleep(wait)
-            val length = try { DocumentFile.fromSingleUri(context, uri)?.length() } catch (_: Exception) { null }
+            val length = try {
+                context.contentResolver.query(
+                    uri,
+                    arrayOf(DocumentsContract.Document.COLUMN_SIZE),
+                    null,
+                    null,
+                    null,
+                )?.use { cursor ->
+                    if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
+                }
+            } catch (e: Exception) {
+                VeLog.w("MirrorTrace", e) { "awaitRealLength: failed to query $uri" }
+                null
+            }
             if (length == expected) return true
         }
         return false

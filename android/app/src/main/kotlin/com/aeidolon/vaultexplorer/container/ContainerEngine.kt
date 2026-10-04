@@ -359,11 +359,16 @@ object ContainerEngine {
             return session.importStream(path, inputStream, volId)
         }
         val tempFile = java.io.File.createTempFile("vc_import_", ".tmp")
+        activeCopyTempFiles.add(tempFile.absolutePath)
         return try {
             tempFile.outputStream().use { out -> inputStream.copyTo(out) }
-        NativeEngine.writeBackFile(path, tempFile.absolutePath, volId, opId)
+            NativeEngine.writeBackFile(path, tempFile.absolutePath, volId, opId)
         } finally {
-            tempFile.delete()
+            // A plain delete() leaves the bytes on flash. Registered with
+            // activeCopyTempFiles so the startup orphan sweep can clean up
+            // after a crash without touching an import that is still running.
+            if (tempFile.exists()) SecureFileWipe.secureDeleteFile(tempFile)
+            activeCopyTempFiles.remove(tempFile.absolutePath)
         }
     }
 

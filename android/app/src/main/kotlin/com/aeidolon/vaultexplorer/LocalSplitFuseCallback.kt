@@ -802,14 +802,76 @@ class SplitFuseCallback(
         // Make sure every buffered write against the mirror is actually
         // on disk before we stream it back up.
         openRafs[index]?.let { try { it.fd.sync() } catch (_: Exception) {} }
-        val out = context.contentResolver.openOutputStream(parts[index].uri, "wt")
-            ?: throw java.io.IOException("openOutputStream returned null for part $index")
-        out.use { stream ->
-            FileInputStream(mirror).use { input ->
-                input.copyTo(stream, bufferSize = 256 * 1024)
+        val uri = parts[index].uri
+        val expectedBytes = mirror.length()
+        var lastFailure: Exception? = null
+
+        // A provider can accept the stream close while leaving the remote
+        // document empty or truncated. Do not clear mirrorDirty (and do not
+        // discard the recovery mirror on release) until the provider reports
+        // the complete staged length. Retrying from the local mirror is safe:
+        // it is the authoritative, complete encrypted image for this part.
+        for (attempt in 1..3) {
+            try {
+                var copiedBytes = 0L
+                val out = context.contentResolver.openOutputStream(uri, "wt")
+                    ?: throw java.io.IOException("openOutputStream returned null for part $index")
+                out.use { stream ->
+                    FileInputStream(mirror).use { input ->
+                        copiedBytes = input.copyTo(stream, bufferSize = 256 * 1024)
+                    }
+                    stream.flush()
+                }
+                if (copiedBytes != expectedBytes) {
+                    throw java.io.IOException(
+                        "part $index copied $copiedBytes bytes from mirror, expected $expectedBytes",
+                    )
+                }
+                if (awaitProviderLength(uri, expectedBytes)) {
+                    VeLog.i("VaultExplorer_C++") {
+                        "SplitFuseCallback: flushed and verified local mirror for part $index ($expectedBytes bytes, attempt $attempt)"
+                    }
+                    return
+                }
+                throw java.io.IOException(
+                    "provider did not report the expected $expectedBytes bytes for part $index after upload",
+                )
+            } catch (e: Exception) {
+                lastFailure = e
+                VeLog.w("VaultExplorer_C++", e) {
+                    "SplitFuseCallback: upload verification failed for part $index on attempt $attempt/3"
+                }
+                if (attempt < 3) Thread.sleep(250L * attempt)
             }
         }
-        VeLog.i("VaultExplorer_C++") { "SplitFuseCallback: flushed local mirror for part $index (${mirror.length()} bytes)" }
+        throw java.io.IOException("failed to upload and verify part $index after 3 attempts", lastFailure)
+    }
+
+    /**
+     * Waits briefly for an asynchronous document provider to publish the
+     * uploaded size. A missing size is not confirmation of a successful
+     * non-empty upload, so it keeps the staged mirror dirty for another try.
+     */
+    private fun awaitProviderLength(uri: Uri, expectedBytes: Long): Boolean {
+        for (waitMs in longArrayOf(0L, 200L, 400L, 700L)) {
+            if (waitMs > 0L) Thread.sleep(waitMs)
+            val actualBytes = try {
+                context.contentResolver.query(
+                    uri,
+                    arrayOf(DocumentsContract.Document.COLUMN_SIZE),
+                    null,
+                    null,
+                    null,
+                )?.use { cursor ->
+                    if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
+                }
+            } catch (e: Exception) {
+                VeLog.w("VaultExplorer_C++", e) { "SplitFuseCallback: could not query uploaded document size for $uri" }
+                null
+            }
+            if (actualBytes == expectedBytes) return true
+        }
+        return false
     }
 
     @Synchronized

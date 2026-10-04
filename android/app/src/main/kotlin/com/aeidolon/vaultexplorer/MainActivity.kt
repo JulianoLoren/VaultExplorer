@@ -390,7 +390,7 @@ open class MainActivity : FlutterFragmentActivity() {
             com.aeidolon.vaultexplorer.camera.QuickCaptureScratchpadPlugin.sweepOrphanedScratchpads(applicationContext)
             SecureFileWipe.sweepOrphanedFiles(
                 cacheDir,
-                listOf("thumb_", "export_", "archive_browse_", "ve_copy_"),
+                listOf("thumb_", "export_", "archive_browse_", "ve_copy_", "vc_import_"),
                 isInUse = com.aeidolon.vaultexplorer.container.ContainerEngine::isActiveCopyTempFile,
             )
             com.aeidolon.vaultexplorer.saf.MirrorSyncCoordinator.sweepOrphanedMirrors(applicationContext)
