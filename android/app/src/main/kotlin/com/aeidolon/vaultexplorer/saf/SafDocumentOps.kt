@@ -525,18 +525,32 @@ class SafDocumentOps(private val context: Context) : VaultDocumentOps {
 
     override fun deleteRecursively(folder: DocumentFile) {
         val rawFile = getRawFile(folder)
-        if (rawFile != null && rawFile.exists()) {
-            rawFile.deleteRecursively()
+        if (rawFile != null) {
+            if (rawFile.exists() && !rawFile.deleteRecursively()) {
+                throw SafIOException("Could not delete ${rawFile.absolutePath}")
+            }
             invalidate(folder)
             rawFile.parentFile?.let { invalidate(DocumentFile.fromFile(it)) }
             return
         }
-        for (child in listChildren(folder)) {
-            if (child.isDirectory) deleteRecursively(child)
-            child.delete()
+
+        SafProviderOperationRunner.runDelete(folder.uri.toString()) {
+            deleteProviderDocumentRecursively(folder)
         }
-        folder.delete()
-        invalidate(folder)
-        invalidateContainingParent(folder)
+    }
+
+    /** Runs only on SafProviderOperationRunner's worker so one deadline covers
+     * folder enumeration and every delete call in the recursive operation. */
+    private fun deleteProviderDocumentRecursively(document: DocumentFile) {
+        if (document.isDirectory) {
+            for (child in listChildren(document)) {
+                deleteProviderDocumentRecursively(child)
+            }
+        }
+        if (!document.delete()) {
+            throw SafIOException("Document provider did not delete ${document.uri}")
+        }
+        invalidate(document)
+        invalidateContainingParent(document)
     }
 }

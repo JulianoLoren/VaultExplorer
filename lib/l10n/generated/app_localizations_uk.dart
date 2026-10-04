@@ -2482,7 +2482,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cameraCaptureTitle => 'Камера сховища';
 
   @override
-  String get takingPhoto => 'Зйомка фото…';
+  String get takingPhoto => 'Знімання фото…';
 
   @override
   String get savingToVault => 'Збереження у сховище…';
@@ -6759,17 +6759,17 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get automationCameraDescription =>
-      'Дозволяє автоматизації викликати TAKE_PHOTO / START_RECORDING / STOP_RECORDING для цього сховища. Вимкнено за замовчуванням навіть при повному доступі — на відміну від імпорту/експорту файлів, зйомка не потребує жодних індикацій на екрані, тому це окремий явний дозвіл.';
+      'Дозволяє автоматизації викликати TAKE_PHOTO / START_RECORDING / STOP_RECORDING для цього сховища. Вимкнено за замовчуванням навіть при повному доступі — на відміну від імпорту/експорту файлів, знімання не потребує жодних індикацій на екрані, тому це окремий явний дозвіл.';
 
   @override
-  String get automationAllowCameraCapture => 'Дозволити зйомку камерою';
+  String get automationAllowCameraCapture => 'Дозволити знімання камерою';
 
   @override
   String get automationOverlayPermissionTitle => 'Показ поверх інших програм';
 
   @override
   String get automationOverlayPermissionMessage =>
-      'Для зйомки камерою у фоновому режимі на Android 14+ потрібен дозвіл «Показ поверх інших програм». Надайте цей дозвіл, щоб дозволити автоматичну зйомку, коли екран заблоковано або програма працює у фоні.';
+      'Для знімання камерою у фоновому режимі на Android 14+ потрібен дозвіл «Показ поверх інших програм». Надайте цей дозвіл, щоб дозволити автоматичне знімання, коли екран заблоковано або програма працює у фоні.';
 
   @override
   String get automationPimSavedMessage => 'PIM збережено';
@@ -6826,7 +6826,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get lensLabel => 'Об\'єктив';
 
   @override
-  String get dateTakenLabel => 'Дата зйомки';
+  String get dateTakenLabel => 'Дата знімання';
 
   @override
   String get shutterSpeedLabel => 'Витримка';
@@ -7470,7 +7470,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get panicBootTriggerArmTitle =>
-      'Активувати для наступного завантаження';
+      'Активувати для наступного перезавантаження';
 
   @override
   String panicBootTriggerArmedSubtitle(Object tier) {
@@ -7479,15 +7479,15 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get panicBootTriggerDisarmedSubtitle =>
-      'Вимкнено — пристрій перезавантажиться у звичайному режимі';
+      'Вимкнено — під час перезавантаження пристрій працюватиме у звичайному режимі';
 
   @override
   String get panicBootTriggerConfirmTitle =>
-      'Активувати очищення під час завантаження?';
+      'Активувати очищення під час перезавантаження?';
 
   @override
   String panicBootTriggerConfirmMessage(Object tier) {
-    return 'Під час наступного завантаження пристрою (включаючи звичайне перезавантаження або оновлення) $tier запуститься автоматично до відкриття програми. Це спрацює один раз.';
+    return 'Під час наступного запуску або перезавантаження пристрою (зокрема звичайного перезапуску чи автоматичного оновлення, а не лише ініційованого вами) $tier виконається автоматично ще до відкриття програми. Спрацьовує один раз, після чого тригер вимикається.';
   }
 
   @override
@@ -7495,11 +7495,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get panicBootTriggerArmedSuccessMessage =>
-      'Тригер завантаження активовано';
+      'Тригер під час перезавантаження активовано';
 
   @override
   String get panicBootTriggerDisarmedSuccessMessage =>
-      'Тригер завантаження вимкнено';
+      'Тригер під час перезавантаження вимкнено';
 
   @override
   String get sectionPanicKit => 'Служба реагування PanicKit';
@@ -7884,7 +7884,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get storageLocationSelfReferenceError =>
-      'Це вже власне сховище цього додатка, тому додати його ще раз як зовнішнє розташування не можна. Відкрийте його зі списку своїх сховищ.';
+      'Це вже власне сховище цієї програми, тому додати його ще раз як зовнішнє розташування не можна. Відкрийте його зі списку своїх сховищ.';
 
   @override
   String get internalStorageSubtitle => 'Внутрішня пам\'ять';
@@ -8720,6 +8720,8 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count фото',
+      many: '$count фото',
+      few: '$count фото',
       one: '1 фото',
     );
     return '$_temp0';
@@ -8729,57 +8731,58 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cameraReviewPhotosTooltip => 'Переглянути зроблені фото';
 
   @override
-  String get vaultItemTypeAuthenticator => 'Authenticator';
+  String get vaultItemTypeAuthenticator => 'Автентифікатор';
 
   @override
-  String get fieldIssuer => 'Issuer';
+  String get fieldIssuer => 'Сервіс';
 
   @override
-  String get fieldAuthenticatorAccount => 'Account';
+  String get fieldAuthenticatorAccount => 'Обліковий запис';
 
   @override
-  String get fieldSecretKey => 'Secret Key';
+  String get fieldSecretKey => 'Секретний ключ';
 
   @override
-  String get fieldTotpAlgorithm => 'Algorithm (default: SHA1)';
+  String get fieldTotpAlgorithm => 'Алгоритм (за замовчуванням: SHA1)';
 
   @override
-  String get fieldTotpDigits => 'Digits (default: 6)';
+  String get fieldTotpDigits => 'Кількість цифр (за замовчуванням: 6)';
 
   @override
-  String get fieldTotpPeriod => 'Refresh Interval, seconds (default: 30)';
+  String get fieldTotpPeriod =>
+      'Інтервал оновлення, секунди (за замовчуванням: 30)';
 
   @override
-  String get authenticatorScreenTitle => 'Authenticator';
+  String get authenticatorScreenTitle => 'Автентифікатор';
 
   @override
-  String get authenticatorAppBarTooltip => 'Authenticator codes';
+  String get authenticatorAppBarTooltip => 'Коди автентифікатора';
 
   @override
-  String get authenticatorEmptyStateTitle => 'No authenticator codes yet';
+  String get authenticatorEmptyStateTitle => 'Кодів автентифікатора ще немає';
 
   @override
   String get authenticatorEmptyStateMessage =>
-      'Add a TOTP secret to a password item, or create a standalone Authenticator item, in any unlocked vault to see live codes here.';
+      'Додайте секрет TOTP до запису пароля або створіть окремий елемент автентифікатора в будь-якому розблокованому сховищі, щоб бачити актуальні коди тут.';
 
   @override
   String get authenticatorNoVaultsUnlockedMessage =>
-      'Unlock a vault to see its authenticator codes here.';
+      'Розблокуйте сховище, щоб переглянути його коди автентифікатора.';
 
   @override
-  String get authenticatorCodeLabel => 'Code';
+  String get authenticatorCodeLabel => 'Код';
 
   @override
-  String get authenticatorInvalidSecretError => 'Invalid secret';
+  String get authenticatorInvalidSecretError => 'Недійсний секретний ключ';
 
   @override
-  String get authenticatorAddButtonTooltip => 'Add authenticator';
+  String get authenticatorAddButtonTooltip => 'Додати автентифікатор';
 
   @override
-  String get authenticatorChooseVaultTitle => 'Choose a vault';
+  String get authenticatorChooseVaultTitle => 'Виберіть сховище';
 
   @override
-  String get authenticatorOpenItemTooltip => 'Open item';
+  String get authenticatorOpenItemTooltip => 'Відкрити запис';
 
   @override
   String get authenticatorNextCodeLabel => 'Наступний код';
@@ -9084,7 +9087,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get screenLockOnlyAutoLockOptionSubtitle =>
-      'Блокується лише при вимкненні екрана — не коли застосунок переходить у фоновий режим';
+      'Блокується лише під час вимкнення екрана — а не коли програма переходить у фоновий режим';
 
   @override
   String get authenticatorScanQrSubtitle =>
@@ -9222,185 +9225,192 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get videoEditorEditAction => 'Edit video';
+  String get videoEditorEditAction => 'Редагувати відео';
 
   @override
-  String get videoEditorExportAction => 'Export';
+  String get videoEditorExportAction => 'Експорт';
 
   @override
-  String get videoEditorTimelineLabel => 'Video timeline';
+  String get videoEditorTimelineLabel => 'Часова шкала відео';
 
   @override
-  String get videoEditorSetStart => 'Set start';
+  String get videoEditorSetStart => 'Встановити початок';
 
   @override
-  String get videoEditorSetEnd => 'Set end';
+  String get videoEditorSetEnd => 'Встановити кінець';
 
   @override
-  String get videoEditorAddSegment => 'Add';
+  String get videoEditorAddSegment => 'Додати';
 
   @override
-  String get videoEditorSplit => 'Split';
+  String get videoEditorSplit => 'Розділити';
 
   @override
-  String get videoEditorDeleteSegment => 'Delete';
+  String get videoEditorDeleteSegment => 'Видалити';
 
   @override
-  String get videoEditorModeKeep => 'Keep';
+  String get videoEditorModeKeep => 'Залишити';
 
   @override
-  String get videoEditorModeCutOut => 'Cut out';
+  String get videoEditorModeCutOut => 'Вирізати';
 
   @override
   String get videoEditorNoSegments =>
-      'No segments yet. Move the playhead and tap Add.';
+      'Сегментів ще немає. Перемістіть повзунок і натисніть «Додати».';
 
   @override
   String videoEditorOutputSummary(int count, String duration) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Output: $count clips · $duration',
-      one: 'Output: 1 clip · $duration',
+      other: 'Результат: $count фрагментів · $duration',
+      many: 'Результат: $count фрагментів · $duration',
+      few: 'Результат: $count фрагменти · $duration',
+      one: 'Результат: 1 фрагмент · $duration',
     );
     return '$_temp0';
   }
 
   @override
   String videoEditorSnapNote(String start, String end) {
-    return 'Lossless cut starts on a keyframe: $start – $end';
+    return 'Нарізка без втрат починається з ключового кадру: $start – $end';
   }
 
   @override
-  String get videoEditorBoundaryInvalid =>
-      'That would leave the segment too short.';
+  String get videoEditorBoundaryInvalid => 'Сегмент вийде занадто коротким.';
 
   @override
-  String get videoEditorNoRoom => 'There is no room for a segment here.';
+  String get videoEditorNoRoom => 'Тут немає місця для сегмента.';
 
   @override
-  String get videoEditorNothingToExport => 'Nothing to export.';
+  String get videoEditorNothingToExport => 'Немає що експортувати.';
 
   @override
   String get videoEditorReadOnly =>
-      'This vault is read-only, so the edited video can\'t be saved.';
+      'Це сховище доступне лише для читання, тому відредаговане відео не можна зберегти.';
 
   @override
   String videoEditorLoadFailed(String message) {
-    return 'Couldn\'t open this video: $message';
+    return 'Не вдалося відкрити відео: $message';
   }
 
   @override
-  String get videoEditorZoomIn => 'Zoom in';
+  String get videoEditorZoomIn => 'Збільшити';
 
   @override
-  String get videoEditorZoomOut => 'Zoom out';
+  String get videoEditorZoomOut => 'Зменшити';
 
   @override
-  String get videoEditorZoomFit => 'Fit to screen';
+  String get videoEditorZoomFit => 'Вписати в екран';
 
   @override
-  String get videoEditorPrevKeyframe => 'Previous keyframe';
+  String get videoEditorPrevKeyframe => 'Попередній ключовий кадр';
 
   @override
-  String get videoEditorNextKeyframe => 'Next keyframe';
+  String get videoEditorNextKeyframe => 'Наступний ключовий кадр';
 
   @override
-  String get videoEditorExporting => 'Exporting video';
+  String get videoEditorExporting => 'Експорт відео';
 
   @override
   String videoEditorCutting(int current, int total) {
-    return 'Cutting clip $current of $total';
+    return 'Обрізання фрагмента $current з $total';
   }
 
   @override
-  String get videoEditorCuttingOne => 'Cutting…';
+  String get videoEditorCuttingOne => 'Обрізання…';
 
   @override
-  String get videoEditorSaving => 'Saving…';
+  String get videoEditorSaving => 'Збереження…';
 
   @override
   String videoEditorSaved(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Saved $count videos',
-      one: 'Saved 1 video',
+      other: 'Збережено $count відео',
+      many: 'Збережено $count відео',
+      few: 'Збережено $count відео',
+      one: 'Збережено 1 відео',
     );
     return '$_temp0';
   }
 
   @override
   String get videoEditorAudioDropped =>
-      'Some audio tracks couldn\'t be copied.';
+      'Деякі аудіодоріжки не вдалося скопіювати.';
 
   @override
   String videoEditorExportFailed(String message) {
-    return 'Export failed: $message';
+    return 'Помилка експорту: $message';
   }
 
   @override
-  String get videoEditorExportCancelled => 'Export cancelled';
+  String get videoEditorExportCancelled => 'Експорт скасовано';
 
   @override
-  String get videoEditorExportTitle => 'Export';
+  String get videoEditorExportTitle => 'Експорт';
 
   @override
   String videoEditorExportSummary(int count, String duration) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count clips · $duration',
-      one: '1 clip · $duration',
+      other: '$count фрагментів · $duration',
+      many: '$count фрагментів · $duration',
+      few: '$count фрагменти · $duration',
+      one: '1 фрагмент · $duration',
     );
     return '$_temp0';
   }
 
   @override
-  String get videoEditorExportSingle => 'Save as new video';
+  String get videoEditorExportSingle => 'Зберегти як нове відео';
 
   @override
-  String get videoEditorExportSingleHint => 'The original stays untouched.';
+  String get videoEditorExportSingleHint => 'Оригінал залишиться без змін.';
 
   @override
-  String get videoEditorExportMerge => 'Merge into one video';
+  String get videoEditorExportMerge => 'Об\'єднати в одне відео';
 
   @override
   String get videoEditorExportMergeHint =>
-      'Clips are joined in timeline order.';
+      'Фрагменти об\'єднуються в порядку часової шкали.';
 
   @override
-  String get videoEditorExportSeparate => 'Save as separate videos';
+  String get videoEditorExportSeparate => 'Зберегти окремими відео';
 
   @override
   String videoEditorExportSeparateHint(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count new files',
-      one: 'One new file',
+      other: '$count нових файлів',
+      many: '$count нових файлів',
+      few: '$count нові файли',
+      one: '1 новий файл',
     );
     return '$_temp0';
   }
 
   @override
   String get videoEditorLosslessNote =>
-      'Cuts are lossless, so nothing is re-encoded. Each clip starts at the nearest keyframe before your start point and ends at the next keyframe after your end point. The thin bars under the timeline show exactly what will be saved.';
+      'Нарізка відбувається без втрат якості, без перекодування. Кожен фрагмент починається з найближчого ключового кадру перед початковою точкою та закінчується наступним ключовим кадром після кінцевої точки. Тонкі смужки під шкалою показують, що саме буде збережено.';
 
   @override
-  String get fileSkinScreenTitle => 'Скін файлового менеджера';
+  String get fileSkinScreenTitle => 'Тема оформлення файлового менеджера';
 
   @override
   String get fileSkinSectionHeader => 'Вигляд';
 
   @override
-  String get fileSkinEntryTitle => 'Скін';
+  String get fileSkinEntryTitle => 'Тема оформлення';
 
   @override
   String get fileSkinPreviewHeader => 'Попередній перегляд';
 
   @override
-  String get fileSkinPresetsHeader => 'Скіни';
+  String get fileSkinPresetsHeader => 'Теми';
 
   @override
   String get fileSkinFoldersHeader => 'Папки';
