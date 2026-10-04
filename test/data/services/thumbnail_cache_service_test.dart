@@ -107,6 +107,7 @@ void main() {
 
   setUp(() {
     fileIoApi = _FakeFileIoApi();
+    ThumbnailCacheService.inContainerDebounceDuration = const Duration(milliseconds: 20);
     ThumbnailCacheService.configure(
       fileIoApi: fileIoApi,
       cryptoApi: VaultCryptoApi(const MethodChannel('test/thumbnail-cache')),

@@ -665,7 +665,17 @@ class ThumbnailCacheService {
 
   // ── Cache Invalidation & Management ────────────────────────────────────────
 
+ static Duration inContainerDebounceDuration = const Duration(milliseconds: 2500);
+
+  /// Called on every container lock (F-16). Flushes any pending in-container
+  /// pack batch to disk before wiping the decrypted memory tier.
   static Future<void> clearAppCacheFor(MountedContainer container) async {
+    final queue = _inContainerQueues[container.uri.toString()];
+    if (queue != null) {
+      try {
+        await queue.flushNow();
+      } catch (_) {}
+    }
     _memoryCache.removeWhere((key) => key.startsWith('${container.volId}:'));
     _latestKeyByFile.removeWhere(
         (prefix, _) => prefix.startsWith('${container.volId}:'));
@@ -1077,8 +1087,7 @@ class _InContainerPackQueue {
   Timer? _debounceTimer;
   bool _isFlushing = false;
 
-  static const Duration _debounceDuration = Duration(milliseconds: 300);
-  static const int _maxPendingItems = 20;
+  static const int _maxPendingItems = 40;
 
   _InContainerPackQueue(this.container);
 
@@ -1088,6 +1097,9 @@ class _InContainerPackQueue {
   }
 
   _PendingPackThumb? getPending(String keyHex) => _pending[keyHex];
+
+  Future<void> flushNow([VaultFileIoApi? fileIo]) =>
+      _drain(fileIo ?? ThumbnailCacheService._fileIo);
 
   Future<void> enqueue(
     _PendingPackThumb thumb,
@@ -1101,7 +1113,7 @@ class _InContainerPackQueue {
     if (_pending.length >= _maxPendingItems) {
       unawaited(_drain(fileIo));
     } else {
-      _debounceTimer = Timer(_debounceDuration, () {
+      _debounceTimer = Timer(ThumbnailCacheService.inContainerDebounceDuration, () {
         unawaited(_drain(fileIo));
       });
     }

@@ -6,8 +6,12 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.system.Os
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.documentfile.provider.DocumentFile
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.util.concurrent.ExecutorService
 import com.aeidolon.vaultexplorer.container.ContainerEngine
 import com.aeidolon.vaultexplorer.MainActivity
@@ -70,26 +74,92 @@ class VaultCreationHandlers(
         val hiddenCipherId: Int = 255,
         val hiddenHashId: Int = 255,
     )
+    private class InsufficientSpaceException(
+        val neededBytes: Long,
+        val availableBytes: Long,
+    ) : IOException("Not enough local space to stage this container")
+
     private var pendingCreate: PendingCreate? = null
 
-    /**
-     * Bytes available (to this app) on the filesystem backing [pfd], or
-     * `null` if that couldn't be determined. `null` means "unknown", not
-     * "zero" — callers should treat it as "don't block the create", since
-     * some document providers (cloud storage, certain FUSE bridges) don't
-     * back a real statvfs-capable filesystem and there's nothing more
-     * reliable to fall back to for an arbitrary SAF destination.
-     *
-     * Uses `f_bavail` (blocks available to an unprivileged app), not
-     * `f_bfree` (which includes blocks reserved for root), times
-     * `f_frsize` (the actual fragment/block size — `f_bsize` is only the
-     * "optimal transfer size" and can differ from it).
-     */
     private fun statvfsAvailableBytes(pfd: ParcelFileDescriptor): Long? = try {
         val stat = Os.fstatvfs(pfd.fileDescriptor)
         stat.f_bavail * stat.f_frsize
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
+    }
+
+    /**
+     * Native container creation needs truncate plus random `pwrite` access.
+     * Many SAF providers (especially cloud-storage bridges) only expose
+     * sequential output streams, and reject the `rw` mode before native code
+     * can write anything. Build the container in a regular local file, then
+     * stream the completed bytes to the document the user selected.
+     */
+    private fun createLocalContainer(create: PendingCreate): File {
+        val stagingFile = File.createTempFile("vaultexplorer-container-", ".tmp", activity.cacheDir)
+        try {
+            ParcelFileDescriptor.open(stagingFile, ParcelFileDescriptor.MODE_READ_WRITE).use { pfd ->
+                // A non-quick create encrypts the full virtual disk into the
+                // staging file. Quick format can keep most of that file sparse.
+                val availableBytes = statvfsAvailableBytes(pfd)
+                if (!create.quickFormat && availableBytes != null && availableBytes < create.sizeBytes) {
+                    throw InsufficientSpaceException(create.sizeBytes, availableBytes)
+                }
+                val keyfileFds = nativeOps.openKeyfileFds(create.keyfilePaths)
+                val success = synchronized(createContainerLock) {
+                    if (create.createHiddenVolume && create.containerFormat == 0) {
+                        val hiddenKeyfileFds = nativeOps.openKeyfileFds(create.hiddenKeyfilePaths)
+                        ContainerEngine.createWithHidden(
+                            pfd.detachFd(), create.password, create.hiddenPassword ?: "",
+                            create.pim, create.hiddenPim, create.sizeBytes,
+                            create.fileSystem, create.hiddenFileSystem ?: "fat",
+                            create.hiddenSizeBytes,
+                            create.cipherId, create.hashId,
+                            create.hiddenCipherId, create.hiddenHashId,
+                            keyfileFds, hiddenKeyfileFds,
+                            create.quickFormat
+                        )
+                    } else {
+                        ContainerEngine.create(
+                            pfd.detachFd(), create.password, create.pim, create.sizeBytes, create.fileSystem,
+                            create.containerFormat, create.cipherId, create.hashId, keyfileFds,
+                            create.quickFormat
+                        )
+                    }
+                }
+                if (!success) throw IOException("Container creation failed")
+            }
+            if (stagingFile.length() == 0L) throw IOException("Container creation produced an empty file")
+            return stagingFile
+        } catch (e: Exception) {
+            stagingFile.delete()
+            throw e
+        }
+    }
+
+    private fun copyToDocument(stagingFile: File, destUri: Uri) {
+        val output = activity.contentResolver.openOutputStream(destUri, "wt")
+            ?: throw IOException("Could not open the selected cloud document for writing")
+        var copiedBytes = 0L
+        output.use { out ->
+            FileInputStream(stagingFile).use { input ->
+                val buffer = ByteArray(1024 * 1024)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    out.write(buffer, 0, count)
+                    copiedBytes += count
+                }
+                out.flush()
+            }
+        }
+        if (copiedBytes != stagingFile.length()) {
+            throw IOException("Only $copiedBytes of ${stagingFile.length()} container bytes were uploaded")
+        }
+    }
+
+    private fun deleteIncompleteDocument(uri: Uri) {
+        try { DocumentFile.fromSingleUri(activity, uri)?.delete() } catch (_: Exception) {}
     }
 
     private val createContainerLauncher = activity.registerForActivityResult(
@@ -103,63 +173,27 @@ class VaultCreationHandlers(
         if (activityResult.resultCode == Activity.RESULT_OK && data?.data != null && create != null) {
             val destUri = data.data!!
             ioExecutor.execute {
+                var stagingFile: File? = null
                 try {
-                    val pfd = activity.contentResolver.openFileDescriptor(destUri, "rw")
-                        ?: throw Exception("Could not open file descriptor")
-
-                    // ACTION_CREATE_DOCUMENT already created an empty placeholder at
-                    // destUri once the user confirmed name/location — nothing has been
-                    // written yet, so bail out now if the destination's filesystem
-                    // can't fit the requested size, rather than starting a native
-                    // write that would fail partway through with ENOSPC. sizeBytes is
-                    // effectively the final file size for both formats (see
-                    // createContainer/createLuksContainer): the volume is truncated
-                    // to it up front and headers are pwrite()'d at offsets within
-                    // that span, not appended after it.
-                    val availableBytes = statvfsAvailableBytes(pfd)
-                    if (availableBytes != null && availableBytes < create.sizeBytes) {
-                        pfd.close()
-                        activity.runOnUiThread {
-                            res.error(
-                                "INSUFFICIENT_SPACE",
-                                "Not enough free space at the destination: need " +
-                                    "${create.sizeBytes} bytes, only $availableBytes available",
-                                mapOf(
-                                    "neededBytes" to create.sizeBytes,
-                                    "availableBytes" to availableBytes,
-                                )
-                            )
-                        }
-                        return@execute
-                    }
-
-                    val keyfileFds = nativeOps.openKeyfileFds(create.keyfilePaths)
-                    val success = synchronized(createContainerLock) {
-                        if (create.createHiddenVolume && create.containerFormat == 0) {
-                            val hiddenKeyfileFds = nativeOps.openKeyfileFds(create.hiddenKeyfilePaths)
-                            ContainerEngine.createWithHidden(
-                                pfd.detachFd(), create.password, create.hiddenPassword ?: "",
-                                create.pim, create.hiddenPim, create.sizeBytes,
-                                create.fileSystem, create.hiddenFileSystem ?: "fat",
-                                create.hiddenSizeBytes,
-                                create.cipherId, create.hashId,
-                                create.hiddenCipherId, create.hiddenHashId,
-                                keyfileFds, hiddenKeyfileFds,
-                                create.quickFormat
-                            )
-                        } else {
-                            ContainerEngine.create(
-                                pfd.detachFd(), create.password, create.pim, create.sizeBytes, create.fileSystem,
-                                create.containerFormat, create.cipherId, create.hashId, keyfileFds,
-                                create.quickFormat
-                            )
-                        }
-                    }
+                    stagingFile = createLocalContainer(create)
+                    copyToDocument(stagingFile, destUri)
                     activity.runOnUiThread {
-                        res.success(mapOf("success" to success, "uri" to if (success) destUri.toString() else null))
+                        res.success(mapOf("success" to true, "uri" to destUri.toString()))
+                    }
+                } catch (e: InsufficientSpaceException) {
+                    deleteIncompleteDocument(destUri)
+                    activity.runOnUiThread {
+                        res.error(
+                            "INSUFFICIENT_SPACE",
+                            e.message,
+                            mapOf("neededBytes" to e.neededBytes, "availableBytes" to e.availableBytes)
+                        )
                     }
                 } catch (e: Exception) {
+                    deleteIncompleteDocument(destUri)
                     activity.runOnUiThread { nativeOps.dispatchNativeError(e, res) }
+                } finally {
+                    stagingFile?.delete()
                 }
             }
         } else {
