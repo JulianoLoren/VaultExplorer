@@ -2596,5 +2596,11 @@
   "textEditorShowTabBarDescription": "إظهار أو إخفاء علامات تبويب الملفات المفتوحة. يمكنك التبديل بين الملفات من الشريط الجانبي.",
   "textEditorAutoHideTabBarLabel": "إخفاء علامات التبويب عند التمرير",
   "textEditorAutoHideTabBarDescription": "إخفاء شريط علامات التبويب عند التمرير لأسفل، والتمرير لأعلى لإظهاره.",
-  "lockWaitingForOperationsMessage": "جارٍ انتظار انتهاء العمليات الحالية قبل القفل…"
+  "lockWaitingForOperationsMessage": "جارٍ انتظار انتهاء العمليات الحالية قبل القفل…",
+  "browseSubtitleFileLabel": "اختيار ملف ترجمة…",
+  "subtitleFilesHint": "المجلد نفسه · أسماء الفيديو الأقرب أولاً",
+  "noSubtitleFilesLabel": "لا توجد ملفات SRT أو VTT في هذا المجلد",
+  "subtitleLoadError": "تعذر تحميل الترجمة. اختر ملف SRT/VTT صالحًا بترميز UTF-8 أو UTF-16 وحجم لا يتجاوز 4 ميغابايت.",
+  "lockRotationLabel": "قفل الدوران",
+  "unlockRotationLabel": "إلغاء قفل الدوران"
 }

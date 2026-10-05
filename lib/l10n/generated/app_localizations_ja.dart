@@ -8992,4 +8992,23 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get lockWaitingForOperationsMessage => 'ロックする前に、進行中の操作が完了するのを待っています…';
+
+  @override
+  String get browseSubtitleFileLabel => '字幕ファイルを選択…';
+
+  @override
+  String get subtitleFilesHint => '同じフォルダ · 動画名に近い順';
+
+  @override
+  String get noSubtitleFilesLabel => 'このフォルダにSRTまたはVTTファイルはありません';
+
+  @override
+  String get subtitleLoadError =>
+      '字幕を読み込めませんでした。4 MB以下の有効なUTF-8またはUTF-16のSRT/VTTファイルを選択してください。';
+
+  @override
+  String get lockRotationLabel => '画面回転をロック';
+
+  @override
+  String get unlockRotationLabel => '画面回転のロックを解除';
 }

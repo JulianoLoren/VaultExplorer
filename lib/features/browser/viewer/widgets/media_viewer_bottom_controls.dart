@@ -29,6 +29,8 @@ class MediaViewerBottomControls extends StatelessWidget {
   final bool isMuted;
   final VideoPlaybackMode videoPlaybackMode;
   final IconData screenOrientationIcon;
+  final bool rotationLocked;
+  final VoidCallback? onToggleRotationLock;
   final ValueChanged<MediaViewerAction> onExecuteAction;
   final VoidCallback onStartHideTimer;
   final ValueChanged<bool> onShowUIChanged;
@@ -52,6 +54,8 @@ class MediaViewerBottomControls extends StatelessWidget {
     required this.isMuted,
     required this.videoPlaybackMode,
     required this.screenOrientationIcon,
+    this.rotationLocked = false,
+    this.onToggleRotationLock,
     required this.onExecuteAction,
     required this.onStartHideTimer,
     required this.onShowUIChanged,
@@ -269,6 +273,25 @@ class MediaViewerBottomControls extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: _buildActionItem(context, action, cs),
               ),
+            if (!isImage && !isAudio) ...[
+              if (!pinned.contains(MediaViewerAction.subtitles) &&
+                  !toolbarConfig.hiddenActions.contains(
+                    MediaViewerAction.subtitles,
+                  ))
+                _buildActionItem(context, MediaViewerAction.subtitles, cs),
+              IconButton(
+                tooltip: rotationLocked
+                    ? context.l10n.unlockRotationLabel
+                    : context.l10n.lockRotationLabel,
+                icon: Icon(
+                  rotationLocked
+                      ? Icons.screen_lock_rotation_rounded
+                      : Icons.screen_rotation_rounded,
+                  color: rotationLocked ? cs.primary : Colors.white,
+                ),
+                onPressed: onToggleRotationLock,
+              ),
+            ],
           ],
         ),
       ),

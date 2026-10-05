@@ -11903,5 +11903,11 @@
   "lockWaitingForOperationsMessage": "Waiting for current operations to finish before locking…",
   "@lockWaitingForOperationsMessage": {
     "description": "Snackbar shown when locking a container takes longer because active operations must finish first"
-  }
+  },
+  "browseSubtitleFileLabel": "Choose subtitle file…",
+  "subtitleFilesHint": "Same folder · closest video names first",
+  "noSubtitleFilesLabel": "No SRT or VTT files in this folder",
+  "subtitleLoadError": "Could not load subtitles. Choose a valid UTF-8 or UTF-16 SRT/VTT file up to 4 MB.",
+  "lockRotationLabel": "Lock rotation",
+  "unlockRotationLabel": "Unlock rotation"
 }

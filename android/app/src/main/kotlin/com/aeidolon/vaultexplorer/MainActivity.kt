@@ -215,6 +215,8 @@ private object ChannelMethods {
     const val DECODE_AVIF_FRAME = "decodeAvifFrame"
     const val DECODE_AVIF = "decodeAvif"
     const val SET_KEEP_SCREEN_ON = "setKeepScreenOn"
+    const val LOCK_SCREEN_ORIENTATION = "lockScreenOrientation"
+    const val PICK_SUBTITLE_FILE = "pickSubtitleFile"
     const val LAUNCH_URL = "launchUrl"
     const val GET_APP_VERSION = "getAppVersion"
     const val GET_ANDROID_SDK_INT = "getAndroidSdkInt"
@@ -1142,6 +1144,8 @@ open class MainActivity : FlutterFragmentActivity() {
                 ChannelMethods.INSTALL_APK -> systemHandlers.handleInstallApk(call, result)
                 ChannelMethods.SHARE_FILE -> systemHandlers.handleShareFile(call, result)
                 ChannelMethods.SET_KEEP_SCREEN_ON -> systemHandlers.handleSetKeepScreenOn(call, result)
+                ChannelMethods.LOCK_SCREEN_ORIENTATION -> systemHandlers.handleLockScreenOrientation(result)
+                ChannelMethods.PICK_SUBTITLE_FILE -> vaultPickerHandlers.handlePickSubtitleFile(result)
                 ChannelMethods.LAUNCH_URL -> systemHandlers.handleLaunchUrl(call, result)
                 ChannelMethods.GET_APP_VERSION -> systemHandlers.handleGetAppVersion(call, result)
                 ChannelMethods.GET_ANDROID_SDK_INT -> systemHandlers.handleGetAndroidSdkInt(call, result)

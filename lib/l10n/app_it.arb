@@ -2596,5 +2596,11 @@
   "textEditorShowTabBarDescription": "Mostra o nascondi le schede dei file aperti. Puoi comunque cambiare file dalla barra laterale.",
   "textEditorAutoHideTabBarLabel": "Nascondi schede durante lo scorrimento",
   "textEditorAutoHideTabBarDescription": "Nascondi la barra delle schede scorrendo verso il basso e mostrala di nuovo scorrendo verso l’alto.",
-  "lockWaitingForOperationsMessage": "Attendo che le operazioni in corso terminino prima di bloccare…"
+  "lockWaitingForOperationsMessage": "Attendo che le operazioni in corso terminino prima di bloccare…",
+  "browseSubtitleFileLabel": "Scegli file sottotitoli…",
+  "subtitleFilesHint": "Stessa cartella · nomi più simili al video per primi",
+  "noSubtitleFilesLabel": "Nessun file SRT o VTT in questa cartella",
+  "subtitleLoadError": "Impossibile caricare i sottotitoli. Scegli un file SRT/VTT valido in UTF-8 o UTF-16 fino a 4 MB.",
+  "lockRotationLabel": "Blocca rotazione",
+  "unlockRotationLabel": "Sblocca rotazione"
 }

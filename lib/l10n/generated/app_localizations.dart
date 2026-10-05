@@ -15738,6 +15738,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for current operations to finish before locking…'**
   String get lockWaitingForOperationsMessage;
+
+  /// No description provided for @browseSubtitleFileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose subtitle file…'**
+  String get browseSubtitleFileLabel;
+
+  /// No description provided for @subtitleFilesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Same folder · closest video names first'**
+  String get subtitleFilesHint;
+
+  /// No description provided for @noSubtitleFilesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'No SRT or VTT files in this folder'**
+  String get noSubtitleFilesLabel;
+
+  /// No description provided for @subtitleLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load subtitles. Choose a valid UTF-8 or UTF-16 SRT/VTT file up to 4 MB.'**
+  String get subtitleLoadError;
+
+  /// No description provided for @lockRotationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock rotation'**
+  String get lockRotationLabel;
+
+  /// No description provided for @unlockRotationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock rotation'**
+  String get unlockRotationLabel;
 }
 
 class _AppLocalizationsDelegate

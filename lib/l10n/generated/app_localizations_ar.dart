@@ -9546,4 +9546,23 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get lockWaitingForOperationsMessage =>
       'جارٍ انتظار انتهاء العمليات الحالية قبل القفل…';
+
+  @override
+  String get browseSubtitleFileLabel => 'اختيار ملف ترجمة…';
+
+  @override
+  String get subtitleFilesHint => 'المجلد نفسه · أسماء الفيديو الأقرب أولاً';
+
+  @override
+  String get noSubtitleFilesLabel => 'لا توجد ملفات SRT أو VTT في هذا المجلد';
+
+  @override
+  String get subtitleLoadError =>
+      'تعذر تحميل الترجمة. اختر ملف SRT/VTT صالحًا بترميز UTF-8 أو UTF-16 وحجم لا يتجاوز 4 ميغابايت.';
+
+  @override
+  String get lockRotationLabel => 'قفل الدوران';
+
+  @override
+  String get unlockRotationLabel => 'إلغاء قفل الدوران';
 }

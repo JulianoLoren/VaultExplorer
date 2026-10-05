@@ -8991,4 +8991,23 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get lockWaitingForOperationsMessage =>
       '잠그기 전에 진행 중인 작업이 완료되기를 기다리는 중…';
+
+  @override
+  String get browseSubtitleFileLabel => '자막 파일 선택…';
+
+  @override
+  String get subtitleFilesHint => '같은 폴더 · 동영상 이름과 비슷한 순';
+
+  @override
+  String get noSubtitleFilesLabel => '이 폴더에 SRT 또는 VTT 파일이 없습니다';
+
+  @override
+  String get subtitleLoadError =>
+      '자막을 불러올 수 없습니다. 4 MB 이하의 올바른 UTF-8 또는 UTF-16 SRT/VTT 파일을 선택하세요.';
+
+  @override
+  String get lockRotationLabel => '화면 회전 잠금';
+
+  @override
+  String get unlockRotationLabel => '화면 회전 잠금 해제';
 }

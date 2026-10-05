@@ -2596,5 +2596,11 @@
   "textEditorShowTabBarDescription": "開いているファイルのタブを表示または非表示にします。サイドバーからファイルを切り替えることもできます。",
   "textEditorAutoHideTabBarLabel": "スクロール時にタブを隠す",
   "textEditorAutoHideTabBarDescription": "下にスクロールするとタブバーを隠し、上にスクロールすると再表示します。",
-  "lockWaitingForOperationsMessage": "ロックする前に、進行中の操作が完了するのを待っています…"
+  "lockWaitingForOperationsMessage": "ロックする前に、進行中の操作が完了するのを待っています…",
+  "browseSubtitleFileLabel": "字幕ファイルを選択…",
+  "subtitleFilesHint": "同じフォルダ · 動画名に近い順",
+  "noSubtitleFilesLabel": "このフォルダにSRTまたはVTTファイルはありません",
+  "subtitleLoadError": "字幕を読み込めませんでした。4 MB以下の有効なUTF-8またはUTF-16のSRT/VTTファイルを選択してください。",
+  "lockRotationLabel": "画面回転をロック",
+  "unlockRotationLabel": "画面回転のロックを解除"
 }

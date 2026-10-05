@@ -157,6 +157,8 @@ abstract final class ChannelMethods {
   static const setSensitiveClipboardText = 'setSensitiveClipboardText';
   static const clearSensitiveClipboardText = 'clearSensitiveClipboardText';
   static const setKeepScreenOn = 'setKeepScreenOn';
+  static const lockScreenOrientation = 'lockScreenOrientation';
+  static const pickSubtitleFile = 'pickSubtitleFile';
   static const setDebugLogging = 'setDebugLogging';
   static const launchUrl = 'launchUrl';
   static const getAppVersion = 'getAppVersion';

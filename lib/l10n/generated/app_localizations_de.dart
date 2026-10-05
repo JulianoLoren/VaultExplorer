@@ -9492,4 +9492,25 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get lockWaitingForOperationsMessage =>
       'Warte, bis die laufenden Vorgänge abgeschlossen sind, bevor der Container gesperrt wird …';
+
+  @override
+  String get browseSubtitleFileLabel => 'Untertiteldatei auswählen…';
+
+  @override
+  String get subtitleFilesHint =>
+      'Gleicher Ordner · ähnlichste Videonamen zuerst';
+
+  @override
+  String get noSubtitleFilesLabel =>
+      'Keine SRT- oder VTT-Dateien in diesem Ordner';
+
+  @override
+  String get subtitleLoadError =>
+      'Untertitel konnten nicht geladen werden. Wähle eine gültige SRT/VTT-Datei in UTF-8 oder UTF-16 bis 4 MB.';
+
+  @override
+  String get lockRotationLabel => 'Drehung sperren';
+
+  @override
+  String get unlockRotationLabel => 'Drehung entsperren';
 }

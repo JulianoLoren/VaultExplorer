@@ -23,6 +23,20 @@ import 'vault_engine_types.dart';
 /// the primitives below, so patching those primitives is enough to make
 /// them work for local storage too, with no changes of their own.
 class VaultFileIoApi {
+  Future<({String name, Uint8List bytes})?> pickSubtitleFile() async {
+    final result = await _channel.invokeMapMethod<String, dynamic>(
+      ChannelMethods.pickSubtitleFile,
+    );
+    if (result == null) return null;
+    return (
+      name: result['name'] as String,
+      bytes: result['bytes'] as Uint8List,
+    );
+  }
+
+  Future<void> lockScreenOrientation() =>
+      _channel.invokeMethod<void>(ChannelMethods.lockScreenOrientation);
+
   final MethodChannel _channel;
   static const LocalFileIoBackend _local = LocalFileIoBackend();
   const VaultFileIoApi(this._channel);

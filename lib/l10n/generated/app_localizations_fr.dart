@@ -9569,4 +9569,24 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get lockWaitingForOperationsMessage =>
       'En attente de la fin des opérations en cours avant de verrouiller…';
+
+  @override
+  String get browseSubtitleFileLabel => 'Choisir un fichier de sous-titres…';
+
+  @override
+  String get subtitleFilesHint =>
+      'Même dossier · noms les plus proches de la vidéo en premier';
+
+  @override
+  String get noSubtitleFilesLabel => 'Aucun fichier SRT ou VTT dans ce dossier';
+
+  @override
+  String get subtitleLoadError =>
+      'Impossible de charger les sous-titres. Choisissez un fichier SRT/VTT valide en UTF-8 ou UTF-16 de 4 Mo maximum.';
+
+  @override
+  String get lockRotationLabel => 'Verrouiller la rotation';
+
+  @override
+  String get unlockRotationLabel => 'Déverrouiller la rotation';
 }

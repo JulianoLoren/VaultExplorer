@@ -16,6 +16,7 @@ import com.aeidolon.vaultexplorer.saf.UriToPath
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import com.aeidolon.vaultexplorer.MainActivity
 import com.aeidolon.vaultexplorer.NativeOpSupport
@@ -42,6 +43,54 @@ class VaultPickerHandlers(
     private val pendingResult: PendingActivityResult,
     private val ioExecutor: ExecutorService,
 ) {
+    private val pickSubtitleFileLauncher = activity.registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { activityResult ->
+        val res = pendingResult.take() ?: return@registerForActivityResult
+        val uri = activityResult.data?.data
+        if (activityResult.resultCode != Activity.RESULT_OK || uri == null) {
+            res.success(null)
+        } else {
+            ioExecutor.execute {
+                try {
+                    val name = UriNameResolver.resolve(activity.contentResolver, uri)
+                    require(name.substringAfterLast('.').lowercase() in setOf("srt", "vtt"))
+                    val bytes = activity.contentResolver.openInputStream(uri)?.use { input ->
+                        val output = ByteArrayOutputStream()
+                        val buffer = ByteArray(8192)
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            require(output.size() + count <= 4 * 1024 * 1024)
+                            output.write(buffer, 0, count)
+                        }
+                        output.toByteArray()
+                    } ?: throw java.io.IOException("Cannot open subtitle")
+                    activity.runOnUiThread {
+                        res.success(mapOf("name" to name, "bytes" to bytes))
+                    }
+                } catch (_: Exception) {
+                    activity.runOnUiThread { res.error("SUBTITLE_READ_ERROR", "Cannot read subtitle", null) }
+                }
+            }
+        }
+    }
+
+    fun handlePickSubtitleFile(result: MethodChannel.Result) {
+        pendingResult.stash(result)
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            // Providers frequently label SRT/VTT as application/octet-stream.
+            type = "*/*"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try {
+            pickSubtitleFileLauncher.launch(intent)
+        } catch (_: Exception) {
+            pendingResult.take()?.error("SUBTITLE_PICK_ERROR", "Cannot open file picker", null)
+        }
+    }
+
     private fun detectVaultFormatInFolder(uri: Uri): String? {
         if (com.aeidolon.vaultexplorer.cryfs.CryfsVault.looksLikeVault(activity, uri)) return "cryfs"
         if (com.aeidolon.vaultexplorer.cryptomator.CryptomatorVault.looksLikeVault(activity, uri)) return "cryptomator"

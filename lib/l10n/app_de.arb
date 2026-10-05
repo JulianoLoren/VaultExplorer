@@ -2596,5 +2596,11 @@
   "textEditorShowTabBarDescription": "Tabs für geöffnete Dateien anzeigen oder ausblenden. Du kannst Dateien weiterhin über die Seitenleiste öffnen.",
   "textEditorAutoHideTabBarLabel": "Tabs beim Scrollen ausblenden",
   "textEditorAutoHideTabBarDescription": "Die Tab-Leiste beim Scrollen nach unten ausblenden und beim Scrollen nach oben wieder einblenden.",
-  "lockWaitingForOperationsMessage": "Warte, bis die laufenden Vorgänge abgeschlossen sind, bevor der Container gesperrt wird …"
+  "lockWaitingForOperationsMessage": "Warte, bis die laufenden Vorgänge abgeschlossen sind, bevor der Container gesperrt wird …",
+  "browseSubtitleFileLabel": "Untertiteldatei auswählen…",
+  "subtitleFilesHint": "Gleicher Ordner · ähnlichste Videonamen zuerst",
+  "noSubtitleFilesLabel": "Keine SRT- oder VTT-Dateien in diesem Ordner",
+  "subtitleLoadError": "Untertitel konnten nicht geladen werden. Wähle eine gültige SRT/VTT-Datei in UTF-8 oder UTF-16 bis 4 MB.",
+  "lockRotationLabel": "Drehung sperren",
+  "unlockRotationLabel": "Drehung entsperren"
 }

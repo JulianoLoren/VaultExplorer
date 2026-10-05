@@ -2596,5 +2596,11 @@
   "textEditorShowTabBarDescription": "Mostrar u ocultar las pestañas de los archivos abiertos. También puedes cambiar de archivo desde la barra lateral.",
   "textEditorAutoHideTabBarLabel": "Ocultar pestañas al desplazarse",
   "textEditorAutoHideTabBarDescription": "Ocultar la barra de pestañas al desplazarte hacia abajo y mostrarla de nuevo al desplazarte hacia arriba.",
-  "lockWaitingForOperationsMessage": "Esperando a que terminen las operaciones en curso antes de bloquear…"
+  "lockWaitingForOperationsMessage": "Esperando a que terminen las operaciones en curso antes de bloquear…",
+  "browseSubtitleFileLabel": "Elegir archivo de subtítulos…",
+  "subtitleFilesHint": "Misma carpeta · nombres más parecidos al vídeo primero",
+  "noSubtitleFilesLabel": "No hay archivos SRT o VTT en esta carpeta",
+  "subtitleLoadError": "No se pudieron cargar los subtítulos. Elige un archivo SRT/VTT válido en UTF-8 o UTF-16 de hasta 4 MB.",
+  "lockRotationLabel": "Bloquear rotación",
+  "unlockRotationLabel": "Desbloquear rotación"
 }

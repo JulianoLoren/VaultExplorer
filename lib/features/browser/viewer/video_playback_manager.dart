@@ -1,8 +1,16 @@
 import 'dart:async';
+import 'external_subtitles.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vaultexplorer/features/browser/viewer/native_video_controller.dart';
 
 class VideoPlaybackManager {
+  final externalSubtitles = ValueNotifier<Map<String, ExternalSubtitle>>({});
+
+  void selectExternalSubtitle(String video, ExternalSubtitle subtitle) {
+    externalSubtitles.value = {...externalSubtitles.value, video: subtitle};
+    updateSubtitleStatus(video, true);
+  }
+
   final Map<String, NativeVideoController> _controllers = {};
   final ValueNotifier<String?> currentFileNotifier = ValueNotifier<String?>(null);
   String? get currentFileName => currentFileNotifier.value;
@@ -31,6 +39,12 @@ class VideoPlaybackManager {
       _controllers[newPath] = controller;
     }
     final subtitleStatus = _subtitlesAvailableMap.remove(oldPath);
+    final external = externalSubtitles.value[oldPath];
+    if (external != null) {
+      final selections = Map<String, ExternalSubtitle>.of(externalSubtitles.value);
+      selections.remove(oldPath);
+      externalSubtitles.value = {...selections, newPath: external};
+    }
     if (subtitleStatus != null) {
       _subtitlesAvailableMap[newPath] = subtitleStatus;
     }
@@ -173,6 +187,7 @@ class VideoPlaybackManager {
     _activationToken++;
     currentFileNotifier.dispose();
     activeControllerNotifier.dispose();
+    externalSubtitles.dispose();
     _subtitlesAvailableMap.clear();
     for (final ctrl in _controllers.values) {
       ctrl.dispose();

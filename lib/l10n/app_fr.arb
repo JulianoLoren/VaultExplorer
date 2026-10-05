@@ -2596,5 +2596,11 @@
   "textEditorShowTabBarDescription": "Afficher ou masquer les onglets des fichiers ouverts. Vous pouvez toujours changer de fichier depuis la barre latérale.",
   "textEditorAutoHideTabBarLabel": "Masquer les onglets au défilement",
   "textEditorAutoHideTabBarDescription": "Masquer la barre des onglets en faisant défiler vers le bas et la réafficher en faisant défiler vers le haut.",
-  "lockWaitingForOperationsMessage": "En attente de la fin des opérations en cours avant de verrouiller…"
+  "lockWaitingForOperationsMessage": "En attente de la fin des opérations en cours avant de verrouiller…",
+  "browseSubtitleFileLabel": "Choisir un fichier de sous-titres…",
+  "subtitleFilesHint": "Même dossier · noms les plus proches de la vidéo en premier",
+  "noSubtitleFilesLabel": "Aucun fichier SRT ou VTT dans ce dossier",
+  "subtitleLoadError": "Impossible de charger les sous-titres. Choisissez un fichier SRT/VTT valide en UTF-8 ou UTF-16 de 4 Mo maximum.",
+  "lockRotationLabel": "Verrouiller la rotation",
+  "unlockRotationLabel": "Déverrouiller la rotation"
 }

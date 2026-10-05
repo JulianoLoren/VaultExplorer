@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +23,7 @@ import 'package:vaultexplorer/data/models/scrub_preview_style.dart';
 import 'package:vaultexplorer/features/browser/viewer/screen_brightness_bridge.dart';
 import 'package:vaultexplorer/features/browser/viewer/video_playback_manager.dart';
 import '../caption_track.dart';
+import '../external_subtitles.dart';
 import '../native_video_controller.dart';
 import '../video_scrub_preview_controller.dart';
 
@@ -164,6 +164,8 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
   bool _showLeftIndicator = false;
   bool _showRightIndicator = false;
   bool _isSpeedHeld = false;
+  bool _isHoldSeeking = false;
+  double _holdSeekLastDx = 0;
   final GlobalKey _interactiveViewerKey = GlobalKey();
   Timer? _skipDebounceTimer;
   bool _isSkipActive = false;
@@ -248,6 +250,9 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
   @override
   void initState() {
     super.initState();
+    widget.playbackManager.externalSubtitles.addListener(
+      _onExternalSubtitleChanged,
+    );
     _lockController = ref.read(sessionLockControllerProvider);
     _thumbnailCache = ref.read(thumbnailCacheServiceProvider);
     final initialPoster =
@@ -368,6 +373,22 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
       return;
     final becameActive = shouldBeActive && !_isActive;
     final becameInactive = !shouldBeActive && _isActive;
+    if (becameInactive || !identical(target, _boundController)) {
+      if (_isSpeedHeld) {
+        _boundController?.setPlaybackSpeed(widget.playbackSpeed);
+      }
+      _isSpeedHeld = false;
+      _isHoldSeeking = false;
+      if (_isSwipeSeeking) {
+        _isSwipeSeeking = false;
+        widget.progressNotifier.value = widget.progressNotifier.value.copyWith(
+          isDragging: false,
+        );
+      }
+      _swipeSeekPreview?.dispose();
+      _swipeSeekPreview = null;
+      _showSwipeSeekHud = false;
+    }
     _boundController?.removeListener(_onControllerTick);
     _boundController = target;
     target?.addListener(_onControllerTick);
@@ -400,9 +421,30 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
 
   Future<void> _loadCaptionsForThisFile() async {
     final token = ++_captionsToken;
-    final captionFile = await _loadCaptions(widget.fileName);
+    final selected =
+        widget.playbackManager.externalSubtitles.value[widget.fileName];
+    final captionFile =
+        selected?.track ?? await _loadCaptions(widget.fileName, token);
     if (token != _captionsToken || !mounted) return;
-    setState(() => _captionFile = captionFile);
+    setState(
+      () => _captionFile =
+          widget
+              .playbackManager
+              .externalSubtitles
+              .value[widget.fileName]
+              ?.track ??
+          captionFile,
+    );
+  }
+
+  void _onExternalSubtitleChanged() {
+    if (!mounted || !_isActive) return;
+    final subtitle =
+        widget.playbackManager.externalSubtitles.value[widget.fileName];
+    if (subtitle == null) return;
+    _captionsToken++;
+    setState(() => _captionFile = subtitle.track);
+    widget.onSubtitlesAvailableChanged(true);
   }
 
   void _onControllerTick() {
@@ -478,35 +520,37 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
     }
   }
 
-  Future<CaptionTrack?> _loadCaptions(String videoPath) async {
-    final dotIndex = videoPath.lastIndexOf('.');
-    if (dotIndex == -1) return null;
-    final basePath = videoPath.substring(0, dotIndex);
-    for (final ext in ['srt', 'vtt']) {
-      final subPath = '$basePath.$ext';
-      try {
-        final size = await _fileIoApi.getFileSize(widget.container, subPath);
-        if (size > 0) {
-          final data = await _fileIoApi.readFileChunk(
+  Future<CaptionTrack?> _loadCaptions(String videoPath, int token) async {
+    try {
+      final files = await findSubtitleFiles(
+        _fileIoApi,
+        widget.container,
+        videoPath,
+      );
+      for (final path in files) {
+        // Unrelated files stay available in the picker but aren't auto-loaded.
+        if (subtitleNameSimilarity(videoPath, path) < 2) continue;
+        try {
+          final subtitle = await readSubtitleFile(
+            _fileIoApi,
             widget.container,
-            subPath,
-            0,
-            size,
+            path,
           );
-          if (data != null && data.isNotEmpty) {
-            final text = utf8.decode(data, allowMalformed: true);
-            widget.onSubtitlesAvailableChanged(true);
-            return ext == 'srt'
-                ? CaptionTrack.subRip(text)
-                : CaptionTrack.webVtt(text);
+          if (!mounted || !_isActive || token != _captionsToken) return null;
+          if (!widget.playbackManager.externalSubtitles.value.containsKey(
+            videoPath,
+          )) {
+            widget.playbackManager.selectExternalSubtitle(videoPath, subtitle);
           }
+          return subtitle.track;
+        } catch (_) {
+          // Try the next matching subtitle if this file cannot be parsed.
         }
-      } catch (_) {
-        // Expected when no matching .srt/.vtt file exists next to the
-        // video for this extension -- try the next extension, or fall
-        // through to "no subtitles available" below.
       }
+    } catch (_) {
+      /* Directory may no longer be accessible. */
     }
+    if (!mounted || !_isActive || token != _captionsToken) return null;
     widget.onSubtitlesAvailableChanged(false);
     return null;
   }
@@ -519,6 +563,10 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
 
   @override
   void dispose() {
+    if (_isSpeedHeld) _boundController?.setPlaybackSpeed(widget.playbackSpeed);
+    widget.playbackManager.externalSubtitles.removeListener(
+      _onExternalSubtitleChanged,
+    );
     _updateMediaPlayingState(false);
     _skipDebounceTimer?.cancel();
     _brightnessHudTimer?.cancel();
@@ -542,6 +590,9 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
   }
 
   void _onSpeedHoldStart(LongPressStartDetails details) {
+    if (!_isActive || _activeTouchPointers.length > 1 || _isZoomed) return;
+    _holdSeekLastDx = 0;
+    _clearEdgeTapCandidates();
     final controller = _boundController;
     if (controller == null) return;
     HapticFeedback.heavyImpact();
@@ -566,10 +617,50 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
   }
 
   void _onSpeedHoldEnd(LongPressEndDetails _) {
+    if (_isHoldSeeking) {
+      _isHoldSeeking = false;
+      unawaited(_handleSwipeToSeekEnd(DragEndDetails()));
+      return;
+    }
+    _cancelSpeedHold();
+  }
+
+  void _cancelSpeedHold() {
+    if (!_isSpeedHeld) return;
     final controller = _boundController;
-    if (controller == null) return;
-    controller.setPlaybackSpeed(widget.playbackSpeed);
+    controller?.setPlaybackSpeed(widget.playbackSpeed);
     setState(() => _isSpeedHeld = false);
+  }
+
+  void _onHoldMove(LongPressMoveUpdateDetails details) {
+    if (!_isSpeedHeld && !_isHoldSeeking) return;
+    final dx = details.offsetFromOrigin.dx;
+    if (!_isHoldSeeking) {
+      if (dx.abs() < 12 ||
+          dx.abs() < details.offsetFromOrigin.dy.abs() ||
+          !_canStartSwipeToSeek(requireEnabled: false)) {
+        return;
+      }
+      _cancelSpeedHold();
+      _handleSwipeToSeekStart(DragStartDetails(), requireEnabled: false);
+      _isHoldSeeking = _isSwipeSeeking;
+    }
+    if (!_isHoldSeeking) return;
+    _handleSwipeToSeekUpdate(
+      DragUpdateDetails(
+        delta: Offset(dx - _holdSeekLastDx, 0),
+        globalPosition: details.globalPosition,
+        localPosition: details.localPosition,
+      ),
+      _tapViewportWidth,
+    );
+    _holdSeekLastDx = dx;
+  }
+
+  void _onHoldCancel() {
+    _isHoldSeeking = false;
+    _handleSwipeToSeekCancel();
+    _cancelSpeedHold();
   }
 
   Matrix4 _calculateZoomMatrix({
@@ -1292,6 +1383,8 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
                   },
                   onLongPressStart: _onSpeedHoldStart,
                   onLongPressEnd: _onSpeedHoldEnd,
+                  onLongPressMoveUpdate: _onHoldMove,
+                  onLongPressCancel: _onHoldCancel,
                 ),
               );
             },
@@ -1602,10 +1695,11 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
     );
   }
 
-  bool _canStartSwipeToSeek() {
-    if (!widget.swipeToSeekEnabled ||
+  bool _canStartSwipeToSeek({bool requireEnabled = true}) {
+    if ((requireEnabled && !widget.swipeToSeekEnabled) ||
         widget.isAudio ||
         !_isActive ||
+        _isSeeking ||
         _isZoomed) {
       return false;
     }
@@ -1703,6 +1797,8 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
       _clearEdgeTapCandidates();
       _abortEdgeGestures();
       _abortSwipeToSeek();
+      _isHoldSeeking = false;
+      _cancelSpeedHold();
       return;
     }
     if (widget.tapEdgesToNavigate &&
@@ -1737,6 +1833,9 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
   void _onGlobalPointerUp(PointerEvent event) {
     if (event.kind != PointerDeviceKind.touch) return;
     _activeTouchPointers.remove(event.pointer);
+    if (event is PointerCancelEvent && (_isSpeedHeld || _isHoldSeeking)) {
+      _onHoldCancel();
+    }
     final next = _edgeTapDirections.remove(event.pointer);
     _edgeTapStartPositions.remove(event.pointer);
     if (event is PointerUpEvent && next != null && mounted) {
@@ -1879,8 +1978,11 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
     });
   }
 
-  void _handleSwipeToSeekStart(DragStartDetails details) {
-    if (!_canStartSwipeToSeek()) return;
+  void _handleSwipeToSeekStart(
+    DragStartDetails details, {
+    bool requireEnabled = true,
+  }) {
+    if (!_canStartSwipeToSeek(requireEnabled: requireEnabled)) return;
     final controller = _boundController;
     if (controller == null) return;
 
@@ -1984,7 +2086,10 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
       _isSeeking = true;
       try {
         await controller.seekTo(target);
-        if (_wasPlayingBeforeSwipeSeek) {
+        if (mounted &&
+            _isActive &&
+            identical(controller, _boundController) &&
+            _wasPlayingBeforeSwipeSeek) {
           await controller.play();
         }
       } catch (e) {
@@ -1992,6 +2097,8 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
       }
       _isSeeking = false;
     }
+    if (!mounted || !_isActive || !identical(controller, _boundController))
+      return;
     unawaited(HapticFeedback.lightImpact());
 
     final totalMs = _seekDragTotalDuration.inMilliseconds;
@@ -2034,6 +2141,7 @@ class _MediaPlayerWidgetState extends ConsumerState<MediaPlayerWidget>
   }
 
   void _abortSwipeToSeek() {
+    _isHoldSeeking = false;
     _swipeToSeekClaim?.abort();
     _handleSwipeToSeekCancel();
   }

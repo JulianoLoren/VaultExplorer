@@ -8866,4 +8866,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lockWaitingForOperationsMessage => '正在等待当前操作完成后再锁定…';
+
+  @override
+  String get browseSubtitleFileLabel => '选择字幕文件…';
+
+  @override
+  String get subtitleFilesHint => '同一文件夹 · 按与视频名称的相似度排序';
+
+  @override
+  String get noSubtitleFilesLabel => '此文件夹中没有 SRT 或 VTT 文件';
+
+  @override
+  String get subtitleLoadError =>
+      '无法加载字幕。请选择不超过 4 MB 的有效 UTF-8 或 UTF-16 SRT/VTT 文件。';
+
+  @override
+  String get lockRotationLabel => '锁定旋转';
+
+  @override
+  String get unlockRotationLabel => '解锁旋转';
 }

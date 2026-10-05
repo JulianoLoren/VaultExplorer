@@ -9,6 +9,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -32,6 +33,11 @@ const val STORAGE_PERMISSION_REQUEST_CODE = 9822
 const val NOTIFICATION_PERMISSION_REQUEST_CODE = 9823
 
 class SystemPermissionHandlers(private val activity: MainActivity) {
+    fun handleLockScreenOrientation(result: MethodChannel.Result) {
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+        result.success(null)
+    }
+
     var userWantsSecureScreen = false
         private set
 

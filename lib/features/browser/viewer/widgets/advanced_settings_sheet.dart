@@ -9,6 +9,9 @@ import 'package:vaultexplorer/features/browser/viewer/media_viewer_constants.dar
 import 'package:vaultexplorer/features/browser/viewer/native_media3_controller.dart';
 import 'package:vaultexplorer/features/browser/viewer/native_video_controller.dart';
 import 'package:vaultexplorer/features/browser/viewer/widgets/advanced_settings_controller.dart';
+import 'package:vaultexplorer/data/models/mounted_container.dart';
+import '../video_playback_manager.dart';
+import 'external_subtitle_selector.dart';
 
 class AdvancedSettingsSheet extends ConsumerStatefulWidget {
   final String? initialPage;
@@ -37,6 +40,8 @@ class AdvancedSettingsSheet extends ConsumerStatefulWidget {
   final ValueChanged<double> onSubtitleVerticalPositionChanged;
   final NativeVideoController? videoController;
   final bool isMuted;
+  final MountedContainer? container;
+  final VideoPlaybackManager? playbackManager;
 
   const AdvancedSettingsSheet({
     super.key,
@@ -66,6 +71,8 @@ class AdvancedSettingsSheet extends ConsumerStatefulWidget {
     required this.onSubtitleFontSizeChanged,
     required this.onSubtitleVerticalPositionChanged,
     this.videoController,
+    this.container,
+    this.playbackManager,
   });
 
   @override
@@ -940,6 +947,17 @@ class _AdvancedSettingsSheetState extends ConsumerState<AdvancedSettingsSheet> {
             },
           );
         }),
+        if (widget.container != null && widget.playbackManager != null)
+          ExternalSubtitleSelector(
+            container: widget.container!,
+            video: widget.currentFileName,
+            playbackManager: widget.playbackManager!,
+            onSelected: () => ref
+                .read(advancedSettingsControllerProvider(params).notifier)
+                .enableExternalSubtitles(
+                  widget.videoController, widget.onSubtitlesEnabledChanged,
+                ),
+          ),
       ],
     );
   }

@@ -2596,5 +2596,11 @@
   "textEditorShowTabBarDescription": "显示或隐藏已打开文件的标签页。你也可以通过侧边栏切换文件。",
   "textEditorAutoHideTabBarLabel": "滚动时隐藏标签页",
   "textEditorAutoHideTabBarDescription": "向下滚动时隐藏标签栏，向上滚动时重新显示。",
-  "lockWaitingForOperationsMessage": "正在等待当前操作完成后再锁定…"
+  "lockWaitingForOperationsMessage": "正在等待当前操作完成后再锁定…",
+  "browseSubtitleFileLabel": "选择字幕文件…",
+  "subtitleFilesHint": "同一文件夹 · 按与视频名称的相似度排序",
+  "noSubtitleFilesLabel": "此文件夹中没有 SRT 或 VTT 文件",
+  "subtitleLoadError": "无法加载字幕。请选择不超过 4 MB 的有效 UTF-8 或 UTF-16 SRT/VTT 文件。",
+  "lockRotationLabel": "锁定旋转",
+  "unlockRotationLabel": "解锁旋转"
 }

@@ -181,6 +181,8 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   final Map<String, String> _resumePositionKeys = {};
   final Map<String, Duration> _lastSavedPlaybackPositions = {};
   int _screenOrientationModeIndex = 2;
+  bool _rotationLocked = false;
+  bool _rotationLockChanging = false;
 
   Future<String> _resumePositionKey(String fileName) async {
     final cached = _resumePositionKeys[fileName];
@@ -1709,6 +1711,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
   };
 
   void _cycleScreenOrientation() {
+    if (_rotationLocked || _rotationLockChanging) return;
     final nextMode = (_screenOrientationModeIndex + 1) % 3;
     setState(() => _screenOrientationModeIndex = nextMode);
 
@@ -1722,6 +1725,32 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
         ]);
       case 2:
         SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    }
+  }
+
+  Future<void> _toggleRotationLock() async {
+    if (_rotationLockChanging) return;
+    _rotationLockChanging = true;
+    try {
+      final locked = !_rotationLocked;
+      if (!locked) {
+        final orientations = switch (_screenOrientationModeIndex) {
+          0 => [DeviceOrientation.portraitUp],
+          1 => [
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ],
+          _ => DeviceOrientation.values,
+        };
+        await SystemChrome.setPreferredOrientations(orientations);
+      } else {
+        await _fileIoApi.lockScreenOrientation();
+      }
+      if (!mounted) return;
+      setState(() => _rotationLocked = locked);
+      _startHideTimer();
+    } finally {
+      _rotationLockChanging = false;
     }
   }
 
@@ -2115,6 +2144,8 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
       isScrollControlled: true,
       builder: (context) {
         return AdvancedSettingsSheet(
+          container: widget.container,
+          playbackManager: _playbackManager,
           initialPage: initialPage,
           actions: mediaConfig.advancedSettingsActions,
           isMuted: _isMuted,
@@ -2853,6 +2884,8 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen>
                                   videoPlaybackMode: _videoPlaybackMode,
                                   screenOrientationIcon:
                                       _screenOrientationIcon(),
+                                  rotationLocked: _rotationLocked,
+                                  onToggleRotationLock: _toggleRotationLock,
                                   onExecuteAction: _executeMediaAction,
                                   onStartHideTimer: _startHideTimer,
                                   onShowUIChanged: _setUIVisibility,
